@@ -1,0 +1,48 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { TopBar, DesktopSidebar, MobileBottomNav } from '@/components/layout/Navbar'
+import { ThemeProvider } from '@/hooks/useTheme'
+import { ComposeModalProvider } from '@/hooks/useComposeModal'
+import { ComposeModal } from '@/components/compose/ComposeModal'
+import { Dashboard } from '@/components/dashboard/Dashboard'
+import { Feed } from '@/components/feed/Feed'
+import { Profile } from '@/components/profile/Profile'
+import { Leaderboard } from '@/components/leaderboard/Leaderboard'
+
+function App() {
+  return (
+    <BrowserRouter>
+      <ThemeProvider>
+        <ComposeModalProvider>
+          <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
+            {/* Top Bar — fixed, never scrolls */}
+            <TopBar />
+
+            <div className="flex flex-1 min-h-0">
+              {/* Desktop Sidebar — fixed, never scrolls */}
+              <DesktopSidebar />
+
+              {/* Main Content — the ONLY scrollable area */}
+              <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 pb-20 lg:pb-6">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/feed" replace />} />
+                  <Route path="/feed" element={<Feed />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/leaderboard" element={<Leaderboard />} />
+                </Routes>
+              </main>
+            </div>
+
+            {/* Mobile Bottom Navigation */}
+            <MobileBottomNav />
+
+            {/* Compose Modal — renders on top of everything */}
+            <ComposeModal />
+          </div>
+        </ComposeModalProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  )
+}
+
+export default App

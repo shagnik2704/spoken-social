@@ -1,0 +1,322 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* ===== Colors — Spoken Social Design System ===== */
+  /* Brand Indigo Palette */
+  --color-primary: #283593;
+  --color-primary-hover: #1A237E;
+  --color-primary-light: #5C6BC0;
+
+  --color-secondary: #0891B2;
+  --color-secondary-hover: #0E7490;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-xp-gold: #FBBF24;
+
+  /* Light mode surfaces */
+  --color-bg-primary: #F5F6FD;
+  --color-bg-secondary: #ECEEF8;
+  --color-bg-tertiary: #DDDFF0;
+
+  /* Text */
+  --color-text-primary: #1A1D3E;
+  --color-text-secondary: #5A5F8A;
+  --color-text-muted: #8B90B0;
+
+  /* Borders */
+  --color-border: #D1D5F0;
+  --color-border-hover: #B0B5D8;
+
+  /* ===== Fonts ===== */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Space Grotesk', monospace;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ======================================
+   LIGHT MODE — Indigo Brand Theme
+   Base: #283593 deep indigo
+   ====================================== */
+
+:root {
+  --radius: 0.625rem;
+
+  /* Surfaces */
+  --background: oklch(0.975 0.008 270);
+  /* Faint indigo-tinted background */
+  --foreground: oklch(0.22 0.05 270);
+  /* Deep indigo-black text */
+
+  --card: oklch(1 0 0);
+  /* White cards */
+  --card-foreground: oklch(0.22 0.05 270);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.05 270);
+
+  /* Brand primary — #283593 deep indigo */
+  --primary: oklch(0.34 0.15 267);
+  --primary-foreground: oklch(1 0 0);
+
+  /* Secondary — light indigo wash */
+  --secondary: oklch(0.94 0.015 267);
+  --secondary-foreground: oklch(0.34 0.12 267);
+
+  /* Muted — very subtle indigo gray */
+  --muted: oklch(0.955 0.01 267);
+  --muted-foreground: oklch(0.52 0.03 265);
+
+  /* Accent */
+  --accent: oklch(0.935 0.018 267);
+  --accent-foreground: oklch(0.34 0.12 267);
+
+  /* Destructive — keep warm red */
+  --destructive: oklch(0.577 0.245 27.325);
+
+  /* Borders — indigo-tinted */
+  --border: oklch(0.91 0.018 267);
+  --input: oklch(0.91 0.018 267);
+  --ring: oklch(0.50 0.12 267);
+  /* #3F51B5 mid-indigo focus ring */
+
+  /* Charts — indigo-friendly palette */
+  --chart-1: oklch(0.34 0.15 267);
+  /* Primary indigo */
+  --chart-2: oklch(0.60 0.118 185);
+  /* Teal */
+  --chart-3: oklch(0.54 0.10 267);
+  /* Mid indigo */
+  --chart-4: oklch(0.828 0.189 84);
+  /* Gold */
+  --chart-5: oklch(0.62 0.08 267);
+  /* Light indigo */
+
+  /* Sidebar — dark indigo treatment */
+  --sidebar: oklch(0.28 0.13 267);
+  /* Deep indigo bg */
+  --sidebar-foreground: oklch(0.92 0.008 267);
+  /* Off-white text */
+  --sidebar-primary: oklch(0.975 0.008 270);
+  /* White-ish for active items */
+  --sidebar-primary-foreground: oklch(0.28 0.13 267);
+  /* Indigo text on active */
+  --sidebar-accent: oklch(0.35 0.12 267);
+  /* Slightly lighter than bg */
+  --sidebar-accent-foreground: oklch(0.92 0.008 267);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  /* Subtle white dividers */
+  --sidebar-ring: oklch(0.54 0.10 267);
+}
+
+/* ======================================
+   DARK MODE — Deep Indigo Night
+   ====================================== */
+
+.dark {
+  --background: oklch(0.145 0.04 267);
+  /* Very dark indigo */
+  --foreground: oklch(0.97 0.005 267);
+  /* Near-white */
+
+  --card: oklch(0.20 0.05 267);
+  /* Dark indigo card */
+  --card-foreground: oklch(0.97 0.005 267);
+
+  --popover: oklch(0.20 0.05 267);
+  --popover-foreground: oklch(0.97 0.005 267);
+
+  --primary: oklch(0.68 0.10 267);
+  /* Lighter indigo for dark mode */
+  --primary-foreground: oklch(0.145 0.04 267);
+
+  --secondary: oklch(0.26 0.05 267);
+  --secondary-foreground: oklch(0.97 0.005 267);
+
+  --muted: oklch(0.26 0.05 267);
+  --muted-foreground: oklch(0.68 0.04 267);
+
+  --accent: oklch(0.26 0.05 267);
+  --accent-foreground: oklch(0.97 0.005 267);
+
+  --destructive: oklch(0.704 0.191 22.216);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.54 0.10 267);
+
+  --chart-1: oklch(0.54 0.14 267);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+
+  --sidebar: oklch(0.175 0.045 267);
+  --sidebar-foreground: oklch(0.97 0.005 267);
+  --sidebar-primary: oklch(0.54 0.14 267);
+  --sidebar-primary-foreground: oklch(0.97 0.005 267);
+  --sidebar-accent: oklch(0.26 0.05 267);
+  --sidebar-accent-foreground: oklch(0.97 0.005 267);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.54 0.10 267);
+}
+
+/* ===== Base Layer ===== */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+/* ======================================
+   Celebration & Confetti Animations
+   ====================================== */
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+
+  75% {
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: translateY(105vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes celebration-icon-pop {
+  0% {
+    transform: scale(0) rotate(-15deg);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+
+  70% {
+    transform: scale(0.9) rotate(-2deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes celebration-text-slide {
+  0% {
+    transform: translateY(15px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes xp-counter {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.3);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(40, 53, 147, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(40, 53, 147, 0.4), 0 0 80px rgba(251, 191, 36, 0.15);
+  }
+}
