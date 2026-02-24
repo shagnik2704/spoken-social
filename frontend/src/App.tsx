@@ -7,8 +7,20 @@ import { Dashboard } from '@/components/dashboard/Dashboard'
 import { Feed } from '@/components/feed/Feed'
 import { Profile } from '@/components/profile/Profile'
 import { Leaderboard } from '@/components/leaderboard/Leaderboard'
+import { useEffect } from 'react'
+import { useUserStore } from './store/userStore'
+
 
 function App() {
+
+  const fetchUser=useUserStore(state=>state.fetchUser)
+
+  useEffect(()=>{
+    fetchUser()
+  },[])
+
+  
+
   return (
     <BrowserRouter>
       <ThemeProvider>

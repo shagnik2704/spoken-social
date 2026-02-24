@@ -1,49 +1,44 @@
-// ============================================================
-// FEED STORE — Zustand
-// ============================================================
-//
-// This store manages the social feed:
-//   - All posts
-//   - Active filter (all, following, achievements, questions, trending)
-//   - Creating new posts
-//   - Toggling likes and bookmarks
-//
-// 🧠 ZUSTAND PATTERN: Derived state
-//
-// Notice `filteredPosts` is NOT in the store — it's a SELECTOR.
-// We compute it on-the-fly from `posts` + `activeFilter`.
-// This is a key Zustand pattern: store raw state, derive the rest.
-//
-// ============================================================
-
 import { create } from 'zustand'
 import type { Post, PostType } from '@/types'
-import { MOCK_POSTS } from '@/data/mockData'
-
-// ----- Filter types -----
+import api from '@/lib/axios'
 
 export type FeedFilter = 'all' | 'following' | 'achievements' | 'questions' | 'trending'
 
-// ----- Store shape -----
 
 interface FeedState {
-    // State
+    
     posts: Post[]
     activeFilter: FeedFilter
+    isLoading:boolean
 
-    // Actions
+    fetchPosts:()=>Promise<void>
     setFilter: (filter: FeedFilter) => void
     addPost: (post: { content: string; type: PostType; tags?: string[]; courseName?: string; authorId: string; authorName: string; authorInitials: string; authorLevel: number; authorTitle: string }) => void
     toggleLike: (postId: string) => void
     toggleBookmark: (postId: string) => void
 }
 
-// ----- Create the store -----
+
 
 export const useFeedStore = create<FeedState>((set, get) => ({
-    posts: MOCK_POSTS,
+    posts:[],
     activeFilter: 'all',
+    isLoading:false,
 
+    fetchPosts: async()=>{
+        set({isLoading:true})
+        try {
+            const {data} = await api.get('/api/feed')
+            set({
+                posts:data,
+                isLoading:false
+            })
+        }
+        catch(error){
+            console.error('Failed to fetch feed',error)
+            set({isLoading:false})
+        }
+    },
     setFilter: (filter) => {
         set({ activeFilter: filter })
     },
@@ -101,23 +96,6 @@ export const useFeedStore = create<FeedState>((set, get) => ({
         })
     },
 }))
-
-// ============================================================
-// SELECTORS — Derived state computed from the store
-// ============================================================
-//
-// 🧠 ZUSTAND PATTERN: Selectors
-//
-// Instead of storing `filteredPosts` in the store (which would be
-// redundant and could get out of sync), we compute it on read.
-//
-// Usage in components:
-//   const posts = useFeedStore(selectFilteredPosts)
-//
-// This is equivalent to React's `useMemo`, but cleaner because
-// the logic lives with the store, not scattered across components.
-//
-// ============================================================
 
 export const selectFilteredPosts = (state: FeedState): Post[] => {
     const { posts, activeFilter } = state

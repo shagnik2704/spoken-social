@@ -9,11 +9,11 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { ActiveCourseTracker } from './ActiveCourseTracker'
 
-// 🧠 ZUSTAND: Import the user store
+
 import { useUserStore } from '@/store/userStore'
 import { MOCK_UPCOMING } from '@/data/mockData'
 
-// ===== COURSE ICON MAP =====
+
 const courseIconMap: Record<string, React.ReactNode> = {
     'Python': <Code className="h-6 w-6 text-primary" />,
     'Linux': <Terminal className="h-6 w-6 text-green-500" />,
@@ -22,14 +22,14 @@ const courseIconMap: Record<string, React.ReactNode> = {
     'LibreOffice': <FileText className="h-6 w-6 text-emerald-500" />,
 }
 
-// ===== BADGE ICON MAP =====
+
 const badgeIconMap: Record<string, React.ReactNode> = {
     '7-Day Streak': <Flame className="h-5 w-5 text-warning" />,
     '5 Courses': <BookOpen className="h-5 w-5 text-primary" />,
     'First Post': <MessageCircle className="h-5 w-5 text-secondary" />,
 }
 
-// ===== COMPONENTS =====
+
 
 function getGreeting(): string {
     const hour = new Date().getHours()
@@ -38,11 +38,12 @@ function getGreeting(): string {
     return 'Good evening'
 }
 
-/** Section 1: Greeting + Streak — reads from userStore */
+
 function GreetingBanner() {
-    // 🧠 ZUSTAND: Each component selects only what it needs
-    const userName = useUserStore(state => state.user?.name)
-    const streak = useUserStore(state => state.streak)
+   
+    const userName = useUserStore(state=>state.user?.name)
+    const streak = useUserStore(state=>state.streak)
+ 
 
     return (
         <Card className="border-warning/20 bg-gradient-to-r from-warning/5 via-orange-500/5 to-danger/5">
@@ -52,7 +53,7 @@ function GreetingBanner() {
                         <div className="flex items-center gap-2 mb-1">
                             <Hand className="h-5 w-5 text-xp-gold shrink-0" />
                             <h1 className="text-lg sm:text-2xl font-bold truncate">
-                                {getGreeting()}, {userName || 'there'}!
+                                {getGreeting()},    {userName || 'there'}!
                             </h1>
                         </div>
                         <p className="text-muted-foreground text-sm mt-1">
@@ -75,7 +76,7 @@ function GreetingBanner() {
     )
 }
 
-/** Section 2: XP + Level — reads from userStore */
+
 function XPLevelCard() {
     const user = useUserStore(state => state.user)
     if (!user) return null
@@ -119,7 +120,7 @@ function XPLevelCard() {
     )
 }
 
-/** Section 4: Weekly Goal Tracker — reads from userStore */
+
 function WeeklyGoalTracker() {
     const weeklyGoal = useUserStore(state => state.weeklyGoal)
 
@@ -172,7 +173,7 @@ function WeeklyGoalTracker() {
     )
 }
 
-/** Section 5: My Courses — reads from userStore */
+
 function MyCourses() {
     const courses = useUserStore(state => state.courses)
 
@@ -227,7 +228,7 @@ function MyCourses() {
     )
 }
 
-/** Section 6: Achievements Preview — reads from userStore */
+
 function AchievementsPreview() {
     const badges = useUserStore(state => state.badges)
     const earnedBadges = badges.filter(b => b.earned)
@@ -282,7 +283,7 @@ function AchievementsPreview() {
     )
 }
 
-/** Section 7: Upcoming Deadlines — uses extracted mock data */
+
 function UpcomingDeadlines() {
     const getUrgencyColor = (daysAway: number) => {
         if (daysAway <= 3) return 'border-l-destructive'

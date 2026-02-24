@@ -15,7 +15,8 @@ import { useUserStore } from '@/store/userStore'
 import { useFeedStore, type FeedFilter } from '@/store/feedStore'
 import { MOCK_TRENDING, MOCK_SUGGESTED_USERS } from '@/data/mockData'
 import type { Post, PostType } from '@/types'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect} from 'react'
+
 
 // ===== HELPER FUNCTIONS =====
 
@@ -404,7 +405,13 @@ export function Feed() {
     // useMemo caches the result and only recomputes when deps change.
     const posts = useFeedStore(state => state.posts)
     const activeFilter = useFeedStore(state => state.activeFilter)
+    const fetchPosts = useFeedStore(state=>state.fetchPosts)
+    
+    useEffect(()=>{
+        fetchPosts()
+    },[])
 
+    
     const filteredPosts = useMemo(() => {
         switch (activeFilter) {
             case 'achievements':
