@@ -265,6 +265,9 @@ all_users = {
 # The currently "logged in" user
 CURRENT_USER_ID = "user-priya"
 
+# The coordinator's assigned college
+COORDINATOR_COLLEGE_ID = "vjti"
+
 
 # ===== FEED POSTS =====
 
@@ -359,4 +362,90 @@ leaderboard_data = [
     {"id": "user-arjun", "rank": 8, "name": "Arjun Nair", "initials": "AN", "level": 6, "levelTitle": "Explorer", "xp": 1800, "xpThisWeek": 150, "streak": 7, "coursesCompleted": 0, "trend": "same", "trendDelta": 0, "isCurrentUser": False, "college": "NIT Calicut"},
     {"id": "user-kavitha", "rank": 9, "name": "Kavitha R", "initials": "KR", "level": 5, "levelTitle": "Explorer", "xp": 1200, "xpThisWeek": 120, "streak": 5, "coursesCompleted": 0, "trend": "down", "trendDelta": 3, "isCurrentUser": False, "college": "Anna University"},
     {"id": "user-amit", "rank": 10, "name": "Amit Kumar", "initials": "AK", "level": 4, "levelTitle": "Beginner", "xp": 800, "xpThisWeek": 90, "streak": 3, "coursesCompleted": 0, "trend": "up", "trendDelta": 2, "isCurrentUser": False, "college": "BITS Pilani"},
+]
+
+
+# ===== COORDINATOR DASHBOARD =====
+
+coordinator_colleges = [
+    {
+        "id": "vjti",
+        "name": "VJTI Mumbai",
+        "location": "Mumbai, Maharashtra",
+        "coordinatorName": "Prof. Sanjay Deshmukh",
+        "totalStudents": 12,
+        "course": "Linux",
+        "students": [
+            {"id": "s1", "name": "Priya Singh", "initials": "PS", "rollNo": "VJTI-CS-001", "tutorialsCompleted": 7, "totalTutorials": 11, "progress": 64, "xp": 210, "streak": 15, "lastActive": "Today", "status": "active"},
+            {"id": "s2", "name": "Rohan Gupta", "initials": "RG", "rollNo": "VJTI-CS-002", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 30, "lastActive": "Today", "status": "completed"},
+            {"id": "s3", "name": "Aisha Khan", "initials": "AK", "rollNo": "VJTI-CS-003", "tutorialsCompleted": 5, "totalTutorials": 11, "progress": 45, "xp": 150, "streak": 8, "lastActive": "Yesterday", "status": "active"},
+            {"id": "s4", "name": "Devika Nair", "initials": "DN", "rollNo": "VJTI-CS-004", "tutorialsCompleted": 9, "totalTutorials": 11, "progress": 82, "xp": 270, "streak": 20, "lastActive": "Today", "status": "active"},
+            {"id": "s5", "name": "Kunal Mehta", "initials": "KM", "rollNo": "VJTI-CS-005", "tutorialsCompleted": 3, "totalTutorials": 11, "progress": 27, "xp": 90, "streak": 0, "lastActive": "5 days ago", "status": "inactive"},
+            {"id": "s6", "name": "Neha Patil", "initials": "NP", "rollNo": "VJTI-CS-006", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 25, "lastActive": "Today", "status": "completed"},
+            {"id": "s7", "name": "Farhan Sheikh", "initials": "FS", "rollNo": "VJTI-CS-007", "tutorialsCompleted": 6, "totalTutorials": 11, "progress": 55, "xp": 180, "streak": 12, "lastActive": "Today", "status": "active"},
+            {"id": "s8", "name": "Sakshi Joshi", "initials": "SJ", "rollNo": "VJTI-CS-008", "tutorialsCompleted": 1, "totalTutorials": 11, "progress": 9, "xp": 30, "streak": 0, "lastActive": "2 weeks ago", "status": "inactive"},
+            {"id": "s9", "name": "Arjun Patkar", "initials": "AP", "rollNo": "VJTI-CS-009", "tutorialsCompleted": 8, "totalTutorials": 11, "progress": 73, "xp": 240, "streak": 18, "lastActive": "Today", "status": "active"},
+            {"id": "s10", "name": "Tanvi Desai", "initials": "TD", "rollNo": "VJTI-CS-010", "tutorialsCompleted": 4, "totalTutorials": 11, "progress": 36, "xp": 120, "streak": 5, "lastActive": "3 days ago", "status": "at_risk"},
+            {"id": "s11", "name": "Vivek Sharma", "initials": "VS", "rollNo": "VJTI-CS-011", "tutorialsCompleted": 10, "totalTutorials": 11, "progress": 91, "xp": 300, "streak": 22, "lastActive": "Today", "status": "active"},
+            {"id": "s12", "name": "Pooja Raut", "initials": "PR", "rollNo": "VJTI-CS-012", "tutorialsCompleted": 0, "totalTutorials": 11, "progress": 0, "xp": 0, "streak": 0, "lastActive": "Never", "status": "not_started"},
+        ],
+    },
+    {
+        "id": "iitb",
+        "name": "IIT Bombay",
+        "location": "Mumbai, Maharashtra",
+        "coordinatorName": "Prof. Anurag Mehra",
+        "totalStudents": 10,
+        "course": "Linux",
+        "students": [
+            {"id": "s13", "name": "Rahul Sharma", "initials": "RS", "rollNo": "IITB-CS-001", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 21, "lastActive": "Today", "status": "completed"},
+            {"id": "s14", "name": "Vikram Desai", "initials": "VD", "rollNo": "IITB-CS-002", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 45, "lastActive": "Today", "status": "completed"},
+            {"id": "s15", "name": "Aditi Verma", "initials": "AV", "rollNo": "IITB-CS-003", "tutorialsCompleted": 9, "totalTutorials": 11, "progress": 82, "xp": 270, "streak": 14, "lastActive": "Today", "status": "active"},
+            {"id": "s16", "name": "Manish Kumar", "initials": "MK", "rollNo": "IITB-CS-004", "tutorialsCompleted": 10, "totalTutorials": 11, "progress": 91, "xp": 300, "streak": 30, "lastActive": "Today", "status": "active"},
+            {"id": "s17", "name": "Riya Patel", "initials": "RP", "rollNo": "IITB-CS-005", "tutorialsCompleted": 8, "totalTutorials": 11, "progress": 73, "xp": 240, "streak": 10, "lastActive": "Yesterday", "status": "active"},
+            {"id": "s18", "name": "Siddharth Rao", "initials": "SR", "rollNo": "IITB-CS-006", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 35, "lastActive": "Today", "status": "completed"},
+            {"id": "s19", "name": "Kavya Iyer", "initials": "KI", "rollNo": "IITB-CS-007", "tutorialsCompleted": 7, "totalTutorials": 11, "progress": 64, "xp": 210, "streak": 8, "lastActive": "Today", "status": "active"},
+            {"id": "s20", "name": "Nikhil Jain", "initials": "NJ", "rollNo": "IITB-CS-008", "tutorialsCompleted": 6, "totalTutorials": 11, "progress": 55, "xp": 180, "streak": 5, "lastActive": "3 days ago", "status": "at_risk"},
+            {"id": "s21", "name": "Shreya Nair", "initials": "SN", "rollNo": "IITB-CS-009", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 40, "lastActive": "Today", "status": "completed"},
+            {"id": "s22", "name": "Deepak Singh", "initials": "DS", "rollNo": "IITB-CS-010", "tutorialsCompleted": 5, "totalTutorials": 11, "progress": 45, "xp": 150, "streak": 3, "lastActive": "4 days ago", "status": "at_risk"},
+        ],
+    },
+    {
+        "id": "nitk",
+        "name": "NIT Surathkal",
+        "location": "Mangalore, Karnataka",
+        "coordinatorName": "Prof. Lakshmi Narayanan",
+        "totalStudents": 8,
+        "course": "Linux",
+        "students": [
+            {"id": "s23", "name": "Ananya Patel", "initials": "AP", "rollNo": "NITK-IT-001", "tutorialsCompleted": 3, "totalTutorials": 11, "progress": 27, "xp": 90, "streak": 14, "lastActive": "Today", "status": "active"},
+            {"id": "s24", "name": "Suresh Reddy", "initials": "SR", "rollNo": "NITK-IT-002", "tutorialsCompleted": 7, "totalTutorials": 11, "progress": 64, "xp": 210, "streak": 10, "lastActive": "Today", "status": "active"},
+            {"id": "s25", "name": "Divya Hegde", "initials": "DH", "rollNo": "NITK-IT-003", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 28, "lastActive": "Today", "status": "completed"},
+            {"id": "s26", "name": "Ajay Bhat", "initials": "AB", "rollNo": "NITK-IT-004", "tutorialsCompleted": 2, "totalTutorials": 11, "progress": 18, "xp": 60, "streak": 0, "lastActive": "1 week ago", "status": "inactive"},
+            {"id": "s27", "name": "Meghana Rao", "initials": "MR", "rollNo": "NITK-IT-005", "tutorialsCompleted": 5, "totalTutorials": 11, "progress": 45, "xp": 150, "streak": 6, "lastActive": "Yesterday", "status": "active"},
+            {"id": "s28", "name": "Pavan Kumar", "initials": "PK", "rollNo": "NITK-IT-006", "tutorialsCompleted": 9, "totalTutorials": 11, "progress": 82, "xp": 270, "streak": 15, "lastActive": "Today", "status": "active"},
+            {"id": "s29", "name": "Rashmi Shenoy", "initials": "RS", "rollNo": "NITK-IT-007", "tutorialsCompleted": 0, "totalTutorials": 11, "progress": 0, "xp": 0, "streak": 0, "lastActive": "Never", "status": "not_started"},
+            {"id": "s30", "name": "Karthik Nayak", "initials": "KN", "rollNo": "NITK-IT-008", "tutorialsCompleted": 6, "totalTutorials": 11, "progress": 55, "xp": 180, "streak": 9, "lastActive": "Today", "status": "active"},
+        ],
+    },
+    {
+        "id": "vit",
+        "name": "VIT Vellore",
+        "location": "Vellore, Tamil Nadu",
+        "coordinatorName": "Prof. Ramesh Babu",
+        "totalStudents": 10,
+        "course": "Linux",
+        "students": [
+            {"id": "s31", "name": "Meera Joshi", "initials": "MJ", "rollNo": "VIT-ECE-001", "tutorialsCompleted": 6, "totalTutorials": 11, "progress": 55, "xp": 180, "streak": 30, "lastActive": "Today", "status": "active"},
+            {"id": "s32", "name": "Arun Prasad", "initials": "AP", "rollNo": "VIT-ECE-002", "tutorialsCompleted": 4, "totalTutorials": 11, "progress": 36, "xp": 120, "streak": 7, "lastActive": "Yesterday", "status": "active"},
+            {"id": "s33", "name": "Sneha Gupta", "initials": "SG", "rollNo": "VIT-ECE-003", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 60, "lastActive": "Today", "status": "completed"},
+            {"id": "s34", "name": "Rajesh Iyer", "initials": "RI", "rollNo": "VIT-ECE-004", "tutorialsCompleted": 8, "totalTutorials": 11, "progress": 73, "xp": 240, "streak": 12, "lastActive": "Today", "status": "active"},
+            {"id": "s35", "name": "Lavanya Krishnan", "initials": "LK", "rollNo": "VIT-ECE-005", "tutorialsCompleted": 2, "totalTutorials": 11, "progress": 18, "xp": 60, "streak": 0, "lastActive": "10 days ago", "status": "inactive"},
+            {"id": "s36", "name": "Kiran Mohan", "initials": "KM", "rollNo": "VIT-ECE-006", "tutorialsCompleted": 10, "totalTutorials": 11, "progress": 91, "xp": 300, "streak": 20, "lastActive": "Today", "status": "active"},
+            {"id": "s37", "name": "Gayathri S", "initials": "GS", "rollNo": "VIT-ECE-007", "tutorialsCompleted": 3, "totalTutorials": 11, "progress": 27, "xp": 90, "streak": 4, "lastActive": "3 days ago", "status": "at_risk"},
+            {"id": "s38", "name": "Naveen Raj", "initials": "NR", "rollNo": "VIT-ECE-008", "tutorialsCompleted": 7, "totalTutorials": 11, "progress": 64, "xp": 210, "streak": 11, "lastActive": "Today", "status": "active"},
+            {"id": "s39", "name": "Pritha Dasgupta", "initials": "PD", "rollNo": "VIT-ECE-009", "tutorialsCompleted": 11, "totalTutorials": 11, "progress": 100, "xp": 330, "streak": 45, "lastActive": "Today", "status": "completed"},
+            {"id": "s40", "name": "Harish V", "initials": "HV", "rollNo": "VIT-ECE-010", "tutorialsCompleted": 1, "totalTutorials": 11, "progress": 9, "xp": 30, "streak": 0, "lastActive": "2 weeks ago", "status": "inactive"},
+        ],
+    },
 ]
