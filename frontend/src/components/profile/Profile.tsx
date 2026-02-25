@@ -10,8 +10,6 @@ import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-
-// 🧠 ZUSTAND: Single import for all user data
 import { useUserStore } from '@/store/userStore'
 import { MOCK_ACTIVITY } from '@/data/mockData'
 import type { ActivityType } from '@/types'

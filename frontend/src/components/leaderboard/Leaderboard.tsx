@@ -7,9 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { MOCK_LEADERBOARD } from '@/data/mockData'
 import type { LeaderboardUser } from '@/types'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import api from '@/lib/axios'
 
 const courses = [
     { id: 'all', name: 'All Courses', icon: BookOpen },
@@ -177,7 +177,7 @@ function LeaderboardRow({ user, showWeeklyXP }: { user: LeaderboardUser; showWee
 }
 
 /** Your Position Highlight Card */
-function YourPosition({ user }: { user: LeaderboardUser }) {
+function YourPosition({ user, data }: { user: LeaderboardUser; data: LeaderboardUser[] }) {
     return (
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
             <CardContent className="p-4 flex items-center justify-between">
@@ -188,7 +188,7 @@ function YourPosition({ user }: { user: LeaderboardUser }) {
                     <div>
                         <p className="text-sm font-semibold">Your Position: <span className="text-primary">#{user.rank}</span></p>
                         <p className="text-xs text-muted-foreground">
-                            {user.xp.toLocaleString()} XP • {user.rank <= 3 ? 'You\'re in the top 3!' : `${user.xp > 0 ? ((MOCK_LEADERBOARD[user.rank - 2]?.xp || 0) - user.xp).toLocaleString() : 0} XP to rank up`}
+                            {user.xp.toLocaleString()} XP • {user.rank <= 3 ? 'You\'re in the top 3!' : `${user.xp > 0 ? ((data[user.rank - 2]?.xp || 0) - user.xp).toLocaleString() : 0} XP to rank up`}
                         </p>
                     </div>
                 </div>
@@ -206,16 +206,31 @@ function YourPosition({ user }: { user: LeaderboardUser }) {
 type TimeFilter = 'overall' | 'weekly'
 
 export function Leaderboard() {
+    const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([])
     const [timeFilter, setTimeFilter] = useState<TimeFilter>('overall')
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
+    
 
-    const currentUser = MOCK_LEADERBOARD.find(u => u.isCurrentUser)
+    useEffect(() => {
+        const fetchLeaderboardData = async () => {
+            try {
+                const { data } = await api.get('/api/leaderboard')
+                setLeaderboardData(data)
+            }
+            catch (error) {
+                console.log(error)
+            }
+        }
+        fetchLeaderboardData()
+    }, [])
+
+    const currentUser = leaderboardData.find(u => u.isCurrentUser)
 
     // Sort by weekly XP for the weekly tab
     const displayData = timeFilter === 'weekly'
-        ? [...MOCK_LEADERBOARD].sort((a, b) => b.xpThisWeek - a.xpThisWeek).map((u, i) => ({ ...u, rank: i + 1 }))
-        : MOCK_LEADERBOARD
+        ? [...leaderboardData].sort((a, b) => b.xpThisWeek - a.xpThisWeek).map((u, i) => ({ ...u, rank: i + 1 }))
+        : leaderboardData
 
     const selectedCourseInfo = courses.find(c => c.id === selectedCourse)
     const CourseIcon = selectedCourseInfo?.icon || BookOpen
@@ -292,7 +307,7 @@ export function Leaderboard() {
             </div>
 
             {/* Your Position */}
-            {currentUser && <YourPosition user={currentUser} />}
+            {currentUser && <YourPosition user={currentUser} data={displayData} />}
 
             {/* Podium */}
             <Podium users={displayData} />
