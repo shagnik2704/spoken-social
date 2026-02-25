@@ -36,7 +36,8 @@ def get_current_user():
             "college": data["college"],
             "department": data["department"],
         },
-        "streak": data["streak"],
+
+
         "weeklyGoal": data["weeklyGoal"],
         "courses": data["courses"],
         "badges": data["badges"],
@@ -75,7 +76,8 @@ def get_user_by_id(user_id:str):
             "college": data["college"],
             "department": data["department"],
         },
-        "streak": data["streak"],
+
+
         "weeklyGoal": data["weeklyGoal"],
         "courses": data["courses"],
         "badges": data["badges"],

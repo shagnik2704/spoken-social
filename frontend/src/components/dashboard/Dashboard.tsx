@@ -1,5 +1,5 @@
 import {
-    Flame, Zap, Calendar, ChevronRight, Trophy, Lock,
+    Zap, Calendar, ChevronRight, Trophy, Lock,
     BookOpen, Hand, Code, Terminal, BarChart3, FileText, Settings,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
     CheckCircle2
@@ -24,7 +24,7 @@ const courseIconMap: Record<string, React.ReactNode> = {
 
 
 const badgeIconMap: Record<string, React.ReactNode> = {
-    '7-Day Streak': <Flame className="h-5 w-5 text-warning" />,
+    'Quick Learner': <Zap className="h-5 w-5 text-warning" />,
     '5 Courses': <BookOpen className="h-5 w-5 text-primary" />,
     'First Post': <MessageCircle className="h-5 w-5 text-secondary" />,
 }
@@ -42,7 +42,6 @@ function getGreeting(): string {
 function GreetingBanner() {
 
     const userName = useUserStore(state => state.user?.name)
-    const streak = useUserStore(state => state.streak)
 
 
     return (
@@ -60,17 +59,7 @@ function GreetingBanner() {
                             Ready to learn something new today?
                         </p>
                     </div>
-                    <div className="flex flex-col items-center shrink-0">
-                        <Flame className="h-9 w-9 sm:h-10 sm:w-10 text-warning animate-pulse" />
-                        <span className="text-xl sm:text-2xl font-bold text-warning font-mono">{streak.current}</span>
-                        <span className="text-[10px] text-muted-foreground -mt-0.5">day streak</span>
-                    </div>
                 </div>
-                {streak.isActiveToday && (
-                    <p className="text-xs text-muted-foreground mt-3">
-                        Your longest: <span className="text-foreground font-medium">{streak.longest} days</span> — keep it going!
-                    </p>
-                )}
             </CardContent>
         </Card>
     )

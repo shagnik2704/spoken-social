@@ -6,7 +6,7 @@
 // ============================================================
 
 import type {
-    User, Streak, WeeklyGoal, Course, Badge,
+    User, WeeklyGoal, Course, Badge,
     Post, LeaderboardUser, Activity, UpcomingEvent,
     TrendingTopic, SuggestedUser,
 } from '@/types'
@@ -35,13 +35,7 @@ export const CURRENT_USER: User = {
     department: 'B.Tech CSE, Year 2',
 }
 
-// ===== STREAK =====
 
-export const MOCK_STREAK: Streak = {
-    current: 15,
-    longest: 23,
-    isActiveToday: true,
-}
 
 // ===== WEEKLY GOAL =====
 
@@ -65,12 +59,12 @@ export const MOCK_COURSES: Course[] = [
 // ===== BADGES =====
 
 export const MOCK_BADGES: Badge[] = [
-    { id: '1', name: '7-Day Streak', description: 'Maintained a 7-day learning streak', icon: 'flame', color: 'text-warning', bgColor: 'bg-warning/10', earned: true, earnedDate: 'Feb 22' },
+    { id: '1', name: 'Quick Learner', description: 'Completed 5 tutorials in a week', icon: 'zap', color: 'text-warning', bgColor: 'bg-warning/10', earned: true, earnedDate: 'Feb 22' },
     { id: '2', name: '5 Courses', description: 'Enrolled in 5 different courses', icon: 'book-open', color: 'text-primary', bgColor: 'bg-primary/10', earned: true, earnedDate: 'Feb 17' },
     { id: '3', name: 'First Post', description: 'Shared your first post with the community', icon: 'message-circle', color: 'text-secondary', bgColor: 'bg-secondary/10', earned: true, earnedDate: 'Feb 10' },
     { id: '4', name: 'Test Passer', description: 'Passed your first online test', icon: 'check-circle', color: 'text-success', bgColor: 'bg-success/10', earned: true, earnedDate: 'Feb 5' },
     { id: '5', name: 'Helpful', description: 'Received 10 likes on your answers', icon: 'heart', color: 'text-danger', bgColor: 'bg-danger/10', earned: true, earnedDate: 'Jan 28' },
-    { id: '6', name: '30-Day Streak', description: 'Maintain a 30-day learning streak', icon: 'flame', color: 'text-warning', bgColor: 'bg-warning/10', earned: false, progress: '15/30 days', daysAway: 15 },
+    { id: '6', name: 'Dedicated Learner', description: 'Complete 30 tutorials across all courses', icon: 'book-open', color: 'text-warning', bgColor: 'bg-warning/10', earned: false, progress: '15/30 tutorials', daysAway: null },
     { id: '7', name: 'Python Master', description: 'Complete all Python tutorials', icon: 'code', color: 'text-primary', bgColor: 'bg-primary/10', earned: false, progress: '7/10 tutorials', daysAway: null },
     { id: '8', name: 'Mentor', description: 'Help 20 learners with their questions', icon: 'users', color: 'text-secondary', bgColor: 'bg-secondary/10', earned: false },
     { id: '9', name: 'Top Contributor', description: 'Be in the top 10 weekly leaderboard', icon: 'trophy', color: 'text-xp-gold', bgColor: 'bg-xp-gold/10', earned: false },
@@ -120,13 +114,13 @@ export const MOCK_POSTS: Post[] = [
         id: '4',
         author: { id: 'user-meera', name: 'Meera Joshi', initials: 'MJ', level: 10, title: 'Practitioner' },
         type: 'milestone',
-        content: 'Hit a 30-day learning streak! Consistency is the key. 🔥',
-        details: '30 days of continuous learning without missing a single day',
+        content: 'Just completed my 30th tutorial on the platform! Consistency is the key. 🔥',
+        details: '30 tutorials completed across Python, Linux, and Scilab',
         timestamp: '8h ago',
         createdAt: Date.now() - 8 * 60 * 60 * 1000,
         likes: 89, comments: 31, shares: 7,
         isLiked: true, isBookmarked: false,
-        tags: ['Streak', 'Milestone'],
+        tags: ['Milestone'],
     },
     {
         id: '5',
@@ -158,16 +152,16 @@ export const MOCK_POSTS: Post[] = [
 // ===== LEADERBOARD =====
 
 export const MOCK_LEADERBOARD: LeaderboardUser[] = [
-    { id: '1', rank: 1, name: 'Vikram Desai', initials: 'VD', level: 22, levelTitle: 'Mentor', xp: 8940, xpThisWeek: 420, streak: 45, coursesCompleted: 8, trend: 'same', trendDelta: 0, isCurrentUser: false, college: 'IIT Bombay' },
-    { id: '2', rank: 2, name: 'Sneha Gupta', initials: 'SG', level: 25, levelTitle: 'Expert', xp: 8720, xpThisWeek: 380, streak: 60, coursesCompleted: 9, trend: 'up', trendDelta: 1, isCurrentUser: false, college: 'NIT Trichy' },
-    { id: '3', rank: 3, name: 'Dr. Kannan', initials: 'DK', level: 30, levelTitle: 'Master', xp: 8500, xpThisWeek: 210, streak: 120, coursesCompleted: 12, trend: 'down', trendDelta: 1, isCurrentUser: false, college: 'IIT Madras' },
-    { id: '4', rank: 4, name: 'Amit Kumar', initials: 'AK', level: 18, levelTitle: 'Advanced', xp: 6200, xpThisWeek: 350, streak: 30, coursesCompleted: 6, trend: 'up', trendDelta: 2, isCurrentUser: false, college: 'BITS Pilani' },
-    { id: '5', rank: 5, name: 'Meera Joshi', initials: 'MJ', level: 10, levelTitle: 'Practitioner', xp: 5100, xpThisWeek: 290, streak: 30, coursesCompleted: 4, trend: 'up', trendDelta: 3, isCurrentUser: false, college: 'VIT Vellore' },
-    { id: '6', rank: 6, name: 'Rahul Sharma', initials: 'RS', level: 15, levelTitle: 'Advanced', xp: 4800, xpThisWeek: 310, streak: 21, coursesCompleted: 5, trend: 'down', trendDelta: 2, isCurrentUser: false, college: 'IIT Bombay' },
-    { id: '7', rank: 7, name: 'Ananya Patel', initials: 'AP', level: 8, levelTitle: 'Learner', xp: 3200, xpThisWeek: 280, streak: 14, coursesCompleted: 3, trend: 'up', trendDelta: 1, isCurrentUser: false, college: 'NIT Surathkal' },
-    { id: '8', rank: 8, name: 'Priya Singh', initials: 'PS', level: 12, levelTitle: 'Practitioner', xp: 2450, xpThisWeek: 180, streak: 15, coursesCompleted: 1, trend: 'up', trendDelta: 4, isCurrentUser: true, college: 'VJTI Mumbai' },
-    { id: '9', rank: 9, name: 'Arjun Nair', initials: 'AN', level: 6, levelTitle: 'Explorer', xp: 1800, xpThisWeek: 150, streak: 7, coursesCompleted: 1, trend: 'same', trendDelta: 0, isCurrentUser: false, college: 'NIT Calicut' },
-    { id: '10', rank: 10, name: 'Kavitha R', initials: 'KR', level: 5, levelTitle: 'Explorer', xp: 1200, xpThisWeek: 120, streak: 5, coursesCompleted: 0, trend: 'down', trendDelta: 3, isCurrentUser: false, college: 'Anna University' },
+    { id: '1', rank: 1, name: 'Vikram Desai', initials: 'VD', level: 22, levelTitle: 'Mentor', xp: 8940, xpThisWeek: 420, coursesCompleted: 8, trend: 'same', trendDelta: 0, isCurrentUser: false, college: 'IIT Bombay' },
+    { id: '2', rank: 2, name: 'Sneha Gupta', initials: 'SG', level: 25, levelTitle: 'Expert', xp: 8720, xpThisWeek: 380, coursesCompleted: 9, trend: 'up', trendDelta: 1, isCurrentUser: false, college: 'NIT Trichy' },
+    { id: '3', rank: 3, name: 'Dr. Kannan', initials: 'DK', level: 30, levelTitle: 'Master', xp: 8500, xpThisWeek: 210, coursesCompleted: 12, trend: 'down', trendDelta: 1, isCurrentUser: false, college: 'IIT Madras' },
+    { id: '4', rank: 4, name: 'Amit Kumar', initials: 'AK', level: 18, levelTitle: 'Advanced', xp: 6200, xpThisWeek: 350, coursesCompleted: 6, trend: 'up', trendDelta: 2, isCurrentUser: false, college: 'BITS Pilani' },
+    { id: '5', rank: 5, name: 'Meera Joshi', initials: 'MJ', level: 10, levelTitle: 'Practitioner', xp: 5100, xpThisWeek: 290, coursesCompleted: 4, trend: 'up', trendDelta: 3, isCurrentUser: false, college: 'VIT Vellore' },
+    { id: '6', rank: 6, name: 'Rahul Sharma', initials: 'RS', level: 15, levelTitle: 'Advanced', xp: 4800, xpThisWeek: 310, coursesCompleted: 5, trend: 'down', trendDelta: 2, isCurrentUser: false, college: 'IIT Bombay' },
+    { id: '7', rank: 7, name: 'Ananya Patel', initials: 'AP', level: 8, levelTitle: 'Learner', xp: 3200, xpThisWeek: 280, coursesCompleted: 3, trend: 'up', trendDelta: 1, isCurrentUser: false, college: 'NIT Surathkal' },
+    { id: '8', rank: 8, name: 'Priya Singh', initials: 'PS', level: 12, levelTitle: 'Practitioner', xp: 2450, xpThisWeek: 180, coursesCompleted: 1, trend: 'up', trendDelta: 4, isCurrentUser: true, college: 'VJTI Mumbai' },
+    { id: '9', rank: 9, name: 'Arjun Nair', initials: 'AN', level: 6, levelTitle: 'Explorer', xp: 1800, xpThisWeek: 150, coursesCompleted: 1, trend: 'same', trendDelta: 0, isCurrentUser: false, college: 'NIT Calicut' },
+    { id: '10', rank: 10, name: 'Kavitha R', initials: 'KR', level: 5, levelTitle: 'Explorer', xp: 1200, xpThisWeek: 120, coursesCompleted: 0, trend: 'down', trendDelta: 3, isCurrentUser: false, college: 'Anna University' },
 ]
 
 // ===== ACTIVITY TIMELINE =====
@@ -175,8 +169,7 @@ export const MOCK_LEADERBOARD: LeaderboardUser[] = [
 export const MOCK_ACTIVITY: Activity[] = [
     { id: '1', type: 'achievement', text: 'Completed C/C++ course with 85% test score', time: '3 days ago' },
     { id: '2', type: 'post', text: 'Shared a tip about Python dictionaries', time: '5 days ago' },
-    { id: '3', type: 'streak', text: 'Hit a 15-day learning streak!', time: '1 week ago' },
-    { id: '4', type: 'badge', text: 'Earned the "7-Day Streak" badge', time: '1 week ago' },
+    { id: '3', type: 'badge', text: 'Earned the "Quick Learner" badge', time: '1 week ago' },
     { id: '5', type: 'course', text: 'Started learning Scilab', time: '2 weeks ago' },
     { id: '6', type: 'answer', text: 'Answered a question about Linux file permissions', time: '2 weeks ago' },
 ]
@@ -202,7 +195,7 @@ export const MOCK_TRENDING: TrendingTopic[] = [
 export const MOCK_SUGGESTED_USERS: SuggestedUser[] = [
     { name: 'Dr. Kannan', initials: 'DK', title: 'Mentor • Python Expert', level: 30 },
     { name: 'Sneha Gupta', initials: 'SG', title: 'Top Contributor', level: 25 },
-    { name: 'Amit Kumar', initials: 'AK', title: '60-Day Streak', level: 18 },
+    { name: 'Amit Kumar', initials: 'AK', title: 'Top Contributor', level: 18 },
 ]
 
 // ===== COURSE OPTIONS (for tagging in compose) =====

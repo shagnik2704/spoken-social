@@ -1,5 +1,5 @@
 import {
-    Trophy, Flame, Zap, TrendingUp, TrendingDown, Minus,
+    Trophy, Zap, TrendingUp, TrendingDown, Minus,
     Crown, Medal, Award, ChevronDown, Star,
     Code, Terminal, BarChart3, FileText, BookOpen, GraduationCap
 } from 'lucide-react'
@@ -154,11 +154,7 @@ function LeaderboardRow({ user, showWeeklyXP }: { user: LeaderboardUser; showWee
                 </div>
             </div>
 
-            {/* Streak - hidden on small mobile */}
-            <div className="hidden sm:flex items-center gap-1 shrink-0">
-                <Flame className="h-3.5 w-3.5 text-warning" />
-                <span className="text-xs font-mono">{user.streak}</span>
-            </div>
+
 
             {/* XP */}
             <div className="text-right shrink-0 min-w-[60px]">
@@ -210,7 +206,7 @@ export function Leaderboard() {
     const [timeFilter, setTimeFilter] = useState<TimeFilter>('overall')
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
-    
+
 
     useEffect(() => {
         const fetchLeaderboardData = async () => {
@@ -319,7 +315,7 @@ export function Leaderboard() {
                     <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                         <div className="w-8 text-center">Rank</div>
                         <div className="flex-1">Student</div>
-                        <div className="hidden sm:block w-12 text-center">Streak</div>
+
                         <div className="w-[60px] text-right">{timeFilter === 'weekly' ? 'Weekly' : 'Total'}</div>
                         <div className="w-10 text-center">Δ</div>
                     </div>

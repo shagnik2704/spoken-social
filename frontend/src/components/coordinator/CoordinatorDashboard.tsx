@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
-    CheckCircle2, Flame, Terminal,
-    Search, Filter, Trophy, BarChart3, Star
+    CheckCircle2, Terminal,
+    Search, Filter, Trophy, BarChart3, Star,
+    Clock, Zap, Activity
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import api from '@/lib/axios'
 
 // ===== TYPES =====
@@ -37,7 +39,6 @@ interface Student {
     totalTutorials: number
     progress: number
     xp: number
-    streak: number
     lastActive: string
     status: 'active' | 'completed' | 'inactive' | 'at_risk' | 'not_started'
 }
@@ -61,12 +62,12 @@ interface CollegeDetails {
     students: Student[]
 }
 
-type Tab = 'students' | 'compare'
-type SortBy = 'name' | 'progress' | 'xp' | 'streak'
+type Tab = 'students' | 'analytics' | 'compare'
+type SortBy = 'name' | 'progress' | 'xp'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
 // The coordinator's own college — later this comes from auth
-const MY_COLLEGE_ID = 'vjti'
+const MY_COLLEGE_ID = 'iitb'
 
 // ===== STATUS HELPERS =====
 
@@ -136,16 +137,6 @@ function StudentRow({ student }: { student: Student }) {
                 <span className="text-sm font-mono">{student.tutorialsCompleted}/{student.totalTutorials}</span>
             </div>
 
-            <div className="hidden md:flex items-center gap-1 w-12 justify-center">
-                {student.streak > 0 ? (
-                    <>
-                        <Flame className="h-3 w-3 text-warning" />
-                        <span className="text-xs font-mono">{student.streak}</span>
-                    </>
-                ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                )}
-            </div>
 
             <div className="w-24 shrink-0 flex justify-center">
                 <Badge className={`${statusConfig.color} border-0 text-[10px] px-2 py-0.5`}>
@@ -181,7 +172,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                 case 'name': return a.name.localeCompare(b.name)
                 case 'progress': return b.progress - a.progress
                 case 'xp': return b.xp - a.xp
-                case 'streak': return b.streak - a.streak
+
                 default: return 0
             }
         })
@@ -274,7 +265,6 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                             { id: 'progress', label: 'Progress' },
                             { id: 'name', label: 'Name' },
                             { id: 'xp', label: 'XP' },
-                            { id: 'streak', label: 'Streak' },
                         ] as { id: SortBy; label: string }[]).map(sort => (
                             <button
                                 key={sort.id}
@@ -296,7 +286,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         <div className="flex-1">Student</div>
                         <div className="hidden sm:block w-28 text-center">Progress</div>
                         <div className="hidden md:block w-16 text-center">Done</div>
-                        <div className="hidden md:block w-12 text-center">Streak</div>
+
                         <div className="w-24 shrink-0 text-center">Status</div>
                     </div>
 
@@ -446,6 +436,337 @@ function CompareCollegesTab({ colleges, myCollegeId }: { colleges: CollegeSummar
     )
 }
 
+// ===== ANALYTICS TAB =====
+
+const TUTORIAL_NAMES = [
+    'Introduction to Linux',
+    'Basic Commands',
+    'Files & Directories',
+    'File Permissions',
+    'Text Editors',
+    'Shell Scripting Basics',
+    'Processes & Services',
+    'Networking Basics',
+    'Package Management',
+    'User Management',
+    'Advanced Shell Scripting',
+]
+
+// Donut chart center label component
+function DonutCenterLabel({ value, label }: { value: string; label: string }) {
+    return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="text-2xl font-bold">{value}</span>
+            <span className="text-[10px] text-muted-foreground">{label}</span>
+        </div>
+    )
+}
+
+function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
+    const students = details?.students || []
+    const total = students.length
+
+    // ── Status Distribution (Donut) ──
+    const statusData = [
+        { name: 'Completed', value: students.filter(s => s.status === 'completed').length, color: 'hsl(142, 76%, 36%)' },
+        { name: 'Active', value: students.filter(s => s.status === 'active').length, color: 'hsl(221, 83%, 53%)' },
+        { name: 'At Risk', value: students.filter(s => s.status === 'at_risk').length, color: 'hsl(38, 92%, 50%)' },
+        { name: 'Inactive', value: students.filter(s => s.status === 'inactive' || s.status === 'not_started').length, color: 'hsl(0, 72%, 51%)' },
+    ].filter(d => d.value > 0)
+
+    // ── Progress Distribution (Donut) ──
+    const progressData = [
+        { name: '0%', value: students.filter(s => s.progress === 0).length, color: 'hsl(0, 72%, 70%)' },
+        { name: '1–25%', value: students.filter(s => s.progress >= 1 && s.progress <= 25).length, color: 'hsl(25, 95%, 60%)' },
+        { name: '26–50%', value: students.filter(s => s.progress >= 26 && s.progress <= 50).length, color: 'hsl(38, 92%, 55%)' },
+        { name: '51–75%', value: students.filter(s => s.progress >= 51 && s.progress <= 75).length, color: 'hsl(221, 83%, 60%)' },
+        { name: '76–99%', value: students.filter(s => s.progress >= 76 && s.progress <= 99).length, color: 'hsl(142, 60%, 50%)' },
+        { name: '100%', value: students.filter(s => s.progress === 100).length, color: 'hsl(142, 76%, 36%)' },
+    ].filter(d => d.value > 0)
+
+    // ── Tutorial-wise Completion ──
+    const tutorialCompletion = TUTORIAL_NAMES.map((name, i) => {
+        const completedCount = students.filter(s => s.tutorialsCompleted > i).length
+        const rate = total > 0 ? Math.round((completedCount / total) * 100) : 0
+        return { name, number: i + 1, completedCount, rate }
+    })
+
+    // ── Top Performers ──
+    const topPerformers = [...students].sort((a, b) => b.xp - a.xp).slice(0, 5)
+
+    // ── At-Risk Students ──
+    const atRisk = students.filter(s => s.status === 'at_risk' || s.status === 'inactive' || s.status === 'not_started')
+        .sort((a, b) => a.progress - b.progress)
+
+    // ── Engagement ──
+    const activeToday = students.filter(s => s.lastActive === 'Today').length
+    const activeRecent = students.filter(s => s.lastActive === 'Today' || s.lastActive === 'Yesterday').length
+    const engagementRate = total > 0 ? Math.round((activeRecent / total) * 100) : 0
+
+    // Custom tooltip for donut charts
+    const CustomTooltip = ({ active, payload }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-md">
+                    <p className="text-sm font-medium">{payload[0].name}</p>
+                    <p className="text-xs text-muted-foreground">{payload[0].value} students ({total > 0 ? Math.round((payload[0].value / total) * 100) : 0}%)</p>
+                </div>
+            )
+        }
+        return null
+    }
+
+    return (
+        <div className="space-y-5">
+            {/* Row 1: Quick Stats */}
+            <div className="grid grid-cols-3 gap-3">
+                <Card className="border-border/40">
+                    <CardContent className="p-4 text-center">
+                        <Activity className="h-5 w-5 text-primary mx-auto mb-1" />
+                        <p className="text-2xl font-bold">{engagementRate}%</p>
+                        <p className="text-[11px] text-muted-foreground">Engagement Rate</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{activeToday} active today</p>
+                    </CardContent>
+                </Card>
+                <Card className="border-border/40">
+                    <CardContent className="p-4 text-center">
+                        <Zap className="h-5 w-5 text-xp-gold mx-auto mb-1" />
+                        <p className="text-2xl font-bold">{total > 0 ? Math.round(students.reduce((a, s) => a + s.xp, 0) / total) : 0}</p>
+                        <p className="text-[11px] text-muted-foreground">Avg XP / Student</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{students.reduce((a, s) => a + s.xp, 0)} total</p>
+                    </CardContent>
+                </Card>
+
+            </div>
+
+            {/* Row 2: Donut Charts */}
+            <div className="grid lg:grid-cols-2 gap-5">
+                {/* Status Distribution Donut */}
+                <Card className="border-border/40">
+                    <CardContent className="p-4">
+                        <h3 className="text-sm font-bold flex items-center gap-2 mb-2">
+                            <Users className="h-4 w-4 text-primary" />
+                            Status Distribution
+                        </h3>
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-40 h-40 shrink-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={statusData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={45}
+                                            outerRadius={70}
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                            strokeWidth={0}
+                                        >
+                                            {statusData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<CustomTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <DonutCenterLabel value={String(total)} label="students" />
+                            </div>
+                            <div className="flex-1 space-y-2">
+                                {statusData.map(item => (
+                                    <div key={item.name} className="flex items-center gap-2">
+                                        <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                                        <span className="text-xs flex-1">{item.name}</span>
+                                        <span className="text-sm font-bold">{item.value}</span>
+                                        <span className="text-[10px] text-muted-foreground">{Math.round((item.value / total) * 100)}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Progress Distribution Donut */}
+                <Card className="border-border/40">
+                    <CardContent className="p-4">
+                        <h3 className="text-sm font-bold flex items-center gap-2 mb-2">
+                            <BarChart3 className="h-4 w-4 text-primary" />
+                            Progress Distribution
+                        </h3>
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-40 h-40 shrink-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={progressData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={45}
+                                            outerRadius={70}
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                            strokeWidth={0}
+                                        >
+                                            {progressData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<CustomTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <DonutCenterLabel
+                                    value={`${total > 0 ? Math.round(students.reduce((a, s) => a + s.progress, 0) / total) : 0}%`}
+                                    label="avg progress"
+                                />
+                            </div>
+                            <div className="flex-1 space-y-2">
+                                {progressData.map(item => (
+                                    <div key={item.name} className="flex items-center gap-2">
+                                        <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                                        <span className="text-xs flex-1">{item.name}</span>
+                                        <span className="text-sm font-bold">{item.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Row 3: Tutorial-wise Completion */}
+            <Card className="border-border/40">
+                <CardContent className="p-4">
+                    <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                        Tutorial-wise Completion
+                        <span className="text-[10px] font-normal text-muted-foreground">— where are students dropping off?</span>
+                    </h3>
+                    <div className="space-y-1.5">
+                        {tutorialCompletion.map(t => (
+                            <div key={t.number} className="flex items-center gap-3">
+                                <span className="text-[11px] text-muted-foreground w-5 text-right font-mono shrink-0">{t.number}</span>
+                                <span className="text-xs w-44 truncate shrink-0">{t.name}</span>
+                                <div className="flex-1 h-5 bg-muted/30 rounded overflow-hidden relative">
+                                    <div
+                                        className={`h-full rounded transition-all duration-500 ${t.rate >= 75 ? 'bg-success/60' :
+                                            t.rate >= 50 ? 'bg-primary/50' :
+                                                t.rate >= 25 ? 'bg-warning/50' :
+                                                    'bg-destructive/40'
+                                            }`}
+                                        style={{ width: `${t.rate}%` }}
+                                    />
+                                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono font-semibold">
+                                        {t.completedCount}/{total}
+                                    </span>
+                                </div>
+                                <span className={`text-xs font-bold w-10 text-right ${t.rate >= 75 ? 'text-success' :
+                                    t.rate >= 50 ? 'text-primary' :
+                                        t.rate >= 25 ? 'text-warning' :
+                                            'text-destructive'
+                                    }`}>{t.rate}%</span>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+
+
+            {/* Row 5: Top Performers + At-Risk */}
+            <div className="grid lg:grid-cols-2 gap-5">
+                {/* Top Performers */}
+                <Card className="border-border/40">
+                    <CardContent className="p-4">
+                        <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
+                            <Trophy className="h-4 w-4 text-xp-gold" />
+                            Top Performers
+                        </h3>
+                        <div className="space-y-1">
+                            {topPerformers.map((student, i) => (
+                                <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
+                                    <span className={`text-xs font-bold w-5 ${i === 0 ? 'text-xp-gold' :
+                                        i === 1 ? 'text-gray-400' :
+                                            i === 2 ? 'text-orange-500' :
+                                                'text-muted-foreground'
+                                        }`}>#{i + 1}</span>
+                                    <Avatar className="h-7 w-7">
+                                        <AvatarFallback className="text-[9px] font-semibold bg-primary/10 text-primary">
+                                            {student.initials}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">{student.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        <div className="flex items-center gap-1">
+                                            <Zap className="h-3 w-3 text-xp-gold" />
+                                            <span className="text-xs font-bold">{student.xp}</span>
+                                        </div>
+                                        <Progress value={student.progress} className="h-1.5 w-14" />
+                                        <span className="text-[11px] font-mono text-muted-foreground">{student.progress}%</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* At-Risk Alerts */}
+                <Card className="border-border/40">
+                    <CardContent className="p-4">
+                        <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
+                            <AlertTriangle className="h-4 w-4 text-warning" />
+                            At-Risk Students
+                            {atRisk.length > 0 && (
+                                <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] px-1.5 py-0 h-4">
+                                    {atRisk.length} need attention
+                                </Badge>
+                            )}
+                        </h3>
+                        {atRisk.length === 0 ? (
+                            <div className="text-center py-6">
+                                <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
+                                <p className="text-sm font-medium">All students on track! 🎉</p>
+                                <p className="text-xs text-muted-foreground">No at-risk students right now</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-1.5">
+                                {atRisk.map(student => (
+                                    <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-destructive/5 border border-destructive/10">
+                                        <Avatar className="h-7 w-7">
+                                            <AvatarFallback className="text-[9px] font-semibold bg-destructive/10 text-destructive">
+                                                {student.initials}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">{student.name}</p>
+                                            <p className="text-[10px] text-muted-foreground">
+                                                {student.tutorialsCompleted}/{student.totalTutorials} done • {student.progress}%
+                                            </p>
+                                        </div>
+                                        <div className="shrink-0 text-right">
+                                            <div className="flex items-center gap-1 text-destructive">
+                                                <Clock className="h-3 w-3" />
+                                                <span className="text-[10px] font-medium">{student.lastActive}</span>
+                                            </div>
+                                            <Badge className={`text-[9px] px-1.5 py-0 h-4 border-0 mt-0.5 ${student.status === 'at_risk' ? 'bg-warning/10 text-warning' :
+                                                student.status === 'not_started' ? 'bg-muted text-muted-foreground' :
+                                                    'bg-destructive/10 text-destructive'
+                                                }`}>
+                                                {student.status === 'at_risk' ? 'At Risk' :
+                                                    student.status === 'not_started' ? 'Not Started' : 'Inactive'}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    )
+}
+
+
 // ===== MAIN COMPONENT =====
 
 export function CoordinatorDashboard() {
@@ -480,6 +801,7 @@ export function CoordinatorDashboard() {
 
     const tabs = [
         { id: 'students' as const, label: 'My Students', icon: Users },
+        { id: 'analytics' as const, label: 'Analytics', icon: Activity },
         { id: 'compare' as const, label: 'Compare Colleges', icon: BarChart3 },
     ]
 
@@ -540,6 +862,10 @@ export function CoordinatorDashboard() {
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                 />
+            )}
+
+            {activeTab === 'analytics' && (
+                <AnalyticsTab details={myCollegeDetails} />
             )}
 
             {activeTab === 'compare' && (

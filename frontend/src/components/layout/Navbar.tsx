@@ -46,7 +46,7 @@ export function TopBar() {
     // 🧠 ZUSTAND: Select only the slices you need.
     // This component only re-renders when these specific values change.
     const user = useUserStore(state => state.user)
-    const streak = useUserStore(state => state.streak)
+
 
     return (
         <header className="z-50 w-full border-b border-border bg-card/80 backdrop-blur-xl shrink-0">
@@ -138,10 +138,7 @@ export function TopBar() {
                                     <Badge variant="secondary" className="bg-primary/20 text-primary text-[10px] px-1.5 py-0 h-5">
                                         Level {user?.level || 1}
                                     </Badge>
-                                    <span className="flex items-center gap-0.5 text-[10px] text-warning">
-                                        <Flame className="h-3 w-3" />
-                                        {streak.current}-day streak
-                                    </span>
+
                                 </div>
                             </div>
                             <DropdownMenuSeparator />
@@ -238,31 +235,12 @@ export function DesktopSidebar() {
                 })}
             </nav>
 
-            {/* Streak summary at bottom of sidebar */}
-            <div className="p-3 border-t border-border">
-                <div className="rounded-lg bg-gradient-to-r from-warning/10 to-danger/10 border border-warning/20 p-3">
-                    <div className="flex items-center gap-2">
-                        <Flame className="h-5 w-5 text-warning" />
-                        <StreakDisplay />
-                    </div>
-                </div>
-            </div>
+
         </aside>
     )
 }
 
-/** Small helper inside the sidebar — reads streak from store */
-function StreakDisplay() {
-    const streak = useUserStore(state => state.streak)
-    return (
-        <div>
-            <p className="text-sm font-semibold">{streak.current}-day streak!</p>
-            <p className="text-xs text-muted-foreground">
-                {streak.current >= streak.longest ? 'New record! 🔥' : 'Keep it going 🔥'}
-            </p>
-        </div>
-    )
-}
+
 
 export function MobileBottomNav() {
     const location = useLocation()
