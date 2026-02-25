@@ -54,8 +54,6 @@ export interface Course {
     completed: number
     total: number
     status: CourseStatus
-    testPassed: boolean
-    testScore?: number | null
     completedDate?: string
 }
 
@@ -122,7 +120,6 @@ export interface LeaderboardUser {
     isCurrentUser: boolean
     college?: string
     courseProgress?: number
-    testScore?: number | null
 }
 
 // ----- Activity -----

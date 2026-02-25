@@ -1,10 +1,8 @@
 import { useState, useCallback } from 'react'
 import {
-    CheckCircle2, Lock, ChevronDown, ChevronUp,
-    Upload, FileCheck, Zap, X, ArrowRight,
-    Code, Terminal, BarChart3, Settings, FileText,
-    CircleDot, PlayCircle, HelpCircle, Award, Sparkles,
-    BookOpenCheck
+    CheckCircle2, ChevronDown, ChevronUp,
+    Zap, Code, Terminal, BarChart3, Settings, FileText,
+    CircleDot, BookOpenCheck, Award, FileCheck, PlayCircle
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,25 +12,15 @@ import { CelebrationModal, type CelebrationType } from './CelebrationModal'
 
 // ===== TYPES =====
 
-type TutorialStatus = 'completed' | 'available' | 'locked'
-type TutorialStep = 'watch' | 'quiz' | 'assignment' | 'done'
-
 interface Tutorial {
     id: string
     number: number
     title: string
-    status: TutorialStatus
-    quizScore: number | null
-    quizTotal: number
-    assignmentUploaded: boolean
+    completed: boolean
+    // Questionnaire checkboxes
+    watched: boolean
+    assignmentDone: boolean
     xpEarned: number
-}
-
-interface QuizQuestion {
-    id: string
-    question: string
-    options: string[]
-    correctIndex: number
 }
 
 // ===== COURSE ICON MAP =====
@@ -51,367 +39,118 @@ const ACTIVE_COURSE = {
     totalTutorials: 10,
 }
 
+const XP_PER_TUTORIAL = 30
+
 const initialTutorials: Tutorial[] = [
-    { id: '1', number: 1, title: 'Getting Started with IPython', status: 'completed', quizScore: 4, quizTotal: 5, assignmentUploaded: true, xpEarned: 45 },
-    { id: '2', number: 2, title: 'Basic Data Types in Python', status: 'completed', quizScore: 5, quizTotal: 5, assignmentUploaded: true, xpEarned: 50 },
-    { id: '3', number: 3, title: 'Input & Output', status: 'completed', quizScore: 3, quizTotal: 5, assignmentUploaded: true, xpEarned: 35 },
-    { id: '4', number: 4, title: 'Lists and List Operations', status: 'completed', quizScore: 5, quizTotal: 5, assignmentUploaded: true, xpEarned: 50 },
-    { id: '5', number: 5, title: 'Conditionals', status: 'completed', quizScore: 4, quizTotal: 5, assignmentUploaded: false, xpEarned: 35 },
-    { id: '6', number: 6, title: 'Loops and Iterations', status: 'completed', quizScore: 4, quizTotal: 5, assignmentUploaded: true, xpEarned: 45 },
-    { id: '7', number: 7, title: 'Working with Dictionaries', status: 'available', quizScore: null, quizTotal: 5, assignmentUploaded: false, xpEarned: 0 },
-    { id: '8', number: 8, title: 'Sets and Tuples', status: 'locked', quizScore: null, quizTotal: 5, assignmentUploaded: false, xpEarned: 0 },
-    { id: '9', number: 9, title: 'Functions', status: 'locked', quizScore: null, quizTotal: 5, assignmentUploaded: false, xpEarned: 0 },
-    { id: '10', number: 10, title: 'File Handling', status: 'locked', quizScore: null, quizTotal: 5, assignmentUploaded: false, xpEarned: 0 },
+    { id: '1', number: 1, title: 'Getting Started with IPython', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
+    { id: '2', number: 2, title: 'Basic Data Types in Python', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
+    { id: '3', number: 3, title: 'Input & Output', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
+    { id: '4', number: 4, title: 'Lists and List Operations', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
+    { id: '5', number: 5, title: 'Conditionals', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
+    { id: '6', number: 6, title: 'Loops and Iterations', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
+    { id: '7', number: 7, title: 'Working with Dictionaries', completed: false, watched: false, assignmentDone: false, xpEarned: 0 },
+    { id: '8', number: 8, title: 'Sets and Tuples', completed: false, watched: false, assignmentDone: false, xpEarned: 0 },
+    { id: '9', number: 9, title: 'Functions', completed: false, watched: false, assignmentDone: false, xpEarned: 0 },
+    { id: '10', number: 10, title: 'File Handling', completed: false, watched: false, assignmentDone: false, xpEarned: 0 },
 ]
 
-const mockQuizQuestions: QuizQuestion[] = [
-    {
-        id: '1',
-        question: 'What is the correct way to create an empty dictionary in Python?',
-        options: ['my_dict = []', 'my_dict = {}', 'my_dict = ()', 'my_dict = set()'],
-        correctIndex: 1,
-    },
-    {
-        id: '2',
-        question: 'How do you access the value associated with key "name" in a dictionary?',
-        options: ['dict.name', 'dict[name]', 'dict["name"]', 'dict.get[name]'],
-        correctIndex: 2,
-    },
-    {
-        id: '3',
-        question: 'Which method returns all the keys of a dictionary?',
-        options: ['.values()', '.items()', '.get()', '.keys()'],
-        correctIndex: 3,
-    },
-    {
-        id: '4',
-        question: "What happens when you access a key that doesn't exist using square brackets?",
-        options: ['Returns None', 'Returns 0', 'Raises KeyError', 'Returns empty string'],
-        correctIndex: 2,
-    },
-    {
-        id: '5',
-        question: 'Which of the following is NOT a valid dictionary operation?',
-        options: ['del dict["key"]', 'dict.pop("key")', 'dict.append("key")', 'dict.update({"key": "val"})'],
-        correctIndex: 2,
-    },
-]
+// ===== QUESTIONNAIRE COMPONENT =====
 
-// ===== XP CONSTANTS =====
-const XP_TUTORIAL_COMPLETE = 10
-const XP_PER_CORRECT = 5
-const XP_ASSIGNMENT = 25
-
-// ===== QUIZ MODAL COMPONENT =====
-
-interface QuizModalProps {
-    questions: QuizQuestion[]
-    onClose: () => void
-    onComplete: (score: number, total: number) => void
+interface QuestionnaireProps {
+    tutorial: Tutorial
+    onCheckChange: (tutorialId: string, field: 'watched' | 'assignmentDone', value: boolean) => void
+    onComplete: (tutorialId: string) => void
 }
 
-function QuizModal({ questions, onClose, onComplete }: QuizModalProps) {
-    const [currentQ, setCurrentQ] = useState(0)
-    const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
-    const [answers, setAnswers] = useState<(number | null)[]>(new Array(questions.length).fill(null))
-    const [showResults, setShowResults] = useState(false)
-    const [score, setScore] = useState(0)
+function Questionnaire({ tutorial, onCheckChange, onComplete }: QuestionnaireProps) {
+    const allChecked = tutorial.watched && tutorial.assignmentDone
 
-    const question = questions[currentQ]
-    const isLast = currentQ === questions.length - 1
-
-    const handleSelect = (optionIndex: number) => {
-        setSelectedAnswer(optionIndex)
-        const newAnswers = [...answers]
-        newAnswers[currentQ] = optionIndex
-        setAnswers(newAnswers)
-    }
-
-    const handleNext = () => {
-        if (selectedAnswer === null) return
-
-        if (isLast) {
-            // Calculate score
-            let correct = 0
-            const finalAnswers = [...answers]
-            finalAnswers[currentQ] = selectedAnswer
-            finalAnswers.forEach((ans, i) => {
-                if (ans === questions[i].correctIndex) correct++
-            })
-            setScore(correct)
-            setShowResults(true)
-        } else {
-            setCurrentQ(currentQ + 1)
-            setSelectedAnswer(answers[currentQ + 1])
-        }
-    }
-
-    const handlePrev = () => {
-        if (currentQ > 0) {
-            setCurrentQ(currentQ - 1)
-            setSelectedAnswer(answers[currentQ - 1])
-        }
-    }
-
-    const handleFinish = () => {
-        onComplete(score, questions.length)
-    }
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-            {/* Modal */}
-            <div className="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-border">
-                    <div className="flex items-center gap-2">
-                        <HelpCircle className="h-5 w-5 text-primary" />
-                        <span className="font-semibold text-sm">Tutorial Quiz</span>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1 rounded-lg hover:bg-muted transition-colors"
-                    >
-                        <X className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                </div>
-
-                {!showResults ? (
-                    <>
-                        {/* Progress */}
-                        <div className="px-5 pt-4">
-                            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                                <span>Question {currentQ + 1} of {questions.length}</span>
-                                <span className="font-mono">{Math.round(((currentQ + 1) / questions.length) * 100)}%</span>
-                            </div>
-                            <Progress value={((currentQ + 1) / questions.length) * 100} className="h-1.5" />
-                        </div>
-
-                        {/* Question */}
-                        <div className="p-5">
-                            <h3 className="text-base font-semibold leading-relaxed mb-5">
-                                {question.question}
-                            </h3>
-
-                            {/* Options */}
-                            <div className="space-y-2.5">
-                                {question.options.map((option, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => handleSelect(i)}
-                                        className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left text-sm transition-all duration-150
-                                            ${selectedAnswer === i
-                                                ? 'border-primary bg-primary/5 text-foreground ring-1 ring-primary/20'
-                                                : 'border-border bg-muted/20 text-foreground hover:border-primary/30 hover:bg-muted/40'
-                                            }`}
-                                    >
-                                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold shrink-0 transition-colors
-                                            ${selectedAnswer === i
-                                                ? 'bg-primary text-primary-foreground'
-                                                : 'bg-muted text-muted-foreground'
-                                            }`}
-                                        >
-                                            {String.fromCharCode(65 + i)}
-                                        </span>
-                                        <span className="font-mono text-[13px]">{option}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="flex items-center justify-between p-5 border-t border-border bg-muted/20">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handlePrev}
-                                disabled={currentQ === 0}
-                                className="text-muted-foreground"
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                size="sm"
-                                onClick={handleNext}
-                                disabled={selectedAnswer === null}
-                                className="gap-1.5"
-                            >
-                                {isLast ? 'Submit' : 'Next'}
-                                <ArrowRight className="h-3.5 w-3.5" />
-                            </Button>
-                        </div>
-                    </>
-                ) : (
-                    /* Results Screen */
-                    <div className="p-8 text-center">
-                        <div className="flex justify-center mb-4">
-                            <div className={`flex h-20 w-20 items-center justify-center rounded-full ${score >= questions.length * 0.8
-                                ? 'bg-success/10'
-                                : score >= questions.length * 0.5
-                                    ? 'bg-warning/10'
-                                    : 'bg-destructive/10'
-                                }`}>
-                                {score >= questions.length * 0.8 ? (
-                                    <Sparkles className="h-10 w-10 text-success" />
-                                ) : score >= questions.length * 0.5 ? (
-                                    <Award className="h-10 w-10 text-warning" />
-                                ) : (
-                                    <HelpCircle className="h-10 w-10 text-destructive" />
-                                )}
-                            </div>
-                        </div>
-
-                        <h3 className="text-xl font-bold mb-1">
-                            {score >= questions.length * 0.8
-                                ? 'Excellent!'
-                                : score >= questions.length * 0.5
-                                    ? 'Good Job!'
-                                    : 'Keep Practicing!'}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-6">
-                            You scored {score} out of {questions.length}
-                        </p>
-
-                        {/* Score breakdown */}
-                        <div className="bg-muted/30 rounded-xl p-4 space-y-3 mb-6 text-left">
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">Correct Answers</span>
-                                <span className="font-semibold text-success">{score}/{questions.length}</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">Quiz XP</span>
-                                <span className="font-semibold text-xp-gold flex items-center gap-1">
-                                    <Zap className="h-3.5 w-3.5" />
-                                    +{score * XP_PER_CORRECT} XP
-                                </span>
-                            </div>
-                            <div className="border-t border-border pt-2 flex items-center justify-between text-sm">
-                                <span className="font-medium">Total XP Earned</span>
-                                <Badge className="bg-xp-gold/15 text-xp-gold font-mono text-xs">
-                                    +{XP_TUTORIAL_COMPLETE + score * XP_PER_CORRECT} XP
-                                </Badge>
-                            </div>
-                        </div>
-
-                        <Button onClick={handleFinish} className="w-full gap-2">
-                            Continue
-                            <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </div>
-                )}
-            </div>
-        </div>
-    )
-}
-
-// ===== STEP PROGRESS INDICATORS =====
-
-interface StepIndicatorsProps {
-    currentStep: TutorialStep
-}
-
-function StepIndicators({ currentStep }: StepIndicatorsProps) {
-    const steps = [
-        { key: 'watch', label: 'Complete Tutorial', icon: PlayCircle },
-        { key: 'quiz', label: 'Take Quiz', icon: HelpCircle },
-        { key: 'assignment', label: 'Upload Assignment', icon: Upload },
+    const checks = [
+        {
+            key: 'watched' as const,
+            label: 'Have you watched the tutorial?',
+            icon: PlayCircle,
+            checked: tutorial.watched,
+        },
+        {
+            key: 'assignmentDone' as const,
+            label: 'Have you finished the assignment?',
+            icon: FileCheck,
+            checked: tutorial.assignmentDone,
+        },
     ]
 
-    const stepOrder = ['watch', 'quiz', 'assignment', 'done']
-    const currentIndex = stepOrder.indexOf(currentStep)
-
     return (
-        <div className="flex items-center gap-1 sm:gap-2 mb-5">
-            {steps.map((step, i) => {
-                const isDone = currentIndex > i
-                const isActive = currentIndex === i
-                const Icon = step.icon
-
-                return (
-                    <div key={step.key} className="flex items-center gap-1 sm:gap-2">
-                        <div className="flex items-center gap-1.5">
-                            <div className={`flex h-7 w-7 items-center justify-center rounded-full transition-all duration-300
-                                ${isDone
+        <div className="space-y-3">
+            <div className="space-y-2">
+                {checks.map((check) => {
+                    const Icon = check.icon
+                    return (
+                        <label
+                            key={check.key}
+                            className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all duration-200
+                                ${check.checked
+                                    ? 'border-success/30 bg-success/5'
+                                    : 'border-border bg-muted/20 hover:border-primary/30 hover:bg-muted/40'
+                                }`}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={check.checked}
+                                onChange={(e) => onCheckChange(tutorial.id, check.key, e.target.checked)}
+                                className="sr-only"
+                            />
+                            <div className={`flex h-7 w-7 items-center justify-center rounded-full shrink-0 transition-all duration-200
+                                ${check.checked
                                     ? 'bg-success text-success-foreground'
-                                    : isActive
-                                        ? 'bg-primary text-primary-foreground animate-pulse'
-                                        : 'bg-muted text-muted-foreground'
+                                    : 'bg-muted text-muted-foreground'
                                 }`}
                             >
-                                {isDone ? (
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                {check.checked ? (
+                                    <CheckCircle2 className="h-4 w-4" />
                                 ) : (
                                     <Icon className="h-3.5 w-3.5" />
                                 )}
                             </div>
-                            <span className={`text-[11px] hidden sm:inline transition-colors
-                                ${isDone ? 'text-success font-medium' : isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`}
-                            >
-                                {step.label}
+                            <span className={`text-sm transition-colors ${check.checked ? 'text-success font-medium' : 'text-foreground'}`}>
+                                {check.label}
                             </span>
-                        </div>
-                        {i < steps.length - 1 && (
-                            <div className={`w-4 sm:w-8 h-0.5 rounded-full transition-colors duration-300
-                                ${currentIndex > i ? 'bg-success' : 'bg-muted'}`}
-                            />
-                        )}
-                    </div>
-                )
-            })}
+                        </label>
+                    )
+                })}
+            </div>
+
+            {allChecked && (
+                <Button
+                    onClick={() => onComplete(tutorial.id)}
+                    className="w-full gap-2 bg-success hover:bg-success/90 text-white"
+                >
+                    <Award className="h-4 w-4" />
+                    Complete Tutorial · Earn +{XP_PER_TUTORIAL} XP
+                </Button>
+            )}
         </div>
     )
 }
 
-// ===== ASSIGNMENT UPLOAD COMPONENT =====
+// ===== PROGRESS DOTS =====
 
-interface AssignmentUploadProps {
-    onUpload: () => void
-    uploaded: boolean
-}
-
-function AssignmentUpload({ onUpload, uploaded }: AssignmentUploadProps) {
-    const [fileName, setFileName] = useState<string | null>(null)
-
-    const handleFakeUpload = () => {
-        setFileName('dictionary_practice.py')
-        setTimeout(() => onUpload(), 500)
-    }
-
-    if (uploaded || fileName) {
-        return (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-success/5 border border-success/20">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-                    <FileCheck className="h-5 w-5 text-success" />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-success">Assignment Uploaded!</p>
-                    <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">{fileName || 'assignment.py'}</p>
-                </div>
-                <Badge className="bg-xp-gold/15 text-xp-gold text-xs font-mono shrink-0">
-                    <Zap className="h-3 w-3 mr-1" />
-                    +{XP_ASSIGNMENT} XP
-                </Badge>
-            </div>
-        )
-    }
+function ProgressDots({ tutorial }: { tutorial: Tutorial }) {
+    const checks = [tutorial.watched, tutorial.assignmentDone]
+    const doneCount = checks.filter(Boolean).length
 
     return (
-        <button
-            onClick={handleFakeUpload}
-            className="w-full flex flex-col items-center gap-2 p-6 rounded-xl border-2 border-dashed border-primary/20 bg-primary/[0.02] hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 cursor-pointer group"
-        >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 group-hover:bg-primary/15 transition-colors">
-                <Upload className="h-5 w-5 text-primary" />
-            </div>
-            <div className="text-center">
-                <p className="text-sm font-medium">Upload Assignment</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                    Click to upload your practice file · Earn <span className="text-xp-gold font-semibold">+{XP_ASSIGNMENT} XP</span>
-                </p>
-            </div>
-        </button>
+        <div className="flex items-center gap-1">
+            {checks.map((done, i) => (
+                <div
+                    key={i}
+                    className={`h-1.5 w-1.5 rounded-full transition-colors ${done ? 'bg-success' : 'bg-muted-foreground/30'}`}
+                />
+            ))}
+            {doneCount > 0 && doneCount < 2 && (
+                <span className="text-[10px] text-muted-foreground ml-1">{doneCount}/2</span>
+            )}
+        </div>
     )
 }
 
@@ -420,62 +159,58 @@ function AssignmentUpload({ onUpload, uploaded }: AssignmentUploadProps) {
 interface TimelineItemProps {
     tutorial: Tutorial
     isLast: boolean
+    isActive: boolean
+    onSelect: (tutorialId: string) => void
 }
 
-function TimelineItem({ tutorial, isLast }: TimelineItemProps) {
+function TimelineItem({ tutorial, isLast, isActive, onSelect }: TimelineItemProps) {
     return (
         <div className="flex gap-3">
             {/* Timeline connector */}
             <div className="flex flex-col items-center">
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 transition-all
-                    ${tutorial.status === 'completed'
-                        ? 'bg-success text-success-foreground'
-                        : tutorial.status === 'available'
-                            ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
-                            : 'bg-muted text-muted-foreground'
-                    }`}
+                <button
+                    onClick={() => !tutorial.completed && onSelect(tutorial.id)}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 transition-all
+                        ${tutorial.completed
+                            ? 'bg-success text-success-foreground'
+                            : isActive
+                                ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
+                                : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary cursor-pointer'
+                        }`}
                 >
-                    {tutorial.status === 'completed' ? (
+                    {tutorial.completed ? (
                         <CheckCircle2 className="h-4 w-4" />
-                    ) : tutorial.status === 'available' ? (
-                        <CircleDot className="h-4 w-4" />
                     ) : (
-                        <Lock className="h-3.5 w-3.5" />
+                        <CircleDot className="h-4 w-4" />
                     )}
-                </div>
+                </button>
                 {!isLast && (
                     <div className={`w-0.5 flex-1 min-h-[20px] transition-colors
-                        ${tutorial.status === 'completed' ? 'bg-success/40' : 'bg-muted'}`}
+                        ${tutorial.completed ? 'bg-success/40' : 'bg-muted'}`}
                     />
                 )}
             </div>
 
             {/* Content */}
-            <div className={`flex-1 pb-4 min-w-0 ${tutorial.status === 'locked' ? 'opacity-50' : ''}`}>
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium truncate">
+            <div className="flex-1 pb-4 min-w-0">
+                <button
+                    onClick={() => !tutorial.completed && onSelect(tutorial.id)}
+                    className={`flex items-center gap-2 flex-wrap text-left ${!tutorial.completed ? 'cursor-pointer' : ''}`}
+                >
+                    <span className={`text-sm font-medium truncate ${isActive ? 'text-primary' : ''}`}>
                         {tutorial.number}. {tutorial.title}
                     </span>
-                    {tutorial.status === 'completed' && tutorial.quizScore !== null && (
-                        <Badge variant="secondary" className="bg-success/10 text-success text-[10px] px-1.5 h-5 gap-0.5 shrink-0">
-                            {tutorial.quizScore}/{tutorial.quizTotal}
-                        </Badge>
-                    )}
-                    {tutorial.status === 'completed' && tutorial.assignmentUploaded && (
-                        <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] px-1.5 h-5 gap-0.5 shrink-0">
-                            <FileCheck className="h-2.5 w-2.5" />
-                        </Badge>
-                    )}
-                </div>
-                {tutorial.status === 'completed' && (
+                    {!tutorial.completed && <ProgressDots tutorial={tutorial} />}
+                </button>
+                {tutorial.completed && (
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
                         <Zap className="h-3 w-3 text-xp-gold" />
                         {tutorial.xpEarned} XP earned
                     </p>
                 )}
-                {tutorial.status === 'available' && (
+                {isActive && !tutorial.completed && (
                     <p className="text-[11px] text-primary mt-0.5 font-medium">
-                        Current tutorial
+                        Currently selected
                     </p>
                 )}
             </div>
@@ -487,8 +222,11 @@ function TimelineItem({ tutorial, isLast }: TimelineItemProps) {
 
 export function ActiveCourseTracker() {
     const [tutorials, setTutorials] = useState<Tutorial[]>(initialTutorials)
-    const [currentStep, setCurrentStep] = useState<TutorialStep>('watch')
-    const [showQuiz, setShowQuiz] = useState(false)
+    const [activeTutorialId, setActiveTutorialId] = useState<string | null>(() => {
+        // Default to first incomplete tutorial
+        const first = initialTutorials.find(t => !t.completed)
+        return first?.id || null
+    })
     const [showTimeline, setShowTimeline] = useState(false)
 
     // Celebration state
@@ -499,12 +237,55 @@ export function ActiveCourseTracker() {
         subtitle?: string
     } | null>(null)
 
-    const currentTutorial = tutorials.find(t => t.status === 'available')
-    const completedCount = tutorials.filter(t => t.status === 'completed').length
+    const activeTutorial = tutorials.find(t => t.id === activeTutorialId)
+    const completedCount = tutorials.filter(t => t.completed).length
     const overallProgress = Math.round((completedCount / tutorials.length) * 100)
 
+    const handleSelectTutorial = useCallback((tutorialId: string) => {
+        setActiveTutorialId(tutorialId)
+    }, [])
+
+    const handleCheckChange = useCallback((tutorialId: string, field: 'watched' | 'assignmentDone', value: boolean) => {
+        setTutorials(prev => prev.map(t =>
+            t.id === tutorialId ? { ...t, [field]: value } : t
+        ))
+    }, [])
+
+    const handleTutorialComplete = useCallback((tutorialId: string) => {
+        const tutorial = tutorials.find(t => t.id === tutorialId)
+        if (!tutorial) return
+
+        const isLastTutorial = completedCount + 1 === tutorials.length
+
+        setTutorials(prev => prev.map(t =>
+            t.id === tutorialId
+                ? { ...t, completed: true, xpEarned: XP_PER_TUTORIAL }
+                : t
+        ))
+
+        // Move to next incomplete tutorial
+        const nextIncomplete = tutorials.find(t => !t.completed && t.id !== tutorialId)
+        setActiveTutorialId(nextIncomplete?.id || null)
+
+        // Show celebration
+        if (isLastTutorial) {
+            setCelebration({
+                type: 'course_complete',
+                xpEarned: XP_PER_TUTORIAL,
+                title: `${ACTIVE_COURSE.title} Complete! 🏆`,
+                subtitle: `You've mastered all ${tutorials.length} tutorials. Share your achievement!`,
+            })
+        } else {
+            setCelebration({
+                type: 'tutorial_complete',
+                xpEarned: XP_PER_TUTORIAL,
+                title: 'Tutorial Complete! ✨',
+                subtitle: `You earned ${XP_PER_TUTORIAL} XP! Pick any tutorial to continue.`,
+            })
+        }
+    }, [tutorials, completedCount])
+
     const handleShare = useCallback(() => {
-        // TODO: Wire up to ComposeModal with pre-filled achievement text
         setCelebration(null)
         console.log('Share achievement — will open compose modal')
     }, [])
@@ -513,83 +294,6 @@ export function ActiveCourseTracker() {
         setCelebration(null)
     }, [])
 
-    const handleMarkComplete = useCallback(() => {
-        setCurrentStep('quiz')
-    }, [])
-
-    const handleStartQuiz = useCallback(() => {
-        setShowQuiz(true)
-    }, [])
-
-    const handleQuizComplete = useCallback((score: number, _total: number) => {
-        setShowQuiz(false)
-        const quizXP = score * XP_PER_CORRECT
-
-        if (currentTutorial) {
-            setTutorials(prev => prev.map(t =>
-                t.id === currentTutorial.id
-                    ? { ...t, quizScore: score, xpEarned: XP_TUTORIAL_COMPLETE + quizXP }
-                    : t
-            ))
-        }
-
-        setCurrentStep('assignment')
-    }, [currentTutorial])
-
-    const handleAssignmentUpload = useCallback(() => {
-        if (!currentTutorial) return
-
-        const totalXP = XP_TUTORIAL_COMPLETE + (currentTutorial.quizScore || 0) * XP_PER_CORRECT + XP_ASSIGNMENT
-
-        // Check if this completes the course (last tutorial)
-        const isLastTutorial = currentTutorial.number === tutorials.length
-
-        setTutorials(prev => {
-            const updated = prev.map(t => {
-                if (t.id === currentTutorial.id) {
-                    return { ...t, assignmentUploaded: true, status: 'completed' as const, xpEarned: totalXP }
-                }
-                // Unlock next tutorial
-                if (t.number === currentTutorial.number + 1 && t.status === 'locked') {
-                    return { ...t, status: 'available' as const }
-                }
-                return t
-            })
-            return updated
-        })
-
-        setCurrentStep('done')
-
-        // Show appropriate celebration
-        if (isLastTutorial) {
-            // Course complete! Big celebration
-            setCelebration({
-                type: 'course_complete',
-                xpEarned: totalXP,
-                title: `${ACTIVE_COURSE.title} Complete! 🏆`,
-                subtitle: `You've mastered all ${tutorials.length} tutorials. Share your achievement!`,
-            })
-        } else {
-            // Tutorial complete
-            setCelebration({
-                type: 'tutorial_complete',
-                xpEarned: totalXP,
-                title: 'Tutorial Mastered! ✨',
-                subtitle: `You earned ${totalXP} XP — next tutorial is unlocked!`,
-            })
-        }
-
-        // Reset step for next tutorial after celebration
-        setTimeout(() => {
-            setCurrentStep('watch')
-        }, 500)
-    }, [currentTutorial, tutorials.length])
-
-    const handleQuizClose = useCallback(() => {
-        setShowQuiz(false)
-    }, [])
-
-    // All tutorials completed
     const allDone = completedCount === tutorials.length
 
     return (
@@ -626,76 +330,28 @@ export function ActiveCourseTracker() {
                         </Button>
                     </div>
 
-                    {/* Current Tutorial Interaction */}
-                    {currentTutorial && !allDone && currentStep !== 'done' && (
+                    {/* Current Tutorial Questionnaire */}
+                    {activeTutorial && !activeTutorial.completed && !allDone && (
                         <div className="mb-4">
-                            {/* Step Indicators */}
-                            <StepIndicators currentStep={currentStep} />
-
-                            {/* Current tutorial info */}
                             <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
                                 <div className="flex items-center gap-2 mb-1">
                                     <BookOpenCheck className="h-4 w-4 text-primary" />
                                     <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-                                        Tutorial {currentTutorial.number}
+                                        Tutorial {activeTutorial.number}
                                     </span>
                                 </div>
-                                <h3 className="text-base font-semibold mb-4">{currentTutorial.title}</h3>
+                                <h3 className="text-base font-semibold mb-4">{activeTutorial.title}</h3>
 
-                                {/* Step content */}
-                                {currentStep === 'watch' && (
-                                    <Button
-                                        onClick={handleMarkComplete}
-                                        className="w-full gap-2 bg-primary hover:bg-primary/90"
-                                    >
-                                        <CheckCircle2 className="h-4 w-4" />
-                                        I've Completed This Tutorial
-                                    </Button>
-                                )}
-
-                                {currentStep === 'quiz' && (
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2 p-3 rounded-lg bg-success/5 border border-success/20">
-                                            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                            <span className="text-sm text-success">
-                                                Tutorial marked as complete!
-                                            </span>
-                                            <Badge className="bg-xp-gold/15 text-xp-gold text-[10px] font-mono ml-auto shrink-0">
-                                                +{XP_TUTORIAL_COMPLETE} XP
-                                            </Badge>
-                                        </div>
-                                        <Button
-                                            onClick={handleStartQuiz}
-                                            className="w-full gap-2"
-                                        >
-                                            <HelpCircle className="h-4 w-4" />
-                                            Take Quiz · Earn up to +{currentTutorial.quizTotal * XP_PER_CORRECT} XP
-                                        </Button>
-                                    </div>
-                                )}
-
-                                {currentStep === 'assignment' && (
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2 p-3 rounded-lg bg-success/5 border border-success/20">
-                                            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                            <span className="text-sm text-success">
-                                                Quiz completed! {currentTutorial.quizScore}/{currentTutorial.quizTotal}
-                                            </span>
-                                            <Badge className="bg-xp-gold/15 text-xp-gold text-[10px] font-mono ml-auto shrink-0">
-                                                +{(currentTutorial.quizScore || 0) * XP_PER_CORRECT} XP
-                                            </Badge>
-                                        </div>
-                                        <AssignmentUpload
-                                            onUpload={handleAssignmentUpload}
-                                            uploaded={currentTutorial.assignmentUploaded}
-                                        />
-                                    </div>
-                                )}
+                                <Questionnaire
+                                    tutorial={activeTutorial}
+                                    onCheckChange={handleCheckChange}
+                                    onComplete={handleTutorialComplete}
+                                />
                             </div>
                         </div>
                     )}
 
-                    {/* All complete inline indicator */}
+                    {/* All complete indicator */}
                     {allDone && (
                         <div className="mb-4 p-5 rounded-xl bg-gradient-to-r from-success/10 to-primary/10 border border-success/20 text-center">
                             <Award className="h-10 w-10 text-success mx-auto mb-2" />
@@ -710,7 +366,7 @@ export function ActiveCourseTracker() {
                     {showTimeline && (
                         <div className="mt-4 pt-4 border-t border-border">
                             <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-4">
-                                All Tutorials
+                                All Tutorials — click any to start
                             </p>
                             <div>
                                 {tutorials.map((tutorial, i) => (
@@ -718,6 +374,8 @@ export function ActiveCourseTracker() {
                                         key={tutorial.id}
                                         tutorial={tutorial}
                                         isLast={i === tutorials.length - 1}
+                                        isActive={tutorial.id === activeTutorialId}
+                                        onSelect={handleSelectTutorial}
                                     />
                                 ))}
                             </div>
@@ -725,15 +383,6 @@ export function ActiveCourseTracker() {
                     )}
                 </CardContent>
             </Card>
-
-            {/* Quiz Modal Portal */}
-            {showQuiz && (
-                <QuizModal
-                    questions={mockQuizQuestions}
-                    onClose={handleQuizClose}
-                    onComplete={handleQuizComplete}
-                />
-            )}
 
             {/* Celebration Modal */}
             {celebration && (

@@ -2,7 +2,7 @@ import {
     Flame, Zap, Calendar, ChevronRight, Trophy, Lock,
     BookOpen, Hand, Code, Terminal, BarChart3, FileText, Settings,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
-    CheckCircle2, Award
+    CheckCircle2
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -40,10 +40,10 @@ function getGreeting(): string {
 
 
 function GreetingBanner() {
-   
-    const userName = useUserStore(state=>state.user?.name)
-    const streak = useUserStore(state=>state.streak)
- 
+
+    const userName = useUserStore(state => state.user?.name)
+    const streak = useUserStore(state => state.streak)
+
 
     return (
         <Card className="border-warning/20 bg-gradient-to-r from-warning/5 via-orange-500/5 to-danger/5">
@@ -212,12 +212,6 @@ function MyCourses() {
                                 <Badge variant="secondary" className="bg-success/15 text-success text-[10px] mt-3 px-1.5 py-0 h-5 gap-1">
                                     <CheckCircle2 className="h-3 w-3" />
                                     Completed
-                                </Badge>
-                            )}
-                            {course.testPassed && (
-                                <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] mt-1.5 px-1.5 py-0 h-5 gap-1">
-                                    <Award className="h-3 w-3" />
-                                    Test Passed
                                 </Badge>
                             )}
                         </CardContent>

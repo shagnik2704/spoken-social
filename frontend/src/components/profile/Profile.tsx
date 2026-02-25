@@ -246,12 +246,10 @@ function CompletedCoursesSection() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                                {course.testScore && (
-                                    <Badge className="bg-success/10 text-success border-0 text-[10px] gap-1">
-                                        <CheckCircle2 className="h-3 w-3" />
-                                        {course.testScore}%
-                                    </Badge>
-                                )}
+                                <Badge className="bg-success/10 text-success border-0 text-[10px] gap-1">
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    Completed
+                                </Badge>
                             </div>
                         </CardContent>
                     </Card>
