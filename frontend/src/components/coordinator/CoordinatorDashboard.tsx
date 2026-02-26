@@ -691,7 +691,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                         <div className="space-y-1">
                             {topPerformers.map((student, i) => (
                                 <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
-                                    <span className={`text-xs font-bold w-5 ${i === 0 ? 'text-xp-gold' :
+                                    <span className={`text-xs font-bold w-6 text-right ${i === 0 ? 'text-xp-gold' :
                                         i === 1 ? 'text-gray-400' :
                                             i === 2 ? 'text-orange-500' :
                                                 'text-muted-foreground'
@@ -705,12 +705,12 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                                         <p className="text-sm font-medium truncate">{student.name}</p>
                                     </div>
                                     <div className="flex items-center gap-3 shrink-0">
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-1 w-14 justify-end">
                                             <Zap className="h-3 w-3 text-xp-gold" />
-                                            <span className="text-xs font-bold">{student.xp}</span>
+                                            <span className="text-xs font-bold tabular-nums">{student.xp}</span>
                                         </div>
                                         <Progress value={student.progress} className="h-1.5 w-14" />
-                                        <span className="text-[11px] font-mono text-muted-foreground">{student.progress}%</span>
+                                        <span className="text-[11px] font-mono text-muted-foreground w-9 text-right tabular-nums">{student.progress}%</span>
                                     </div>
                                 </div>
                             ))}
