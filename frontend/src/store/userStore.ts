@@ -8,7 +8,6 @@ interface UserState {
 
     user: User | null
     isAuthenticated: boolean
-    isLoading: boolean
 
     weeklyGoal: WeeklyGoal
     courses: Course[]
@@ -27,7 +26,6 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     user: null,
     isAuthenticated: false,
-    isLoading: true,
 
     weeklyGoal: { target: 0, completed: 0, days: [], dayLabels: [] },
     courses: [],
@@ -35,22 +33,18 @@ export const useUserStore = create<UserState>((set, get) => ({
 
 
     fetchUser: async () => {
-        set({ isLoading: true })
         try {
             const { data } = await api.get('/api/me')
             set({
                 user: data.user,
-
                 weeklyGoal: data.weeklyGoal,
                 courses: data.courses,
                 badges: data.badges,
                 isAuthenticated: true,
-                isLoading: false,
             })
         }
         catch (error) {
             console.error('Failed to fetch user:', error)
-            set({ isLoading: false })
         }
     },
     login: (user) => {

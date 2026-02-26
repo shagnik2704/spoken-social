@@ -42,6 +42,7 @@ function getGreeting(): string {
 function GreetingBanner() {
 
     const userName = useUserStore(state => state.user?.name)
+    const firstName = userName?.split(' ')[0]
 
 
     return (
@@ -51,8 +52,8 @@ function GreetingBanner() {
                     <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                             <Hand className="h-5 w-5 text-xp-gold shrink-0" />
-                            <h1 className="text-lg sm:text-2xl font-bold truncate">
-                                {getGreeting()},    {userName || 'there'}!
+                            <h1 className="text-lg sm:text-2xl font-bold">
+                                {getGreeting()}, {firstName || 'there'}!
                             </h1>
                         </div>
                         <p className="text-muted-foreground text-sm mt-1">

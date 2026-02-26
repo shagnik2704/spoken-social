@@ -439,17 +439,26 @@ function CompareCollegesTab({ colleges, myCollegeId }: { colleges: CollegeSummar
 // ===== ANALYTICS TAB =====
 
 const TUTORIAL_NAMES = [
-    'Introduction to Linux',
-    'Basic Commands',
-    'Files & Directories',
-    'File Permissions',
-    'Text Editors',
-    'Shell Scripting Basics',
-    'Processes & Services',
-    'Networking Basics',
-    'Package Management',
-    'User Management',
-    'Advanced Shell Scripting',
+    'Installation of VirtualBox on Windows',
+    'Installing Ubuntu OS in Oracle VirtualBox',
+    'Ubuntu Desktop',
+    'Synaptic Package Manager',
+    'Basic Commands in Linux',
+    'Date and Time Commands',
+    'Structure of Linux Commands',
+    'General Purpose Utilities',
+    'File System in Linux',
+    'Working with Regular Files in Linux',
+    'Redirecting Streams and Pipes',
+    'Working with Linux Processes',
+    'The Linux Environment',
+    'Basics of System Administration in Linux',
+    'Linux File Ownership and Permissions',
+    'Simple Filters in Linux',
+    'Introduction to grep Command',
+    'Mastering grep',
+    'Introduction to the Stream Editor sed',
+    'Text Editing using sed',
 ]
 
 // Donut chart center label component

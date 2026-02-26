@@ -1,27 +1,37 @@
 import { useState, useCallback } from 'react'
 import {
-    CheckCircle2, ChevronDown, ChevronUp,
+    CheckCircle2, ChevronDown, ChevronRight, Sparkles,
     Zap, Code, Terminal, BarChart3, Settings, FileText,
-    CircleDot, BookOpenCheck, Award, FileCheck, PlayCircle
+    BookOpenCheck, Award
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { CelebrationModal, type CelebrationType } from './CelebrationModal'
 
 // ===== TYPES =====
+
+type RadioValue = 'yes' | 'no' | null
 
 interface Tutorial {
     id: string
     number: number
     title: string
     completed: boolean
-    // Questionnaire checkboxes
-    watched: boolean
-    assignmentDone: boolean
+    watched: RadioValue
+    assignmentDone: RadioValue
+    bonusDone: RadioValue
     xpEarned: number
 }
+
+// ===== POINTS =====
+
+const XP_WATCHED = 15
+const XP_ASSIGNMENT = 15
+const XP_BONUS = 10
+const XP_PER_TUTORIAL = XP_WATCHED + XP_ASSIGNMENT
 
 // ===== COURSE ICON MAP =====
 const courseIconMap: Record<string, React.ReactNode> = {
@@ -35,186 +45,239 @@ const courseIconMap: Record<string, React.ReactNode> = {
 // ===== MOCK DATA =====
 
 const ACTIVE_COURSE = {
-    title: 'Python',
-    totalTutorials: 10,
+    title: 'Linux',
+    totalTutorials: 20,
 }
-
-const XP_PER_TUTORIAL = 30
 
 const initialTutorials: Tutorial[] = [
-    { id: '1', number: 1, title: 'Getting Started with IPython', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
-    { id: '2', number: 2, title: 'Basic Data Types in Python', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
-    { id: '3', number: 3, title: 'Input & Output', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
-    { id: '4', number: 4, title: 'Lists and List Operations', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
-    { id: '5', number: 5, title: 'Conditionals', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
-    { id: '6', number: 6, title: 'Loops and Iterations', completed: true, watched: true, assignmentDone: true, xpEarned: 30 },
-    { id: '7', number: 7, title: 'Working with Dictionaries', completed: false, watched: false, assignmentDone: false, xpEarned: 0 },
-    { id: '8', number: 8, title: 'Sets and Tuples', completed: false, watched: false, assignmentDone: false, xpEarned: 0 },
-    { id: '9', number: 9, title: 'Functions', completed: false, watched: false, assignmentDone: false, xpEarned: 0 },
-    { id: '10', number: 10, title: 'File Handling', completed: false, watched: false, assignmentDone: false, xpEarned: 0 },
+    { id: '1', number: 1, title: 'Installation of VirtualBox on Windows', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '2', number: 2, title: 'Installing Ubuntu OS in Oracle VirtualBox', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '3', number: 3, title: 'Ubuntu Desktop', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '4', number: 4, title: 'Synaptic Package Manager', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '5', number: 5, title: 'Basic Commands in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '6', number: 6, title: 'Date and Time Commands', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '7', number: 7, title: 'Structure of Linux Commands', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '8', number: 8, title: 'General Purpose Utilities', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '9', number: 9, title: 'File System in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '10', number: 10, title: 'Working with Regular Files in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '11', number: 11, title: 'Redirecting Streams and Pipes', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '12', number: 12, title: 'Working with Linux Processes', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '13', number: 13, title: 'The Linux Environment', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '14', number: 14, title: 'Basics of System Administration in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '15', number: 15, title: 'Linux File Ownership and Permissions', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '16', number: 16, title: 'Simple Filters in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '17', number: 17, title: 'Introduction to grep Command', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '18', number: 18, title: 'Mastering grep', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '19', number: 19, title: 'Introduction to the Stream Editor sed', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '20', number: 20, title: 'Text Editing using sed', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
 ]
 
-// ===== QUESTIONNAIRE COMPONENT =====
+// ===== ANSWER DISPLAY (read-only, for completed tutorials) =====
 
-interface QuestionnaireProps {
+function AnswerSummary({ label, value, isBonus }: { label: string; value: RadioValue; isBonus?: boolean }) {
+    const isYes = value === 'yes'
+    return (
+        <div className="flex items-center justify-between py-1">
+            <span className="text-[13px] text-muted-foreground">{label}</span>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded ${isYes
+                ? (isBonus ? 'bg-primary/10 text-primary' : 'bg-success/10 text-success')
+                : 'bg-muted text-muted-foreground'
+                }`}>
+                {isYes ? '✓ Yes' : '✗ No'}
+            </span>
+        </div>
+    )
+}
+
+// ===== QUESTION ROW =====
+
+interface QuestionRowProps {
+    label: string
+    points: number
+    isBonus?: boolean
+    value: RadioValue
+    fieldId: string
+    onChange: (value: RadioValue) => void
+    disabled?: boolean
+}
+
+function QuestionRow({ label, points, isBonus, value, fieldId, onChange, disabled }: QuestionRowProps) {
+    return (
+        <div className={`flex items-center gap-3 py-2.5 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            {/* Label + points */}
+            <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                <span className={`text-[13px] text-muted-foreground ${value === 'yes' ? 'text-success font-medium' : ''}`}>
+                    {label}
+                </span>
+                {isBonus && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Bonus</span>
+                )}
+                <span className={`text-[10px] ${isBonus ? 'text-primary' : 'text-xp-gold'}`}>
+                    +{points}
+                </span>
+            </div>
+
+            {/* Radio: Yes / No — larger clickable area */}
+            <RadioGroup
+                value={value ?? ''}
+                onValueChange={(v) => onChange(v as RadioValue)}
+                className="flex items-center gap-2"
+            >
+                <label htmlFor={`${fieldId}-yes`} className="flex items-center gap-1.5 px-3 py-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="yes" id={`${fieldId}-yes`} className="h-4 w-4" />
+                    <span className="text-xs text-muted-foreground">Yes</span>
+                </label>
+                <label htmlFor={`${fieldId}-no`} className="flex items-center gap-1.5 px-3 py-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="no" id={`${fieldId}-no`} className="h-4 w-4" />
+                    <span className="text-xs text-muted-foreground">No</span>
+                </label>
+            </RadioGroup>
+        </div>
+    )
+}
+
+// ===== TUTORIAL CARD =====
+
+interface TutorialCardProps {
     tutorial: Tutorial
-    onCheckChange: (tutorialId: string, field: 'watched' | 'assignmentDone', value: boolean) => void
+    onRadioChange: (tutorialId: string, field: 'watched' | 'assignmentDone' | 'bonusDone', value: RadioValue) => void
     onComplete: (tutorialId: string) => void
+    onBonusCompleted: (tutorialTitle: string) => void
 }
 
-function Questionnaire({ tutorial, onCheckChange, onComplete }: QuestionnaireProps) {
-    const allChecked = tutorial.watched && tutorial.assignmentDone
+function TutorialCard({ tutorial, onRadioChange, onComplete, onBonusCompleted }: TutorialCardProps) {
+    const requiredDone = tutorial.watched === 'yes' && tutorial.assignmentDone === 'yes'
+    const [isOpen, setIsOpen] = useState(!tutorial.completed)
 
-    const checks = [
-        {
-            key: 'watched' as const,
-            label: 'Have you watched the tutorial?',
-            icon: PlayCircle,
-            checked: tutorial.watched,
-        },
-        {
-            key: 'assignmentDone' as const,
-            label: 'Have you finished the assignment?',
-            icon: FileCheck,
-            checked: tutorial.assignmentDone,
-        },
-    ]
+    const currentXP =
+        (tutorial.watched === 'yes' ? XP_WATCHED : 0) +
+        (tutorial.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
+        (tutorial.bonusDone === 'yes' ? XP_BONUS : 0)
 
-    return (
-        <div className="space-y-3">
-            <div className="space-y-2">
-                {checks.map((check) => {
-                    const Icon = check.icon
-                    return (
-                        <label
-                            key={check.key}
-                            className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all duration-200
-                                ${check.checked
-                                    ? 'border-success/30 bg-success/5'
-                                    : 'border-border bg-muted/20 hover:border-primary/30 hover:bg-muted/40'
-                                }`}
-                        >
-                            <input
-                                type="checkbox"
-                                checked={check.checked}
-                                onChange={(e) => onCheckChange(tutorial.id, check.key, e.target.checked)}
-                                className="sr-only"
-                            />
-                            <div className={`flex h-7 w-7 items-center justify-center rounded-full shrink-0 transition-all duration-200
-                                ${check.checked
-                                    ? 'bg-success text-success-foreground'
-                                    : 'bg-muted text-muted-foreground'
-                                }`}
-                            >
-                                {check.checked ? (
-                                    <CheckCircle2 className="h-4 w-4" />
-                                ) : (
-                                    <Icon className="h-3.5 w-3.5" />
-                                )}
-                            </div>
-                            <span className={`text-sm transition-colors ${check.checked ? 'text-success font-medium' : 'text-foreground'}`}>
-                                {check.label}
+    // Handle bonus change on completed tutorial — trigger feedback
+    const handleBonusOnCompleted = useCallback((v: RadioValue) => {
+        onRadioChange(tutorial.id, 'bonusDone', v)
+        if (v === 'yes') {
+            onBonusCompleted(tutorial.title)
+        }
+    }, [tutorial.id, tutorial.title, onRadioChange, onBonusCompleted])
+
+    // Completed card — expandable to show answers + bonus toggle
+    if (tutorial.completed) {
+        return (
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                <div className="rounded-lg border border-border/40 bg-card">
+                    <CollapsibleTrigger asChild>
+                        <button className="flex items-center gap-2.5 w-full px-4 py-3 text-left hover:bg-muted/20 transition-colors rounded-lg">
+                            <CheckCircle2 className="h-4.5 w-4.5 text-success shrink-0" />
+                            <span className="text-sm font-semibold flex-1 truncate">
+                                {tutorial.number}. {tutorial.title}
                             </span>
-                        </label>
-                    )
-                })}
-            </div>
+                            <span className="text-[11px] text-xp-gold font-medium flex items-center gap-0.5 shrink-0">
+                                <Zap className="h-3 w-3" />
+                                {tutorial.xpEarned}
+                            </span>
+                            {tutorial.bonusDone === 'yes' && (
+                                <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">★</span>
+                            )}
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <div className="px-4 pb-3 border-t border-border/20 pt-2">
+                            {/* Show all answers as read-only summary */}
+                            <AnswerSummary label="Practiced the tutorial" value={tutorial.watched} />
+                            <AnswerSummary label="Finished the assignment" value={tutorial.assignmentDone} />
 
-            {allChecked && (
-                <Button
-                    onClick={() => onComplete(tutorial.id)}
-                    className="w-full gap-2 bg-success hover:bg-success/90 text-white"
-                >
-                    <Award className="h-4 w-4" />
-                    Complete Tutorial · Earn +{XP_PER_TUTORIAL} XP
-                </Button>
-            )}
-        </div>
-    )
-}
+                            {/* Bonus: show answer if done, or allow toggling if not */}
+                            {tutorial.bonusDone === 'yes' ? (
+                                <AnswerSummary label="Interacted in the forum" value="yes" isBonus />
+                            ) : (
+                                <div className="mt-1 pt-1.5 border-t border-dashed border-border/30">
+                                    <QuestionRow
+                                        label="Have you interacted in the forum?"
+                                        points={XP_BONUS}
+                                        isBonus
+                                        value={tutorial.bonusDone}
+                                        fieldId={`t${tutorial.id}-bonus`}
+                                        onChange={handleBonusOnCompleted}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </CollapsibleContent>
+                </div>
+            </Collapsible>
+        )
+    }
 
-// ===== PROGRESS DOTS =====
-
-function ProgressDots({ tutorial }: { tutorial: Tutorial }) {
-    const checks = [tutorial.watched, tutorial.assignmentDone]
-    const doneCount = checks.filter(Boolean).length
-
+    // Active card — accordion style
     return (
-        <div className="flex items-center gap-1">
-            {checks.map((done, i) => (
-                <div
-                    key={i}
-                    className={`h-1.5 w-1.5 rounded-full transition-colors ${done ? 'bg-success' : 'bg-muted-foreground/30'}`}
-                />
-            ))}
-            {doneCount > 0 && doneCount < 2 && (
-                <span className="text-[10px] text-muted-foreground ml-1">{doneCount}/2</span>
-            )}
-        </div>
-    )
-}
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <div className="rounded-lg border border-border/60 bg-card transition-all hover:border-primary/30">
+                {/* Header row — clickable to toggle */}
+                <CollapsibleTrigger asChild>
+                    <button className="flex items-center justify-between w-full px-4 py-3 bg-muted/30 rounded-t-lg border-b border-border/30 text-left hover:bg-muted/40 transition-colors">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <BookOpenCheck className="h-4 w-4 text-primary shrink-0" />
+                            <span className="text-sm font-semibold truncate">
+                                {tutorial.number}. {tutorial.title}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            {currentXP > 0 && (
+                                <Badge className="bg-xp-gold/10 text-xp-gold border-0 text-[9px] px-1.5 py-0 h-4 gap-0.5">
+                                    <Zap className="h-2.5 w-2.5" />
+                                    {currentXP}
+                                </Badge>
+                            )}
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                    </button>
+                </CollapsibleTrigger>
 
-// ===== TUTORIAL TIMELINE ITEM =====
+                {/* Collapsible questions */}
+                <CollapsibleContent>
+                    <div className="px-4 py-2">
+                        <QuestionRow
+                            label="Have you practiced the tutorial?"
+                            points={XP_WATCHED}
+                            value={tutorial.watched}
+                            fieldId={`t${tutorial.id}-watched`}
+                            onChange={(v) => onRadioChange(tutorial.id, 'watched', v)}
+                        />
+                        <QuestionRow
+                            label="Have you finished the assignment?"
+                            points={XP_ASSIGNMENT}
+                            value={tutorial.assignmentDone}
+                            fieldId={`t${tutorial.id}-assign`}
+                            onChange={(v) => onRadioChange(tutorial.id, 'assignmentDone', v)}
+                        />
+                        <QuestionRow
+                            label="Have you interacted in the forum?"
+                            points={XP_BONUS}
+                            isBonus
+                            value={tutorial.bonusDone}
+                            fieldId={`t${tutorial.id}-bonus`}
+                            onChange={(v) => onRadioChange(tutorial.id, 'bonusDone', v)}
+                        />
+                    </div>
 
-interface TimelineItemProps {
-    tutorial: Tutorial
-    isLast: boolean
-    isActive: boolean
-    onSelect: (tutorialId: string) => void
-}
-
-function TimelineItem({ tutorial, isLast, isActive, onSelect }: TimelineItemProps) {
-    return (
-        <div className="flex gap-3">
-            {/* Timeline connector */}
-            <div className="flex flex-col items-center">
-                <button
-                    onClick={() => !tutorial.completed && onSelect(tutorial.id)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 transition-all
-                        ${tutorial.completed
-                            ? 'bg-success text-success-foreground'
-                            : isActive
-                                ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
-                                : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary cursor-pointer'
-                        }`}
-                >
-                    {tutorial.completed ? (
-                        <CheckCircle2 className="h-4 w-4" />
-                    ) : (
-                        <CircleDot className="h-4 w-4" />
+                    {/* Complete button */}
+                    {requiredDone && (
+                        <div className="px-4 pb-3">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onComplete(tutorial.id) }}
+                                className="w-full py-2 rounded-md text-xs font-medium bg-success hover:bg-success/90 text-white transition-colors flex items-center justify-center gap-1.5"
+                            >
+                                <Award className="h-3.5 w-3.5" />
+                                Complete · +{currentXP} XP
+                            </button>
+                        </div>
                     )}
-                </button>
-                {!isLast && (
-                    <div className={`w-0.5 flex-1 min-h-[20px] transition-colors
-                        ${tutorial.completed ? 'bg-success/40' : 'bg-muted'}`}
-                    />
-                )}
+                </CollapsibleContent>
             </div>
-
-            {/* Content */}
-            <div className="flex-1 pb-4 min-w-0">
-                <button
-                    onClick={() => !tutorial.completed && onSelect(tutorial.id)}
-                    className={`flex items-center gap-2 flex-wrap text-left ${!tutorial.completed ? 'cursor-pointer' : ''}`}
-                >
-                    <span className={`text-sm font-medium truncate ${isActive ? 'text-primary' : ''}`}>
-                        {tutorial.number}. {tutorial.title}
-                    </span>
-                    {!tutorial.completed && <ProgressDots tutorial={tutorial} />}
-                </button>
-                {tutorial.completed && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                        <Zap className="h-3 w-3 text-xp-gold" />
-                        {tutorial.xpEarned} XP earned
-                    </p>
-                )}
-                {isActive && !tutorial.completed && (
-                    <p className="text-[11px] text-primary mt-0.5 font-medium">
-                        Currently selected
-                    </p>
-                )}
-            </div>
-        </div>
+        </Collapsible>
     )
 }
 
@@ -222,14 +285,11 @@ function TimelineItem({ tutorial, isLast, isActive, onSelect }: TimelineItemProp
 
 export function ActiveCourseTracker() {
     const [tutorials, setTutorials] = useState<Tutorial[]>(initialTutorials)
-    const [activeTutorialId, setActiveTutorialId] = useState<string | null>(() => {
-        // Default to first incomplete tutorial
-        const first = initialTutorials.find(t => !t.completed)
-        return first?.id || null
-    })
-    const [showTimeline, setShowTimeline] = useState(false)
+    const [showCompleted, setShowCompleted] = useState(false)
 
-    // Celebration state
+    // Bonus feedback toast
+    const [bonusFeedback, setBonusFeedback] = useState<string | null>(null)
+
     const [celebration, setCelebration] = useState<{
         type: CelebrationType
         xpEarned: number
@@ -237,162 +297,185 @@ export function ActiveCourseTracker() {
         subtitle?: string
     } | null>(null)
 
-    const activeTutorial = tutorials.find(t => t.id === activeTutorialId)
-    const completedCount = tutorials.filter(t => t.completed).length
+    const completedTutorials = tutorials.filter(t => t.completed)
+    const incompleteTutorials = tutorials.filter(t => !t.completed)
+    const completedCount = completedTutorials.length
     const overallProgress = Math.round((completedCount / tutorials.length) * 100)
+    const totalXP = tutorials.reduce((sum, t) => sum + t.xpEarned, 0)
 
-    const handleSelectTutorial = useCallback((tutorialId: string) => {
-        setActiveTutorialId(tutorialId)
+    const handleRadioChange = useCallback((tutorialId: string, field: 'watched' | 'assignmentDone' | 'bonusDone', value: RadioValue) => {
+        setTutorials(prev => prev.map(t => {
+            if (t.id !== tutorialId) return t
+            const updated = { ...t, [field]: value }
+            if (updated.completed) {
+                updated.xpEarned =
+                    (updated.watched === 'yes' ? XP_WATCHED : 0) +
+                    (updated.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
+                    (updated.bonusDone === 'yes' ? XP_BONUS : 0)
+            }
+            return updated
+        }))
     }, [])
 
-    const handleCheckChange = useCallback((tutorialId: string, field: 'watched' | 'assignmentDone', value: boolean) => {
-        setTutorials(prev => prev.map(t =>
-            t.id === tutorialId ? { ...t, [field]: value } : t
-        ))
+    const handleBonusCompleted = useCallback((tutorialTitle: string) => {
+        setBonusFeedback(tutorialTitle)
+        setTimeout(() => setBonusFeedback(null), 3000)
     }, [])
 
     const handleTutorialComplete = useCallback((tutorialId: string) => {
         const tutorial = tutorials.find(t => t.id === tutorialId)
         if (!tutorial) return
 
+        const xpEarned =
+            (tutorial.watched === 'yes' ? XP_WATCHED : 0) +
+            (tutorial.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
+            (tutorial.bonusDone === 'yes' ? XP_BONUS : 0)
+
         const isLastTutorial = completedCount + 1 === tutorials.length
 
         setTutorials(prev => prev.map(t =>
-            t.id === tutorialId
-                ? { ...t, completed: true, xpEarned: XP_PER_TUTORIAL }
-                : t
+            t.id === tutorialId ? { ...t, completed: true, xpEarned } : t
         ))
 
-        // Move to next incomplete tutorial
-        const nextIncomplete = tutorials.find(t => !t.completed && t.id !== tutorialId)
-        setActiveTutorialId(nextIncomplete?.id || null)
-
-        // Show celebration
         if (isLastTutorial) {
             setCelebration({
                 type: 'course_complete',
-                xpEarned: XP_PER_TUTORIAL,
+                xpEarned,
                 title: `${ACTIVE_COURSE.title} Complete! 🏆`,
-                subtitle: `You've mastered all ${tutorials.length} tutorials. Share your achievement!`,
+                subtitle: `You've mastered all ${tutorials.length} tutorials!`,
             })
         } else {
             setCelebration({
                 type: 'tutorial_complete',
-                xpEarned: XP_PER_TUTORIAL,
+                xpEarned,
                 title: 'Tutorial Complete! ✨',
-                subtitle: `You earned ${XP_PER_TUTORIAL} XP! Pick any tutorial to continue.`,
+                subtitle: `+${xpEarned} XP earned`,
             })
         }
     }, [tutorials, completedCount])
-
-    const handleShare = useCallback(() => {
-        setCelebration(null)
-        console.log('Share achievement — will open compose modal')
-    }, [])
-
-    const handleCloseCelebration = useCallback(() => {
-        setCelebration(null)
-    }, [])
 
     const allDone = completedCount === tutorials.length
 
     return (
         <>
             <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.03] via-transparent to-transparent overflow-hidden">
-                <CardContent className="p-5 sm:p-6">
+                <CardContent className="p-4 sm:p-5">
                     {/* Header */}
-                    <div className="flex items-center justify-between gap-3 mb-5">
+                    <div className="flex items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3 min-w-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
                                 {courseIconMap[ACTIVE_COURSE.title] || <Code className="h-5 w-5 text-primary" />}
                             </div>
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-sm font-bold">{ACTIVE_COURSE.title}</h2>
-                                    <Badge variant="secondary" className="text-[10px] px-1.5 h-5">
+                                    <h2 className="text-lg font-bold">{ACTIVE_COURSE.title}</h2>
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 h-4">
                                         {completedCount}/{tutorials.length}
                                     </Badge>
                                 </div>
-                                <div className="flex items-center gap-2 mt-1">
+                                <div className="flex items-center gap-2 mt-0.5">
                                     <Progress value={overallProgress} className="h-1.5 flex-1 max-w-[120px]" />
-                                    <span className="text-[11px] text-muted-foreground font-mono">{overallProgress}%</span>
+                                    <span className="text-[10px] text-muted-foreground font-mono">{overallProgress}%</span>
                                 </div>
                             </div>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowTimeline(!showTimeline)}
-                            className="shrink-0 text-xs text-muted-foreground hover:text-foreground gap-1"
-                        >
-                            {showTimeline ? 'Hide' : 'All Tutorials'}
-                            {showTimeline ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        </Button>
+                        <span className="text-xs text-xp-gold font-semibold flex items-center gap-0.5 shrink-0">
+                            <Zap className="h-4 w-4" />
+                            {totalXP} XP
+                        </span>
                     </div>
 
-                    {/* Current Tutorial Questionnaire */}
-                    {activeTutorial && !activeTutorial.completed && !allDone && (
-                        <div className="mb-4">
-                            <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <BookOpenCheck className="h-4 w-4 text-primary" />
-                                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-                                        Tutorial {activeTutorial.number}
-                                    </span>
-                                </div>
-                                <h3 className="text-base font-semibold mb-4">{activeTutorial.title}</h3>
-
-                                <Questionnaire
-                                    tutorial={activeTutorial}
-                                    onCheckChange={handleCheckChange}
-                                    onComplete={handleTutorialComplete}
-                                />
-                            </div>
+                    {/* Bonus feedback toast */}
+                    {bonusFeedback && (
+                        <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                            <span className="text-xs text-primary font-medium">
+                                +{XP_BONUS} bonus XP earned for forum participation in "{bonusFeedback}"!
+                            </span>
                         </div>
                     )}
 
-                    {/* All complete indicator */}
+                    {/* All complete */}
                     {allDone && (
-                        <div className="mb-4 p-5 rounded-xl bg-gradient-to-r from-success/10 to-primary/10 border border-success/20 text-center">
-                            <Award className="h-10 w-10 text-success mx-auto mb-2" />
-                            <h3 className="font-bold text-lg">Course Complete! 🏆</h3>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                You've finished all {tutorials.length} tutorials in {ACTIVE_COURSE.title}!
+                        <div className="mb-3 p-4 rounded-lg bg-gradient-to-r from-success/10 to-primary/10 border border-success/20 text-center">
+                            <Award className="h-8 w-8 text-success mx-auto mb-1" />
+                            <h3 className="font-bold text-sm">Course Complete! 🏆</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                All {tutorials.length} tutorials · {totalXP} XP earned
                             </p>
                         </div>
                     )}
 
-                    {/* Expandable Timeline */}
-                    {showTimeline && (
-                        <div className="mt-4 pt-4 border-t border-border">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-4">
-                                All Tutorials — click any to start
-                            </p>
-                            <div>
-                                {tutorials.map((tutorial, i) => (
-                                    <TimelineItem
+                    {/* ---- COMPLETED SECTION (collapsible group) ---- */}
+                    {completedCount > 0 && (
+                        <Collapsible open={showCompleted} onOpenChange={setShowCompleted}>
+                            <CollapsibleTrigger asChild>
+                                <button className="flex items-center gap-2.5 w-full mb-2.5 px-1 py-2 text-left group">
+                                    <ChevronRight className={`h-4.5 w-4.5 text-muted-foreground transition-transform duration-200 ${showCompleted ? 'rotate-90' : ''}`} />
+                                    <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                                        Completed ({completedCount})
+                                    </span>
+                                    <div className="flex-1 border-t border-border/30" />
+                                </button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <div className="space-y-1.5 mb-3">
+                                    {completedTutorials.map(tutorial => (
+                                        <TutorialCard
+                                            key={tutorial.id}
+                                            tutorial={tutorial}
+                                            onRadioChange={handleRadioChange}
+                                            onComplete={handleTutorialComplete}
+                                            onBonusCompleted={handleBonusCompleted}
+                                        />
+                                    ))}
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    )}
+
+                    {/* ---- IN PROGRESS SECTION ---- */}
+                    {incompleteTutorials.length > 0 && (
+                        <>
+                            {completedCount > 0 && (
+                                <div className="flex items-center gap-2.5 mb-2.5 px-1 py-2">
+                                    <span className="text-sm font-semibold text-muted-foreground">
+                                        In Progress ({incompleteTutorials.length})
+                                    </span>
+                                    <div className="flex-1 border-t border-border/30" />
+                                </div>
+                            )}
+                            <div className="space-y-2">
+                                {incompleteTutorials.map(tutorial => (
+                                    <TutorialCard
                                         key={tutorial.id}
                                         tutorial={tutorial}
-                                        isLast={i === tutorials.length - 1}
-                                        isActive={tutorial.id === activeTutorialId}
-                                        onSelect={handleSelectTutorial}
+                                        onRadioChange={handleRadioChange}
+                                        onComplete={handleTutorialComplete}
+                                        onBonusCompleted={handleBonusCompleted}
                                     />
                                 ))}
                             </div>
-                        </div>
+                        </>
                     )}
+
+                    {/* Legend */}
+                    <div className="flex items-center justify-center gap-3 mt-3 text-[9px] text-muted-foreground">
+                        <span>Practice = +{XP_WATCHED}</span>
+                        <span>Assignment = +{XP_ASSIGNMENT}</span>
+                        <span className="text-primary">★ Bonus = +{XP_BONUS}</span>
+                    </div>
                 </CardContent>
             </Card>
 
-            {/* Celebration Modal */}
             {celebration && (
                 <CelebrationModal
                     type={celebration.type}
                     xpEarned={celebration.xpEarned}
                     title={celebration.title}
                     subtitle={celebration.subtitle}
-                    onClose={handleCloseCelebration}
-                    onShare={handleShare}
+                    onClose={() => setCelebration(null)}
+                    onShare={() => setCelebration(null)}
                 />
             )}
         </>
