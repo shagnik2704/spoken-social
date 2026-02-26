@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 import {
-    CheckCircle2, ChevronDown, ChevronRight, Sparkles,
+    CheckCircle2, ChevronDown, Sparkles, Lock,
     Zap, Code, Terminal, BarChart3, Settings, FileText,
-    BookOpenCheck, Award
+    BookOpenCheck
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -21,18 +21,33 @@ interface Tutorial {
     number: number
     title: string
     completed: boolean
-    watched: RadioValue
-    assignmentDone: RadioValue
-    bonusDone: RadioValue
+    watched: RadioValue         // Step 1: Watch the tutorial
+    practiced: RadioValue       // Step 2: Practice — auto-completes on "yes"
+    assignmentDone: RadioValue  // Bonus
+    forumAsked: RadioValue      // Bonus
+    forumAnswered: RadioValue   // Bonus
     xpEarned: number
 }
 
+type TutorialField = 'watched' | 'practiced' | 'assignmentDone' | 'forumAsked' | 'forumAnswered'
+
 // ===== POINTS =====
 
-const XP_WATCHED = 15
-const XP_ASSIGNMENT = 15
-const XP_BONUS = 10
-const XP_PER_TUTORIAL = XP_WATCHED + XP_ASSIGNMENT
+const XP_WATCHED = 10           // Step 1
+const XP_PRACTICED = 10         // Step 2 (auto-completes)
+const XP_ASSIGNMENT = 5         // Bonus
+const XP_FORUM_ASK = 5          // Bonus
+const XP_FORUM_ANSWER = 5       // Bonus
+
+function calcXP(t: Tutorial): number {
+    return (
+        (t.watched === 'yes' ? XP_WATCHED : 0) +
+        (t.practiced === 'yes' ? XP_PRACTICED : 0) +
+        (t.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
+        (t.forumAsked === 'yes' ? XP_FORUM_ASK : 0) +
+        (t.forumAnswered === 'yes' ? XP_FORUM_ANSWER : 0)
+    )
+}
 
 // ===== COURSE ICON MAP =====
 const courseIconMap: Record<string, React.ReactNode> = {
@@ -51,41 +66,46 @@ const ACTIVE_COURSE = {
 }
 
 const initialTutorials: Tutorial[] = [
-    { id: '1', number: 1, title: 'Installation of VirtualBox on Windows', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '2', number: 2, title: 'Installing Ubuntu OS in Oracle VirtualBox', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '3', number: 3, title: 'Ubuntu Desktop', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '4', number: 4, title: 'Synaptic Package Manager', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '5', number: 5, title: 'Basic Commands in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '6', number: 6, title: 'Date and Time Commands', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '7', number: 7, title: 'Structure of Linux Commands', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '8', number: 8, title: 'General Purpose Utilities', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '9', number: 9, title: 'File System in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '10', number: 10, title: 'Working with Regular Files in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '11', number: 11, title: 'Redirecting Streams and Pipes', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '12', number: 12, title: 'Working with Linux Processes', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '13', number: 13, title: 'The Linux Environment', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '14', number: 14, title: 'Basics of System Administration in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '15', number: 15, title: 'Linux File Ownership and Permissions', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '16', number: 16, title: 'Simple Filters in Linux', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '17', number: 17, title: 'Introduction to grep Command', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '18', number: 18, title: 'Mastering grep', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '19', number: 19, title: 'Introduction to the Stream Editor sed', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
-    { id: '20', number: 20, title: 'Text Editing using sed', completed: false, watched: null, assignmentDone: null, bonusDone: null, xpEarned: 0 },
+    { id: '1', number: 1, title: 'Installation of VirtualBox on Windows', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '2', number: 2, title: 'Installing Ubuntu OS in Oracle VirtualBox', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '3', number: 3, title: 'Ubuntu Desktop', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '4', number: 4, title: 'Synaptic Package Manager', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '5', number: 5, title: 'Basic Commands in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '6', number: 6, title: 'Date and Time Commands', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '7', number: 7, title: 'Structure of Linux Commands', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '8', number: 8, title: 'General Purpose Utilities', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '9', number: 9, title: 'File System in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '10', number: 10, title: 'Working with Regular Files in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '11', number: 11, title: 'Redirecting Streams and Pipes', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '12', number: 12, title: 'Working with Linux Processes', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '13', number: 13, title: 'The Linux Environment', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '14', number: 14, title: 'Basics of System Administration in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '15', number: 15, title: 'Linux File Ownership and Permissions', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '16', number: 16, title: 'Simple Filters in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '17', number: 17, title: 'Introduction to grep Command', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '18', number: 18, title: 'Mastering grep', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '19', number: 19, title: 'Introduction to the Stream Editor sed', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
+    { id: '20', number: 20, title: 'Text Editing using sed', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
 ]
 
 // ===== ANSWER DISPLAY (read-only, for completed tutorials) =====
 
 function AnswerSummary({ label, value, isBonus }: { label: string; value: RadioValue; isBonus?: boolean }) {
     const isYes = value === 'yes'
+    const isAnswered = value !== null
     return (
         <div className="flex items-center justify-between py-1">
             <span className="text-[13px] text-muted-foreground">{label}</span>
-            <span className={`text-xs font-medium px-2 py-0.5 rounded ${isYes
-                ? (isBonus ? 'bg-primary/10 text-primary' : 'bg-success/10 text-success')
-                : 'bg-muted text-muted-foreground'
-                }`}>
-                {isYes ? '✓ Yes' : '✗ No'}
-            </span>
+            {isAnswered ? (
+                <span className={`text-xs font-medium px-2 py-0.5 rounded ${isYes
+                    ? (isBonus ? 'bg-primary/10 text-primary' : 'bg-success/10 text-success')
+                    : 'bg-muted text-muted-foreground'
+                    }`}>
+                    {isYes ? '✓ Yes' : '✗ No'}
+                </span>
+            ) : (
+                <span className="text-[10px] text-muted-foreground/50">—</span>
+            )}
         </div>
     )
 }
@@ -104,21 +124,22 @@ interface QuestionRowProps {
 
 function QuestionRow({ label, points, isBonus, value, fieldId, onChange, disabled }: QuestionRowProps) {
     return (
-        <div className={`flex items-center gap-3 py-2.5 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}>
+        <div className={`flex items-center gap-3 py-2.5 transition-opacity ${disabled ? 'opacity-35 pointer-events-none' : ''}`}>
             {/* Label + points */}
             <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                <span className={`text-[13px] text-muted-foreground ${value === 'yes' ? 'text-success font-medium' : ''}`}>
+                {disabled && <Lock className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />}
+                <span className={`text-sm text-muted-foreground ${value === 'yes' ? 'text-success font-medium' : ''}`}>
                     {label}
                 </span>
                 {isBonus && (
-                    <span className="text-[9px] font-semibold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Bonus</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Bonus</span>
                 )}
-                <span className={`text-[10px] ${isBonus ? 'text-primary' : 'text-xp-gold'}`}>
+                <span className={`text-[11px] ${isBonus ? 'text-primary' : 'text-xp-gold'}`}>
                     +{points}
                 </span>
             </div>
 
-            {/* Radio: Yes / No — larger clickable area */}
+            {/* Radio: Yes / No */}
             <RadioGroup
                 value={value ?? ''}
                 onValueChange={(v) => onChange(v as RadioValue)}
@@ -126,11 +147,11 @@ function QuestionRow({ label, points, isBonus, value, fieldId, onChange, disable
             >
                 <label htmlFor={`${fieldId}-yes`} className="flex items-center gap-1.5 px-3 py-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
                     <RadioGroupItem value="yes" id={`${fieldId}-yes`} className="h-4 w-4" />
-                    <span className="text-xs text-muted-foreground">Yes</span>
+                    <span className="text-sm text-muted-foreground">Yes</span>
                 </label>
                 <label htmlFor={`${fieldId}-no`} className="flex items-center gap-1.5 px-3 py-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors">
                     <RadioGroupItem value="no" id={`${fieldId}-no`} className="h-4 w-4" />
-                    <span className="text-xs text-muted-foreground">No</span>
+                    <span className="text-sm text-muted-foreground">No</span>
                 </label>
             </RadioGroup>
         </div>
@@ -141,29 +162,29 @@ function QuestionRow({ label, points, isBonus, value, fieldId, onChange, disable
 
 interface TutorialCardProps {
     tutorial: Tutorial
-    onRadioChange: (tutorialId: string, field: 'watched' | 'assignmentDone' | 'bonusDone', value: RadioValue) => void
-    onComplete: (tutorialId: string) => void
-    onBonusCompleted: (tutorialTitle: string) => void
+    onRadioChange: (tutorialId: string, field: TutorialField, value: RadioValue) => void
+    onBonusCompleted: (tutorialTitle: string, xp: number) => void
 }
 
-function TutorialCard({ tutorial, onRadioChange, onComplete, onBonusCompleted }: TutorialCardProps) {
-    const requiredDone = tutorial.watched === 'yes' && tutorial.assignmentDone === 'yes'
+function TutorialCard({ tutorial, onRadioChange, onBonusCompleted }: TutorialCardProps) {
     const [isOpen, setIsOpen] = useState(!tutorial.completed)
+    const currentXP = calcXP(tutorial)
+    const isWatched = tutorial.watched === 'yes'
+    const isPracticed = tutorial.practiced === 'yes'
 
-    const currentXP =
-        (tutorial.watched === 'yes' ? XP_WATCHED : 0) +
-        (tutorial.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
-        (tutorial.bonusDone === 'yes' ? XP_BONUS : 0)
+    // Count how many bonus stars earned
+    const bonusCount = [tutorial.assignmentDone, tutorial.forumAsked, tutorial.forumAnswered]
+        .filter(v => v === 'yes').length
 
     // Handle bonus change on completed tutorial — trigger feedback
-    const handleBonusOnCompleted = useCallback((v: RadioValue) => {
-        onRadioChange(tutorial.id, 'bonusDone', v)
+    const handleBonusChange = useCallback((field: TutorialField, points: number) => (v: RadioValue) => {
+        onRadioChange(tutorial.id, field, v)
         if (v === 'yes') {
-            onBonusCompleted(tutorial.title)
+            onBonusCompleted(tutorial.title, points)
         }
     }, [tutorial.id, tutorial.title, onRadioChange, onBonusCompleted])
 
-    // Completed card — expandable to show answers + bonus toggle
+    // ======= COMPLETED CARD =======
     if (tutorial.completed) {
         return (
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -178,33 +199,59 @@ function TutorialCard({ tutorial, onRadioChange, onComplete, onBonusCompleted }:
                                 <Zap className="h-3 w-3" />
                                 {tutorial.xpEarned}
                             </span>
-                            {tutorial.bonusDone === 'yes' && (
-                                <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">★</span>
+                            {bonusCount > 0 && (
+                                <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                                    {'★'.repeat(bonusCount)}
+                                </span>
                             )}
                             <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
                         </button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                         <div className="px-4 pb-3 border-t border-border/20 pt-2">
-                            {/* Show all answers as read-only summary */}
-                            <AnswerSummary label="Practiced the tutorial" value={tutorial.watched} />
-                            <AnswerSummary label="Finished the assignment" value={tutorial.assignmentDone} />
+                            {/* Read-only: required answers */}
+                            <AnswerSummary label="Watched the tutorial" value={tutorial.watched} />
+                            <AnswerSummary label="Practiced the tutorial" value={tutorial.practiced} />
 
-                            {/* Bonus: show answer if done, or allow toggling if not */}
-                            {tutorial.bonusDone === 'yes' ? (
-                                <AnswerSummary label="Interacted in the forum" value="yes" isBonus />
-                            ) : (
-                                <div className="mt-1 pt-1.5 border-t border-dashed border-border/30">
+                            {/* Bonus questions — answerable even after completion */}
+                            <div className="mt-1.5 pt-1.5 border-t border-dashed border-border/30">
+                                {tutorial.assignmentDone === 'yes' ? (
+                                    <AnswerSummary label="Finished the assignment" value="yes" isBonus />
+                                ) : (
                                     <QuestionRow
-                                        label="Have you interacted in the forum?"
-                                        points={XP_BONUS}
+                                        label="Have you finished the assignment?"
+                                        points={XP_ASSIGNMENT}
                                         isBonus
-                                        value={tutorial.bonusDone}
-                                        fieldId={`t${tutorial.id}-bonus`}
-                                        onChange={handleBonusOnCompleted}
+                                        value={tutorial.assignmentDone}
+                                        fieldId={`t${tutorial.id}-assign`}
+                                        onChange={handleBonusChange('assignmentDone', XP_ASSIGNMENT)}
                                     />
-                                </div>
-                            )}
+                                )}
+                                {tutorial.forumAsked === 'yes' ? (
+                                    <AnswerSummary label="Asked a question in the forum" value="yes" isBonus />
+                                ) : (
+                                    <QuestionRow
+                                        label="Have you asked a question in the forum?"
+                                        points={XP_FORUM_ASK}
+                                        isBonus
+                                        value={tutorial.forumAsked}
+                                        fieldId={`t${tutorial.id}-forum-ask`}
+                                        onChange={handleBonusChange('forumAsked', XP_FORUM_ASK)}
+                                    />
+                                )}
+                                {tutorial.forumAnswered === 'yes' ? (
+                                    <AnswerSummary label="Answered a question in the forum" value="yes" isBonus />
+                                ) : (
+                                    <QuestionRow
+                                        label="Have you answered a question in the forum?"
+                                        points={XP_FORUM_ANSWER}
+                                        isBonus
+                                        value={tutorial.forumAnswered}
+                                        fieldId={`t${tutorial.id}-forum-ans`}
+                                        onChange={handleBonusChange('forumAnswered', XP_FORUM_ANSWER)}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </CollapsibleContent>
                 </div>
@@ -212,7 +259,7 @@ function TutorialCard({ tutorial, onRadioChange, onComplete, onBonusCompleted }:
         )
     }
 
-    // Active card — accordion style
+    // ======= ACTIVE CARD =======
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <div className="rounded-lg border border-border/60 bg-card transition-all hover:border-primary/30">
@@ -240,42 +287,60 @@ function TutorialCard({ tutorial, onRadioChange, onComplete, onBonusCompleted }:
                 {/* Collapsible questions */}
                 <CollapsibleContent>
                     <div className="px-4 py-2">
+                        {/* STEP 1: Watch — always enabled */}
                         <QuestionRow
-                            label="Have you practiced the tutorial?"
+                            label="Have you watched the tutorial?"
                             points={XP_WATCHED}
                             value={tutorial.watched}
                             fieldId={`t${tutorial.id}-watched`}
                             onChange={(v) => onRadioChange(tutorial.id, 'watched', v)}
                         />
+
+                        {/* STEP 2: Practice — locked until watched */}
+                        <QuestionRow
+                            label="Have you practiced the tutorial?"
+                            points={XP_PRACTICED}
+                            value={tutorial.practiced}
+                            fieldId={`t${tutorial.id}-practiced`}
+                            onChange={(v) => onRadioChange(tutorial.id, 'practiced', v)}
+                            disabled={!isWatched}
+                        />
+
+                        {/* BONUS — locked until practiced */}
+                        {!isPracticed && (
+                            <div className="flex items-center gap-1.5 py-2 text-[11px] text-muted-foreground/60">
+                                <Lock className="h-3 w-3" />
+                                <span>{!isWatched ? 'Watch and practice the tutorial to unlock bonus questions' : 'Practice the tutorial to unlock bonus questions'}</span>
+                            </div>
+                        )}
                         <QuestionRow
                             label="Have you finished the assignment?"
                             points={XP_ASSIGNMENT}
+                            isBonus
                             value={tutorial.assignmentDone}
                             fieldId={`t${tutorial.id}-assign`}
                             onChange={(v) => onRadioChange(tutorial.id, 'assignmentDone', v)}
+                            disabled={!isPracticed}
                         />
                         <QuestionRow
-                            label="Have you interacted in the forum?"
-                            points={XP_BONUS}
+                            label="Have you asked a question in the forum?"
+                            points={XP_FORUM_ASK}
                             isBonus
-                            value={tutorial.bonusDone}
-                            fieldId={`t${tutorial.id}-bonus`}
-                            onChange={(v) => onRadioChange(tutorial.id, 'bonusDone', v)}
+                            value={tutorial.forumAsked}
+                            fieldId={`t${tutorial.id}-forum-ask`}
+                            onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
+                            disabled={!isPracticed}
+                        />
+                        <QuestionRow
+                            label="Have you answered a question in the forum?"
+                            points={XP_FORUM_ANSWER}
+                            isBonus
+                            value={tutorial.forumAnswered}
+                            fieldId={`t${tutorial.id}-forum-ans`}
+                            onChange={(v) => onRadioChange(tutorial.id, 'forumAnswered', v)}
+                            disabled={!isPracticed}
                         />
                     </div>
-
-                    {/* Complete button */}
-                    {requiredDone && (
-                        <div className="px-4 pb-3">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onComplete(tutorial.id) }}
-                                className="w-full py-2 rounded-md text-xs font-medium bg-success hover:bg-success/90 text-white transition-colors flex items-center justify-center gap-1.5"
-                            >
-                                <Award className="h-3.5 w-3.5" />
-                                Complete · +{currentXP} XP
-                            </button>
-                        </div>
-                    )}
                 </CollapsibleContent>
             </div>
         </Collapsible>
@@ -286,11 +351,10 @@ function TutorialCard({ tutorial, onRadioChange, onComplete, onBonusCompleted }:
 
 export function ActiveCourseTracker() {
     const [tutorials, setTutorials] = useState<Tutorial[]>(initialTutorials)
-    const [showCompleted, setShowCompleted] = useState(false)
-    const addXP = useUserStore(state=>state.addXP)
+    const addXP = useUserStore(state => state.addXP)
 
     // Bonus feedback toast
-    const [bonusFeedback, setBonusFeedback] = useState<string | null>(null)
+    const [bonusFeedback, setBonusFeedback] = useState<{ title: string; xp: number } | null>(null)
 
     const [celebration, setCelebration] = useState<{
         type: CelebrationType
@@ -299,63 +363,69 @@ export function ActiveCourseTracker() {
         subtitle?: string
     } | null>(null)
 
-    const completedTutorials = tutorials.filter(t => t.completed)
-    const incompleteTutorials = tutorials.filter(t => !t.completed)
-    const completedCount = completedTutorials.length
+    const completedCount = tutorials.filter(t => t.completed).length
     const overallProgress = Math.round((completedCount / tutorials.length) * 100)
     const totalXP = tutorials.reduce((sum, t) => sum + t.xpEarned, 0)
 
-    const handleRadioChange = useCallback((tutorialId: string, field: 'watched' | 'assignmentDone' | 'bonusDone', value: RadioValue) => {
-        setTutorials(prev => prev.map(t => {
-            if (t.id !== tutorialId) return t
-            const updated = { ...t, [field]: value }
-            if (updated.completed) {
-                updated.xpEarned =
-                    (updated.watched === 'yes' ? XP_WATCHED : 0) +
-                    (updated.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
-                    (updated.bonusDone === 'yes' ? XP_BONUS : 0)
+    const handleRadioChange = useCallback((tutorialId: string, field: TutorialField, value: RadioValue) => {
+        setTutorials(prev => {
+            const newTutorials = prev.map(t => {
+                if (t.id !== tutorialId) return t
+                const updated = { ...t, [field]: value }
+
+                // AUTO-COMPLETE: if practice is answered "yes", mark as completed
+                if (field === 'practiced' && value === 'yes' && !updated.completed) {
+                    updated.completed = true
+                    updated.xpEarned = calcXP(updated)
+                    return updated
+                }
+
+                // Recalculate XP for already-completed tutorials (bonus toggled)
+                if (updated.completed) {
+                    updated.xpEarned = calcXP(updated)
+                }
+
+                return updated
+            })
+            return newTutorials
+        })
+
+        // If practicing = auto-complete → add XP and show celebration
+        if (field === 'practiced' && value === 'yes') {
+            const tutorial = tutorials.find(t => t.id === tutorialId)
+            if (tutorial && !tutorial.completed) {
+                const xpEarned = XP_WATCHED + XP_PRACTICED +
+                    (tutorial.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
+                    (tutorial.forumAsked === 'yes' ? XP_FORUM_ASK : 0) +
+                    (tutorial.forumAnswered === 'yes' ? XP_FORUM_ANSWER : 0)
+
+                addXP(xpEarned)
+
+                const isLastTutorial = completedCount + 1 === tutorials.length
+                if (isLastTutorial) {
+                    setCelebration({
+                        type: 'course_complete',
+                        xpEarned,
+                        title: `${ACTIVE_COURSE.title} Complete! 🏆`,
+                        subtitle: `You've mastered all ${tutorials.length} tutorials!`,
+                    })
+                } else {
+                    setCelebration({
+                        type: 'tutorial_complete',
+                        xpEarned,
+                        title: 'Tutorial Complete! ✨',
+                        subtitle: `+${xpEarned} XP earned`,
+                    })
+                }
             }
-            return updated
-        }))
-    }, [])
-
-    const handleBonusCompleted = useCallback((tutorialTitle: string) => {
-        addXP(XP_BONUS)
-        setBonusFeedback(tutorialTitle)
-        setTimeout(() => setBonusFeedback(null), 3000)
-    }, [])
-
-    const handleTutorialComplete = useCallback((tutorialId: string) => {
-        const tutorial = tutorials.find(t => t.id === tutorialId)
-        if (!tutorial) return
-
-        const xpEarned =
-            (tutorial.watched === 'yes' ? XP_WATCHED : 0) +
-            (tutorial.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
-            (tutorial.bonusDone === 'yes' ? XP_BONUS : 0)
-
-        const isLastTutorial = completedCount + 1 === tutorials.length
-
-        setTutorials(prev => prev.map(t =>
-            t.id === tutorialId ? { ...t, completed: true, xpEarned } : t
-        ))
-        addXP(xpEarned)
-        if (isLastTutorial) {
-            setCelebration({
-                type: 'course_complete',
-                xpEarned,
-                title: `${ACTIVE_COURSE.title} Complete! 🏆`,
-                subtitle: `You've mastered all ${tutorials.length} tutorials!`,
-            })
-        } else {
-            setCelebration({
-                type: 'tutorial_complete',
-                xpEarned,
-                title: 'Tutorial Complete! ✨',
-                subtitle: `+${xpEarned} XP earned`,
-            })
         }
-    }, [tutorials, completedCount])
+    }, [tutorials, completedCount, addXP])
+
+    const handleBonusCompleted = useCallback((tutorialTitle: string, xp: number) => {
+        addXP(xp)
+        setBonusFeedback({ title: tutorialTitle, xp })
+        setTimeout(() => setBonusFeedback(null), 3000)
+    }, [addXP])
 
     const allDone = completedCount === tutorials.length
 
@@ -393,7 +463,7 @@ export function ActiveCourseTracker() {
                         <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 animate-in fade-in slide-in-from-top-2 duration-300">
                             <Sparkles className="h-4 w-4 text-primary shrink-0" />
                             <span className="text-xs text-primary font-medium">
-                                +{XP_BONUS} bonus XP earned for forum participation in "{bonusFeedback}"!
+                                +{bonusFeedback.xp} bonus XP earned for "{bonusFeedback.title}"!
                             </span>
                         </div>
                     )}
@@ -401,7 +471,7 @@ export function ActiveCourseTracker() {
                     {/* All complete */}
                     {allDone && (
                         <div className="mb-3 p-4 rounded-lg bg-gradient-to-r from-success/10 to-primary/10 border border-success/20 text-center">
-                            <Award className="h-8 w-8 text-success mx-auto mb-1" />
+                            <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-1" />
                             <h3 className="font-bold text-sm">Course Complete! 🏆</h3>
                             <p className="text-xs text-muted-foreground mt-0.5">
                                 All {tutorials.length} tutorials · {totalXP} XP earned
@@ -409,64 +479,24 @@ export function ActiveCourseTracker() {
                         </div>
                     )}
 
-                    {/* ---- COMPLETED SECTION (collapsible group) ---- */}
-                    {completedCount > 0 && (
-                        <Collapsible open={showCompleted} onOpenChange={setShowCompleted}>
-                            <CollapsibleTrigger asChild>
-                                <button className="flex items-center gap-2.5 w-full mb-2.5 px-1 py-2 text-left group">
-                                    <ChevronRight className={`h-4.5 w-4.5 text-muted-foreground transition-transform duration-200 ${showCompleted ? 'rotate-90' : ''}`} />
-                                    <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
-                                        Completed ({completedCount})
-                                    </span>
-                                    <div className="flex-1 border-t border-border/30" />
-                                </button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                                <div className="space-y-1.5 mb-3">
-                                    {completedTutorials.map(tutorial => (
-                                        <TutorialCard
-                                            key={tutorial.id}
-                                            tutorial={tutorial}
-                                            onRadioChange={handleRadioChange}
-                                            onComplete={handleTutorialComplete}
-                                            onBonusCompleted={handleBonusCompleted}
-                                        />
-                                    ))}
-                                </div>
-                            </CollapsibleContent>
-                        </Collapsible>
-                    )}
-
-                    {/* ---- IN PROGRESS SECTION ---- */}
-                    {incompleteTutorials.length > 0 && (
-                        <>
-                            {completedCount > 0 && (
-                                <div className="flex items-center gap-2.5 mb-2.5 px-1 py-2">
-                                    <span className="text-sm font-semibold text-muted-foreground">
-                                        In Progress ({incompleteTutorials.length})
-                                    </span>
-                                    <div className="flex-1 border-t border-border/30" />
-                                </div>
-                            )}
-                            <div className="space-y-2">
-                                {incompleteTutorials.map(tutorial => (
-                                    <TutorialCard
-                                        key={tutorial.id}
-                                        tutorial={tutorial}
-                                        onRadioChange={handleRadioChange}
-                                        onComplete={handleTutorialComplete}
-                                        onBonusCompleted={handleBonusCompleted}
-                                    />
-                                ))}
-                            </div>
-                        </>
-                    )}
+                    {/* ---- ALL TUTORIALS ---- */}
+                    <div className="space-y-1.5">
+                        {tutorials.map(tutorial => (
+                            <TutorialCard
+                                key={tutorial.id}
+                                tutorial={tutorial}
+                                onRadioChange={handleRadioChange}
+                                onBonusCompleted={handleBonusCompleted}
+                            />
+                        ))}
+                    </div>
 
                     {/* Legend */}
-                    <div className="flex items-center justify-center gap-3 mt-3 text-[9px] text-muted-foreground">
-                        <span>Practice = +{XP_WATCHED}</span>
-                        <span>Assignment = +{XP_ASSIGNMENT}</span>
-                        <span className="text-primary">★ Bonus = +{XP_BONUS}</span>
+                    <div className="flex items-center justify-center gap-3 mt-3 text-[9px] text-muted-foreground flex-wrap">
+                        <span>Watch = +{XP_WATCHED}</span>
+                        <span>Practice = +{XP_PRACTICED}</span>
+                        <span className="text-primary">★ Assignment = +{XP_ASSIGNMENT}</span>
+                        <span className="text-primary">★ Forum = +{XP_FORUM_ASK}</span>
                     </div>
                 </CardContent>
             </Card>

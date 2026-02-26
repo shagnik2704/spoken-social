@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
-    CheckCircle2, Terminal,
+    CheckCircle2, Terminal, Eye,
     Search, Filter, Trophy, BarChart3, Star,
     Clock, Zap, Activity
 } from 'lucide-react'
@@ -35,6 +35,7 @@ interface Student {
     name: string
     initials: string
     rollNo: string
+    tutorialsWatched: number
     tutorialsCompleted: number
     totalTutorials: number
     progress: number
@@ -133,8 +134,15 @@ function StudentRow({ student }: { student: Student }) {
                 <span className="text-[11px] text-muted-foreground font-mono w-8 text-right">{student.progress}%</span>
             </div>
 
-            <div className="hidden md:block w-16 text-center">
-                <span className="text-sm font-mono">{student.tutorialsCompleted}/{student.totalTutorials}</span>
+            <div className="hidden md:flex w-32 items-center gap-4 justify-center">
+                <span className="flex items-center gap-1 text-muted-foreground" title="Watched">
+                    <Eye className="h-3 w-3 shrink-0" />
+                    <span className="text-xs font-mono tabular-nums w-5 text-right">{student.tutorialsWatched}</span>
+                </span>
+                <span className="flex items-center gap-1" title="Completed">
+                    <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
+                    <span className="text-xs font-mono font-medium tabular-nums w-5 text-right">{student.tutorialsCompleted}</span>
+                </span>
             </div>
 
 
@@ -285,7 +293,10 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         <div className="w-8 shrink-0" />
                         <div className="flex-1">Student</div>
                         <div className="hidden sm:block w-28 text-center">Progress</div>
-                        <div className="hidden md:block w-16 text-center">Done</div>
+                        <div className="hidden md:flex w-32 items-center gap-4 justify-center">
+                            <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" /> Watched</span>
+                            <span className="flex items-center gap-0.5"><CheckCircle2 className="h-3 w-3" /> Completed</span>
+                        </div>
 
                         <div className="w-24 shrink-0 text-center">Status</div>
                     </div>
@@ -507,10 +518,10 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
     const atRisk = students.filter(s => s.status === 'at_risk' || s.status === 'inactive' || s.status === 'not_started')
         .sort((a, b) => a.progress - b.progress)
 
-    // ── Engagement ──
-    const activeToday = students.filter(s => s.lastActive === 'Today').length
-    const activeRecent = students.filter(s => s.lastActive === 'Today' || s.lastActive === 'Yesterday').length
-    const engagementRate = total > 0 ? Math.round((activeRecent / total) * 100) : 0
+    // ── Watch Rate ──
+    const avgWatched = total > 0 ? students.reduce((sum, s) => sum + (s.tutorialsWatched || 0), 0) / total : 0
+    const totalTutorials = students.length > 0 ? students[0].totalTutorials : 20
+    const watchRate = totalTutorials > 0 ? Math.round((avgWatched / totalTutorials) * 100) : 0
 
     // Custom tooltip for donut charts
     const CustomTooltip = ({ active, payload }: any) => {
@@ -531,10 +542,10 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
             <div className="grid grid-cols-3 gap-3">
                 <Card className="border-border/40">
                     <CardContent className="p-4 text-center">
-                        <Activity className="h-5 w-5 text-primary mx-auto mb-1" />
-                        <p className="text-2xl font-bold">{engagementRate}%</p>
-                        <p className="text-[11px] text-muted-foreground">Engagement Rate</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{activeToday} active today</p>
+                        <Eye className="h-5 w-5 text-primary mx-auto mb-1" />
+                        <p className="text-2xl font-bold">{watchRate}%</p>
+                        <p className="text-[11px] text-muted-foreground">Watch Rate</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">avg {avgWatched.toFixed(1)} / {totalTutorials} per student</p>
                     </CardContent>
                 </Card>
                 <Card className="border-border/40">
@@ -748,7 +759,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium truncate">{student.name}</p>
                                             <p className="text-[10px] text-muted-foreground">
-                                                {student.tutorialsCompleted}/{student.totalTutorials} done • {student.progress}%
+                                                Watched {student.tutorialsWatched} · Done {student.tutorialsCompleted}/{student.totalTutorials} • {student.progress}%
                                             </p>
                                         </div>
                                         <div className="shrink-0 text-right">
