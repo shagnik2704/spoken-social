@@ -269,6 +269,47 @@ CURRENT_USER_ID = "user-rahul"
 COORDINATOR_COLLEGE_ID = "vjti"
 
 
+# ===== TUTORIAL PROGRESS (per-user, per-course) =====
+# Key format: "{user_id}:{course_id}"
+# Mirrors the Tutorial interface in ActiveCourseTracker.tsx
+
+import copy
+
+LINUX_TUTORIALS = [
+    {"id": "1",  "number": 1,  "title": "Installation of VirtualBox on Windows",       "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "2",  "number": 2,  "title": "Installing Ubuntu OS in Oracle VirtualBox",    "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "3",  "number": 3,  "title": "Ubuntu Desktop",                               "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "4",  "number": 4,  "title": "Synaptic Package Manager",                     "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "5",  "number": 5,  "title": "Basic Commands in Linux",                      "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "6",  "number": 6,  "title": "Date and Time Commands",                       "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "7",  "number": 7,  "title": "Structure of Linux Commands",                  "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "8",  "number": 8,  "title": "General Purpose Utilities",                    "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "9",  "number": 9,  "title": "File System in Linux",                         "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "10", "number": 10, "title": "Working with Regular Files in Linux",          "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "11", "number": 11, "title": "Redirecting Streams and Pipes",                "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "12", "number": 12, "title": "Working with Linux Processes",                 "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "13", "number": 13, "title": "The Linux Environment",                        "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "14", "number": 14, "title": "Basics of System Administration in Linux",     "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "15", "number": 15, "title": "Linux File Ownership and Permissions",         "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "16", "number": 16, "title": "Simple Filters in Linux",                      "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "17", "number": 17, "title": "Introduction to grep Command",                 "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "18", "number": 18, "title": "Mastering grep",                               "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "19", "number": 19, "title": "Introduction to the Stream Editor sed",        "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+    {"id": "20", "number": 20, "title": "Text Editing using sed",                       "completed": False, "watched": None, "practiced": None, "assignmentDone": None, "forumAsked": None, "forumAnswered": None, "xpEarned": 0},
+]
+
+# Each user gets their own independent copy of tutorial progress
+# Course id "2" = Linux (from the courses arrays above)
+user_tutorials = {
+    "user-rahul:2":  copy.deepcopy(LINUX_TUTORIALS),
+    "user-priya:2":  copy.deepcopy(LINUX_TUTORIALS),
+    "user-ananya:2": copy.deepcopy(LINUX_TUTORIALS),
+    "user-vikram:2": copy.deepcopy(LINUX_TUTORIALS),
+    "user-meera:2":  copy.deepcopy(LINUX_TUTORIALS),
+    "user-arjun:2":  copy.deepcopy(LINUX_TUTORIALS),
+}
+
+
 # ===== FEED POSTS =====
 
 feed_data = [

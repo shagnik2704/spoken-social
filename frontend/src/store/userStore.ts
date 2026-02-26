@@ -1,20 +1,20 @@
 import { create } from 'zustand'
-import type { User, WeeklyGoal, Course, Badge } from '@/types'
+import type { User, WeeklyGoal, Course, Badge, Tutorial, RadioValue, TutorialField } from '@/types'
 import api from '@/lib/axios'
 
-// ----- Define the shape of the store -----
 
 interface UserState {
 
     user: User | null
     isAuthenticated: boolean
-
     weeklyGoal: WeeklyGoal
     courses: Course[]
     badges: Badge[]
+    tutorials: Tutorial[]
+    activeCourseId: string
 
-
-
+    fetchTutorials: (courseId: string) => Promise<void>
+    updateTutorials: (courseId: string, tutorialId: string, field: TutorialField, value: RadioValue) => void
     fetchUser: () => Promise<void>
     login: (user: User) => void
     logout: () => void
@@ -26,10 +26,11 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     user: null,
     isAuthenticated: false,
-
     weeklyGoal: { target: 0, completed: 0, days: [], dayLabels: [] },
     courses: [],
     badges: [],
+    tutorials: [],
+    activeCourseId:'2',
 
 
     fetchUser: async () => {
@@ -47,6 +48,38 @@ export const useUserStore = create<UserState>((set, get) => ({
             console.error('Failed to fetch user:', error)
         }
     },
+
+
+    fetchTutorials: async (courseId) => {
+        try {
+            const { data } = await api.get(`/api/me/courses/${courseId}/tutorials`)
+            set({ tutorials: data })
+        }
+        catch (error) {
+            console.error('Failed to fetch tutorials', error)
+        }
+    },
+
+    updateTutorials(courseId, tutorialId, field, value) {
+        set({
+            tutorials: get().tutorials.map(t => {
+                if (t.id !== tutorialId) return t
+                const updated = { ...t, [field]: value }
+                if (field === 'practiced' && value === 'yes') updated.completed = true
+
+                const XP: Record<string, number> = { watched: 10, practiced: 10, assignmentDone: 5, forumAsked: 5, forumAnswered: 5 }
+                updated.xpEarned = Object.entries(XP).reduce((sum, [f, pts]) => sum + (updated[f as TutorialField] === 'yes' ? pts : 0), 0)
+                return updated
+            })
+        })
+
+        api.put(`/api/me/courses/${courseId}/tutorials/${tutorialId}`, { field, value })
+    },
+
+    
+
+
+
     login: (user) => {
         // set() shallow-merges into the state
         set({

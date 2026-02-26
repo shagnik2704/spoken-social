@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, } from 'react'
 import {
     CheckCircle2, ChevronDown, Sparkles, Lock,
     Zap, Code, Terminal, BarChart3, Settings, FileText,
@@ -11,33 +11,15 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { CelebrationModal, type CelebrationType } from './CelebrationModal'
 import { useUserStore } from '@/store/userStore'
-
-// ===== TYPES =====
-
-type RadioValue = 'yes' | 'no' | null
-
-interface Tutorial {
-    id: string
-    number: number
-    title: string
-    completed: boolean
-    watched: RadioValue         // Step 1: Watch the tutorial
-    practiced: RadioValue       // Step 2: Practice — auto-completes on "yes"
-    assignmentDone: RadioValue  // Bonus
-    forumAsked: RadioValue      // Bonus
-    forumAnswered: RadioValue   // Bonus
-    xpEarned: number
-}
-
-type TutorialField = 'watched' | 'practiced' | 'assignmentDone' | 'forumAsked' | 'forumAnswered'
+import type { RadioValue, Tutorial, TutorialField } from '@/types'
 
 // ===== POINTS =====
 
-const XP_WATCHED = 10           // Step 1
-const XP_PRACTICED = 10         // Step 2 (auto-completes)
-const XP_ASSIGNMENT = 5         // Bonus
-const XP_FORUM_ASK = 5          // Bonus
-const XP_FORUM_ANSWER = 5       // Bonus
+const XP_WATCHED = 10
+const XP_PRACTICED = 10
+const XP_ASSIGNMENT = 5
+const XP_FORUM_ASK = 5
+const XP_FORUM_ANSWER = 5
 
 function calcXP(t: Tutorial): number {
     return (
@@ -58,35 +40,7 @@ const courseIconMap: Record<string, React.ReactNode> = {
     'LibreOffice': <FileText className="h-5 w-5" />,
 }
 
-// ===== MOCK DATA =====
 
-const ACTIVE_COURSE = {
-    title: 'Linux',
-    totalTutorials: 20,
-}
-
-const initialTutorials: Tutorial[] = [
-    { id: '1', number: 1, title: 'Installation of VirtualBox on Windows', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '2', number: 2, title: 'Installing Ubuntu OS in Oracle VirtualBox', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '3', number: 3, title: 'Ubuntu Desktop', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '4', number: 4, title: 'Synaptic Package Manager', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '5', number: 5, title: 'Basic Commands in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '6', number: 6, title: 'Date and Time Commands', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '7', number: 7, title: 'Structure of Linux Commands', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '8', number: 8, title: 'General Purpose Utilities', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '9', number: 9, title: 'File System in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '10', number: 10, title: 'Working with Regular Files in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '11', number: 11, title: 'Redirecting Streams and Pipes', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '12', number: 12, title: 'Working with Linux Processes', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '13', number: 13, title: 'The Linux Environment', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '14', number: 14, title: 'Basics of System Administration in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '15', number: 15, title: 'Linux File Ownership and Permissions', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '16', number: 16, title: 'Simple Filters in Linux', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '17', number: 17, title: 'Introduction to grep Command', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '18', number: 18, title: 'Mastering grep', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '19', number: 19, title: 'Introduction to the Stream Editor sed', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-    { id: '20', number: 20, title: 'Text Editing using sed', completed: false, watched: null, practiced: null, assignmentDone: null, forumAsked: null, forumAnswered: null, xpEarned: 0 },
-]
 
 // ===== ANSWER DISPLAY (read-only, for completed tutorials) =====
 
@@ -163,10 +117,9 @@ function QuestionRow({ label, points, isBonus, value, fieldId, onChange, disable
 interface TutorialCardProps {
     tutorial: Tutorial
     onRadioChange: (tutorialId: string, field: TutorialField, value: RadioValue) => void
-    onBonusCompleted: (tutorialTitle: string, xp: number) => void
 }
 
-function TutorialCard({ tutorial, onRadioChange, onBonusCompleted }: TutorialCardProps) {
+function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
     const [isOpen, setIsOpen] = useState(!tutorial.completed)
     const currentXP = calcXP(tutorial)
     const isWatched = tutorial.watched === 'yes'
@@ -175,14 +128,6 @@ function TutorialCard({ tutorial, onRadioChange, onBonusCompleted }: TutorialCar
     // Count how many bonus stars earned
     const bonusCount = [tutorial.assignmentDone, tutorial.forumAsked, tutorial.forumAnswered]
         .filter(v => v === 'yes').length
-
-    // Handle bonus change on completed tutorial — trigger feedback
-    const handleBonusChange = useCallback((field: TutorialField, points: number) => (v: RadioValue) => {
-        onRadioChange(tutorial.id, field, v)
-        if (v === 'yes') {
-            onBonusCompleted(tutorial.title, points)
-        }
-    }, [tutorial.id, tutorial.title, onRadioChange, onBonusCompleted])
 
     // ======= COMPLETED CARD =======
     if (tutorial.completed) {
@@ -224,7 +169,7 @@ function TutorialCard({ tutorial, onRadioChange, onBonusCompleted }: TutorialCar
                                         isBonus
                                         value={tutorial.assignmentDone}
                                         fieldId={`t${tutorial.id}-assign`}
-                                        onChange={handleBonusChange('assignmentDone', XP_ASSIGNMENT)}
+                                        onChange={(v) => onRadioChange(tutorial.id, 'assignmentDone', v)}
                                     />
                                 )}
                                 {tutorial.forumAsked === 'yes' ? (
@@ -236,7 +181,7 @@ function TutorialCard({ tutorial, onRadioChange, onBonusCompleted }: TutorialCar
                                         isBonus
                                         value={tutorial.forumAsked}
                                         fieldId={`t${tutorial.id}-forum-ask`}
-                                        onChange={handleBonusChange('forumAsked', XP_FORUM_ASK)}
+                                        onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
                                     />
                                 )}
                                 {tutorial.forumAnswered === 'yes' ? (
@@ -248,7 +193,7 @@ function TutorialCard({ tutorial, onRadioChange, onBonusCompleted }: TutorialCar
                                         isBonus
                                         value={tutorial.forumAnswered}
                                         fieldId={`t${tutorial.id}-forum-ans`}
-                                        onChange={handleBonusChange('forumAnswered', XP_FORUM_ANSWER)}
+                                        onChange={(v) => onRadioChange(tutorial.id, 'forumAnswered', v)}
                                     />
                                 )}
                             </div>
@@ -350,8 +295,24 @@ function TutorialCard({ tutorial, onRadioChange, onBonusCompleted }: TutorialCar
 // ===== MAIN COMPONENT =====
 
 export function ActiveCourseTracker() {
-    const [tutorials, setTutorials] = useState<Tutorial[]>(initialTutorials)
-    const addXP = useUserStore(state => state.addXP)
+    const {
+        tutorials,
+        activeCourseId,
+        fetchTutorials,
+        updateTutorials,
+        addXP,
+        courses
+    } = useUserStore()
+
+    const currentCourse = courses.find(c => c.id == activeCourseId)
+    const courseTitle = currentCourse?.title || 'Course'
+
+    useEffect(() => {
+        if (activeCourseId) {
+            fetchTutorials(activeCourseId)
+        }
+    }, [])
+
 
     // Bonus feedback toast
     const [bonusFeedback, setBonusFeedback] = useState<{ title: string; xp: number } | null>(null)
@@ -368,64 +329,47 @@ export function ActiveCourseTracker() {
     const totalXP = tutorials.reduce((sum, t) => sum + t.xpEarned, 0)
 
     const handleRadioChange = useCallback((tutorialId: string, field: TutorialField, value: RadioValue) => {
-        setTutorials(prev => {
-            const newTutorials = prev.map(t => {
-                if (t.id !== tutorialId) return t
-                const updated = { ...t, [field]: value }
+        const tutorial = tutorials.find(t => t.id === tutorialId)
+        if (!tutorial) return
 
-                // AUTO-COMPLETE: if practice is answered "yes", mark as completed
-                if (field === 'practiced' && value === 'yes' && !updated.completed) {
-                    updated.completed = true
-                    updated.xpEarned = calcXP(updated)
-                    return updated
-                }
+        const oldValue = tutorial[field]
+        updateTutorials(activeCourseId, tutorialId, field, value)
 
-                // Recalculate XP for already-completed tutorials (bonus toggled)
-                if (updated.completed) {
-                    updated.xpEarned = calcXP(updated)
-                }
+        if (value === 'yes' && oldValue !== 'yes') {
+            let xpEarned = 0;
+            if (field === 'watched') xpEarned = XP_WATCHED;
+            else if (field === 'practiced') xpEarned = XP_PRACTICED;
+            else if (field === 'assignmentDone') xpEarned = XP_ASSIGNMENT;
+            else if (field === 'forumAsked') xpEarned = XP_FORUM_ASK;
+            else if (field === 'forumAnswered') xpEarned = XP_FORUM_ANSWER;
 
-                return updated
-            })
-            return newTutorials
-        })
-
-        // If practicing = auto-complete → add XP and show celebration
-        if (field === 'practiced' && value === 'yes') {
-            const tutorial = tutorials.find(t => t.id === tutorialId)
-            if (tutorial && !tutorial.completed) {
-                const xpEarned = XP_WATCHED + XP_PRACTICED +
-                    (tutorial.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
-                    (tutorial.forumAsked === 'yes' ? XP_FORUM_ASK : 0) +
-                    (tutorial.forumAnswered === 'yes' ? XP_FORUM_ANSWER : 0)
-
+            if (xpEarned > 0) {
                 addXP(xpEarned)
 
-                const isLastTutorial = completedCount + 1 === tutorials.length
-                if (isLastTutorial) {
-                    setCelebration({
-                        type: 'course_complete',
-                        xpEarned,
-                        title: `${ACTIVE_COURSE.title} Complete! 🏆`,
-                        subtitle: `You've mastered all ${tutorials.length} tutorials!`,
-                    })
+                if (field === 'practiced') {
+                    const isLastTutorial = completedCount + 1 === tutorials.length
+                    if (isLastTutorial) {
+                        setCelebration({
+                            type: 'course_complete',
+                            xpEarned,
+                            title: `${courseTitle} Complete! 🏆`,
+                            subtitle: `You've mastered all ${tutorials.length} tutorials!`,
+                        })
+                    } else {
+                        setCelebration({
+                            type: 'tutorial_complete',
+                            xpEarned,
+                            title: 'Tutorial Complete! ✨',
+                            subtitle: `+${xpEarned} XP earned`,
+                        })
+                    }
                 } else {
-                    setCelebration({
-                        type: 'tutorial_complete',
-                        xpEarned,
-                        title: 'Tutorial Complete! ✨',
-                        subtitle: `+${xpEarned} XP earned`,
-                    })
+                    setBonusFeedback({ title: tutorial.title, xp: xpEarned })
+                    setTimeout(() => setBonusFeedback(null), 3000)
                 }
             }
         }
-    }, [tutorials, completedCount, addXP])
-
-    const handleBonusCompleted = useCallback((tutorialTitle: string, xp: number) => {
-        addXP(xp)
-        setBonusFeedback({ title: tutorialTitle, xp })
-        setTimeout(() => setBonusFeedback(null), 3000)
-    }, [addXP])
+    }, [tutorials, activeCourseId, updateTutorials, completedCount, courseTitle, addXP])
 
     const allDone = completedCount === tutorials.length
 
@@ -437,11 +381,11 @@ export function ActiveCourseTracker() {
                     <div className="flex items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3 min-w-0">
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                                {courseIconMap[ACTIVE_COURSE.title] || <Code className="h-5 w-5 text-primary" />}
+                                {courseIconMap[courseTitle] || <Code className="h-5 w-5 text-primary" />}
                             </div>
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-lg font-bold">{ACTIVE_COURSE.title}</h2>
+                                    <h2 className="text-lg font-bold">{courseTitle}</h2>
                                     <Badge variant="secondary" className="text-[10px] px-1.5 h-4">
                                         {completedCount}/{tutorials.length}
                                     </Badge>
@@ -486,7 +430,6 @@ export function ActiveCourseTracker() {
                                 key={tutorial.id}
                                 tutorial={tutorial}
                                 onRadioChange={handleRadioChange}
-                                onBonusCompleted={handleBonusCompleted}
                             />
                         ))}
                     </div>

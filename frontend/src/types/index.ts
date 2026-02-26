@@ -164,3 +164,23 @@ export interface ProfileStat {
     iconKey: string
     color: string
 }
+
+// Tutorial
+
+export type RadioValue = 'yes'|'no'|null
+
+export type TutorialField = 'watched' | 'practiced' | 'assignmentDone' | 'forumAsked' | 'forumAnswered'
+
+export interface Tutorial {
+    id: string
+    number: number
+    title: string
+    completed: boolean
+    watched: RadioValue
+    practiced: RadioValue
+    assignmentDone: RadioValue
+    forumAsked: RadioValue
+    forumAnswered: RadioValue
+    xpEarned: number
+}
+
