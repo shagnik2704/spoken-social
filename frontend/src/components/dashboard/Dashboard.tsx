@@ -1,8 +1,8 @@
 import {
-    Flame, Zap, Calendar, ChevronRight, Trophy, Lock,
+    Zap, Calendar, ChevronRight, Trophy, Lock,
     BookOpen, Hand, Code, Terminal, BarChart3, FileText, Settings,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
-    CheckCircle2, Award
+    CheckCircle2
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -24,7 +24,7 @@ const courseIconMap: Record<string, React.ReactNode> = {
 
 
 const badgeIconMap: Record<string, React.ReactNode> = {
-    '7-Day Streak': <Flame className="h-5 w-5 text-warning" />,
+    'Quick Learner': <Zap className="h-5 w-5 text-warning" />,
     '5 Courses': <BookOpen className="h-5 w-5 text-primary" />,
     'First Post': <MessageCircle className="h-5 w-5 text-secondary" />,
 }
@@ -40,10 +40,10 @@ function getGreeting(): string {
 
 
 function GreetingBanner() {
-   
-    const userName = useUserStore(state=>state.user?.name)
-    const streak = useUserStore(state=>state.streak)
- 
+
+    const userName = useUserStore(state => state.user?.name)
+    const firstName = userName?.split(' ')[0]
+
 
     return (
         <Card className="border-warning/20 bg-gradient-to-r from-warning/5 via-orange-500/5 to-danger/5">
@@ -52,25 +52,15 @@ function GreetingBanner() {
                     <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                             <Hand className="h-5 w-5 text-xp-gold shrink-0" />
-                            <h1 className="text-lg sm:text-2xl font-bold truncate">
-                                {getGreeting()},    {userName || 'there'}!
+                            <h1 className="text-lg sm:text-2xl font-bold">
+                                {getGreeting()}, {firstName || 'there'}!
                             </h1>
                         </div>
                         <p className="text-muted-foreground text-sm mt-1">
                             Ready to learn something new today?
                         </p>
                     </div>
-                    <div className="flex flex-col items-center shrink-0">
-                        <Flame className="h-9 w-9 sm:h-10 sm:w-10 text-warning animate-pulse" />
-                        <span className="text-xl sm:text-2xl font-bold text-warning font-mono">{streak.current}</span>
-                        <span className="text-[10px] text-muted-foreground -mt-0.5">day streak</span>
-                    </div>
                 </div>
-                {streak.isActiveToday && (
-                    <p className="text-xs text-muted-foreground mt-3">
-                        Your longest: <span className="text-foreground font-medium">{streak.longest} days</span> — keep it going!
-                    </p>
-                )}
             </CardContent>
         </Card>
     )
@@ -212,12 +202,6 @@ function MyCourses() {
                                 <Badge variant="secondary" className="bg-success/15 text-success text-[10px] mt-3 px-1.5 py-0 h-5 gap-1">
                                     <CheckCircle2 className="h-3 w-3" />
                                     Completed
-                                </Badge>
-                            )}
-                            {course.testPassed && (
-                                <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] mt-1.5 px-1.5 py-0 h-5 gap-1">
-                                    <Award className="h-3 w-3" />
-                                    Test Passed
                                 </Badge>
                             )}
                         </CardContent>

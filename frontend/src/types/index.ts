@@ -30,11 +30,7 @@ export interface User {
     department?: string
 }
 
-export interface Streak {
-    current: number
-    longest: number
-    isActiveToday: boolean
-}
+
 
 export interface WeeklyGoal {
     target: number
@@ -54,8 +50,6 @@ export interface Course {
     completed: number
     total: number
     status: CourseStatus
-    testPassed: boolean
-    testScore?: number | null
     completedDate?: string
 }
 
@@ -115,19 +109,18 @@ export interface LeaderboardUser {
     levelTitle: string
     xp: number
     xpThisWeek: number
-    streak: number
+
     coursesCompleted: number
     trend: 'up' | 'down' | 'same'
     trendDelta: number
     isCurrentUser: boolean
     college?: string
     courseProgress?: number
-    testScore?: number | null
 }
 
 // ----- Activity -----
 
-export type ActivityType = 'achievement' | 'post' | 'streak' | 'badge' | 'course' | 'answer'
+export type ActivityType = 'achievement' | 'post' | 'badge' | 'course' | 'answer'
 
 export interface Activity {
     id: string

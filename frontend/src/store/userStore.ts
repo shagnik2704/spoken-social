@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { User, Streak, WeeklyGoal, Course, Badge } from '@/types'
+import type { User, WeeklyGoal, Course, Badge } from '@/types'
 import api from '@/lib/axios'
 
 // ----- Define the shape of the store -----
@@ -8,8 +8,7 @@ interface UserState {
 
     user: User | null
     isAuthenticated: boolean
-    isLoading: boolean
-    streak: Streak
+
     weeklyGoal: WeeklyGoal
     courses: Course[]
     badges: Badge[]
@@ -27,30 +26,25 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     user: null,
     isAuthenticated: false,
-    isLoading:true,
-    streak: { current: 0, longest: 0, isActiveToday: false },
+
     weeklyGoal: { target: 0, completed: 0, days: [], dayLabels: [] },
     courses: [],
     badges: [],
 
-    
+
     fetchUser: async () => {
-        set({ isLoading: true })
         try {
             const { data } = await api.get('/api/me')
             set({
                 user: data.user,
-                streak: data.streak,
                 weeklyGoal: data.weeklyGoal,
                 courses: data.courses,
                 badges: data.badges,
                 isAuthenticated: true,
-                isLoading: false,
             })
         }
         catch (error) {
             console.error('Failed to fetch user:', error)
-            set({ isLoading: false })
         }
     },
     login: (user) => {

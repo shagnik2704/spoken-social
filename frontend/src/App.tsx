@@ -7,19 +7,20 @@ import { Dashboard } from '@/components/dashboard/Dashboard'
 import { Feed } from '@/components/feed/Feed'
 import { Profile } from '@/components/profile/Profile'
 import { Leaderboard } from '@/components/leaderboard/Leaderboard'
+import { CoordinatorDashboard } from '@/components/coordinator/CoordinatorDashboard'
 import { useEffect } from 'react'
 import { useUserStore } from './store/userStore'
 
 
 function App() {
 
-  const fetchUser=useUserStore(state=>state.fetchUser)
+  const fetchUser = useUserStore(state => state.fetchUser)
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchUser()
-  },[])
+  }, [])
 
-  
+
 
   return (
     <BrowserRouter>
@@ -41,6 +42,7 @@ function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/coordinator" element={<CoordinatorDashboard />} />
                 </Routes>
               </main>
             </div>

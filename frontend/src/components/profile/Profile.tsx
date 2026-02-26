@@ -125,14 +125,14 @@ function ProfileHeader() {
 function StatsRow() {
     const user = useUserStore(state => state.user)
     const courses = useUserStore(state => state.courses)
-    const streak = useUserStore(state => state.streak)
+
 
     if (!user) return null
 
     const stats = [
         { label: 'Total XP', value: user.xpTotal.toLocaleString(), icon: Zap, color: 'text-xp-gold' },
         { label: 'Courses', value: String(courses.length), icon: BookOpen, color: 'text-primary' },
-        { label: 'Best Streak', value: `${streak.longest} days`, icon: Flame, color: 'text-warning' },
+        { label: 'Followers', value: String(user.followers), icon: Users, color: 'text-warning' },
         { label: 'Posts', value: String(user.postsCount), icon: MessageCircle, color: 'text-secondary' },
     ]
 
@@ -246,12 +246,10 @@ function CompletedCoursesSection() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                                {course.testScore && (
-                                    <Badge className="bg-success/10 text-success border-0 text-[10px] gap-1">
-                                        <CheckCircle2 className="h-3 w-3" />
-                                        {course.testScore}%
-                                    </Badge>
-                                )}
+                                <Badge className="bg-success/10 text-success border-0 text-[10px] gap-1">
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    Completed
+                                </Badge>
                             </div>
                         </CardContent>
                     </Card>
@@ -306,7 +304,7 @@ function ActivityTimeline() {
         switch (type) {
             case 'achievement': return { icon: Trophy, color: 'text-xp-gold', bg: 'bg-xp-gold/10' }
             case 'post': return { icon: MessageCircle, color: 'text-primary', bg: 'bg-primary/10' }
-            case 'streak': return { icon: Flame, color: 'text-warning', bg: 'bg-warning/10' }
+
             case 'badge': return { icon: Award, color: 'text-secondary', bg: 'bg-secondary/10' }
             case 'course': return { icon: BookOpen, color: 'text-success', bg: 'bg-success/10' }
             case 'answer': return { icon: Star, color: 'text-primary-light', bg: 'bg-primary-light/10' }

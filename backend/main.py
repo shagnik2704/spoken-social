@@ -1,6 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from data import all_users, feed_data, leaderboard_data, CURRENT_USER_ID
+from routes.user import router as user_router
+from routes.feed import router as feed_router
+from routes.leaderboard import router as leaderboard_router
+from routes.coordinator import router as coordinator_router
+
+
 
 app = FastAPI()
 
@@ -11,75 +16,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get('/api/me')
-def get_current_user():
-    data = all_users[CURRENT_USER_ID]
-    return {
-        "user": {
-            "id": data["id"],
-            "name": data["name"],
-            "username": data["username"],
-            "initials": data["initials"],
-            "bio": data["bio"],
-            "level": data["level"],
-            "levelTitle": data["levelTitle"],
-            "xpTotal": data["xpTotal"],
-            "xpForNextLevel": data["xpForNextLevel"],
-            "xpToday": data["xpToday"],
-            "xpThisWeek": data["xpThisWeek"],
-            "joinDate": data["joinDate"],
-            "location": data["location"],
-            "website": data["website"],
-            "followers": data["followers"],
-            "following": data["following"],
-            "postsCount": data["postsCount"],
-            "college": data["college"],
-            "department": data["department"],
-        },
-        "streak": data["streak"],
-        "weeklyGoal": data["weeklyGoal"],
-        "courses": data["courses"],
-        "badges": data["badges"],
-    }
+app.include_router(user_router)
+app.include_router(feed_router)
+app.include_router(leaderboard_router)
+app.include_router(coordinator_router)
 
-@app.get('/api/feed')
-def get_feed():
-    return feed_data
 
-@app.get('/api/leaderboard')
-def get_leaderboard():
-    return leaderboard_data
 
-@app.get('/api/users/{user_id}')
-def get_user_by_id(user_id:str):
-    data = all_users[user_id]
-    return {
-        "user": {
-            "id": data["id"],
-            "name": data["name"],
-            "username": data["username"],
-            "initials": data["initials"],
-            "bio": data["bio"],
-            "level": data["level"],
-            "levelTitle": data["levelTitle"],
-            "xpTotal": data["xpTotal"],
-            "xpForNextLevel": data["xpForNextLevel"],
-            "xpToday": data["xpToday"],
-            "xpThisWeek": data["xpThisWeek"],
-            "joinDate": data["joinDate"],
-            "location": data["location"],
-            "website": data["website"],
-            "followers": data["followers"],
-            "following": data["following"],
-            "postsCount": data["postsCount"],
-            "college": data["college"],
-            "department": data["department"],
-        },
-        "streak": data["streak"],
-        "weeklyGoal": data["weeklyGoal"],
-        "courses": data["courses"],
-        "badges": data["badges"],
-    }
+
 
 
 
