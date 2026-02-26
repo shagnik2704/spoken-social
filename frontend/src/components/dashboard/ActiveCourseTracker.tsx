@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { CelebrationModal, type CelebrationType } from './CelebrationModal'
+import { useUserStore } from '@/store/userStore'
 
 // ===== TYPES =====
 
@@ -286,6 +287,7 @@ function TutorialCard({ tutorial, onRadioChange, onComplete, onBonusCompleted }:
 export function ActiveCourseTracker() {
     const [tutorials, setTutorials] = useState<Tutorial[]>(initialTutorials)
     const [showCompleted, setShowCompleted] = useState(false)
+    const addXP = useUserStore(state=>state.addXP)
 
     // Bonus feedback toast
     const [bonusFeedback, setBonusFeedback] = useState<string | null>(null)
@@ -318,6 +320,7 @@ export function ActiveCourseTracker() {
     }, [])
 
     const handleBonusCompleted = useCallback((tutorialTitle: string) => {
+        addXP(XP_BONUS)
         setBonusFeedback(tutorialTitle)
         setTimeout(() => setBonusFeedback(null), 3000)
     }, [])
@@ -336,7 +339,7 @@ export function ActiveCourseTracker() {
         setTutorials(prev => prev.map(t =>
             t.id === tutorialId ? { ...t, completed: true, xpEarned } : t
         ))
-
+        addXP(xpEarned)
         if (isLastTutorial) {
             setCelebration({
                 type: 'course_complete',
