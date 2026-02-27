@@ -40,10 +40,6 @@ class User(Base):
     xp_today = Column(Integer, default=0)
     xp_this_week = Column(Integer, default=0)
 
-    # Streak
-    streak_current = Column(Integer, default=0)
-    streak_longest = Column(Integer, default=0)
-    streak_active_today = Column(Boolean, default=False)
 
     # Weekly goal (stored as JSON for flexibility)
     weekly_goal = Column(JSON, default={"target": 5, "completed": 0, "days": [False]*7, "dayLabels": ["M","T","W","T","F","S","S"]})
