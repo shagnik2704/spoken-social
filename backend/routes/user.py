@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from database import get_db
 from dependencies import get_current_user
-from models import User, UserCourse, UserTutorial, UserBadge
+from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
 
 router = APIRouter(prefix='/api', tags=['users'])
 
@@ -65,7 +65,13 @@ class XPUpdate(BaseModel):
 
 @router.get('/me/courses/{course_id}/tutorials')
 def get_my_tutorials(course_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    tutorials = db.query(UserTutorial).filter_by(user_id=user.id, course_id=course_id).all()
+    tutorials = (
+        db.query(UserTutorial)
+        .join(Tutorial, UserTutorial.tutorial_id == Tutorial.id)
+        .filter(UserTutorial.user_id == user.id, UserTutorial.course_id == course_id)
+        .order_by(Tutorial.number)
+        .all()
+    )
     if not tutorials:
         raise HTTPException(status_code=404, detail="No tutorial data found")
     return [t.to_api_dict() for t in tutorials]
@@ -100,12 +106,29 @@ def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
 
     # Recalculate XP
     XP_MAP = {"watched": 10, "practiced": 10, "assignment_done": 5, "forum_asked": 5, "forum_answered": 5}
+    old_xp=ut.xp_earned
     ut.xp_earned = sum(
         XP_MAP[col] for col in XP_MAP
         if getattr(ut, col) == "yes"
     )
 
-    db.commit()  # ← THIS is the magic line. Saves to PostgreSQL.
+    # Update user's total XP with the difference
+    xp_gained = ut.xp_earned - old_xp
+    if xp_gained > 0:
+        user.xp_total += xp_gained
+        user.xp_today += xp_gained
+        user.xp_this_week += xp_gained
+
+        # Level up check
+        xp = user.xp_total
+        if xp >= 12000:   user.level, user.level_title = 26, "Spoken Legend"
+        elif xp >= 7000:  user.level, user.level_title = 21, "Master"
+        elif xp >= 3500:  user.level, user.level_title = 16, "Expert"
+        elif xp >= 1500:  user.level, user.level_title = 11, "Practitioner"
+        elif xp >= 500:   user.level, user.level_title = 6, "Explorer"
+        else:             user.level, user.level_title = 1, "Beginner"
+
+    db.commit()
     return ut.to_api_dict()
 
 
