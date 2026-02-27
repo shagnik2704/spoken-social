@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation,useNavigate } from 'react-router-dom'
 import { useUserStore } from '@/store/userStore'
 import { useTheme } from '@/hooks/useTheme'
 import { useComposeModal } from '@/hooks/useComposeModal'
@@ -28,6 +28,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAuthStore } from '@/store/authStore'
 
 // Navigation items for the sidebar/bottom nav
 const navItems = [
@@ -41,6 +42,9 @@ const navItems = [
 export function TopBar() {
     const { theme, toggleTheme } = useTheme()
     const [searchOpen, setSearchOpen] = useState(false)
+    const logout = useAuthStore(state=>state.logout)
+    const navigate = useNavigate()
+
     const notificationCount = 3
 
     // 🧠 ZUSTAND: Select only the slices you need.
@@ -142,18 +146,6 @@ export function TopBar() {
                                 </div>
                             </div>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer gap-2">
-                                <User className="h-4 w-4" />
-                                My Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer gap-2">
-                                <Trophy className="h-4 w-4" />
-                                Achievements
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer gap-2">
-                                <Settings className="h-4 w-4" />
-                                Settings
-                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="cursor-pointer gap-2"
                                 onClick={toggleTheme}
@@ -162,7 +154,8 @@ export function TopBar() {
                                 {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer gap-2">
+                            <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer gap-2"
+                                onClick={()=>{logout();navigate('/')}}>
                                 <LogOut className="h-4 w-4" />
                                 Log Out
                             </DropdownMenuItem>
