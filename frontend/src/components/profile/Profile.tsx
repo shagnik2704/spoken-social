@@ -11,8 +11,16 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useUserStore } from '@/store/userStore'
-import { MOCK_ACTIVITY } from '@/data/mockData'
 import type { ActivityType } from '@/types'
+
+// Will be replaced with API call later
+const ACTIVITY = [
+    { id: '1', type: 'achievement' as ActivityType, text: 'Completed C/C++ course with 85% test score', time: '3 days ago' },
+    { id: '2', type: 'post' as ActivityType, text: 'Shared a tip about Python dictionaries', time: '5 days ago' },
+    { id: '3', type: 'badge' as ActivityType, text: 'Earned the "Quick Learner" badge', time: '1 week ago' },
+    { id: '5', type: 'course' as ActivityType, text: 'Started learning Scilab', time: '2 weeks ago' },
+    { id: '6', type: 'answer' as ActivityType, text: 'Answered a question about Linux file permissions', time: '2 weeks ago' },
+]
 
 // ===== ICON MAPS =====
 
@@ -314,7 +322,7 @@ function ActivityTimeline() {
 
     return (
         <div className="space-y-1">
-            {MOCK_ACTIVITY.map((activity, index) => {
+            {ACTIVITY.map((activity, index) => {
                 const config = getActivityIcon(activity.type)
                 const Icon = config.icon
                 return (
@@ -325,7 +333,7 @@ function ActivityTimeline() {
                                             group-hover:scale-110 transition-transform duration-200`}>
                                 <Icon className={`h-4 w-4 ${config.color}`} />
                             </div>
-                            {index < MOCK_ACTIVITY.length - 1 && (
+                            {index < ACTIVITY.length - 1 && (
                                 <div className="w-px h-full bg-border/50 min-h-[16px]" />
                             )}
                         </div>

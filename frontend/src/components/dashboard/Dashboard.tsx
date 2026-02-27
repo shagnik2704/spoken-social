@@ -11,7 +11,13 @@ import { ActiveCourseTracker } from './ActiveCourseTracker'
 
 
 import { useUserStore } from '@/store/userStore'
-import { MOCK_UPCOMING } from '@/data/mockData'
+
+// Will be replaced with API call later
+const UPCOMING = [
+    { id: '1', type: 'test' as const, title: 'Python Online Test', date: 'Feb 28', daysAway: 4, location: 'Lab 201, 10:00 AM' },
+    { id: '2', type: 'workshop' as const, title: 'Linux Training Workshop', date: 'Mar 5', daysAway: 9, location: 'Computer Lab, 2:00 PM' },
+    { id: '3', type: 'test' as const, title: 'Scilab Online Test', date: 'Mar 12', daysAway: 16, location: 'TBD' },
+]
 
 
 const courseIconMap: Record<string, React.ReactNode> = {
@@ -289,7 +295,7 @@ function UpcomingDeadlines() {
                     Upcoming
                 </h2>
                 <div className="space-y-3">
-                    {MOCK_UPCOMING.map((event) => (
+                    {UPCOMING.map((event) => (
                         <div
                             key={event.id}
                             className={`flex items-start gap-3 p-3 rounded-lg bg-muted/30 border-l-[3px] ${getUrgencyColor(event.daysAway)}`}

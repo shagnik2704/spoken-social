@@ -10,15 +10,30 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 
+
 // 🧠 ZUSTAND: Import the stores
 import { useUserStore } from '@/store/userStore'
 import { useFeedStore, type FeedFilter } from '@/store/feedStore'
-import { MOCK_TRENDING, MOCK_SUGGESTED_USERS } from '@/data/mockData'
 import type { Post, PostType } from '@/types'
-import { useState, useMemo, useEffect} from 'react'
+import { useState, useMemo, useEffect } from 'react'
+
+// Sidebar data — will be replaced with API calls later
+const TRENDING = [
+    { tag: 'Python', posts: 234 },
+    { tag: 'Linux', posts: 189 },
+    { tag: 'Online Test Tips', posts: 156 },
+    { tag: 'Scilab', posts: 98 },
+    { tag: 'Study Group', posts: 67 },
+]
+
+const SUGGESTED_USERS = [
+    { name: 'Dr. Kannan', initials: 'DK', title: 'Mentor • Python Expert', level: 30 },
+    { name: 'Sneha Gupta', initials: 'SG', title: 'Top Contributor', level: 25 },
+    { name: 'Amit Kumar', initials: 'AK', title: 'Top Contributor', level: 18 },
+]
 
 
-// ===== HELPER FUNCTIONS =====
+
 
 function getPostTypeConfig(type: PostType) {
     switch (type) {
@@ -320,7 +335,7 @@ function TrendingTopics() {
                     <h3 className="font-semibold text-sm">Trending Topics</h3>
                 </div>
                 <div className="space-y-2.5">
-                    {MOCK_TRENDING.map((topic, index) => (
+                    {TRENDING.map((topic, index) => (
                         <button
                             key={topic.tag}
                             className="flex items-center justify-between w-full p-2 rounded-lg
@@ -363,7 +378,7 @@ function SuggestedPeople() {
                     </Button>
                 </div>
                 <div className="space-y-3">
-                    {MOCK_SUGGESTED_USERS.map(user => (
+                    {SUGGESTED_USERS.map(user => (
                         <div key={user.name} className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <Avatar className="h-8 w-8 shrink-0">
@@ -394,24 +409,15 @@ function SuggestedPeople() {
 // ===== MAIN FEED PAGE =====
 
 export function Feed() {
-    // 🧠 ZUSTAND LESSON: Why we DON'T use a selector here
-    //
-    // Selectors that create new arrays (via .filter()/.sort()) return a
-    // new reference every time. Zustand compares with Object.is(), sees
-    // the new reference ≠ old reference, and triggers a re-render.
-    // That re-render calls the selector again → new array → re-render → 💥 infinite loop.
-    //
-    // FIX: Read raw state from the store, then derive with useMemo.
-    // useMemo caches the result and only recomputes when deps change.
     const posts = useFeedStore(state => state.posts)
     const activeFilter = useFeedStore(state => state.activeFilter)
-    const fetchPosts = useFeedStore(state=>state.fetchPosts)
-    
-    useEffect(()=>{
-        fetchPosts()
-    },[])
+    const fetchPosts = useFeedStore(state => state.fetchPosts)
 
-    
+    useEffect(() => {
+        fetchPosts()
+    }, [])
+
+
     const filteredPosts = useMemo(() => {
         switch (activeFilter) {
             case 'achievements':
