@@ -8,10 +8,12 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from dotenv import load_dotenv
+import os
 
-# Connection string format: postgresql://user@host/dbname
-# Postgres.app on Mac doesn't need a password for local connections
-DATABASE_URL = "postgresql://shagniksarkar@localhost/spoken_social"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL, echo=False)
 # echo=True would print every SQL query (useful for debugging)
