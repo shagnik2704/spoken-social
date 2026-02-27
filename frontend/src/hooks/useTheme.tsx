@@ -20,7 +20,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setTheme] = useState<Theme>(() => {
         // Check localStorage first, default to dark
         const saved = localStorage.getItem('spoken-social-theme') as Theme
-        return saved || 'dark'
+        return saved || 'light'
     })
 
     useEffect(() => {

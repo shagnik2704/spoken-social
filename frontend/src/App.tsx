@@ -10,15 +10,21 @@ import { Leaderboard } from '@/components/leaderboard/Leaderboard'
 import { CoordinatorDashboard } from '@/components/coordinator/CoordinatorDashboard'
 import { useEffect } from 'react'
 import { useUserStore } from './store/userStore'
-
+import { LoginPage } from './components/auth/LoginPage'
+import { useAuthStore } from './store/authStore'
 
 function App() {
 
   const fetchUser = useUserStore(state => state.fetchUser)
+  const isAuthenticated = useAuthStore(state=>state.isAuthenticated)
 
   useEffect(() => {
-    fetchUser()
-  }, [])
+    if(isAuthenticated){
+      fetchUser()
+    }
+  }, [isAuthenticated])
+
+
 
 
 
@@ -26,33 +32,39 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <ComposeModalProvider>
-          <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
-            {/* Top Bar — fixed, never scrolls */}
-            <TopBar />
+          {!isAuthenticated?(
+            <Routes>
+              <Route path = "*" element = {<LoginPage/>} />
+            </Routes>
+          ):(
+            <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
+              {/* Top Bar — fixed, never scrolls */}
+              <TopBar />
 
-            <div className="flex flex-1 min-h-0">
-              {/* Desktop Sidebar — fixed, never scrolls */}
-              <DesktopSidebar />
+              <div className="flex flex-1 min-h-0">
+                {/* Desktop Sidebar — fixed, never scrolls */}
+                <DesktopSidebar />
 
-              {/* Main Content — the ONLY scrollable area */}
-              <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 pb-20 lg:pb-6">
-                <Routes>
-                  <Route path="/" element={<Navigate to="/feed" replace />} />
-                  <Route path="/feed" element={<Feed />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/leaderboard" element={<Leaderboard />} />
-                  <Route path="/coordinator" element={<CoordinatorDashboard />} />
-                </Routes>
-              </main>
+                {/* Main Content — the ONLY scrollable area */}
+                <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 pb-20 lg:pb-6">
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/feed" replace />} />
+                    <Route path="/feed" element={<Feed />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/leaderboard" element={<Leaderboard />} />
+                    <Route path="/coordinator" element={<CoordinatorDashboard />} />
+                  </Routes>
+                </main>
+              </div>
+
+              {/* Mobile Bottom Navigation */}
+              <MobileBottomNav />
+
+              {/* Compose Modal — renders on top of everything */}
+              <ComposeModal />
             </div>
-
-            {/* Mobile Bottom Navigation */}
-            <MobileBottomNav />
-
-            {/* Compose Modal — renders on top of everything */}
-            <ComposeModal />
-          </div>
+          )}
         </ComposeModalProvider>
       </ThemeProvider>
     </BrowserRouter>
