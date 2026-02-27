@@ -7,6 +7,7 @@ from database import get_db
 from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
 
+
 router = APIRouter(prefix='/api', tags=['users'])
 
 
@@ -19,7 +20,7 @@ def get_current_user_profile(user: User = Depends(get_current_user), db: Session
     """
     # user.courses is a list of UserCourse objects (thanks to relationship())
     courses = [uc.to_api_dict() for uc in user.courses]
-
+    
     # user.badges is a list of UserBadge objects
     badges = [ub.to_api_dict() for ub in user.badges]
 

@@ -6,12 +6,12 @@ export type FeedFilter = 'all' | 'following' | 'achievements' | 'questions' | 't
 
 
 interface FeedState {
-    
+
     posts: Post[]
     activeFilter: FeedFilter
-    isLoading:boolean
+    isLoading: boolean
 
-    fetchPosts:()=>Promise<void>
+    fetchPosts: () => Promise<void>
     setFilter: (filter: FeedFilter) => void
     addPost: (post: { content: string; type: PostType; tags?: string[]; courseName?: string; authorId: string; authorName: string; authorInitials: string; authorLevel: number; authorTitle: string }) => void
     toggleLike: (postId: string) => void
@@ -21,22 +21,22 @@ interface FeedState {
 
 
 export const useFeedStore = create<FeedState>((set, get) => ({
-    posts:[],
+    posts: [],
     activeFilter: 'all',
-    isLoading:false,
+    isLoading: false,
 
-    fetchPosts: async()=>{
-        set({isLoading:true})
+    fetchPosts: async () => {
+        set({ isLoading: true })
         try {
-            const {data} = await api.get('/api/feed')
+            const { data } = await api.get('/api/feed')
             set({
-                posts:data,
-                isLoading:false
+                posts: data,
+                isLoading: false
             })
         }
-        catch(error){
-            console.error('Failed to fetch feed',error)
-            set({isLoading:false})
+        catch (error) {
+            console.error('Failed to fetch feed', error)
+            set({ isLoading: false })
         }
     },
     setFilter: (filter) => {

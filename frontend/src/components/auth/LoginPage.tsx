@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { BookOpen, Loader2 } from 'lucide-react'
+import {toast} from 'sonner'
 
 export function LoginPage() {
     const [email, setEmail] = useState('')
@@ -21,9 +22,18 @@ export function LoginPage() {
         const success = await login(email, password)
         setIsLoading(false)
         if (success) {
+            toast.success('Successfully logged in!',
+                {
+                    description:'Welcome back to Spoken Social'
+                }
+            )
             navigate('/feed')
         }
+        else{
+            toast.error('Login failed.Please check your credentials')
+        }
     }
+    
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">

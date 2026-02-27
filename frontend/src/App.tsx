@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import { useUserStore } from './store/userStore'
 import { LoginPage } from './components/auth/LoginPage'
 import { useAuthStore } from './store/authStore'
+import { Toaster } from '@/components/ui/sonner'
 
 function App() {
 
@@ -65,6 +66,10 @@ function App() {
               <ComposeModal />
             </div>
           )}
+          
+          <Toaster 
+            position="top-right" 
+          />
         </ComposeModalProvider>
       </ThemeProvider>
     </BrowserRouter>
