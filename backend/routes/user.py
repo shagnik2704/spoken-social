@@ -1,45 +1,55 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
-from data import all_users, CURRENT_USER_ID, user_tutorials
+from data import all_users, user_tutorials
+from dependencies import get_current_user
 
-router = APIRouter(prefix='/api',tags=['users'])
+router = APIRouter(prefix='/api', tags=['users'])
+
+
+# ===== PROTECTED: requires JWT token =====
 
 @router.get('/me')
-def get_current_user():
-    data = all_users[CURRENT_USER_ID]
+def get_current_user_profile(user: dict = Depends(get_current_user)):
+    """
+    Returns the logged-in user's full profile.
+    'user' is automatically resolved from the JWT token by get_current_user.
+    """
     return {
         "user": {
-            "id": data["id"],
-            "name": data["name"],
-            "username": data["username"],
-            "initials": data["initials"],
-            "bio": data["bio"],
-            "level": data["level"],
-            "levelTitle": data["levelTitle"],
-            "xpTotal": data["xpTotal"],
-            "xpForNextLevel": data["xpForNextLevel"],
-            "xpToday": data["xpToday"],
-            "xpThisWeek": data["xpThisWeek"],
-            "joinDate": data["joinDate"],
-            "location": data["location"],
-            "website": data["website"],
-            "followers": data["followers"],
-            "following": data["following"],
-            "postsCount": data["postsCount"],
-            "college": data["college"],
-            "department": data["department"],
+            "id": user["id"],
+            "name": user["name"],
+            "username": user["username"],
+            "initials": user["initials"],
+            "bio": user["bio"],
+            "level": user["level"],
+            "levelTitle": user["levelTitle"],
+            "xpTotal": user["xpTotal"],
+            "xpForNextLevel": user["xpForNextLevel"],
+            "xpToday": user["xpToday"],
+            "xpThisWeek": user["xpThisWeek"],
+            "joinDate": user["joinDate"],
+            "location": user["location"],
+            "website": user["website"],
+            "followers": user["followers"],
+            "following": user["following"],
+            "postsCount": user["postsCount"],
+            "college": user["college"],
+            "department": user["department"],
         },
-
-
-        "weeklyGoal": data["weeklyGoal"],
-        "courses": data["courses"],
-        "badges": data["badges"],
+        "weeklyGoal": user["weeklyGoal"],
+        "courses": user["courses"],
+        "badges": user["badges"],
     }
 
+
+# ===== PUBLIC: no auth needed =====
+
 @router.get('/users/{user_id}')
-def get_user_by_id(user_id:str):
-    data = all_users[user_id]
+def get_user_by_id(user_id: str):
+    data = all_users.get(user_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="User not found")
     return {
         "user": {
             "id": data["id"],
@@ -62,8 +72,6 @@ def get_user_by_id(user_id:str):
             "college": data["college"],
             "department": data["department"],
         },
-
-
         "weeklyGoal": data["weeklyGoal"],
         "courses": data["courses"],
         "badges": data["badges"],
@@ -81,11 +89,11 @@ class XPUpdate(BaseModel):
     source: str
 
 
-# ===== TUTORIAL ENDPOINTS =====
+# ===== TUTORIAL ENDPOINTS (protected) =====
 
 @router.get('/me/courses/{course_id}/tutorials')
-def get_my_tutorials(course_id: str):
-    key = f"{CURRENT_USER_ID}:{course_id}"
+def get_my_tutorials(course_id: str, user: dict = Depends(get_current_user)):
+    key = f"{user['id']}:{course_id}"
     tutorials = user_tutorials.get(key)
     if tutorials is None:
         raise HTTPException(status_code=404, detail="No tutorial data found")
@@ -93,8 +101,8 @@ def get_my_tutorials(course_id: str):
 
 
 @router.put('/me/courses/{course_id}/tutorials/{tutorial_id}')
-def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate):
-    key = f"{CURRENT_USER_ID}:{course_id}"
+def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate, user: dict = Depends(get_current_user)):
+    key = f"{user['id']}:{course_id}"
     tutorials = user_tutorials.get(key)
     if tutorials is None:
         raise HTTPException(status_code=404, detail="No tutorial data found")
@@ -118,11 +126,10 @@ def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate):
     return tutorial
 
 
-# ===== XP ENDPOINT =====
+# ===== XP ENDPOINT (protected) =====
 
 @router.post('/me/xp')
-def add_xp(body: XPUpdate):
-    user = all_users[CURRENT_USER_ID]
+def add_xp(body: XPUpdate, user: dict = Depends(get_current_user)):
     user["xpTotal"] += body.amount
     user["xpToday"] += body.amount
     user["xpThisWeek"] += body.amount
