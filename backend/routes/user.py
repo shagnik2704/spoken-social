@@ -1,80 +1,52 @@
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
-from data import all_users, user_tutorials
+from sqlalchemy.orm import Session
+from database import get_db
 from dependencies import get_current_user
+from models import User, UserCourse, UserTutorial, UserBadge
 
 router = APIRouter(prefix='/api', tags=['users'])
 
 
-# ===== PROTECTED: requires JWT token =====
 
 @router.get('/me')
-def get_current_user_profile(user: dict = Depends(get_current_user)):
+def get_current_user_profile(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Returns the logged-in user's full profile.
-    'user' is automatically resolved from the JWT token by get_current_user.
+    Returns the logged-in user's full profile + courses + badges.
+    'user' is a User ORM object resolved from the JWT token.
     """
+    # user.courses is a list of UserCourse objects (thanks to relationship())
+    courses = [uc.to_api_dict() for uc in user.courses]
+
+    # user.badges is a list of UserBadge objects
+    badges = [ub.to_api_dict() for ub in user.badges]
+
     return {
-        "user": {
-            "id": user["id"],
-            "name": user["name"],
-            "username": user["username"],
-            "initials": user["initials"],
-            "bio": user["bio"],
-            "level": user["level"],
-            "levelTitle": user["levelTitle"],
-            "xpTotal": user["xpTotal"],
-            "xpForNextLevel": user["xpForNextLevel"],
-            "xpToday": user["xpToday"],
-            "xpThisWeek": user["xpThisWeek"],
-            "joinDate": user["joinDate"],
-            "location": user["location"],
-            "website": user["website"],
-            "followers": user["followers"],
-            "following": user["following"],
-            "postsCount": user["postsCount"],
-            "college": user["college"],
-            "department": user["department"],
-        },
-        "weeklyGoal": user["weeklyGoal"],
-        "courses": user["courses"],
-        "badges": user["badges"],
+        "user": user.to_api_dict(),
+        "weeklyGoal": user.weekly_goal,
+        "courses": courses,
+        "badges": badges,
     }
 
 
 # ===== PUBLIC: no auth needed =====
 
 @router.get('/users/{user_id}')
-def get_user_by_id(user_id: str):
-    data = all_users.get(user_id)
-    if not data:
+def get_user_by_id(user_id: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    courses = [uc.to_api_dict() for uc in user.courses]
+    badges = [ub.to_api_dict() for ub in user.badges]
+
     return {
-        "user": {
-            "id": data["id"],
-            "name": data["name"],
-            "username": data["username"],
-            "initials": data["initials"],
-            "bio": data["bio"],
-            "level": data["level"],
-            "levelTitle": data["levelTitle"],
-            "xpTotal": data["xpTotal"],
-            "xpForNextLevel": data["xpForNextLevel"],
-            "xpToday": data["xpToday"],
-            "xpThisWeek": data["xpThisWeek"],
-            "joinDate": data["joinDate"],
-            "location": data["location"],
-            "website": data["website"],
-            "followers": data["followers"],
-            "following": data["following"],
-            "postsCount": data["postsCount"],
-            "college": data["college"],
-            "department": data["department"],
-        },
-        "weeklyGoal": data["weeklyGoal"],
-        "courses": data["courses"],
-        "badges": data["badges"],
+        "user": user.to_api_dict(),
+        "weeklyGoal": user.weekly_goal,
+        "courses": courses,
+        "badges": badges,
     }
 
 
@@ -92,54 +64,67 @@ class XPUpdate(BaseModel):
 # ===== TUTORIAL ENDPOINTS (protected) =====
 
 @router.get('/me/courses/{course_id}/tutorials')
-def get_my_tutorials(course_id: str, user: dict = Depends(get_current_user)):
-    key = f"{user['id']}:{course_id}"
-    tutorials = user_tutorials.get(key)
-    if tutorials is None:
+def get_my_tutorials(course_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    tutorials = db.query(UserTutorial).filter_by(user_id=user.id, course_id=course_id).all()
+    if not tutorials:
         raise HTTPException(status_code=404, detail="No tutorial data found")
-    return tutorials
+    return [t.to_api_dict() for t in tutorials]
 
 
 @router.put('/me/courses/{course_id}/tutorials/{tutorial_id}')
-def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate, user: dict = Depends(get_current_user)):
-    key = f"{user['id']}:{course_id}"
-    tutorials = user_tutorials.get(key)
-    if tutorials is None:
-        raise HTTPException(status_code=404, detail="No tutorial data found")
+def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
+                    user: User = Depends(get_current_user), db: Session = Depends(get_db)):
 
-    tutorial = next((t for t in tutorials if t["id"] == tutorial_id), None)
-    if not tutorial:
+    ut = db.query(UserTutorial).filter_by(user_id=user.id, tutorial_id=tutorial_id, course_id=course_id).first()
+    if not ut:
         raise HTTPException(status_code=404, detail="Tutorial not found")
 
-    valid_fields = ["watched", "practiced", "assignmentDone", "forumAsked", "forumAnswered"]
-    if body.field not in valid_fields:
+    # Map frontend field names → database column names
+    field_map = {
+        "watched": "watched",
+        "practiced": "practiced",
+        "assignmentDone": "assignment_done",
+        "forumAsked": "forum_asked",
+        "forumAnswered": "forum_answered",
+    }
+
+    if body.field not in field_map:
         raise HTTPException(status_code=400, detail="Invalid field")
 
-    tutorial[body.field] = body.value
+    # Update the field on the ORM object
+    setattr(ut, field_map[body.field], body.value)
 
+    # Auto-complete if practiced
     if body.field == "practiced" and body.value == "yes":
-        tutorial["completed"] = True
+        ut.completed = True
 
-    XP_MAP = {"watched": 10, "practiced": 10, "assignmentDone": 5, "forumAsked": 5, "forumAnswered": 5}
-    tutorial["xpEarned"] = sum(XP_MAP[f] for f in valid_fields if tutorial.get(f) == "yes")
+    # Recalculate XP
+    XP_MAP = {"watched": 10, "practiced": 10, "assignment_done": 5, "forum_asked": 5, "forum_answered": 5}
+    ut.xp_earned = sum(
+        XP_MAP[col] for col in XP_MAP
+        if getattr(ut, col) == "yes"
+    )
 
-    return tutorial
+    db.commit()  # ← THIS is the magic line. Saves to PostgreSQL.
+    return ut.to_api_dict()
 
 
 # ===== XP ENDPOINT (protected) =====
 
 @router.post('/me/xp')
-def add_xp(body: XPUpdate, user: dict = Depends(get_current_user)):
-    user["xpTotal"] += body.amount
-    user["xpToday"] += body.amount
-    user["xpThisWeek"] += body.amount
+def add_xp(body: XPUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user.xp_total += body.amount
+    user.xp_today += body.amount
+    user.xp_this_week += body.amount
 
-    xp = user["xpTotal"]
-    if xp >= 12000:   user["level"], user["levelTitle"] = 26, "Spoken Legend"
-    elif xp >= 7000:  user["level"], user["levelTitle"] = 21, "Master"
-    elif xp >= 3500:  user["level"], user["levelTitle"] = 16, "Expert"
-    elif xp >= 1500:  user["level"], user["levelTitle"] = 11, "Practitioner"
-    elif xp >= 500:   user["level"], user["levelTitle"] = 6, "Explorer"
-    else:             user["level"], user["levelTitle"] = 1, "Beginner"
+    # Level up logic
+    xp = user.xp_total
+    if xp >= 12000:   user.level, user.level_title = 26, "Spoken Legend"
+    elif xp >= 7000:  user.level, user.level_title = 21, "Master"
+    elif xp >= 3500:  user.level, user.level_title = 16, "Expert"
+    elif xp >= 1500:  user.level, user.level_title = 11, "Practitioner"
+    elif xp >= 500:   user.level, user.level_title = 6, "Explorer"
+    else:             user.level, user.level_title = 1, "Beginner"
 
-    return {"xpTotal": user["xpTotal"], "level": user["level"], "levelTitle": user["levelTitle"]}
+    db.commit()  # ← saves XP to PostgreSQL
+    return {"xpTotal": user.xp_total, "level": user.level, "levelTitle": user.level_title}

@@ -1,32 +1,15 @@
-# ============================================================
-# FastAPI Dependencies — reusable "middleware" for routes
-# ============================================================
-# get_current_user is injected into any route that needs auth.
-# FastAPI calls it automatically before your route function runs.
-# ============================================================
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from services.jwt import decode_token
-from data import all_users
+from models import User
+from database import get_db
+from sqlalchemy.orm import Session
 
-# This tells FastAPI to look for "Authorization: Bearer <token>" header
 security = HTTPBearer()
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-    """
-    FastAPI dependency that:
-    1. Extracts the JWT token from the Authorization header
-    2. Decodes it to get the user_id
-    3. Looks up the full user from data store
-    4. Returns the user dict (or raises 401)
-    
-    Usage in any route:
-        @router.get('/me')
-        def get_me(user = Depends(get_current_user)):
-            return user
-    """
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security),db:Session=Depends(get_db)) -> dict:
+
     token = credentials.credentials
     user_id = decode_token(token)
 
@@ -36,7 +19,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail="Invalid or expired token",
         )
 
-    user = all_users.get(user_id)
+    user = db.query(User).filter_by(id=user_id).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
