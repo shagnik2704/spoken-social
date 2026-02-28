@@ -146,7 +146,7 @@ export interface ProfileStat {
 
 // Tutorial
 
-export type RadioValue = boolean | null
+export type RadioValue = 'yes' | 'no' | null
 
 export type TutorialField = 'watched' | 'practiced' | 'assignmentDone' | 'forumAsked' | 'forumAnswered'
 
