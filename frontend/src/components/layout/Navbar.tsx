@@ -207,15 +207,28 @@ export function DesktopSidebar() {
                         // Post button opens the compose modal
                         if (item.label === 'Post') {
                             return (
-                                <button
-                                    key={item.label}
-                                    onClick={openCompose}
-                                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium
-                                           text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
-                                >
-                                    <item.icon className="h-5 w-5" />
-                                    {item.label}
-                                </button>
+                                <TooltipProvider key={item.label}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed">
+                                                <item.icon className="h-5 w-5" />
+                                                {item.label}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right">
+                                            <p>Coming soon!</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                // <button
+                                //     key={item.label}
+                                //     onClick={openCompose}
+                                //     className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium
+                                //            text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+                                // >
+                                //     <item.icon className="h-5 w-5" />
+                                //     {item.label}
+                                // </button>
                             )
                         }
                         if (item.label === 'Feed') {
