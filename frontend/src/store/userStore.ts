@@ -62,7 +62,16 @@ export const useUserStore = create<UserState>((set, get) => ({
     fetchTutorials: async (courseId) => {
         try {
             const { data } = await api.get(`/api/me/courses/${courseId}/tutorials`)
-            set({ tutorials: data })
+            // Backend returns boolean values — convert to 'yes'/'no' strings for RadioGroup
+            const fields = ['watched', 'practiced', 'assignmentDone', 'forumAsked', 'forumAnswered'] as const
+            const converted = data.map((t: any) => {
+                const out = { ...t }
+                for (const f of fields) {
+                    out[f] = t[f] === true ? 'yes' : t[f] === false ? 'no' : null
+                }
+                return out
+            })
+            set({ tutorials: converted })
         }
         catch (error) {
             console.error('Failed to fetch tutorials', error)
@@ -70,19 +79,22 @@ export const useUserStore = create<UserState>((set, get) => ({
     },
 
     updateTutorials(courseId, tutorialId, field, value) {
+        // Convert 'yes'/'no' to boolean for the backend API
+        const boolValue = value === 'yes' ? true : value === 'no' ? false : null
+
         set({
             tutorials: get().tutorials.map(t => {
                 if (t.id !== tutorialId) return t
                 const updated = { ...t, [field]: value }
-                if (field === 'practiced' && value === true) updated.completed = true
+                if (field === 'practiced' && value === 'yes') updated.completed = true
 
                 const XP: Record<string, number> = { watched: 10, practiced: 10, assignmentDone: 5, forumAsked: 5, forumAnswered: 5 }
-                updated.xpEarned = Object.entries(XP).reduce((sum, [f, pts]) => sum + (updated[f as TutorialField] === true ? pts : 0), 0)
+                updated.xpEarned = Object.entries(XP).reduce((sum, [f, pts]) => sum + (updated[f as TutorialField] === 'yes' ? pts : 0), 0)
                 return updated
             })
         })
 
-        api.put(`/api/me/courses/${courseId}/tutorials/${tutorialId}`, { field, value })
+        api.put(`/api/me/courses/${courseId}/tutorials/${tutorialId}`, { field, value: boolValue })
     },
 
     login: (user) => {
