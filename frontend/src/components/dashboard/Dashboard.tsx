@@ -321,7 +321,7 @@ function UpcomingDeadlines() {
 
 // ===== MAIN DASHBOARD PAGE =====
 
-export function Dashboard() {
+export default function Dashboard() {
     const isLoading = useUserStore(state=>state.isLoading) 
     if(isLoading)
     {

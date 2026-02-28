@@ -201,7 +201,7 @@ function YourPosition({ user, data }: { user: LeaderboardUser; data: Leaderboard
 
 type TimeFilter = 'overall' | 'weekly'
 
-export function Leaderboard() {
+export default function Leaderboard() {
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([])
     const [timeFilter, setTimeFilter] = useState<TimeFilter>('overall')
     const [selectedCourse, setSelectedCourse] = useState('all')

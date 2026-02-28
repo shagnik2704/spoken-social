@@ -355,7 +355,7 @@ function ActivityTimeline() {
 
 type ProfileTab = 'activity' | 'courses' | 'badges'
 
-export function Profile() {
+export default function Profile() {
     const [activeTab, setActiveTab] = useState<ProfileTab>('activity')
     const courses = useUserStore(state => state.courses)
     const badges = useUserStore(state => state.badges)

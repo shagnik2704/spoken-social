@@ -10,7 +10,6 @@ import {
     LayoutDashboard,
     PlusCircle,
     User,
-    Settings,
     Moon,
     Sun,
     LogOut,

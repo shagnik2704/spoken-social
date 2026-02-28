@@ -27,7 +27,7 @@ export function LoginPage() {
                     description:'Welcome back to Spoken Social'
                 }
             )
-            navigate('/feed')
+            navigate('/dashboard')
         }
         else{
             toast.error('Login failed.Please check your credentials')

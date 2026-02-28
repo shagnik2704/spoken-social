@@ -1,13 +1,14 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { TopBar, DesktopSidebar, MobileBottomNav } from '@/components/layout/Navbar'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { ComposeModalProvider } from '@/hooks/useComposeModal'
 import { ComposeModal } from '@/components/compose/ComposeModal'
-import { Dashboard } from '@/components/dashboard/Dashboard'
-import { Feed } from '@/components/feed/Feed'
-import { Profile } from '@/components/profile/Profile'
-import { Leaderboard } from '@/components/leaderboard/Leaderboard'
-import { CoordinatorDashboard } from '@/components/coordinator/CoordinatorDashboard'
+const Feed = lazy(() => import('@/components/feed/Feed'))
+const Profile = lazy(() => import('@/components/profile/Profile'))
+const Dashboard = lazy(() => import('@/components/dashboard/Dashboard'))
+const Leaderboard = lazy(() => import('@/components/leaderboard/Leaderboard'))
+const CoordinatorDashboard = lazy(() => import('@/components/coordinator/CoordinatorDashboard'))
 import { useEffect } from 'react'
 import { useUserStore } from './store/userStore'
 import { LoginPage } from './components/auth/LoginPage'
@@ -48,14 +49,16 @@ function App() {
 
                 {/* Main Content — the ONLY scrollable area */}
                 <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 pb-20 lg:pb-6">
-                  <Routes>
-                    <Route path="/" element={<Navigate to="/feed" replace />} />
-                    <Route path="/feed" element={<Feed />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/leaderboard" element={<Leaderboard />} />
-                    <Route path="/coordinator" element={<CoordinatorDashboard />} />
-                  </Routes>
+                  <Suspense fallback={<div className="flex h-full items-center justify-center p-8">Loading page...</div>}>
+                    <Routes>
+                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/feed" element={<Feed />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/leaderboard" element={<Leaderboard />} />
+                      <Route path="/coordinator" element={<CoordinatorDashboard />} />
+                    </Routes>
+                  </Suspense>
                 </main>
               </div>
 
@@ -66,9 +69,9 @@ function App() {
               <ComposeModal />
             </div>
           )}
-          
-          <Toaster 
-            position="top-right" 
+
+          <Toaster
+            position="bottom-right"
           />
         </ComposeModalProvider>
       </ThemeProvider>

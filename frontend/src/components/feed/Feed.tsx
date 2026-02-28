@@ -407,7 +407,7 @@ function SuggestedPeople() {
 
 // ===== MAIN FEED PAGE =====
 
-export function Feed() {
+export default function Feed() {
     const posts = useFeedStore(state => state.posts)
     const activeFilter = useFeedStore(state => state.activeFilter)
     const fetchPosts = useFeedStore(state => state.fetchPosts)
