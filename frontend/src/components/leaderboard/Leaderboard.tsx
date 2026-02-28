@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import type { LeaderboardUser } from '@/types'
 import { useState, useEffect } from 'react'
-import api from '@/lib/axios'
+import { useLeaderboardStore } from '@/store/leaderboardStore'
 
 const courses = [
     { id: 'all', name: 'All Courses', icon: BookOpen },
@@ -201,23 +201,14 @@ function YourPosition({ user, data }: { user: LeaderboardUser; data: Leaderboard
 type TimeFilter = 'overall' | 'weekly'
 
 export default function Leaderboard() {
-    const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([])
+    const { leaderboardData, fetchLeaderboard } = useLeaderboardStore()
     const [timeFilter, setTimeFilter] = useState<TimeFilter>('overall')
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
 
 
     useEffect(() => {
-        const fetchLeaderboardData = async () => {
-            try {
-                const { data } = await api.get('/api/leaderboard')
-                setLeaderboardData(data)
-            }
-            catch (error) {
-                console.log(error)
-            }
-        }
-        fetchLeaderboardData()
+        fetchLeaderboard()
     }, [])
 
     const currentUser = leaderboardData.find(u => u.isCurrentUser)

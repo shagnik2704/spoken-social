@@ -8,6 +8,7 @@ from routes.leaderboard import router as leaderboard_router
 from routes.coordinator import router as coordinator_router
 from routes.feedback import router as feedback_router
 from routes.admin import router as admin_router
+from routes.sse import router as sse_router
 from scheduler import start_scheduler, stop_scheduler
 
 
@@ -24,7 +25,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -36,3 +37,4 @@ app.include_router(leaderboard_router)
 app.include_router(coordinator_router)
 app.include_router(feedback_router)
 app.include_router(admin_router)
+app.include_router(sse_router)
