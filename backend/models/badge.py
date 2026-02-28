@@ -1,42 +1,30 @@
-# ============================================================
-# Badge Models
-# ============================================================
-# Badge     = badge definition (e.g. "7-Day Streak")
-# UserBadge = whether a specific user has earned it
-# ============================================================
-
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from database import Base
+from datetime import datetime, timezone
 
 
 class Badge(Base):
-    """A badge definition."""
     __tablename__ = "badges"
 
-    id = Column(String, primary_key=True)
-    name = Column(String, nullable=False)
-    description = Column(String, default="")
-    icon = Column(String, default="")
-    color = Column(String, default="")
-    bg_color = Column(String, default="")
+    id = Column(String(50), primary_key=True)
+    name = Column(String(150), nullable=False)
+    description = Column(Text)
+    icon = Column(String(255))
+    color = Column(String(32))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     user_badges = relationship("UserBadge", back_populates="badge")
 
 
 class UserBadge(Base):
-    """Whether a specific user has earned a badge."""
     __tablename__ = "user_badges"
 
-    id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    badge_id = Column(String, ForeignKey("badges.id"), nullable=False)
-
-    earned = Column(Boolean, default=False)
-    earned_date = Column(String, nullable=True)
-    progress = Column(String, nullable=True)       # "15/30 days"
-    days_away = Column(Integer, nullable=True)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    badge_id = Column(String(50), ForeignKey("badges.id", ondelete="CASCADE"), primary_key=True)
+    earned_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     user = relationship("User", back_populates="badges")
@@ -49,9 +37,5 @@ class UserBadge(Base):
             "description": self.badge.description if self.badge else "",
             "icon": self.badge.icon if self.badge else "",
             "color": self.badge.color if self.badge else "",
-            "bgColor": self.badge.bg_color if self.badge else "",
-            "earned": self.earned,
-            "earnedDate": self.earned_date,
-            "progress": self.progress,
-            "daysAway": self.days_away,
+            "earnedAt": self.earned_at.isoformat() if self.earned_at else None,
         }

@@ -104,8 +104,8 @@ function PostComposer() {
             content: postText,
             type: 'discussion',
             authorId: user.id,
-            authorName: user.name,
-            authorInitials: user.initials,
+            authorName: user.displayName,
+            authorInitials: user.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??',
             authorLevel: user.level,
             authorTitle: user.levelTitle,
         })
@@ -119,7 +119,7 @@ function PostComposer() {
                 <div className="flex gap-3">
                     <Avatar className="h-10 w-10 shrink-0">
                         <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                            {user?.initials || '??'}
+                            {user?.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
@@ -184,7 +184,7 @@ function FeedPost({ post }: { post: Post }) {
                     <div className="flex items-start gap-3 min-w-0">
                         <Avatar className="h-10 w-10 shrink-0 ring-2 ring-background">
                             <AvatarFallback className="bg-muted text-foreground text-xs font-semibold">
-                                {post.author.initials}
+                                {post.author.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??'}
                             </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
@@ -215,11 +215,11 @@ function FeedPost({ post }: { post: Post }) {
                 {/* Post Content */}
                 <div className="mb-3">
                     <p className="text-sm leading-relaxed whitespace-pre-line">{post.content}</p>
-                    {post.details && (
+                    {post.courseId && (
                         <div className={`mt-3 p-3 rounded-lg bg-gradient-to-r ${config.gradient} border ${config.borderColor}`}>
                             <p className="text-xs font-medium flex items-center gap-2">
-                                {post.courseName && getCourseIcon(post.courseName)}
-                                {post.details}
+                                {post.courseId && getCourseIcon(post.courseId)}
+                                Course: {post.courseId}
                             </p>
                         </div>
                     )}
@@ -382,7 +382,7 @@ function SuggestedPeople() {
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <Avatar className="h-8 w-8 shrink-0">
                                     <AvatarFallback className="bg-muted text-foreground text-[10px] font-semibold">
-                                        {user.initials}
+                                        {user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??'}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0">

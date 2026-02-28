@@ -40,7 +40,7 @@ def login(body: LoginRequest):
             detail="Invalid email or password",
         )
 
-    # Create a JWT with the user_id baked in
+    # Create a JWT with the user_id (UUID string) baked in
     token = create_access_token(user_info["user_id"])
 
     return {

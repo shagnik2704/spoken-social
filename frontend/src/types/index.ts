@@ -9,34 +9,23 @@
 
 export interface User {
     id: string
-    name: string
     username: string
-    initials: string
+    displayName: string
+    email: string
     bio: string
+    departmentYear: string
+    location: string
+    website: string
     level: number
     levelTitle: string
     xpTotal: number
     xpForNextLevel: number
     xpToday: number
     xpThisWeek: number
-    joinDate: string
-    location: string
-    website: string
+    xpLastWeek: number
     followers: number
     following: number
     postsCount: number
-    avatar?: string
-    college?: string
-    department?: string
-}
-
-
-
-export interface WeeklyGoal {
-    target: number
-    completed: number
-    days: boolean[]
-    dayLabels: string[]
 }
 
 // ----- Courses -----
@@ -46,11 +35,9 @@ export type CourseStatus = 'in_progress' | 'completed' | 'not_started'
 export interface Course {
     id: string
     title: string
-    progress: number
-    completed: number
-    total: number
     status: CourseStatus
-    completedDate?: string
+    progressPercent: number
+    completedAt?: string | null
 }
 
 // ----- Badges -----
@@ -59,14 +46,9 @@ export interface Badge {
     id: string
     name: string
     description: string
-    icon: string          // icon key, e.g. 'flame', 'book-open'
-    color: string         // tailwind color class
-    bgColor: string       // tailwind bg class
-    earned: boolean
-    earnedDate?: string
-    // for upcoming/locked badges:
-    progress?: string
-    daysAway?: number | null
+    icon: string
+    color: string
+    earnedAt?: string | null
 }
 
 // ----- Posts & Feed -----
@@ -78,24 +60,21 @@ export interface Post {
     author: {
         id: string
         name: string
-        avatar?: string
-        initials: string
+        username: string
         level: number
         title: string
     }
     type: PostType
     content: string
-    details?: string
-    courseName?: string
+    courseId?: string
     timestamp: string
-    createdAt: number     // epoch ms for sorting
+    createdAt: number
     likes: number
     comments: number
     shares: number
     isLiked: boolean
     isBookmarked: boolean
     tags?: string[]
-    image?: string
 }
 
 // ----- Leaderboard -----
@@ -104,23 +83,19 @@ export interface LeaderboardUser {
     id: string
     rank: number
     name: string
-    initials: string
+    username: string
     level: number
     levelTitle: string
     xp: number
-    xpThisWeek: number
-
-    coursesCompleted: number
+    xpLastWeek: number
     trend: 'up' | 'down' | 'same'
     trendDelta: number
     isCurrentUser: boolean
-    college?: string
-    courseProgress?: number
 }
 
 // ----- Activity -----
 
-export type ActivityType = 'achievement' | 'post' | 'badge' | 'course' | 'answer'
+export type ActivityType = 'achievement' | 'post' | 'badge' | 'course' | 'answer' | 'earned_badge' | 'completed_tutorial' | 'posted'
 
 export interface Activity {
     id: string
@@ -151,7 +126,7 @@ export interface TrendingTopic {
 
 export interface SuggestedUser {
     name: string
-    initials: string
+    username: string
     title: string
     level: number
 }
@@ -167,7 +142,7 @@ export interface ProfileStat {
 
 // Tutorial
 
-export type RadioValue = 'yes'|'no'|null
+export type RadioValue = boolean | null
 
 export type TutorialField = 'watched' | 'practiced' | 'assignmentDone' | 'forumAsked' | 'forumAnswered'
 
@@ -175,6 +150,7 @@ export interface Tutorial {
     id: string
     number: number
     title: string
+    status: string
     completed: boolean
     watched: RadioValue
     practiced: RadioValue
@@ -183,4 +159,3 @@ export interface Tutorial {
     forumAnswered: RadioValue
     xpEarned: number
 }
-

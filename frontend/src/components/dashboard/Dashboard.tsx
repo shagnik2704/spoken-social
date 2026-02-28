@@ -1,5 +1,5 @@
 import {
-    Zap, Calendar, ChevronRight, Trophy, Lock,
+    Zap, ChevronRight, Trophy, Lock,
     BookOpen, Hand, Code, Terminal, BarChart3, FileText, Settings,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
     CheckCircle2
@@ -47,7 +47,7 @@ function getGreeting(): string {
 
 function GreetingBanner() {
 
-    const userName = useUserStore(state => state.user?.name)
+    const userName = useUserStore(state => state.user?.displayName)
     const firstName = userName?.split(' ')[0]
 
 
@@ -117,57 +117,7 @@ function XPLevelCard() {
 }
 
 
-function WeeklyGoalTracker() {
-    const weeklyGoal = useUserStore(state => state.weeklyGoal)
-
-    const isToday = (index: number) => {
-        const today = new Date().getDay()
-        const todayIndex = today === 0 ? 6 : today - 1
-        return index === todayIndex
-    }
-
-    return (
-        <Card>
-            <CardContent className="p-5 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-semibold">Weekly Goal</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                        {weeklyGoal.completed}/{weeklyGoal.target} tutorials
-                    </span>
-                </div>
-                <div className="flex items-center justify-between gap-2 sm:gap-3">
-                    {weeklyGoal.days.map((done, i) => (
-                        <div key={i} className="flex flex-col items-center gap-1.5">
-                            <div
-                                className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full text-xs font-semibold transition-all
-                  ${done
-                                        ? 'bg-primary text-primary-foreground'
-                                        : isToday(i)
-                                            ? 'border-2 border-dashed border-primary/50 text-primary animate-pulse'
-                                            : 'bg-muted text-muted-foreground'
-                                    }`}
-                            >
-                                {done ? <CheckCircle2 className="h-4 w-4" /> : weeklyGoal.dayLabels[i]}
-                            </div>
-                            <span className={`text-[10px] ${isToday(i) ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
-                                {weeklyGoal.dayLabels[i]}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-4 text-center">
-                    {weeklyGoal.completed >= weeklyGoal.target
-                        ? 'Weekly goal smashed!'
-                        : `${weeklyGoal.target - weeklyGoal.completed} more to hit your goal!`
-                    }
-                </p>
-            </CardContent>
-        </Card>
-    )
-}
+// WeeklyGoalTracker removed — weekly_goal field no longer in schema
 
 
 function MyCourses() {
@@ -192,16 +142,13 @@ function MyCourses() {
                                 {courseIconMap[course.title] || <Code className="h-5 w-5 text-muted-foreground" />}
                             </div>
                             <h3 className="text-sm font-semibold truncate">{course.title}</h3>
-                            <p className="text-[11px] text-muted-foreground mt-1">
-                                {course.completed}/{course.total} tutorials
-                            </p>
                             <div className="flex items-center gap-2 mt-3">
                                 <Progress
-                                    value={course.progress}
+                                    value={course.progressPercent}
                                     className={`h-1.5 flex-1 ${course.status === 'completed' ? '[&>div]:bg-success' : ''}`}
                                 />
                                 <span className="text-[11px] font-mono text-muted-foreground">
-                                    {course.progress}%
+                                    {Math.round(course.progressPercent)}%
                                 </span>
                             </div>
                             {course.status === 'completed' && (
@@ -221,8 +168,8 @@ function MyCourses() {
 
 function AchievementsPreview() {
     const badges = useUserStore(state => state.badges)
-    const earnedBadges = badges.filter(b => b.earned)
-    const upcomingBadges = badges.filter(b => !b.earned && b.progress)
+    const earnedBadges = badges.filter(b => b.earnedAt)
+    const upcomingBadges: typeof badges = []  // no progress tracking in new schema
 
     return (
         <Card>
@@ -262,7 +209,7 @@ function AchievementsPreview() {
                                 <div key={badge.id} className="flex items-center gap-2.5 text-xs">
                                     <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                                     <span className="text-muted-foreground">{badge.name}</span>
-                                    <span className="ml-auto text-[11px] font-mono text-muted-foreground">{badge.progress}</span>
+                                    <span className="ml-auto text-[11px] font-mono text-muted-foreground">{badge.name}</span>
                                 </div>
                             ))}
                         </div>
@@ -349,8 +296,7 @@ export default function Dashboard() {
             {/* Section 3: Active Course Tracker */}
             <ActiveCourseTracker />
 
-            {/* Section 4: Weekly Goal */}
-            <WeeklyGoalTracker />
+            {/* Weekly Goal removed from schema */}
 
             {/* Section 5: My Courses */}
             <MyCourses />

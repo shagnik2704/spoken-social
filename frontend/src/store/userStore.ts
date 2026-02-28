@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { User, WeeklyGoal, Course, Badge, Tutorial, RadioValue, TutorialField } from '@/types'
+import type { User, Course, Badge, Tutorial, RadioValue, TutorialField } from '@/types'
 import api from '@/lib/axios'
 
 
@@ -9,13 +9,13 @@ interface UserState {
     isLoading: boolean
     error: string | null
     isAuthenticated: boolean
-    weeklyGoal: WeeklyGoal
     courses: Course[]
     badges: Badge[]
     tutorials: Tutorial[]
     activeCourseId: string
-    
-    
+    weeklyGoal: any
+
+
 
     fetchTutorials: (courseId: string) => Promise<void>
     updateTutorials: (courseId: string, tutorialId: string, field: TutorialField, value: RadioValue) => void
@@ -32,20 +32,20 @@ export const useUserStore = create<UserState>((set, get) => ({
     isLoading: false,
     error: null,
     isAuthenticated: false,
-    weeklyGoal: { target: 0, completed: 0, days: [], dayLabels: [] },
     courses: [],
     badges: [],
     tutorials: [],
-    activeCourseId:'2',
+    activeCourseId: 'linux',
+    weeklyGoal: null,
 
 
     fetchUser: async () => {
-        set({isLoading:true,error:null})
+        set({ isLoading: true, error: null })
         try {
             const { data } = await api.get('/api/me')
             set({
                 user: data.user,
-                isLoading:false,
+                isLoading: false,
                 weeklyGoal: data.weeklyGoal,
                 courses: data.courses,
                 badges: data.badges,
@@ -54,7 +54,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         }
         catch (error) {
             console.error('Failed to fetch user:', error)
-            set({error:'Failed to load',isLoading:false})
+            set({ error: 'Failed to load', isLoading: false })
         }
     },
 
@@ -74,10 +74,10 @@ export const useUserStore = create<UserState>((set, get) => ({
             tutorials: get().tutorials.map(t => {
                 if (t.id !== tutorialId) return t
                 const updated = { ...t, [field]: value }
-                if (field === 'practiced' && value === 'yes') updated.completed = true
+                if (field === 'practiced' && value === true) updated.completed = true
 
                 const XP: Record<string, number> = { watched: 10, practiced: 10, assignmentDone: 5, forumAsked: 5, forumAnswered: 5 }
-                updated.xpEarned = Object.entries(XP).reduce((sum, [f, pts]) => sum + (updated[f as TutorialField] === 'yes' ? pts : 0), 0)
+                updated.xpEarned = Object.entries(XP).reduce((sum, [f, pts]) => sum + (updated[f as TutorialField] === true ? pts : 0), 0)
                 return updated
             })
         })
@@ -85,12 +85,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         api.put(`/api/me/courses/${courseId}/tutorials/${tutorialId}`, { field, value })
     },
 
-    
-
-
-
     login: (user) => {
-        // set() shallow-merges into the state
         set({
             user,
             isAuthenticated: true,
@@ -105,11 +100,10 @@ export const useUserStore = create<UserState>((set, get) => ({
     },
 
     updateProfile: (updates) => {
-        const { user } = get() // read current state with get()
+        const { user } = get()
         if (!user) return
 
         set({
-            // Spread old user, overlay new fields
             user: { ...user, ...updates },
         })
     },
@@ -122,7 +116,6 @@ export const useUserStore = create<UserState>((set, get) => ({
         const newXPToday = user.xpToday + amount
         const newXPWeek = user.xpThisWeek + amount
 
-        // Simple level calculation based on DESIGN.md thresholds
         let newLevel = user.level
         let newTitle = user.levelTitle
         if (newXP >= 12000) { newLevel = 26; newTitle = 'Spoken Legend' }
@@ -144,4 +137,3 @@ export const useUserStore = create<UserState>((set, get) => ({
         })
     },
 }))
-

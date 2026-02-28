@@ -69,7 +69,7 @@ function ProfileHeader() {
                 {/* Avatar */}
                 <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-background absolute -top-10 sm:-top-12 shadow-lg">
                     <AvatarFallback className="bg-primary text-primary-foreground text-xl sm:text-2xl font-bold">
-                        {user.initials}
+                        {user.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
                     </AvatarFallback>
                 </Avatar>
 
@@ -88,7 +88,7 @@ function ProfileHeader() {
                 {/* User Info */}
                 <div className="mt-4 sm:mt-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <h1 className="text-xl sm:text-2xl font-bold">{user.name}</h1>
+                        <h1 className="text-xl sm:text-2xl font-bold">{user.displayName}</h1>
                         <Badge variant="secondary" className="text-[10px] px-2 py-0.5 gap-1">
                             <Zap className="h-3 w-3 text-xp-gold" />
                             Level {user.level} — {user.levelTitle}
@@ -107,10 +107,7 @@ function ProfileHeader() {
                             <LinkIcon className="h-3.5 w-3.5" />
                             <a href="#" className="text-primary hover:underline">{user.website}</a>
                         </span>
-                        <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Joined {user.joinDate}
-                        </span>
+
                     </div>
 
                     {/* Follower Counts */}
@@ -166,8 +163,8 @@ function StatsRow() {
 /** Badge / Achievement Wall — reads from userStore */
 function BadgeWall() {
     const badges = useUserStore(state => state.badges)
-    const earnedBadges = badges.filter(b => b.earned)
-    const lockedBadges = badges.filter(b => !b.earned)
+    const earnedBadges = badges.filter(b => b.earnedAt)
+    const lockedBadges = badges.filter(b => !b.earnedAt)
 
     return (
         <div className="space-y-4">
@@ -191,7 +188,7 @@ function BadgeWall() {
                                     <Icon className={`h-6 w-6 ${iconConfig.color}`} />
                                 </div>
                                 <p className="text-[11px] font-medium text-center leading-tight">{badge.name}</p>
-                                <p className="text-[9px] text-muted-foreground mt-0.5">{badge.earnedDate}</p>
+                                <p className="text-[9px] text-muted-foreground mt-0.5">{badge.earnedAt ? new Date(badge.earnedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</p>
                             </div>
                         )
                     })}
@@ -250,7 +247,7 @@ function CompletedCoursesSection() {
                                 <div>
                                     <p className="font-semibold text-sm">{course.title}</p>
                                     <p className="text-xs text-muted-foreground">
-                                        {course.completed}/{course.total} tutorials • Completed {course.completedDate}
+                                        Completed {course.completedAt ? new Date(course.completedAt).toLocaleDateString() : ''}
                                     </p>
                                 </div>
                             </div>
@@ -292,13 +289,13 @@ function InProgressCoursesSection() {
                                     <div>
                                         <p className="font-semibold text-sm">{course.title}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            {course.completed}/{course.total} tutorials
+                                            {Math.round(course.progressPercent)}% complete
                                         </p>
                                     </div>
                                 </div>
-                                <span className="text-xs font-mono font-semibold">{course.progress}%</span>
+                                <span className="text-xs font-mono font-semibold">{Math.round(course.progressPercent)}%</span>
                             </div>
-                            <Progress value={course.progress} className="h-1.5" />
+                            <Progress value={course.progressPercent} className="h-1.5" />
                         </CardContent>
                     </Card>
                 )
@@ -415,7 +412,7 @@ export default function Profile() {
     const tabs: { id: ProfileTab; label: string; icon: React.ElementType; count?: number }[] = [
         { id: 'activity', label: 'Activity', icon: Clock },
         { id: 'courses', label: 'Courses', icon: BookOpen, count: courses.length },
-        { id: 'badges', label: 'Badges', icon: Trophy, count: badges.filter(b => b.earned).length },
+        { id: 'badges', label: 'Badges', icon: Trophy, count: badges.filter(b => b.earnedAt).length },
     ]
 
 

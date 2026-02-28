@@ -49,13 +49,13 @@ export const useFeedStore = create<FeedState>((set, get) => ({
             author: {
                 id: newPostData.authorId,
                 name: newPostData.authorName,
-                initials: newPostData.authorInitials,
+                username: '',
                 level: newPostData.authorLevel,
                 title: newPostData.authorTitle,
             },
             type: newPostData.type,
             content: newPostData.content,
-            courseName: newPostData.courseName,
+            courseId: newPostData.courseName, // mapped to courseId now
             timestamp: 'Just now',
             createdAt: Date.now(),
             likes: 0,

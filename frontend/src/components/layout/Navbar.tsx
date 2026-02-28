@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation,useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useUserStore } from '@/store/userStore'
 import { useTheme } from '@/hooks/useTheme'
 import { useComposeModal } from '@/hooks/useComposeModal'
@@ -41,7 +41,7 @@ const navItems = [
 export function TopBar() {
     const { theme, toggleTheme } = useTheme()
     const [searchOpen, setSearchOpen] = useState(false)
-    const logout = useAuthStore(state=>state.logout)
+    const logout = useAuthStore(state => state.logout)
     const navigate = useNavigate()
 
     const notificationCount = 3
@@ -121,9 +121,8 @@ export function TopBar() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                                 <Avatar className="h-8 w-8 border-2 border-primary/50">
-                                    <AvatarImage src={user?.avatar || ''} alt={user?.name || ''} />
                                     <AvatarFallback className="bg-primary text-sm font-semibold text-primary-foreground">
-                                        {user?.initials || '??'}
+                                        {user?.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
                                     </AvatarFallback>
                                 </Avatar>
                                 {/* Level badge */}
@@ -135,8 +134,8 @@ export function TopBar() {
                         <DropdownMenuContent align="end" className="w-56">
                             {/* User info header */}
                             <div className="px-3 py-2.5">
-                                <p className="text-sm font-semibold">{user?.name || 'Guest'}</p>
-                                <p className="text-xs text-muted-foreground">{user?.department || ''}</p>
+                                <p className="text-sm font-semibold">{user?.displayName || 'Guest'}</p>
+                                <p className="text-xs text-muted-foreground">{user?.departmentYear || ''}</p>
                                 <div className="flex items-center gap-2 mt-1.5">
                                     <Badge variant="secondary" className="bg-primary/20 text-primary text-[10px] px-1.5 py-0 h-5">
                                         Level {user?.level || 1}
@@ -154,7 +153,7 @@ export function TopBar() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer gap-2"
-                                onClick={()=>{logout();navigate('/')}}>
+                                onClick={() => { logout(); navigate('/') }}>
                                 <LogOut className="h-4 w-4" />
                                 Log Out
                             </DropdownMenuItem>

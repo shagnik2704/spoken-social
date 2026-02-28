@@ -1,22 +1,17 @@
-# ============================================================
-# Course Models
-# ============================================================
-# Course      = the course template (e.g. "Python", "Linux")
-# UserCourse  = a student's enrollment + progress in a course
-# ============================================================
-
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Numeric, Index
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from database import Base
+from datetime import datetime, timezone
 
 
 class Course(Base):
-    """A course template — e.g. 'Python' with 10 tutorials."""
     __tablename__ = "courses"
 
-    id = Column(String, primary_key=True)
-    title = Column(String, nullable=False)
-    total_tutorials = Column(Integer, default=0)
+    id = Column(String(50), primary_key=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     enrollments = relationship("UserCourse", back_populates="course")
@@ -24,32 +19,30 @@ class Course(Base):
 
 
 class UserCourse(Base):
-    """A student's enrollment in a course — tracks their progress."""
     __tablename__ = "user_courses"
 
-    id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    course_id = Column(String(50), ForeignKey("courses.id", ondelete="CASCADE"), primary_key=True)
 
-    progress = Column(Integer, default=0)          # percentage
-    completed_count = Column(Integer, default=0)   # tutorials done
-    total = Column(Integer, default=0)             # total tutorials
-    status = Column(String, default="not_started") # in_progress, completed, not_started
-    completed_date = Column(String, nullable=True)
-    test_passed = Column(Boolean, default=False)
-    test_score = Column(Integer, nullable=True)
+    status = Column(String(20), nullable=False, default="in_progress")
+    progress_percent = Column(Numeric(5, 2), default=0)
+    completed_at = Column(DateTime(timezone=True))
 
     # Relationships
     user = relationship("User", back_populates="courses")
     course = relationship("Course", back_populates="enrollments")
 
+    __table_args__ = (
+        Index("idx_user_courses_user", "user_id"),
+        Index("idx_user_courses_course", "course_id"),
+    )
+
     def to_api_dict(self):
+        # Derive completed count from user_tutorials
         return {
             "id": self.course_id,
             "title": self.course.title if self.course else "",
-            "progress": self.progress,
-            "completed": self.completed_count,
-            "total": self.total,
             "status": self.status,
-            "completedDate": self.completed_date,
+            "progressPercent": float(self.progress_percent or 0),
+            "completedAt": self.completed_at.isoformat() if self.completed_at else None,
         }

@@ -97,8 +97,8 @@ export function ComposeModal() {
                 ? courseOptions.find(c => c.id === selectedCourses[0])?.name
                 : undefined,
             authorId: user.id,
-            authorName: user.name,
-            authorInitials: user.initials,
+            authorName: user.displayName,
+            authorInitials: user.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??',
             authorLevel: user.level,
             authorTitle: user.levelTitle,
         })
@@ -178,7 +178,7 @@ export function ComposeModal() {
                         <div className="flex gap-3">
                             <Avatar className="h-9 w-9 shrink-0">
                                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                                    {user?.initials || '??'}
+                                    {user?.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
                                 </AvatarFallback>
                             </Avatar>
 
