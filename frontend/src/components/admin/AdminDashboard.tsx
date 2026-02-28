@@ -4,7 +4,7 @@ import {
     CheckCircle2, Eye,
     Search, Filter, Trophy, BarChart3,
     Zap, Activity, ChevronRight, ArrowLeft,
-    Shield, Building2,
+    Shield, Building2, MessageCircleQuestion,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import api from '@/lib/axios'
+import { FeedbackPanel } from '@/components/admin/FeedbackPanel'
 
 // ===== TYPES =====
 
@@ -101,7 +102,7 @@ interface EnrichedStudent {
     collegeName: string
 }
 
-type Tab = 'overview' | 'colleges' | 'analytics'
+type Tab = 'overview' | 'colleges' | 'analytics' | 'feedback'
 type SortBy = 'name' | 'progress' | 'xp'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
@@ -900,6 +901,7 @@ export default function AdminDashboard() {
         { id: 'overview' as const, label: 'Overview', icon: BarChart3 },
         { id: 'colleges' as const, label: 'Colleges', icon: Building2 },
         { id: 'analytics' as const, label: 'Analytics', icon: Activity },
+        { id: 'feedback' as const, label: 'Feedback', icon: MessageCircleQuestion },
     ]
 
     if (isLoading || !summary) {
@@ -961,6 +963,10 @@ export default function AdminDashboard() {
 
             {activeTab === 'analytics' && (
                 <AnalyticsTab colleges={colleges} summary={summary} />
+            )}
+
+            {activeTab === 'feedback' && (
+                <FeedbackPanel />
             )}
         </div>
     )
