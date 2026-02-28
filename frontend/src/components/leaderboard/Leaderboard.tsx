@@ -78,7 +78,7 @@ function Podium({ users }: { users: LeaderboardUser[] }) {
                                 <div className="relative mb-2">
                                     <Avatar className={`${config.size} border-2 ${config.border}`}>
                                         <AvatarFallback className={`bg-gradient-to-b ${config.bg} text-foreground text-sm font-bold`}>
-                                            {user.initials}
+                                            {user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??'}
                                         </AvatarFallback>
                                     </Avatar>
                                     {config.rank === 1 && (
@@ -137,7 +137,7 @@ function LeaderboardRow({ user, showWeeklyXP }: { user: LeaderboardUser; showWee
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <Avatar className="h-9 w-9 shrink-0">
                     <AvatarFallback className={`text-[11px] font-semibold ${user.isCurrentUser ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'}`}>
-                        {user.initials}
+                        {user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??'}
                     </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
@@ -149,7 +149,6 @@ function LeaderboardRow({ user, showWeeklyXP }: { user: LeaderboardUser; showWee
                     </div>
                     <p className="text-[10px] text-muted-foreground truncate">
                         Lv.{user.level} • {user.levelTitle}
-                        {user.college && <span className="hidden sm:inline"> • {user.college}</span>}
                     </p>
                 </div>
             </div>
@@ -159,7 +158,7 @@ function LeaderboardRow({ user, showWeeklyXP }: { user: LeaderboardUser; showWee
             {/* XP */}
             <div className="text-right shrink-0 min-w-[60px]">
                 <p className="text-sm font-bold font-mono">
-                    {showWeeklyXP ? `+${user.xpThisWeek}` : user.xp.toLocaleString()}
+                    {showWeeklyXP ? `+${user.xpLastWeek}` : user.xp.toLocaleString()}
                 </p>
                 <p className="text-[10px] text-muted-foreground">{showWeeklyXP ? 'this week' : 'XP'}</p>
             </div>
@@ -225,7 +224,7 @@ export function Leaderboard() {
 
     // Sort by weekly XP for the weekly tab
     const displayData = timeFilter === 'weekly'
-        ? [...leaderboardData].sort((a, b) => b.xpThisWeek - a.xpThisWeek).map((u, i) => ({ ...u, rank: i + 1 }))
+        ? [...leaderboardData].sort((a, b) => b.xpLastWeek - a.xpLastWeek).map((u, i) => ({ ...u, rank: i + 1 }))
         : leaderboardData
 
     const selectedCourseInfo = courses.find(c => c.id === selectedCourse)
