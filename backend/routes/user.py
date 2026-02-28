@@ -7,6 +7,7 @@ from database import get_db
 from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
 from models.xp_event import XPEvent
+from sse import sse_manager
 
 
 router = APIRouter(prefix='/api', tags=['users'])
@@ -140,6 +141,17 @@ def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
         else:             user.level = 1
 
     db.commit()
+
+    # Broadcast XP change to all connected SSE clients
+    if xp_gained > 0:
+        sse_manager.broadcast_sync({
+            "type": "xp_update",
+            "userId": str(user.id),
+            "xpTotal": user.xp_total,
+            "level": user.level,
+            "levelTitle": user._level_title(),
+        })
+
     return ut.to_api_dict()
 
 
@@ -168,4 +180,14 @@ def add_xp(body: XPUpdate, user: User = Depends(get_current_user), db: Session =
     else:             user.level = 1
 
     db.commit()
+
+    # Broadcast XP change to all connected SSE clients
+    sse_manager.broadcast_sync({
+        "type": "xp_update",
+        "userId": str(user.id),
+        "xpTotal": user.xp_total,
+        "level": user.level,
+        "levelTitle": user._level_title(),
+    })
+
     return {"xpTotal": user.xp_total, "level": user.level, "levelTitle": user._level_title()}

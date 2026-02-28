@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useUserStore } from '@/store/userStore'
 import { useTheme } from '@/hooks/useTheme'
@@ -36,6 +36,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useAuthStore } from '@/store/authStore'
+import { useLeaderboardStore } from '@/store/leaderboardStore'
 
 // Navigation items for the sidebar/bottom nav
 const navItems = [
@@ -60,6 +61,14 @@ export function TopBar() {
     // 🧠 ZUSTAND: Select only the slices you need.
     // This component only re-renders when these specific values change.
     const user = useUserStore(state => state.user)
+
+    // Connect SSE for real-time XP updates app-wide
+    const { connectSSE, disconnectSSE, fetchLeaderboard } = useLeaderboardStore()
+    useEffect(() => {
+        fetchLeaderboard()
+        connectSSE()
+        return () => disconnectSSE()
+    }, [])
 
 
     return (
