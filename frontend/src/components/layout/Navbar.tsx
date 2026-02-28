@@ -27,6 +27,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useAuthStore } from '@/store/authStore'
 
 // Navigation items for the sidebar/bottom nav
@@ -205,6 +211,23 @@ export function DesktopSidebar() {
                             </button>
                         )
                     }
+                    if (item.label === 'Feed') {
+                        return (
+                            <TooltipProvider key={item.label}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed">
+                                            <item.icon className="h-5 w-5" />
+                                            {item.label}
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                        <p>Coming soon!</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )
+                    }
 
                     return (
                         <Link
@@ -257,6 +280,26 @@ export function MobileBottomNav() {
                             </button>
                         )
                     }
+    
+                    if (item.label === 'Feed') {
+                        return (
+                            <TooltipProvider key={item.label}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-muted-foreground opacity-50 cursor-not-allowed">
+                                            <item.icon className="h-5 w-5" />
+                                            <span className="text-[10px] font-medium">{item.label}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <p>Coming soon!</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )
+                    }
+
+                    
 
                     return (
                         <Link
