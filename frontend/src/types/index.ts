@@ -7,7 +7,7 @@
 
 // ----- User & Auth -----
 
-export type UserRole = 'student'|'coordinator'|'admin'
+export type UserRole = 'student' | 'coordinator' | 'admin'
 
 export interface User {
     id: string

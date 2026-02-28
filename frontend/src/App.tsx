@@ -9,6 +9,7 @@ const Profile = lazy(() => import('@/components/profile/Profile'))
 const Dashboard = lazy(() => import('@/components/dashboard/Dashboard'))
 const Leaderboard = lazy(() => import('@/components/leaderboard/Leaderboard'))
 const CoordinatorDashboard = lazy(() => import('@/components/coordinator/CoordinatorDashboard'))
+const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard'))
 import { useEffect } from 'react'
 import { useUserStore } from './store/userStore'
 import { LoginPage } from './components/auth/LoginPage'
@@ -18,11 +19,11 @@ import { Toaster } from '@/components/ui/sonner'
 function App() {
 
   const fetchUser = useUserStore(state => state.fetchUser)
-  const isAuthenticated = useAuthStore(state=>state.isAuthenticated)
-  const user = useUserStore(state=>state.user)
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const user = useUserStore(state => state.user)
 
   useEffect(() => {
-    if(isAuthenticated){
+    if (isAuthenticated) {
       fetchUser()
     }
   }, [isAuthenticated])
@@ -35,9 +36,9 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <ComposeModalProvider>
-          {!isAuthenticated?(
+          {!isAuthenticated ? (
             <Routes>
-              <Route path = "*" element = {<LoginPage/>} />
+              <Route path="*" element={<LoginPage />} />
             </Routes>
           ) : (
             <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
@@ -52,12 +53,13 @@ function App() {
                 <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 pb-20 lg:pb-6">
                   <Suspense fallback={<div className="flex h-full items-center justify-center p-8">Loading page...</div>}>
                     <Routes>
-                      <Route path="/*" element={<Navigate to={user?.role==='coordinator'?'/coordinator':'/dashboard'} replace/>} />
+                      <Route path="/*" element={<Navigate to={user?.role === 'admin' ? '/admin' : user?.role === 'coordinator' ? '/coordinator' : '/dashboard'} replace />} />
                       {/* <Route path="/feed" element={<Feed />} /> */}
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/leaderboard" element={<Leaderboard />} />
                       <Route path="/coordinator" element={<CoordinatorDashboard />} />
+                      <Route path="/admin" element={<AdminDashboard />} />
                     </Routes>
                   </Suspense>
                 </main>

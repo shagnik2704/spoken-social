@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Text, Index
+from sqlalchemy import Column, String, Integer, DateTime, Text, Index, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from database import Base
@@ -21,9 +21,11 @@ class User(Base):
     xp_total = Column(Integer, nullable=False, default=0)
     xp_last_week = Column(Integer, nullable=False, default=0)
     role = Column(String(20), nullable=False, default="student")  # student | coordinator | admin
+    college_id = Column(String(50), ForeignKey("colleges.id"), nullable=True)  # which college they belong to
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
+    college = relationship("College", back_populates="students")
     courses = relationship("UserCourse", back_populates="user")
     badges = relationship("UserBadge", back_populates="user")
     posts = relationship("Post", back_populates="author")
@@ -91,6 +93,7 @@ class User(Base):
             "following": following_count,
             "postsCount": posts_count,
             "role": self.role,
+            "collegeId": self.college_id,
         }
 
     def _level_title(self):

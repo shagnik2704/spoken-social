@@ -36,3 +36,23 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         )
 
     return user
+
+
+def require_coordinator(user: User = Depends(get_current_user)) -> User:
+    """Only coordinators and admins can access coordinator routes."""
+    if user.role not in ("coordinator", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Coordinator access required",
+        )
+    return user
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    """Only admins can access admin routes."""
+    if user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return user

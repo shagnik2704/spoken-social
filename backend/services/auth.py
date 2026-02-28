@@ -10,6 +10,7 @@ import uuid
 # Fixed UUIDs for mock users so they're consistent across restarts
 PRIYA_UUID = uuid.UUID("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 RAHUL_UUID = uuid.UUID("b2c3d4e5-f6a7-8901-bcde-f12345678901")
+DIVYA_UUID = uuid.UUID("a3b4c5d6-e7f8-9012-abcd-234567890123")
 
 _MOCK_USERS = {
     "priya@vjti.ac.in": {
@@ -25,6 +26,13 @@ _MOCK_USERS = {
         "username": "@rahul_codes",
         "email": "rahul@iitb.ac.in",
         "password": "password123",
+    },
+    "divya@spoken.ac.in": {
+        "user_id": DIVYA_UUID,
+        "display_name": "Divya Sundaram",
+        "username": "@divya_s",
+        "email": "divya@spoken.ac.in",
+        "password": "admin123",
     },
 }
 

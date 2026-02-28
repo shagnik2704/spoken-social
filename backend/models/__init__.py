@@ -2,6 +2,7 @@
 # This file must be imported before any queries are made.
 
 from models.user import User
+from models.college import College
 from models.course import Course, UserCourse
 from models.tutorial import Tutorial, UserTutorial
 from models.post import Post
