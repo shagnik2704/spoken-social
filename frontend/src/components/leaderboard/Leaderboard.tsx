@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import type { LeaderboardUser } from '@/types'
 import { useState, useEffect } from 'react'
 import { useLeaderboardStore } from '@/store/leaderboardStore'
+import XPGrowthGraph from './XPGrowthGraph'
 
 const courses = [
     { id: 'all', name: 'All Courses', icon: BookOpen },
@@ -292,11 +293,14 @@ export default function Leaderboard() {
                 </div>
             </div>
 
-            {/* Your Position */}
-            {currentUser && <YourPosition user={currentUser} data={displayData} />}
-
             {/* Podium */}
             <Podium users={displayData} />
+
+            {/* XP Growth Graph */}
+            <XPGrowthGraph />
+
+            {/* Your Position */}
+            {currentUser && <YourPosition user={currentUser} data={displayData} />}
 
             {/* Full Leaderboard Table */}
             <Card className="border-border/40">

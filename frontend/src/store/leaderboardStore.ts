@@ -3,12 +3,20 @@ import type { LeaderboardUser } from '@/types'
 import api from '@/lib/axios'
 import { useUserStore } from './userStore'
 
+interface XPHistoryDay {
+    day: number
+    xp: number
+}
+
 interface LeaderboardState {
     leaderboardData: LeaderboardUser[]
     isLoading: boolean
     eventSource: EventSource | null
+    xpHistory: XPHistoryDay[]
+    xpHistoryMonth: string
 
     fetchLeaderboard: () => Promise<void>
+    fetchXPHistory: (month: string) => Promise<void>
     connectSSE: () => void
     disconnectSSE: () => void
     handleXPUpdate: (data: { userId: string; xpTotal: number; level: number; levelTitle: string }) => void
@@ -18,6 +26,8 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
     leaderboardData: [],
     isLoading: false,
     eventSource: null,
+    xpHistory: [],
+    xpHistoryMonth: '',
 
     fetchLeaderboard: async () => {
         set({ isLoading: true })
@@ -27,6 +37,15 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
         } catch (error) {
             console.error('Failed to fetch leaderboard:', error)
             set({ isLoading: false })
+        }
+    },
+
+    fetchXPHistory: async (month: string) => {
+        try {
+            const { data } = await api.get('/api/xp-history', { params: { month } })
+            set({ xpHistory: data.days, xpHistoryMonth: data.month })
+        } catch (error) {
+            console.error('Failed to fetch XP history:', error)
         }
     },
 
@@ -91,3 +110,4 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
         }
     },
 }))
+
