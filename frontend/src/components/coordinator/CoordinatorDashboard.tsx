@@ -789,7 +789,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
 
 // ===== MAIN COMPONENT =====
 
-export function CoordinatorDashboard() {
+export default function CoordinatorDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>('students')
     const [colleges, setColleges] = useState<CollegeSummary[]>([])
     const [myCollegeDetails, setMyCollegeDetails] = useState<CollegeDetails | null>(null)

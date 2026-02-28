@@ -9,17 +9,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 
-
-// 🧠 ZUSTAND: Import the stores
 import { useUserStore } from '@/store/userStore'
 import { useFeedStore, type FeedFilter } from '@/store/feedStore'
 import type { Post, PostType } from '@/types'
 import { useState, useMemo, useEffect } from 'react'
 
 
-
-// Sidebar data — will be replaced with API calls later
 const TRENDING = [
     { tag: 'Python', posts: 234 },
     { tag: 'Linux', posts: 189 },
@@ -410,14 +407,15 @@ function SuggestedPeople() {
 
 // ===== MAIN FEED PAGE =====
 
-export function Feed() {
+export default function Feed() {
     const posts = useFeedStore(state => state.posts)
     const activeFilter = useFeedStore(state => state.activeFilter)
     const fetchPosts = useFeedStore(state => state.fetchPosts)
+    const isLoading = useFeedStore(state => state.isLoading)
 
     useEffect(() => {
         fetchPosts()
-    },  [])
+    }, [])
 
 
     const filteredPosts = useMemo(() => {
@@ -452,7 +450,35 @@ export function Feed() {
 
                     {/* Posts — now filtered! */}
                     <div className="space-y-4">
-                        {filteredPosts.length > 0 ? (
+                        {isLoading ? (
+                            Array.from({ length: 3 }).map((_, i) => (
+                                <Card key={i} className="border-border/40">
+                                    <CardContent className="p-4 sm:p-5">
+                                        <div className="flex items-start gap-3 mb-4">
+                                            <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                                            <div className="space-y-2 flex-1 mt-1">
+                                                <div className="flex gap-2">
+                                                    <Skeleton className="h-4 w-24" />
+                                                    <Skeleton className="h-4 w-12 rounded-full" />
+                                                </div>
+                                                <Skeleton className="h-3 w-16" />
+                                            </div>
+                                            <Skeleton className="h-6 w-20 rounded-full shrink-0" />
+                                        </div>
+                                        <div className="space-y-2 mb-4">
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-4 w-5/6" />
+                                            <Skeleton className="h-4 w-4/6" />
+                                        </div>
+                                        <div className="flex gap-2 pt-3 border-t border-border/30">
+                                            <Skeleton className="h-8 w-14 rounded-full" />
+                                            <Skeleton className="h-8 w-14 rounded-full" />
+                                            <Skeleton className="h-8 w-14 rounded-full" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))
+                        ) : filteredPosts.length > 0 ? (
                             filteredPosts.map(post => (
                                 <FeedPost key={post.id} post={post} />
                             ))

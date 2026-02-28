@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useUserStore } from '@/store/userStore'
 import type { ActivityType } from '@/types'
 
@@ -351,16 +352,69 @@ function ActivityTimeline() {
 
 type ProfileTab = 'activity' | 'courses' | 'badges'
 
-export function Profile() {
+export default function Profile() {
     const [activeTab, setActiveTab] = useState<ProfileTab>('activity')
     const courses = useUserStore(state => state.courses)
     const badges = useUserStore(state => state.badges)
+    const isLoading = useUserStore(state => state.isLoading)
+    if (isLoading) {
+        return (
+            <div className="max-w-3xl mx-auto space-y-5">
+                {/* Skeleton Header */}
+                <Card className="border-border/40 overflow-hidden">
+                    <div className="h-28 sm:h-36 bg-muted animate-pulse" />
+                    <CardContent className="p-5 sm:p-6 relative">
+                        <Skeleton className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-4 border-background absolute -top-10 sm:-top-12 z-10" />
+                        <div className="flex justify-end gap-2 mb-4 sm:mb-0">
+                            <Skeleton className="h-8 w-16 rounded-full" />
+                            <Skeleton className="h-8 w-24 rounded-full" />
+                        </div>
+                        <div className="mt-4 sm:mt-2 space-y-3">
+                            <Skeleton className="h-7 w-48" />
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-4 w-3/4 mt-4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </div>
+                    </CardContent>
+                </Card>
 
+                {/* Skeleton Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[1, 2, 3, 4].map(i => (
+                        <Card key={i} className="border-border/40">
+                            <CardContent className="p-4 flex flex-col items-center justify-center gap-2">
+                                <Skeleton className="h-5 w-5 rounded-full" />
+                                <Skeleton className="h-6 w-16" />
+                                <Skeleton className="h-3 w-12" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Skeleton Tabs Content Space */}
+                <Card className="border-border/40 mt-5">
+                    <CardContent className="p-5 space-y-4">
+                        <Skeleton className="h-5 w-40 mb-4" />
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="flex gap-3">
+                                <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                                <div className="space-y-2 flex-1">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-3 w-20" />
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
     const tabs: { id: ProfileTab; label: string; icon: React.ElementType; count?: number }[] = [
         { id: 'activity', label: 'Activity', icon: Clock },
         { id: 'courses', label: 'Courses', icon: BookOpen, count: courses.length },
         { id: 'badges', label: 'Badges', icon: Trophy, count: badges.filter(b => b.earnedAt).length },
     ]
+
 
     return (
         <div className="max-w-3xl mx-auto space-y-5">

@@ -8,6 +8,7 @@ from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
 from models.xp_event import XPEvent
 
+
 router = APIRouter(prefix='/api', tags=['users'])
 
 

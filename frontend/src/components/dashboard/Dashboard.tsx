@@ -268,7 +268,23 @@ function UpcomingDeadlines() {
 
 // ===== MAIN DASHBOARD PAGE =====
 
-export function Dashboard() {
+export default function Dashboard() {
+    const isLoading = useUserStore(state=>state.isLoading) 
+    if(isLoading)
+    {
+        return (
+            <div className="max-w-3xl mx-auto space-y-6">
+                {/* Skeleton cards */}
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="p-4 rounded-xl border bg-muted/50 space-y-3 animate-pulse">
+                        <div className="h-4 w-1/3 bg-muted rounded" />
+                        <div className="h-4 w-full bg-muted rounded" />
+                        <div className="h-4 w-2/3 bg-muted rounded" />
+                    </div>
+                ))}
+            </div>
+        )
+    }
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             {/* Section 1 & 2: Greeting + XP side by side on desktop */}

@@ -6,11 +6,16 @@ import api from '@/lib/axios'
 interface UserState {
 
     user: User | null
+    isLoading: boolean
+    error: string | null
     isAuthenticated: boolean
     courses: Course[]
     badges: Badge[]
     tutorials: Tutorial[]
     activeCourseId: string
+    weeklyGoal: any
+
+
 
     fetchTutorials: (courseId: string) => Promise<void>
     updateTutorials: (courseId: string, tutorialId: string, field: TutorialField, value: RadioValue) => void
@@ -24,18 +29,24 @@ interface UserState {
 export const useUserStore = create<UserState>((set, get) => ({
 
     user: null,
+    isLoading: false,
+    error: null,
     isAuthenticated: false,
     courses: [],
     badges: [],
     tutorials: [],
     activeCourseId: 'linux',
+    weeklyGoal: null,
 
 
     fetchUser: async () => {
+        set({ isLoading: true, error: null })
         try {
             const { data } = await api.get('/api/me')
             set({
                 user: data.user,
+                isLoading: false,
+                weeklyGoal: data.weeklyGoal,
                 courses: data.courses,
                 badges: data.badges,
                 isAuthenticated: true,
@@ -43,6 +54,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         }
         catch (error) {
             console.error('Failed to fetch user:', error)
+            set({ error: 'Failed to load', isLoading: false })
         }
     },
 
