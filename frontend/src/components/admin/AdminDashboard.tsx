@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import api from '@/lib/axios'
 import { FeedbackPanel } from '@/components/admin/FeedbackPanel'
+import { StudentFeedbackDrawer } from '@/components/admin/StudentFeedbackDrawer'
 
 // ===== TYPES =====
 
@@ -150,12 +151,12 @@ function MetricCard({ icon: Icon, label, value, subtext, color }: {
 
 // ===== STUDENT TABLE ROW =====
 
-function StudentRow({ student, collegeName }: { student: Student | EnrichedStudent; collegeName?: string }) {
+function StudentRow({ student, collegeName, onClick }: { student: Student | EnrichedStudent; collegeName?: string; onClick?: () => void }) {
     const statusConfig = getStatusConfig(student.status)
     const cName = collegeName || ('collegeName' in student ? student.collegeName : undefined)
 
     return (
-        <div className="flex items-center gap-3 px-3 sm:px-4 py-3 rounded-lg hover:bg-muted/30 transition-colors">
+        <button onClick={onClick} className="w-full text-left flex items-center gap-3 px-3 sm:px-4 py-3 rounded-lg hover:bg-muted/30 transition-colors">
             <Avatar className="h-8 w-8 shrink-0">
                 <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
                     {student.initials}
@@ -201,16 +202,17 @@ function StudentRow({ student, collegeName }: { student: Student | EnrichedStude
                     {statusConfig.label}
                 </Badge>
             </div>
-        </div>
+        </button>
     )
 }
 
 // ===== OVERVIEW TAB =====
 // Uses pre-computed data from /api/admin/platform-summary — no client-side aggregation
 
-function OverviewTab({ colleges, summary }: {
+function OverviewTab({ colleges, summary, onStudentClick }: {
     colleges: CollegeSummary[]
     summary: PlatformSummary
+    onStudentClick: (student: { id: string, name: string, initials: string }) => void
 }) {
     const m = summary.metrics
 
@@ -304,7 +306,7 @@ function OverviewTab({ colleges, summary }: {
                         </h3>
                         <div className="space-y-1">
                             {summary.topPerformers.map((student, i) => (
-                                <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
+                                <button key={student.id} onClick={() => onStudentClick({ id: student.id, name: student.name, initials: student.initials })} className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
                                     <span className={`text-xs font-bold w-6 text-right ${i === 0 ? 'text-xp-gold' :
                                         i === 1 ? 'text-gray-400' :
                                             i === 2 ? 'text-orange-500' :
@@ -326,7 +328,7 @@ function OverviewTab({ colleges, summary }: {
                                         </div>
                                         <Progress value={student.progress} className="h-1.5 w-14" />
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </CardContent>
@@ -354,7 +356,7 @@ function OverviewTab({ colleges, summary }: {
                                 {summary.atRiskStudents.map(student => {
                                     const sc = getStatusConfig(student.status)
                                     return (
-                                        <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-destructive/5 border border-destructive/10">
+                                        <button key={student.id} onClick={() => onStudentClick({ id: student.id, name: student.name, initials: student.initials })} className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg bg-destructive/5 border border-destructive/10 hover:bg-destructive/10 transition-colors">
                                             <Avatar className="h-7 w-7">
                                                 <AvatarFallback className="text-[9px] font-semibold bg-destructive/10 text-destructive">
                                                     {student.initials}
@@ -369,7 +371,7 @@ function OverviewTab({ colleges, summary }: {
                                             <Badge className={`text-[9px] px-1.5 py-0 h-4 border-0 ${sc.color}`}>
                                                 {sc.label}
                                             </Badge>
-                                        </div>
+                                        </button>
                                     )
                                 })}
                             </div>
@@ -384,8 +386,9 @@ function OverviewTab({ colleges, summary }: {
 // ===== COLLEGES TAB =====
 // College list uses summary data. Drill-down fetches paginated students on demand.
 
-function CollegesTab({ colleges }: {
+function CollegesTab({ colleges, onStudentClick }: {
     colleges: CollegeSummary[]
+    onStudentClick: (student: { id: string, name: string, initials: string }) => void
 }) {
     const [selectedCollegeId, setSelectedCollegeId] = useState<string | null>(null)
     const [collegeDetails, setCollegeDetails] = useState<CollegeDetails | null>(null)
@@ -549,7 +552,7 @@ function CollegesTab({ colleges }: {
                         ) : (
                             <div className="space-y-0.5">
                                 {students.map(student => (
-                                    <StudentRow key={student.id} student={student} />
+                                    <StudentRow key={student.id} student={student} onClick={() => onStudentClick({ id: student.id, name: student.name, initials: student.initials })} />
                                 ))}
                                 {students.length === 0 && (
                                     <p className="text-center text-sm text-muted-foreground py-8">
@@ -875,6 +878,7 @@ export default function AdminDashboard() {
     const [colleges, setColleges] = useState<CollegeSummary[]>([])
     const [summary, setSummary] = useState<PlatformSummary | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [selectedStudentForFeedback, setSelectedStudentForFeedback] = useState<{ id: string, name: string, initials: string } | null>(null)
 
     // On mount: fetch college summaries + platform summary (2 lightweight calls)
     useEffect(() => {
@@ -954,11 +958,11 @@ export default function AdminDashboard() {
 
             {/* Tab Content */}
             {activeTab === 'overview' && (
-                <OverviewTab colleges={colleges} summary={summary} />
+                <OverviewTab colleges={colleges} summary={summary} onStudentClick={setSelectedStudentForFeedback} />
             )}
 
             {activeTab === 'colleges' && (
-                <CollegesTab colleges={colleges} />
+                <CollegesTab colleges={colleges} onStudentClick={setSelectedStudentForFeedback} />
             )}
 
             {activeTab === 'analytics' && (
@@ -967,6 +971,15 @@ export default function AdminDashboard() {
 
             {activeTab === 'feedback' && (
                 <FeedbackPanel />
+            )}
+
+            {selectedStudentForFeedback && (
+                <StudentFeedbackDrawer
+                    studentId={selectedStudentForFeedback.id}
+                    studentName={selectedStudentForFeedback.name}
+                    studentInitials={selectedStudentForFeedback.initials}
+                    onClose={() => setSelectedStudentForFeedback(null)}
+                />
             )}
         </div>
     )
