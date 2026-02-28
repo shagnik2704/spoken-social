@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import api from '@/lib/axios'
+import { useUserStore } from '@/store/userStore'
 
 // ===== TYPES =====
 
@@ -61,14 +62,19 @@ interface CollegeDetails {
         completionRate: number
     }
     students: Student[]
+    pagination?: {
+        currentPage: number
+        totalPages: number
+        totalRecords: number
+        limit: number
+    }
 }
 
 type Tab = 'students' | 'analytics' | 'compare'
 type SortBy = 'name' | 'progress' | 'xp'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
-// The coordinator's own college — later this comes from auth
-const MY_COLLEGE_ID = 'iitb'
+
 
 // ===== STATUS HELPERS =====
 
@@ -158,7 +164,7 @@ function StudentRow({ student }: { student: Student }) {
 
 // ===== MY STUDENTS TAB =====
 
-function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setStatusFilter, searchQuery, setSearchQuery }: {
+function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setStatusFilter, searchQuery, setSearchQuery, page, setPage }: {
     college: CollegeSummary
     details: CollegeDetails | null
     sortBy: SortBy
@@ -167,24 +173,10 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
     setStatusFilter: (s: StatusFilter) => void
     searchQuery: string
     setSearchQuery: (s: string) => void
+    page: number
+    setPage: (p: number) => void
 }) {
     const filteredStudents = (details?.students || [])
-        .filter(s => statusFilter === 'all' || s.status === statusFilter)
-        .filter(s =>
-            searchQuery === '' ||
-            s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.rollNo.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .sort((a, b) => {
-            switch (sortBy) {
-                case 'name': return a.name.localeCompare(b.name)
-                case 'progress': return b.progress - a.progress
-                case 'xp': return b.xp - a.xp
-
-                default: return 0
-            }
-        })
-
     return (
         <div className="space-y-5">
             {/* Metric Cards */}
@@ -312,6 +304,31 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                             </p>
                         )}
                     </div>
+
+                    {/* Pagination */}
+                    {details?.pagination && details.pagination.totalPages > 1 && (
+                        <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                            <p className="text-xs text-muted-foreground">
+                                Page {details.pagination.currentPage} of {details.pagination.totalPages} · {details.pagination.totalRecords} students
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setPage(page - 1)}
+                                    disabled={page <= 1}
+                                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border disabled:opacity-30 hover:bg-muted/50 transition-colors"
+                                >
+                                    ← Prev
+                                </button>
+                                <button
+                                    onClick={() => setPage(page + 1)}
+                                    disabled={page >= details.pagination.totalPages}
+                                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border disabled:opacity-30 hover:bg-muted/50 transition-colors"
+                                >
+                                    Next →
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
@@ -797,6 +814,11 @@ export default function CoordinatorDashboard() {
     const [sortBy, setSortBy] = useState<SortBy>('progress')
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
     const [searchQuery, setSearchQuery] = useState('')
+    const [page, setPage] = useState(1)
+    const user = useUserStore(state => state.user) 
+    const MY_COLLEGE_ID = user?.collegeId || 'iitb'
+
+
 
     // Fetch all colleges + my college's student details
     useEffect(() => {
@@ -804,7 +826,7 @@ export default function CoordinatorDashboard() {
             try {
                 const [collegesRes, detailsRes] = await Promise.all([
                     api.get('/api/coordinator/colleges'),
-                    api.get(`/api/coordinator/colleges/${MY_COLLEGE_ID}`),
+                    api.get(`/api/coordinator/colleges/${MY_COLLEGE_ID}?page=${page}&limit=10&sort=${sortBy}&status=${statusFilter}&search=${searchQuery}`),
                 ])
                 setColleges(collegesRes.data)
                 setMyCollegeDetails(detailsRes.data)
@@ -815,7 +837,7 @@ export default function CoordinatorDashboard() {
             }
         }
         fetchData()
-    }, [])
+    }, [page, sortBy, statusFilter, searchQuery])
 
     const myCollege = colleges.find(c => c.id === MY_COLLEGE_ID)
 
@@ -876,11 +898,13 @@ export default function CoordinatorDashboard() {
                     college={myCollege}
                     details={myCollegeDetails}
                     sortBy={sortBy}
-                    setSortBy={setSortBy}
+                    setSortBy={(s) => { setSortBy(s); setPage(1) }}
                     statusFilter={statusFilter}
-                    setStatusFilter={setStatusFilter}
+                    setStatusFilter={(s) => { setStatusFilter(s); setPage(1) }}
                     searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
+                    setSearchQuery={(s) => { setSearchQuery(s); setPage(1) }}
+                    page={page}
+                    setPage={setPage}
                 />
             )}
 

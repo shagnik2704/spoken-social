@@ -29,6 +29,7 @@ export interface User {
     following: number
     postsCount: number
     role: UserRole
+    collegeId?: string | null
 }
 
 // ----- Courses -----
