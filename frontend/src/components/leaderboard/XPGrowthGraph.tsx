@@ -6,6 +6,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { ChevronDown, TrendingUp, Zap } from 'lucide-react'
 import { useLeaderboardStore } from '@/store/leaderboardStore'
+import { useTheme } from '@/hooks/useTheme'
 
 const MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -49,8 +50,11 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function XPGrowthGraph() {
     const { xpHistory, fetchXPHistory } = useLeaderboardStore()
+    const { theme } = useTheme()
     const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
     const [dropdownOpen, setDropdownOpen] = useState(false)
+
+    const axisColor = theme === 'dark' ? '#ffffff' : '#000000'
 
     const availableMonths = useMemo(() => getAvailableMonths(), [])
 
@@ -132,13 +136,13 @@ export default function XPGrowthGraph() {
                             />
                             <XAxis
                                 dataKey="day"
-                                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                                tick={{ fontSize: 10, fill: axisColor }}
                                 tickLine={false}
                                 axisLine={{ stroke: 'hsl(var(--border))', opacity: 0.3 }}
                                 interval={4}
                             />
                             <YAxis
-                                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                                tick={{ fontSize: 10, fill: axisColor }}
                                 tickLine={false}
                                 axisLine={false}
                             />
