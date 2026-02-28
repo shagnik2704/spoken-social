@@ -18,6 +18,7 @@ import type { Post, PostType } from '@/types'
 import { useState, useMemo, useEffect } from 'react'
 
 
+
 // Sidebar data — will be replaced with API calls later
 const TRENDING = [
     { tag: 'Python', posts: 234 },
@@ -415,12 +416,8 @@ export function Feed() {
     const fetchPosts = useFeedStore(state => state.fetchPosts)
 
     useEffect(() => {
-    const fetchPosts = useFeedStore(state => state.fetchPosts)
-
-    useEffect(() => {
         fetchPosts()
-    }, [])
-    }, [])
+    },  [])
 
 
     const filteredPosts = useMemo(() => {
