@@ -16,6 +16,8 @@ import {
     MessageSquare,
     Trophy,
     Flame,
+    Users,
+    Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -37,12 +39,15 @@ import { useAuthStore } from '@/store/authStore'
 
 // Navigation items for the sidebar/bottom nav
 const navItems = [
-    { icon: Home, label: 'Feed', path: '/feed' },
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: PlusCircle, label: 'Post', path: '/post' },
-    { icon: Trophy, label: 'Leaderboard', path: '/leaderboard' },
-    { icon: User, label: 'Profile', path: '/profile' },
+    { icon: Home, label: 'Feed', path: '/feed', roles: ['student', 'coordinator', 'admin'] },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', roles: ['student'] },
+    { icon: PlusCircle, label: 'Post', path: '/post', roles: ['student'] },
+    { icon: Trophy, label: 'Leaderboard', path: '/leaderboard', roles: ['student'] },
+    { icon: User, label: 'Profile', path: '/profile', roles: ['student', 'coordinator', 'admin'] },
+    { icon: Users, label: 'My Students', path: '/coordinator', roles: ['coordinator'] },
+    { icon: Shield, label: 'Admin Panel', path: '/admin', roles: ['admin'] },
 ]
+
 
 export function TopBar() {
     const { theme, toggleTheme } = useTheme()
@@ -190,63 +195,65 @@ export function TopBar() {
 export function DesktopSidebar() {
     const location = useLocation()
     const { open: openCompose } = useComposeModal()
+    const user = useUserStore(state => state.user)
 
     return (
         <aside className="hidden lg:flex flex-col w-60 border-r border-border bg-card/50 shrink-0">
             <nav className="flex flex-col gap-1 p-3 flex-1">
-                {navItems.map((item) => {
-                    const isActive = location.pathname === item.path
+                {navItems
+                    .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
+                        const isActive = location.pathname === item.path
 
-                    // Post button opens the compose modal
-                    if (item.label === 'Post') {
-                        return (
-                            <button
-                                key={item.label}
-                                onClick={openCompose}
-                                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium
+                        // Post button opens the compose modal
+                        if (item.label === 'Post') {
+                            return (
+                                <button
+                                    key={item.label}
+                                    onClick={openCompose}
+                                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium
                                            text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
-                            >
-                                <item.icon className="h-5 w-5" />
-                                {item.label}
-                            </button>
-                        )
-                    }
-                    if (item.label === 'Feed') {
-                        return (
-                            <TooltipProvider key={item.label}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed">
-                                            <item.icon className="h-5 w-5" />
-                                            {item.label}
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                        <p>Coming soon!</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )
-                    }
+                                >
+                                    <item.icon className="h-5 w-5" />
+                                    {item.label}
+                                </button>
+                            )
+                        }
+                        if (item.label === 'Feed') {
+                            return (
+                                <TooltipProvider key={item.label}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed">
+                                                <item.icon className="h-5 w-5" />
+                                                {item.label}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right">
+                                            <p>Coming soon!</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )
+                        }
 
-                    return (
-                        <Link
-                            key={item.label}
-                            to={item.path}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
+                        return (
+                            <Link
+                                key={item.label}
+                                to={item.path}
+                                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
                                 ${isActive
-                                    ? 'bg-primary/15 text-primary'
-                                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                                }`}
-                        >
-                            <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
-                            {item.label}
-                            {isActive && (
-                                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
-                            )}
-                        </Link>
-                    )
-                })}
+                                        ? 'bg-primary/15 text-primary'
+                                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                                    }`}
+                            >
+                                <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
+                                {item.label}
+                                {isActive && (
+                                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                                )}
+                            </Link>
+                        )
+                    })}
             </nav>
 
 
@@ -259,66 +266,69 @@ export function DesktopSidebar() {
 export function MobileBottomNav() {
     const location = useLocation()
     const { open: openCompose } = useComposeModal()
+    const user = useUserStore(state => state.user)
+
 
     return (
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl">
             <div className="flex items-center justify-around h-16 px-2">
-                {navItems.map((item) => {
-                    const isActive = location.pathname === item.path
+                {navItems
+                    .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
+                        const isActive = location.pathname === item.path
 
-                    // Post button opens the compose modal
-                    if (item.label === 'Post') {
+                        // Post button opens the compose modal
+                        if (item.label === 'Post') {
+                            return (
+                                <button
+                                    key={item.label}
+                                    onClick={openCompose}
+                                    className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all"
+                                >
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 -mt-3">
+                                        <PlusCircle className="h-5 w-5 text-primary-foreground" />
+                                    </div>
+                                </button>
+                            )
+                        }
+
+                        if (item.label === 'Feed') {
+                            return (
+                                <TooltipProvider key={item.label}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-muted-foreground opacity-50 cursor-not-allowed">
+                                                <item.icon className="h-5 w-5" />
+                                                <span className="text-[10px] font-medium">{item.label}</span>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">
+                                            <p>Coming soon!</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )
+                        }
+
+
+
                         return (
-                            <button
+                            <Link
                                 key={item.label}
-                                onClick={openCompose}
-                                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all"
-                            >
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 -mt-3">
-                                    <PlusCircle className="h-5 w-5 text-primary-foreground" />
-                                </div>
-                            </button>
-                        )
-                    }
-    
-                    if (item.label === 'Feed') {
-                        return (
-                            <TooltipProvider key={item.label}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-muted-foreground opacity-50 cursor-not-allowed">
-                                            <item.icon className="h-5 w-5" />
-                                            <span className="text-[10px] font-medium">{item.label}</span>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">
-                                        <p>Coming soon!</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )
-                    }
-
-                    
-
-                    return (
-                        <Link
-                            key={item.label}
-                            to={item.path}
-                            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all
+                                to={item.path}
+                                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all
                                 ${isActive
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                }`}
-                        >
-                            <item.icon className="h-5 w-5" />
-                            <span className="text-[10px] font-medium">{item.label}</span>
-                            {isActive && (
-                                <div className="h-0.5 w-4 rounded-full bg-primary mt-0" />
-                            )}
-                        </Link>
-                    )
-                })}
+                                        ? 'text-primary'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                <item.icon className="h-5 w-5" />
+                                <span className="text-[10px] font-medium">{item.label}</span>
+                                {isActive && (
+                                    <div className="h-0.5 w-4 rounded-full bg-primary mt-0" />
+                                )}
+                            </Link>
+                        )
+                    })}
             </div>
         </nav>
     )

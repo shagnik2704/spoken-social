@@ -7,6 +7,8 @@
 
 // ----- User & Auth -----
 
+export type UserRole = 'student' | 'coordinator' | 'admin'
+
 export interface User {
     id: string
     username: string
@@ -26,6 +28,7 @@ export interface User {
     followers: number
     following: number
     postsCount: number
+    role: UserRole
 }
 
 // ----- Courses -----
