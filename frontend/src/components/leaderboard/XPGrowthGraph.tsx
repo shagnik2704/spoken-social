@@ -55,7 +55,6 @@ export default function XPGrowthGraph() {
     const [dropdownOpen, setDropdownOpen] = useState(false)
 
     const axisColor = theme === 'dark' ? '#ffffff' : '#000000'
-
     const availableMonths = useMemo(() => getAvailableMonths(), [])
 
     useEffect(() => {
