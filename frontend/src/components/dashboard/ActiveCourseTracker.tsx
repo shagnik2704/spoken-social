@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { CelebrationModal, type CelebrationType } from './CelebrationModal'
+import { FeedbackModal } from './FeedbackModal'
 import { useUserStore } from '@/store/userStore'
 import type { RadioValue, Tutorial, TutorialField } from '@/types'
 
@@ -324,6 +325,15 @@ export function ActiveCourseTracker() {
         subtitle?: string
     } | null>(null)
 
+    // Feedback modal state — includes pending "No" info so we can save or revert
+    const [feedbackModal, setFeedbackModal] = useState<{
+        tutorialId: string
+        tutorialTitle: string
+        stepType: string
+        field: TutorialField
+        oldValue: RadioValue
+    } | null>(null)
+
     const completedCount = tutorials.filter(t => t.completed).length
     const overallProgress = Math.round((completedCount / tutorials.length) * 100)
     const totalXP = tutorials.reduce((sum, t) => sum + t.xpEarned, 0)
@@ -333,6 +343,20 @@ export function ActiveCourseTracker() {
         if (!tutorial) return
 
         const oldValue = tutorial[field]
+
+        // When "No" is selected: DON'T save yet — open feedback modal first
+        if (value === 'no') {
+            setFeedbackModal({
+                tutorialId: tutorial.id,
+                tutorialTitle: tutorial.title,
+                stepType: field,
+                field,
+                oldValue,
+            })
+            return  // <-- Don't call updateTutorials yet!
+        }
+
+        // "Yes" is saved immediately as before
         updateTutorials(activeCourseId, tutorialId, field, value)
 
         if (value === 'yes' && oldValue !== 'yes') {
@@ -370,6 +394,19 @@ export function ActiveCourseTracker() {
             }
         }
     }, [tutorials, activeCourseId, updateTutorials, completedCount, courseTitle, addXP])
+
+    // Called when feedback is successfully submitted — NOW save the "No"
+    const handleFeedbackSubmitted = useCallback(() => {
+        if (!feedbackModal) return
+        updateTutorials(activeCourseId, feedbackModal.tutorialId, feedbackModal.field, 'no')
+        setFeedbackModal(null)
+    }, [feedbackModal, activeCourseId, updateTutorials])
+
+    // Called when modal is closed without submitting — revert, don't save "No"
+    const handleFeedbackCancelled = useCallback(() => {
+        setFeedbackModal(null)
+        // Nothing to revert — we never saved the "No" in the first place
+    }, [])
 
     const allDone = completedCount === tutorials.length
 
@@ -452,6 +489,16 @@ export function ActiveCourseTracker() {
                     subtitle={celebration.subtitle}
                     onClose={() => setCelebration(null)}
                     onShare={() => setCelebration(null)}
+                />
+            )}
+
+            {feedbackModal && (
+                <FeedbackModal
+                    tutorialId={feedbackModal.tutorialId}
+                    tutorialTitle={feedbackModal.tutorialTitle}
+                    stepType={feedbackModal.stepType}
+                    onClose={handleFeedbackCancelled}
+                    onSubmitted={handleFeedbackSubmitted}
                 />
             )}
         </>

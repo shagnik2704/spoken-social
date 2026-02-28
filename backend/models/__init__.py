@@ -13,3 +13,4 @@ from models.hashtag import Tag, PostTag, Hashtag, PostHashtag, HashtagCount
 from models.xp_event import XPEvent
 from models.leaderboard import LeaderboardWeekly
 from models.activity import Activity
+from models.feedback import TutorialFeedback
