@@ -6,6 +6,7 @@ from routes.user import router as user_router
 from routes.feed import router as feed_router
 from routes.leaderboard import router as leaderboard_router
 from routes.coordinator import router as coordinator_router
+from routes.admin import router as admin_router
 from scheduler import start_scheduler, stop_scheduler
 
 
@@ -32,3 +33,4 @@ app.include_router(user_router)
 app.include_router(feed_router)
 app.include_router(leaderboard_router)
 app.include_router(coordinator_router)
+app.include_router(admin_router)
