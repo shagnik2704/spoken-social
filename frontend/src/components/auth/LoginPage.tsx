@@ -27,13 +27,13 @@ export function LoginPage() {
                     description:'Welcome back to Spoken Social'
                 }
             )
-            navigate('/dashboard')
+            navigate('/')
         }
         else{
             toast.error('Login failed.Please check your credentials')
         }
     }
-    
+
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">

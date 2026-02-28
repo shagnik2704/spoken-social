@@ -20,6 +20,7 @@ class User(Base):
     level = Column(Integer, nullable=False, default=1)
     xp_total = Column(Integer, nullable=False, default=0)
     xp_last_week = Column(Integer, nullable=False, default=0)
+    role = Column(String(20), nullable=False, default="student")  # student | coordinator | admin
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
@@ -89,6 +90,7 @@ class User(Base):
             "followers": followers_count,
             "following": following_count,
             "postsCount": posts_count,
+            "role": self.role,
         }
 
     def _level_title(self):

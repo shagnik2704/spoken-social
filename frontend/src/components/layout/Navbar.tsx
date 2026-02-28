@@ -16,6 +16,7 @@ import {
     MessageSquare,
     Trophy,
     Flame,
+    Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -37,12 +38,14 @@ import { useAuthStore } from '@/store/authStore'
 
 // Navigation items for the sidebar/bottom nav
 const navItems = [
-    { icon: Home, label: 'Feed', path: '/feed' },
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: PlusCircle, label: 'Post', path: '/post' },
-    { icon: Trophy, label: 'Leaderboard', path: '/leaderboard' },
-    { icon: User, label: 'Profile', path: '/profile' },
+    { icon: Home, label: 'Feed', path: '/feed', roles: ['student', 'coordinator', 'admin'] },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', roles: ['student'] },
+    { icon: PlusCircle, label: 'Post', path: '/post', roles: ['student'] },
+    { icon: Trophy, label: 'Leaderboard', path: '/leaderboard', roles: ['student'] },
+    { icon: User, label: 'Profile', path: '/profile', roles: ['student', 'coordinator', 'admin'] },
+    { icon: Users, label: 'My Students', path: '/coordinator', roles: ['coordinator'] },
 ]
+
 
 export function TopBar() {
     const { theme, toggleTheme } = useTheme()
@@ -190,11 +193,13 @@ export function TopBar() {
 export function DesktopSidebar() {
     const location = useLocation()
     const { open: openCompose } = useComposeModal()
+    const user = useUserStore(state=>state.user)
 
     return (
         <aside className="hidden lg:flex flex-col w-60 border-r border-border bg-card/50 shrink-0">
             <nav className="flex flex-col gap-1 p-3 flex-1">
-                {navItems.map((item) => {
+                {navItems
+    .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
                     const isActive = location.pathname === item.path
 
                     // Post button opens the compose modal
@@ -259,11 +264,14 @@ export function DesktopSidebar() {
 export function MobileBottomNav() {
     const location = useLocation()
     const { open: openCompose } = useComposeModal()
+    const user = useUserStore(state=>state.user)
+
 
     return (
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl">
             <div className="flex items-center justify-around h-16 px-2">
-                {navItems.map((item) => {
+                {navItems
+                .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
                     const isActive = location.pathname === item.path
 
                     // Post button opens the compose modal

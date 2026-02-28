@@ -19,6 +19,7 @@ function App() {
 
   const fetchUser = useUserStore(state => state.fetchUser)
   const isAuthenticated = useAuthStore(state=>state.isAuthenticated)
+  const user = useUserStore(state=>state.user)
 
   useEffect(() => {
     if(isAuthenticated){
@@ -38,7 +39,7 @@ function App() {
             <Routes>
               <Route path = "*" element = {<LoginPage/>} />
             </Routes>
-          ):(
+          ) : (
             <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
               {/* Top Bar — fixed, never scrolls */}
               <TopBar />
@@ -51,7 +52,7 @@ function App() {
                 <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 pb-20 lg:pb-6">
                   <Suspense fallback={<div className="flex h-full items-center justify-center p-8">Loading page...</div>}>
                     <Routes>
-                      <Route path="/*" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/*" element={<Navigate to={user?.role==='coordinator'?'/coordinator':'/dashboard'} replace/>} />
                       {/* <Route path="/feed" element={<Feed />} /> */}
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/profile" element={<Profile />} />
