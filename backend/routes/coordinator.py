@@ -126,27 +126,56 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
                       search: str = ""):
     """
     Returns paginated student rows for a specific college.
-    Sort and filter are done in SQL, not Python.
+    Status calculation, filtering, sorting, and pagination are ALL done in SQL.
+    PostgreSQL only returns the exact rows needed for the requested page.
     """
     tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
     total_tutorials = tot_tut_res.scalar() or 20
 
-    # Build base query with tutorial aggregations
-    watched_sub = func.count(
+    # ── Step 1: Build a subquery that computes per-student aggregations ──
+    watched_col = func.count(
         case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
     ).label("tutorials_watched")
 
-    completed_sub = func.count(
+    completed_col = func.count(
         case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
     ).label("tutorials_completed")
 
-    q = select(
+    # Progress as a percentage (integer 0–100), computed in SQL
+    progress_col = case(
+        (literal(total_tutorials) > 0,
+         func.round(
+             func.count(
+                 case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
+             ) * 100.0 / literal(total_tutorials)
+         )),
+        else_=literal(0),
+    ).label("progress")
+
+    # Status derived in SQL using the same business rules as before
+    status_col = case(
+        (func.count(
+            case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
+         ) >= literal(total_tutorials), literal("completed")),
+        (func.count(
+            case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
+         ) > literal(int(total_tutorials * 0.3)), literal("active")),
+        (func.count(
+            case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
+         ) > literal(0), literal("at_risk")),
+        (User.xp_total > 0, literal("inactive")),
+        else_=literal("not_started"),
+    ).label("status")
+
+    base = select(
         User.id,
         User.display_name,
         User.username,
         User.xp_total,
-        watched_sub,
-        completed_sub,
+        watched_col,
+        completed_col,
+        progress_col,
+        status_col,
     ).outerjoin(
         UserTutorial, UserTutorial.user_id == User.id
     ).outerjoin(
@@ -157,40 +186,55 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
         User.role == "student",
     ).group_by(User.id)
 
-    # Search
+    # Search filter (applied before aggregation since it's on User columns)
     if search:
-        q = q.filter(
+        base = base.filter(
             User.display_name.ilike(f"%{search}%") |
             User.username.ilike(f"%{search}%")
         )
 
-    # We need to get all rows first to compute status (it depends on watched/completed counts)
-    res = await db.execute(q)
-    all_rows = res.all()
+    # Wrap as a subquery so we can filter/sort by computed columns
+    sub = base.subquery("student_stats")
 
-    # Compute progress + status for each
-    students = []
-    for row in all_rows:
-        uid, name, username, xp, watched, completed = row
-        progress = round((completed / total_tutorials) * 100) if total_tutorials > 0 else 0
+    # ── Step 2: Build the outer query with filtering, sorting, pagination ──
+    outer = select(sub)
 
-        if completed >= total_tutorials:
-            status = "completed"
-        elif watched > total_tutorials * 0.3:
-            status = "active"
-        elif watched > 0:
-            status = "at_risk"
+    # Status filter — done in SQL WHERE, not Python
+    if status_filter != "all":
+        if status_filter == "inactive":
+            outer = outer.where(sub.c.status.in_(["inactive", "not_started"]))
         else:
-            status = "inactive" if xp > 0 else "not_started"
+            outer = outer.where(sub.c.status == status_filter)
 
-        # Apply status filter
-        if status_filter != "all":
-            if status_filter == "inactive" and status not in ("inactive", "not_started"):
-                continue
-            elif status_filter != "inactive" and status != status_filter:
-                continue
+    # ── Step 3: Get TOTAL count (for pagination metadata) before LIMIT ──
+    count_q = select(func.count()).select_from(outer.subquery("filtered"))
+    total_count = (await db.execute(count_q)).scalar() or 0
+    total_pages = max(1, (total_count + limit - 1) // limit)
 
-        # Build initials
+    # ── Step 4: Sort in SQL ──
+    if sort == "progress":
+        outer = outer.order_by(sub.c.progress.desc())
+    elif sort == "xp":
+        outer = outer.order_by(sub.c.xp_total.desc())
+    elif sort == "name":
+        outer = outer.order_by(func.coalesce(sub.c.display_name, sub.c.username))
+    else:
+        outer = outer.order_by(sub.c.progress.desc())
+
+    # ── Step 5: REAL pagination — PostgreSQL only processes these rows ──
+    offset = (page - 1) * limit
+    outer = outer.limit(limit).offset(offset)
+
+    res = await db.execute(outer)
+    rows = res.all()
+
+    # ── Step 6: Build response dicts (no computation, just formatting) ──
+    students = []
+    for row in rows:
+        uid = row.id
+        name = row.display_name
+        username = row.username
+
         parts = (name or "").split()
         initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
 
@@ -199,31 +243,17 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
             "name": name or username or "",
             "initials": initials,
             "rollNo": "",  # Not in DB yet — placeholder
-            "tutorialsWatched": watched,
-            "tutorialsCompleted": completed,
+            "tutorialsWatched": row.tutorials_watched,
+            "tutorialsCompleted": row.tutorials_completed,
             "totalTutorials": total_tutorials,
-            "progress": progress,
-            "xp": xp,
+            "progress": int(row.progress),
+            "xp": row.xp_total,
             "lastActive": "—",  # Not tracked yet — placeholder
-            "status": status,
+            "status": row.status,
         })
 
-    # Sort
-    if sort == "progress":
-        students.sort(key=lambda s: s["progress"], reverse=True)
-    elif sort == "xp":
-        students.sort(key=lambda s: s["xp"], reverse=True)
-    elif sort == "name":
-        students.sort(key=lambda s: s["name"])
-
-    # Paginate
-    total_count = len(students)
-    total_pages = max(1, (total_count + limit - 1) // limit)
-    start = (page - 1) * limit
-    end = start + limit
-
     return {
-        "students": students[start:end],
+        "students": students,
         "pagination": {
             "currentPage": page,
             "totalPages": total_pages,
