@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
-    X, AlertTriangle, Eye,
-    CheckCircle2, MessageSquare, PenTool, BookOpen,
+    X, AlertTriangle,
+    CheckCircle2, BookOpen,
     Clock, Layers, List, Loader2
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -52,29 +52,9 @@ interface StudentFeedbackData {
 }
 
 
-// Step type icons & colors (reused from FeedbackPanel)
-const STEP_ICONS: Record<string, React.ReactNode> = {
-    watched: <Eye className="h-3 w-3" />,
-    practiced: <PenTool className="h-3 w-3" />,
-    assignmentDone: <CheckCircle2 className="h-3 w-3" />,
-    forumAsked: <MessageSquare className="h-3 w-3" />,
-    forumAnswered: <MessageSquare className="h-3 w-3" />,
-}
-
-const STEP_COLORS: Record<string, string> = {
-    watched: 'bg-blue-500/10 text-blue-500',
-    practiced: 'bg-orange-500/10 text-orange-500',
-    assignmentDone: 'bg-purple-500/10 text-purple-500',
-    forumAsked: 'bg-teal-500/10 text-teal-500',
-    forumAnswered: 'bg-teal-500/10 text-teal-500',
-}
-
-
-// ===== ENTRY CARD =====
+// ===== ENTRY CARD (Simplified) =====
 
 function FeedbackEntryCard({ entry, showTutorial = true }: { entry: FeedbackEntry; showTutorial?: boolean }) {
-    const stepColor = STEP_COLORS[entry.stepType] || 'bg-muted text-muted-foreground'
-    const stepIcon = STEP_ICONS[entry.stepType] || <AlertTriangle className="h-3 w-3" />
     const stepLabel = STEP_TYPE_LABELS[entry.stepType] || entry.stepType
 
     const date = new Date(entry.createdAt)
@@ -84,52 +64,43 @@ function FeedbackEntryCard({ entry, showTutorial = true }: { entry: FeedbackEntr
     })
 
     return (
-        <div className="relative pl-6 pb-5 last:pb-0">
-            {/* Timeline dot and line */}
-            <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-destructive/20 border-2 border-destructive/40" />
-            <div className="absolute left-[5px] top-4 bottom-0 w-0.5 bg-border/40 last:hidden" />
+        <div className="py-3 border-b border-border/20 last:border-0">
+            {/* Tutorial name */}
+            {showTutorial && (
+                <p className="text-xs font-medium mb-1.5">
+                    Tutorial {entry.tutorialNumber}: {entry.tutorialTitle}
+                </p>
+            )}
 
-            <div className="bg-muted/10 border border-border/30 rounded-lg p-3">
-                {/* Tutorial + step info */}
-                {showTutorial && (
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <BookOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="text-xs font-medium">
-                            Tutorial {entry.tutorialNumber}: {entry.tutorialTitle}
-                        </span>
-                    </div>
-                )}
-
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Badge className={`${stepColor} border-0 text-[9px] px-1.5 py-0 h-4 gap-0.5`}>
-                        {stepIcon}
-                        {stepLabel}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground ml-auto shrink-0 flex items-center gap-1">
-                        <Clock className="h-2.5 w-2.5" />
-                        {dateStr}
-                    </span>
-                </div>
-
-                {/* Reasons */}
-                <div className="flex flex-wrap gap-1.5">
-                    {entry.reasons.map(reason => (
-                        <span
-                            key={reason}
-                            className="text-[11px] bg-destructive/8 text-destructive/90 border border-destructive/15 px-2 py-0.5 rounded-md"
-                        >
-                            {REASON_LABELS[reason] || reason}
-                        </span>
-                    ))}
-                </div>
-
-                {/* "Other" text */}
-                {entry.otherText && (
-                    <p className="text-xs text-muted-foreground mt-2 italic bg-muted/30 rounded px-2 py-1">
-                        "{entry.otherText}"
-                    </p>
-                )}
+            {/* Step type + date */}
+            <div className="flex items-center justify-between mb-2">
+                <Badge className="bg-muted text-muted-foreground border-0 text-[10px] px-2 py-0.5">
+                    {stepLabel}
+                </Badge>
+                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-2.5 w-2.5" />
+                    {dateStr}
+                </span>
             </div>
+
+            {/* Reasons — simple muted pills */}
+            <div className="flex flex-wrap gap-1.5">
+                {entry.reasons.map(reason => (
+                    <span
+                        key={reason}
+                        className="text-[11px] bg-muted/50 text-foreground/70 border border-border/40 px-2 py-0.5 rounded-md"
+                    >
+                        {REASON_LABELS[reason] || reason}
+                    </span>
+                ))}
+            </div>
+
+            {/* "Other" text */}
+            {entry.otherText && (
+                <p className="text-xs text-muted-foreground mt-2 italic bg-muted/20 rounded px-2 py-1">
+                    "{entry.otherText}"
+                </p>
+            )}
         </div>
     )
 }
@@ -152,13 +123,13 @@ function TutorialGroupCard({ group }: { group: TutorialGroup }) {
                         Tutorial {group.tutorialNumber}: {group.tutorialTitle}
                     </span>
                 </div>
-                <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] px-2 py-0.5 shrink-0">
+                <span className="text-[11px] text-muted-foreground font-mono shrink-0">
                     {group.issueCount} {group.issueCount === 1 ? 'issue' : 'issues'}
-                </Badge>
+                </span>
             </button>
 
             {isOpen && (
-                <div className="border-t border-border/20 px-3 py-3">
+                <div className="border-t border-border/20 px-3">
                     {group.entries.map(entry => (
                         <FeedbackEntryCard key={entry.id} entry={entry} showTutorial={false} />
                     ))}
@@ -227,7 +198,7 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                         <div className="flex-1 min-w-0">
                             <h2 className="text-sm font-bold truncate">{studentName}</h2>
                             <p className="text-[11px] text-muted-foreground">
-                                {data?.student.collegeName || 'Loading...'} {data?.student.rollNo ? `· ${data.student.rollNo}` : ''}
+                                {data?.student.collegeName || 'Loading...'} {data?.student.rollNo ? `· @${data.student.rollNo}` : ''}
                             </p>
                         </div>
                         <button
@@ -272,65 +243,45 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                     {/* Data loaded */}
                     {!isLoading && !error && data && data.totalEntries > 0 && (
                         <>
-                            {/* Quick stats */}
-                            <div className="grid grid-cols-3 gap-2.5">
-                                <Card className="border-border/40">
-                                    <CardContent className="p-3 text-center">
-                                        <p className="text-xl font-bold text-destructive">{data.totalEntries}</p>
-                                        <p className="text-[10px] text-muted-foreground">Total Issues</p>
-                                    </CardContent>
-                                </Card>
-                                <Card className="border-border/40">
-                                    <CardContent className="p-3 text-center">
-                                        <p className="text-[11px] font-bold truncate">
-                                            {data.summary.mostCommonReason
-                                                ? (REASON_LABELS[data.summary.mostCommonReason] || data.summary.mostCommonReason)
-                                                : '—'}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground mt-0.5">Top Reason</p>
-                                    </CardContent>
-                                </Card>
-                                <Card className="border-border/40">
-                                    <CardContent className="p-3 text-center">
-                                        <p className="text-[11px] font-bold truncate">
-                                            {data.summary.mostProblematicStep
-                                                ? (STEP_TYPE_LABELS[data.summary.mostProblematicStep] || data.summary.mostProblematicStep)
-                                                : '—'}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground mt-0.5">Top Step Issue</p>
-                                    </CardContent>
-                                </Card>
+                            {/* Quick stats — simple text row */}
+                            <div className="flex items-center gap-4 text-sm">
+                                <div>
+                                    <span className="font-bold text-lg">{data.totalEntries}</span>
+                                    <span className="text-muted-foreground text-xs ml-1">issues</span>
+                                </div>
+                                <div className="h-4 w-px bg-border/50" />
+                                <div className="text-xs text-muted-foreground">
+                                    Top issue: <span className="text-foreground font-medium">
+                                        {data.summary.mostCommonReason
+                                            ? (REASON_LABELS[data.summary.mostCommonReason] || data.summary.mostCommonReason)
+                                            : '—'}
+                                    </span>
+                                </div>
                             </div>
 
-                            {/* Reason breakdown bar chart */}
+                            {/* Reason breakdown — uniform muted bars */}
                             {data.reasonBreakdown.length > 0 && (
                                 <Card className="border-border/40">
                                     <CardContent className="p-4">
                                         <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
                                             Reason Breakdown
                                         </h3>
-                                        <div className="space-y-2">
-                                            {data.reasonBreakdown.map((reason, i) => (
-                                                <div key={reason.key} className="flex items-center gap-2.5">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between mb-0.5">
-                                                            <span className="text-[11px] font-medium truncate">
-                                                                {REASON_LABELS[reason.key] || reason.key}
-                                                            </span>
-                                                            <span className="text-[10px] text-muted-foreground font-mono shrink-0 ml-2">
-                                                                {reason.count}×
-                                                            </span>
-                                                        </div>
-                                                        <div className="h-3 bg-muted/30 rounded overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded transition-all duration-700 ${i === 0 ? 'bg-destructive/60' :
-                                                                    i === 1 ? 'bg-warning/60' :
-                                                                        i === 2 ? 'bg-orange-400/50' :
-                                                                            'bg-muted-foreground/30'
-                                                                    }`}
-                                                                style={{ width: `${(reason.count / maxReasonCount) * 100}%` }}
-                                                            />
-                                                        </div>
+                                        <div className="space-y-2.5">
+                                            {data.reasonBreakdown.map(reason => (
+                                                <div key={reason.key}>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-[11px] font-medium truncate">
+                                                            {REASON_LABELS[reason.key] || reason.key}
+                                                        </span>
+                                                        <span className="text-[10px] text-muted-foreground font-mono shrink-0 ml-2">
+                                                            {reason.count}×
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full bg-foreground/20 transition-all duration-700"
+                                                            style={{ width: `${(reason.count / maxReasonCount) * 100}%` }}
+                                                        />
                                                     </div>
                                                 </div>
                                             ))}
@@ -339,16 +290,14 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                                 </Card>
                             )}
 
-                            {/* Step type pills */}
+                            {/* Step type — simple text pills */}
                             {data.stepBreakdown.length > 0 && (
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-[11px] text-muted-foreground">By step:</span>
                                     {data.stepBreakdown.map(step => {
-                                        const stepColor = STEP_COLORS[step.stepType] || 'bg-muted text-muted-foreground'
                                         const stepLabel = STEP_TYPE_LABELS[step.stepType] || step.stepType
                                         return (
-                                            <Badge key={step.stepType} className={`${stepColor} border-0 text-[10px] px-2 py-0.5 gap-1`}>
-                                                {STEP_ICONS[step.stepType]}
+                                            <Badge key={step.stepType} className="bg-muted text-muted-foreground border-0 text-[10px] px-2 py-0.5">
                                                 {stepLabel}: {step.count}
                                             </Badge>
                                         )
@@ -385,8 +334,8 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                             {/* Timeline view */}
                             {viewMode === 'timeline' && (
                                 <div>
-                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                                        Feedback Timeline — Most Recent First
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                                        Feedback Timeline
                                     </h3>
                                     <div>
                                         {data.entries.map(entry => (
@@ -399,8 +348,8 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                             {/* Grouped by tutorial view */}
                             {viewMode === 'grouped' && (
                                 <div>
-                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                                        Issues by Tutorial — Most Problematic First
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                                        Issues by Tutorial
                                     </h3>
                                     <div className="space-y-2">
                                         {data.tutorialGroups.map(group => (

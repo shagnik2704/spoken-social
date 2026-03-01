@@ -970,7 +970,7 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'feedback' && (
-                <FeedbackPanel />
+                <FeedbackPanel onStudentClick={setSelectedStudentForFeedback} />
             )}
 
             {selectedStudentForFeedback && (

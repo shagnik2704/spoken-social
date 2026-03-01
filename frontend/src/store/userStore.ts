@@ -67,7 +67,7 @@ export const useUserStore = create<UserState>((set, get) => ({
             const converted = data.map((t: any) => {
                 const out = { ...t }
                 for (const f of fields) {
-                    out[f] = t[f] === true ? 'yes' : t[f] === false ? 'no' : null
+                    out[f] = t[f] === true ? 'yes' : null
                 }
                 return out
             })
