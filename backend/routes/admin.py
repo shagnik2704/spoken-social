@@ -8,8 +8,9 @@
 
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
-from sqlalchemy.orm import Session
-from sqlalchemy import func, case
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func, case
 
 from database import get_db
 from models import User, College, UserTutorial, Tutorial
@@ -20,20 +21,20 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 @router.get("/platform-summary")
-def get_platform_summary(
+async def get_platform_summary(
     user: User = Depends(require_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Returns a single, pre-computed payload for the admin Overview + Analytics tabs.
     Everything is done in SQL — no Python loops over students.
     """
-    total_tutorials = db.query(func.count(Tutorial.id)).filter(
-        Tutorial.course_id == "linux"
-    ).scalar() or 20
+    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == "linux"))
+    total_tutorials = tot_tut_res.scalar() or 20
 
     # ----- Per-student metrics (one query) -----
-    student_metrics = db.query(
+    res_metrics = await db.execute(
+        select(
         User.id,
         User.display_name,
         User.username,
@@ -52,10 +53,13 @@ def get_platform_summary(
         (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == "linux")
     ).filter(
         User.role == "student",
-    ).group_by(User.id).all()
+    ).group_by(User.id)
+    )
+    student_metrics = res_metrics.all()
 
     # ----- Build college name lookup -----
-    colleges = db.query(College.id, College.name).all()
+    colleges_res = await db.execute(select(College.id, College.name))
+    colleges = colleges_res.all()
     college_names = {c.id: c.name for c in colleges}
 
     # ----- Compute derived metrics -----
@@ -127,7 +131,8 @@ def get_platform_summary(
 
     # ----- Tutorial-wise completion rates -----
     # For each tutorial number, count how many students have completed it
-    tutorial_stats = db.query(
+    res_stats = await db.execute(
+        select(
         Tutorial.tutorial_number,
         Tutorial.title,
         func.count(
@@ -141,7 +146,9 @@ def get_platform_summary(
         Tutorial.tutorial_number, Tutorial.title
     ).order_by(
         Tutorial.tutorial_number
-    ).all()
+    )
+    )
+    tutorial_stats = res_stats.all()
 
     tutorial_completion = [
         {
@@ -190,10 +197,10 @@ def get_platform_summary(
 # ============================================================
 
 @router.get("/feedback-summary")
-def get_feedback_summary(
+async def get_feedback_summary(
     college_id: Optional[str] = Query(None, description="Filter by college"),
     user: User = Depends(require_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Returns aggregated feedback data for the admin dashboard:
@@ -202,14 +209,15 @@ def get_feedback_summary(
     """
 
     # ----- Base query -----
-    base_query = db.query(TutorialFeedback).join(
+    base_query = select(TutorialFeedback).options(selectinload(TutorialFeedback.user)).join(
         User, TutorialFeedback.user_id == User.id
     )
 
     if college_id:
         base_query = base_query.filter(User.college_id == college_id)
 
-    all_feedback = base_query.order_by(TutorialFeedback.created_at.desc()).all()
+    res_fb = await db.execute(base_query.order_by(TutorialFeedback.created_at.desc()))
+    all_feedback = res_fb.scalars().all()
 
     # ----- Aggregate reason counts -----
     reason_counts: dict[str, int] = {}
@@ -242,18 +250,25 @@ def get_feedback_summary(
     # ----- Per-student feedback (grouped) -----
     # Get unique students who gave feedback
     students_with_feedback: dict[str, dict] = {}
-    college_names: dict[str, str] = {}
+    college_ids = list({fb.user.college_id for fb in all_feedback if fb.user.college_id})
+    if college_ids:
+        res_cols = await db.execute(select(College.id, College.name).filter(College.id.in_(college_ids)))
+        college_names = {c.id: c.name for c in res_cols.all()}
+    else:
+        college_names = {}
+
+    tutorial_ids = list({fb.tutorial_id for fb in all_feedback})
+    if tutorial_ids:
+        res_tuts = await db.execute(select(Tutorial.id, Tutorial.title, Tutorial.tutorial_number).filter(Tutorial.id.in_(tutorial_ids)))
+        tut_map = {t.id: {"title": t.title, "number": t.tutorial_number} for t in res_tuts.all()}
+    else:
+        tut_map = {}
 
     for fb in all_feedback:
         uid = str(fb.user_id)
         if uid not in students_with_feedback:
             student_user = fb.user
-            # Cache college name
             cid = student_user.college_id
-            if cid and cid not in college_names:
-                college = db.query(College.name).filter_by(id=cid).first()
-                college_names[cid] = college.name if college else cid
-
             parts = (student_user.display_name or "").split()
             initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
 
@@ -266,16 +281,12 @@ def get_feedback_summary(
                 "entries": [],
             }
 
-        # Get tutorial title
-        tutorial = db.query(Tutorial.title, Tutorial.tutorial_number).filter_by(
-            id=fb.tutorial_id
-        ).first()
-
+        tm = tut_map.get(fb.tutorial_id, {"title": "Unknown", "number": 0})
         students_with_feedback[uid]["feedbackCount"] += 1
         students_with_feedback[uid]["entries"].append({
-            "id": fb.id,
-            "tutorialNumber": tutorial.tutorial_number if tutorial else 0,
-            "tutorialTitle": tutorial.title if tutorial else "Unknown",
+            "id": str(fb.id),
+            "tutorialNumber": tm["number"],
+            "tutorialTitle": tm["title"],
             "stepType": fb.step_type,
             "reasons": fb.reasons or [],
             "otherText": fb.other_text,
@@ -298,10 +309,10 @@ def get_feedback_summary(
 
 
 @router.get("/students/{student_id}/feedback")
-def get_student_feedback(
+async def get_student_feedback(
     student_id: str,
     user: User = Depends(require_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Returns detailed feedback data for a single student:
@@ -315,7 +326,8 @@ def get_student_feedback(
     sid = uuid_mod.UUID(student_id)
 
     # Get the student
-    student = db.query(User).filter_by(id=sid).first()
+    res_st = await db.execute(select(User).filter_by(id=sid))
+    student = res_st.scalars().first()
     if not student:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Student not found")
@@ -323,7 +335,8 @@ def get_student_feedback(
     # Get college name
     college_name = "Unknown"
     if student.college_id:
-        college = db.query(College.name).filter_by(id=student.college_id).first()
+        res_c = await db.execute(select(College.name).filter_by(id=student.college_id))
+        college = res_c.first()
         if college:
             college_name = college.name
 
@@ -340,12 +353,12 @@ def get_student_feedback(
     }
 
     # Fetch all feedback for this student
-    feedback_entries = (
-        db.query(TutorialFeedback)
+    res_fe = await db.execute(
+        select(TutorialFeedback)
         .filter(TutorialFeedback.user_id == sid)
         .order_by(TutorialFeedback.created_at.desc())
-        .all()
     )
+    feedback_entries = res_fe.scalars().all()
 
     total = len(feedback_entries)
 
@@ -394,16 +407,21 @@ def get_student_feedback(
     # Group by tutorial for the grouped view
     tutorial_groups: dict[str, dict] = {}
 
-    for fb in feedback_entries:
-        tutorial = db.query(Tutorial.title, Tutorial.tutorial_number).filter_by(
-            id=fb.tutorial_id
-        ).first()
+    tutorial_ids = list({fb.tutorial_id for fb in feedback_entries})
+    if tutorial_ids:
+        res_tuts = await db.execute(select(Tutorial.id, Tutorial.title, Tutorial.tutorial_number).filter(Tutorial.id.in_(tutorial_ids)))
+        tut_map = {t.id: {"title": t.title, "number": t.tutorial_number} for t in res_tuts.all()}
+    else:
+        tut_map = {}
 
+    for fb in feedback_entries:
+        tm = tut_map.get(fb.tutorial_id, {"title": "Unknown", "number": 0})
+        
         entry = {
-            "id": fb.id,
+            "id": str(fb.id),
             "tutorialId": str(fb.tutorial_id),
-            "tutorialNumber": tutorial.tutorial_number if tutorial else 0,
-            "tutorialTitle": tutorial.title if tutorial else "Unknown",
+            "tutorialNumber": tm["number"],
+            "tutorialTitle": tm["title"],
             "stepType": fb.step_type,
             "reasons": fb.reasons or [],
             "otherText": fb.other_text,

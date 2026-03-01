@@ -3,7 +3,7 @@ Seed Script — populates the database with mock data for the new schema.
 Run once:  python seed.py
 """
 
-from database import SessionLocal
+from database import SyncSessionLocal
 from models.user import User
 from models.course import Course, UserCourse
 from models.tutorial import Tutorial, UserTutorial
@@ -14,10 +14,12 @@ from models.follow import Follow
 from models.hashtag import Hashtag, PostHashtag, HashtagCount
 from models.xp_event import XPEvent
 from models.activity import Activity
-from services.auth import PRIYA_UUID, RAHUL_UUID
 from datetime import datetime, timezone, timedelta
 import uuid
 import random
+
+PRIYA_UUID = uuid.UUID("f47ac10b-58cc-4372-a567-0e02b2c3d479")
+RAHUL_UUID = uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
 
 random.seed(42)  # deterministic for reproducibility
 
@@ -53,7 +55,7 @@ def _level_from_xp(xp: int) -> int:
 
 
 def seed():
-    db = SessionLocal()
+    db = SyncSessionLocal()
 
     # Check if already seeded
     if db.query(User).first():

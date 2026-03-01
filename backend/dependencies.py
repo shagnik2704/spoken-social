@@ -3,13 +3,13 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from services.jwt import decode_token
 from models import User
 from database import get_db
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 import uuid
 
 security = HTTPBearer()
 
-
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)) -> User:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: AsyncSession = Depends(get_db)) -> User:
 
     token = credentials.credentials
     user_id_str = decode_token(token)
@@ -28,7 +28,9 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail="Invalid token format",
         )
 
-    user = db.query(User).filter_by(id=user_uuid).first()
+    result = await db.execute(select(User).filter_by(id=user_uuid))
+    user = result.scalars().first()
+
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

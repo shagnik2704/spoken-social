@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func, cast, Date
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, cast, Date
 from database import get_db
 from models import User
 from models.xp_event import XPEvent
@@ -14,7 +14,7 @@ router = APIRouter(prefix='/api', tags=['leaderboard'])
 
 
 @router.get('/leaderboard')
-def get_leaderboard(request: Request, db: Session = Depends(get_db)):
+async def get_leaderboard(request: Request, db: AsyncSession = Depends(get_db)):
     """Returns all-time leaderboard — top users by xp_total."""
 
     # Try to identify the current user from the Authorization header (optional)
@@ -29,16 +29,16 @@ def get_leaderboard(request: Request, db: Session = Depends(get_db)):
             except ValueError:
                 pass
 
-    users = (
-        db.query(User)
+    result = await db.execute(
+        select(User)
         .order_by(User.xp_total.desc())
         .limit(100)
-        .all()
     )
+    users = result.scalars().all()
 
-    result = []
+    leaderboard = []
     for rank, user in enumerate(users, start=1):
-        result.append({
+        leaderboard.append({
             "id": str(user.id),
             "rank": rank,
             "name": user.display_name,
@@ -52,14 +52,14 @@ def get_leaderboard(request: Request, db: Session = Depends(get_db)):
             "isCurrentUser": current_user_id is not None and user.id == current_user_id,
         })
 
-    return result
+    return leaderboard
 
 
 @router.get('/xp-history')
-def get_xp_history(
+async def get_xp_history(
     current_user: User = Depends(get_current_user),
     month: str = Query(None, description="Month in YYYY-MM format, defaults to current month"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """Returns daily XP gained for the authenticated user in a given month."""
 
@@ -85,8 +85,8 @@ def get_xp_history(
         end_date = datetime(year, mon + 1, 1)
 
     # Query: aggregate xp_delta by day
-    rows = (
-        db.query(
+    result = await db.execute(
+        select(
             func.extract('day', XPEvent.created_at).label('day'),
             func.coalesce(func.sum(XPEvent.xp_delta), 0).label('xp'),
         )
@@ -96,8 +96,8 @@ def get_xp_history(
             XPEvent.created_at < end_date,
         )
         .group_by(func.extract('day', XPEvent.created_at))
-        .all()
     )
+    rows = result.all()
 
     # Build a lookup dict: day -> xp
     day_xp = {int(row.day): int(row.xp) for row in rows}

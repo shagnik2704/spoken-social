@@ -1,11 +1,11 @@
 import random
 from datetime import datetime, timezone, timedelta
-from database import SessionLocal
+from database import SyncSessionLocal
 from models import User, Tutorial
 from models.feedback import TutorialFeedback
 
 def seed_feedback():
-    db = SessionLocal()
+    db = SyncSessionLocal()
 
     print("Generating mock tutorial feedback...")
 

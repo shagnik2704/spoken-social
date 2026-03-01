@@ -1,27 +1,31 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from sqlalchemy import select
 from database import get_db
 from models.post import Post
+from models.hashtag import PostHashtag
 
 router = APIRouter(prefix='/api', tags=['feed'])
 
 
 @router.get('/feed')
-def get_feed(db: Session = Depends(get_db)):
+async def get_feed(db: AsyncSession = Depends(get_db)):
     """Returns the feed — posts with derived counts from interaction tables."""
-    posts = (
-        db.query(Post)
+    stmt = (
+        select(Post)
         .options(
-            joinedload(Post.author),
-            joinedload(Post.likes),
-            joinedload(Post.comments),
-            joinedload(Post.shares),
-            joinedload(Post.post_hashtags),
+            selectinload(Post.author),
+            selectinload(Post.likes),
+            selectinload(Post.comments),
+            selectinload(Post.shares),
+            selectinload(Post.post_hashtags).selectinload(PostHashtag.hashtag),
         )
         .order_by(Post.created_at.desc())
         .limit(50)
-        .all()
     )
+    result = await db.execute(stmt)
+    posts = result.scalars().all()
 
     # Deduplicate due to joinedload producing multiple rows
     seen = set()

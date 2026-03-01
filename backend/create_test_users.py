@@ -1,9 +1,9 @@
-from database import SessionLocal
+from database import SyncSessionLocal
 from models import User
 import uuid
 
 def create_users():
-    db = SessionLocal()
+    db = SyncSessionLocal()
     
     try:
         # 1. Empty Student (No courses, no XP, just created)

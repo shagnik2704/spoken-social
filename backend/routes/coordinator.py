@@ -7,8 +7,8 @@
 # ============================================================
 
 from fastapi import APIRouter, HTTPException, Depends, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func, case, literal
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, case, literal
 
 from database import get_db
 from models import User, College, UserCourse, UserTutorial, Tutorial
@@ -17,73 +17,30 @@ from dependencies import get_current_user, require_coordinator, require_admin
 router = APIRouter(prefix="/api/coordinator", tags=["coordinator"])
 
 
-# ===== HELPER: Build aggregated college summary from DB =====
-
-def _college_summary_query(db: Session, college_filter=None):
-    """
-    Returns a list of college summary dicts with metrics computed in SQL.
-    If college_filter is provided, only returns that college.
-    """
-    # Count total tutorials for the linux course (used for progress calc)
-    total_tutorials = db.query(func.count(Tutorial.id)).filter(
-        Tutorial.course_id == "linux"
-    ).scalar() or 20  # fallback
-
-    # Base query: join users → user_tutorials → tutorials
-    # Aggregate per college
-    q = db.query(
-        College.id,
-        College.name,
-        College.location,
-        College.coordinator_name,
-        College.course_id,
-        func.count(User.id).label("total_students"),
-        # Count by activity: watched > 50% = active, watched == total = completed, etc.
-        func.count(func.nullif(
-            case(
-                (func.coalesce(
-                    db.query(func.count(UserTutorial.tutorial_id)).filter(
-                        UserTutorial.user_id == User.id,
-                        UserTutorial.watched == True,
-                    ).correlate(User).scalar_subquery(), 0
-                ) == total_tutorials, "completed"),
-                else_=None
-            ), None
-        )).label("completed_count"),
-        func.avg(User.xp_total).label("avg_xp"),
-    ).join(User, User.college_id == College.id)
-
-    if college_filter:
-        q = q.filter(College.id == college_filter)
-
-    q = q.group_by(College.id)
-    return q.all()
-
-
-def _build_college_summary(db: Session, college_id: str | None = None) -> list[dict]:
+async def _build_college_summary(db: AsyncSession, college_id: str | None = None) -> list[dict]:
     """
     Builds college summaries using individual SQL queries per college.
     This approach is clearer and avoids complex correlated subqueries.
     """
     if college_id:
-        colleges = db.query(College).filter(College.id == college_id).all()
+        result = await db.execute(select(College).filter(College.id == college_id))
     else:
-        colleges = db.query(College).all()
+        result = await db.execute(select(College))
+    colleges = result.scalars().all()
 
-    total_tutorials = db.query(func.count(Tutorial.id)).filter(
-        Tutorial.course_id == "linux"
-    ).scalar() or 20
+    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == "linux"))
+    total_tutorials = tot_tut_res.scalar() or 20
 
     summaries = []
     for college in colleges:
         # Get all student IDs for this college
-        student_ids = db.query(User.id).filter(User.college_id == college.id).all()
-        student_ids = [sid[0] for sid in student_ids]
+        stu_ids_res = await db.execute(select(User.id).filter(User.college_id == college.id))
+        student_ids = stu_ids_res.scalars().all()
         total = len(student_ids)
 
         if total == 0:
             summaries.append({
-                "id": college.id,
+                "id": str(college.id),
                 "name": college.name,
                 "location": college.location or "",
                 "coordinatorName": college.coordinator_name or "",
@@ -100,23 +57,26 @@ def _build_college_summary(db: Session, college_id: str | None = None) -> list[d
             continue
 
         # Per-student metrics via SQL
-        student_metrics = db.query(
-            User.id,
-            User.xp_total,
-            func.count(
-                case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
-            ).label("watched"),
-            func.count(
-                case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
-            ).label("completed"),
-        ).outerjoin(
-            UserTutorial, UserTutorial.user_id == User.id
-        ).outerjoin(
-            Tutorial,
-            (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == "linux")
-        ).filter(
-            User.college_id == college.id
-        ).group_by(User.id).all()
+        student_metrics_res = await db.execute(
+            select(
+                User.id,
+                User.xp_total,
+                func.count(
+                    case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
+                ).label("watched"),
+                func.count(
+                    case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
+                ).label("completed"),
+            ).outerjoin(
+                UserTutorial, UserTutorial.user_id == User.id
+            ).outerjoin(
+                Tutorial,
+                (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == "linux")
+            ).filter(
+                User.college_id == college.id
+            ).group_by(User.id)
+        )
+        student_metrics = student_metrics_res.all()
 
         num_completed = 0
         num_active = 0
@@ -138,12 +98,11 @@ def _build_college_summary(db: Session, college_id: str | None = None) -> list[d
             else:
                 num_inactive += 1
 
-        avg_xp_val = db.query(func.avg(User.xp_total)).filter(
-            User.college_id == college.id
-        ).scalar() or 0
+        avg_xp_res = await db.execute(select(func.avg(User.xp_total)).filter(User.college_id == college.id))
+        avg_xp_val = avg_xp_res.scalar() or 0
 
         summaries.append({
-            "id": college.id,
+            "id": str(college.id),
             "name": college.name,
             "location": college.location or "",
             "coordinatorName": college.coordinator_name or "",
@@ -161,7 +120,7 @@ def _build_college_summary(db: Session, college_id: str | None = None) -> list[d
     return summaries
 
 
-def _get_student_rows(db: Session, college_id: str, course_id: str = "linux",
+async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = "linux",
                       page: int = 1, limit: int = 50,
                       sort: str = "progress", status_filter: str = "all",
                       search: str = ""):
@@ -169,9 +128,8 @@ def _get_student_rows(db: Session, college_id: str, course_id: str = "linux",
     Returns paginated student rows for a specific college.
     Sort and filter are done in SQL, not Python.
     """
-    total_tutorials = db.query(func.count(Tutorial.id)).filter(
-        Tutorial.course_id == course_id
-    ).scalar() or 20
+    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
+    total_tutorials = tot_tut_res.scalar() or 20
 
     # Build base query with tutorial aggregations
     watched_sub = func.count(
@@ -182,7 +140,7 @@ def _get_student_rows(db: Session, college_id: str, course_id: str = "linux",
         case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
     ).label("tutorials_completed")
 
-    q = db.query(
+    q = select(
         User.id,
         User.display_name,
         User.username,
@@ -207,7 +165,8 @@ def _get_student_rows(db: Session, college_id: str, course_id: str = "linux",
         )
 
     # We need to get all rows first to compute status (it depends on watched/completed counts)
-    all_rows = q.all()
+    res = await db.execute(q)
+    all_rows = res.all()
 
     # Compute progress + status for each
     students = []
@@ -278,19 +237,19 @@ def _get_student_rows(db: Session, college_id: str, course_id: str = "linux",
 
 
 @router.get("/colleges")
-def get_all_colleges(
+async def get_all_colleges(
     user: User = Depends(require_coordinator),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Returns all colleges with computed metrics.
     Coordinator and Admin both have access.
     """
-    return _build_college_summary(db)
+    return await _build_college_summary(db)
 
 
 @router.get("/colleges/{college_id}")
-def get_college_details(
+async def get_college_details(
     college_id: str,
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200),
@@ -298,28 +257,29 @@ def get_college_details(
     status: str = Query("all"),
     search: str = Query(""),
     user: User = Depends(require_coordinator),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Returns a specific college's details + paginated student list.
     Coordinator can only access their own college; admin can access any.
     """
     # Coordinator can only see their own college
-    if user.role == "coordinator" and user.college_id != college_id:
+    if user.role == "coordinator" and str(user.college_id) != str(college_id):
         raise HTTPException(
             status_code=403,
             detail="You can only view your own college's students",
         )
 
-    college = db.query(College).filter(College.id == college_id).first()
+    res = await db.execute(select(College).filter(College.id == college_id))
+    college = res.scalars().first()
     if not college:
         raise HTTPException(status_code=404, detail="College not found")
 
-    summary = _build_college_summary(db, college_id=college_id)
+    summary = await _build_college_summary(db, college_id=college_id)
     if not summary:
         raise HTTPException(status_code=404, detail="College not found")
 
-    student_data = _get_student_rows(
+    student_data = await _get_student_rows(
         db, college_id,
         page=page, limit=limit, sort=sort,
         status_filter=status, search=search,
@@ -327,7 +287,7 @@ def get_college_details(
 
     return {
         "college": {
-            "id": college.id,
+            "id": str(college.id),
             "name": college.name,
             "location": college.location or "",
             "coordinatorName": college.coordinator_name or "",

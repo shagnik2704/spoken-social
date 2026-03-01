@@ -2,13 +2,14 @@
 # Auth Routes — login endpoint
 # ============================================================
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 from services.auth import verify_credentials
 from services.jwt import create_access_token
+from database import get_db
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-
 
 # ----- Request / Response models -----
 
@@ -16,23 +17,21 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
-
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: dict
 
-
 # ----- Endpoints -----
 
 @router.post("/login", response_model=LoginResponse)
-def login(body: LoginRequest):
+async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     """
     1. Verify credentials (mock for now, Spoken Tutorial API later)
     2. If valid → create JWT token → return it
     3. If invalid → 401
     """
-    user_info = verify_credentials(body.email, body.password)
+    user_info = await verify_credentials(body.email, body.password, db)
 
     if user_info is None:
         raise HTTPException(

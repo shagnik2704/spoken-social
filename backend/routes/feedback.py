@@ -5,7 +5,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from dependencies import get_current_user
@@ -27,10 +27,10 @@ class FeedbackRequest(BaseModel):
 # ----- Endpoint -----
 
 @router.post("/feedback")
-def submit_feedback(
+async def submit_feedback(
     body: FeedbackRequest,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """Save feedback for why a student selected 'No' on a tutorial step."""
     import uuid
@@ -43,7 +43,7 @@ def submit_feedback(
         other_text=body.otherText,
     )
     db.add(feedback)
-    db.commit()
-    db.refresh(feedback)
+    await db.commit()
+    await db.refresh(feedback)
 
     return feedback.to_api_dict()

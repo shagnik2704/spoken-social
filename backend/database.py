@@ -1,13 +1,15 @@
-# ============================================================
+    # ============================================================
 # Database Connection — Engine + Session
 # ============================================================
 # Engine = the connection to PostgreSQL
-# SessionLocal = a factory that creates DB sessions
+# SessionLocal = a factory that creates DB sessions (async, for API)
+# SyncSessionLocal = a factory that creates sync sessions (for scripts)
 # Base = all models inherit from this
 # ============================================================
 
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from dotenv import load_dotenv
 import os
 
@@ -15,10 +17,28 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(DATABASE_URL, echo=False)
-# echo=True would print every SQL query (useful for debugging)
+# --- Async engine (for the API server) ---
+ASYNC_DATABASE_URL = DATABASE_URL
+if ASYNC_DATABASE_URL and ASYNC_DATABASE_URL.startswith("postgresql://"):
+    ASYNC_DATABASE_URL = ASYNC_DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
-SessionLocal = sessionmaker(bind=engine)
+engine = create_async_engine(
+    ASYNC_DATABASE_URL,
+    echo=False,
+    pool_size=20,
+    max_overflow=10,
+    pool_pre_ping=True
+)
+
+SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+
+# --- Sync engine (for offline scripts like seed.py) ---
+SYNC_DATABASE_URL = DATABASE_URL
+if SYNC_DATABASE_URL and SYNC_DATABASE_URL.startswith("postgresql+asyncpg://"):
+    SYNC_DATABASE_URL = SYNC_DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+
+sync_engine = create_engine(SYNC_DATABASE_URL, echo=False)
+SyncSessionLocal = sessionmaker(bind=sync_engine)
 
 
 class Base(DeclarativeBase):
@@ -26,20 +46,12 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db():
+async def get_db():
     """
     FastAPI dependency that gives each request its own DB session.
-    
-    Usage in routes:
-        @router.get('/me')
-        def get_me(db: Session = Depends(get_db)):
-            user = db.query(User).filter_by(id=...).first()
-    
-    The 'finally' block ensures the session is always closed,
-    even if the route throws an error.
     """
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        await db.close()

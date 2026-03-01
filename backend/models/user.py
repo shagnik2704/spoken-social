@@ -41,10 +41,11 @@ class User(Base):
         Index("idx_users_xp_total", xp_total.desc()),
     )
 
-    def to_api_dict(self, db=None):
+    async def to_api_dict(self, db=None):
         """Convert to the JSON shape the frontend expects."""
         from models.post import Post
         from models.follow import Follow
+        from sqlalchemy import select
 
         followers_count = 0
         following_count = 0
@@ -53,22 +54,34 @@ class User(Base):
         xp_this_week = 0
 
         if db:
-            from sqlalchemy import func, text
+            from sqlalchemy import func
             from models.xp_event import XPEvent
 
-            followers_count = db.query(func.count()).filter(Follow.following_id == self.id).scalar() or 0
-            following_count = db.query(func.count()).filter(Follow.follower_id == self.id).scalar() or 0
-            posts_count = db.query(func.count()).filter(Post.user_id == self.id).scalar() or 0
+            # count followers
+            followers_res = await db.execute(select(func.count()).where(Follow.following_id == self.id))
+            followers_count = followers_res.scalar() or 0
+            
+            # count following
+            following_res = await db.execute(select(func.count()).where(Follow.follower_id == self.id))
+            following_count = following_res.scalar() or 0
+            
+            # count posts
+            posts_res = await db.execute(select(func.count()).where(Post.user_id == self.id))
+            posts_count = posts_res.scalar() or 0
 
-            xp_today = db.query(func.coalesce(func.sum(XPEvent.xp_delta), 0)).filter(
+            # xp today
+            xp_today_res = await db.execute(select(func.coalesce(func.sum(XPEvent.xp_delta), 0)).where(
                 XPEvent.user_id == self.id,
                 XPEvent.created_at >= func.date_trunc('day', func.now())
-            ).scalar() or 0
+            ))
+            xp_today = xp_today_res.scalar() or 0
 
-            xp_this_week = db.query(func.coalesce(func.sum(XPEvent.xp_delta), 0)).filter(
+            # xp this week
+            xp_week_res = await db.execute(select(func.coalesce(func.sum(XPEvent.xp_delta), 0)).where(
                 XPEvent.user_id == self.id,
                 XPEvent.created_at >= func.date_trunc('week', func.now())
-            ).scalar() or 0
+            ))
+            xp_this_week = xp_week_res.scalar() or 0
 
         # Compute xp_for_next_level using formula: 100 * (level+1)^2
         xp_for_next_level = 100 * (self.level + 1) * (self.level + 1)

@@ -1,8 +1,8 @@
-from database import SessionLocal
+from database import SyncSessionLocal
 from models import User
 from models.feedback import TutorialFeedback
 
-db = SessionLocal()
+db = SyncSessionLocal()
 student = db.query(User).filter(User.role == 'student').first()
 if student:
     db.query(TutorialFeedback).filter(TutorialFeedback.user_id == student.id).delete()

@@ -15,20 +15,16 @@ logger = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
 
-
-def run_weekly_leaderboard():
+async def run_weekly_leaderboard():
     """Execute the compute_leaderboard_weekly() SQL function."""
-    db = SessionLocal()
-    try:
-        db.execute(text("SELECT compute_leaderboard_weekly()"))
-        db.commit()
-        logger.info("✅ Weekly leaderboard computed successfully")
-    except Exception as e:
-        db.rollback()
-        logger.error(f"❌ Weekly leaderboard computation failed: {e}")
-    finally:
-        db.close()
-
+    async with SessionLocal() as db:
+        try:
+            await db.execute(text("SELECT compute_leaderboard_weekly()"))
+            await db.commit()
+            logger.info("✅ Weekly leaderboard computed successfully")
+        except Exception as e:
+            await db.rollback()
+            logger.error(f"❌ Weekly leaderboard computation failed: {e}")
 
 def start_scheduler():
     """Start APScheduler with cron jobs."""
@@ -47,7 +43,6 @@ def start_scheduler():
     )
     scheduler.start()
     logger.info("📅 Scheduler started — weekly leaderboard runs every Monday at 00:05 IST")
-
 
 def stop_scheduler():
     """Shut down the scheduler gracefully."""

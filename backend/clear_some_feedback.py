@@ -1,9 +1,9 @@
-from database import SessionLocal
+from database import SyncSessionLocal
 from models import User
 from models.feedback import TutorialFeedback
 
 def main():
-    db = SessionLocal()
+    db = SyncSessionLocal()
     try:
         student = db.query(User).filter(User.role == 'student').order_by(User.id).first()
         if student:

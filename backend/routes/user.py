@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from database import get_db
 from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
@@ -14,13 +15,23 @@ router = APIRouter(prefix='/api', tags=['users'])
 
 
 @router.get('/me')
-def get_current_user_profile(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_current_user_profile(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """Returns the logged-in user's full profile + courses + badges."""
-    courses = [uc.to_api_dict() for uc in user.courses]
-    badges = [ub.to_api_dict() for ub in user.badges]
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.courses).selectinload(UserCourse.course),
+                 selectinload(User.badges).selectinload(UserBadge.badge))
+        .where(User.id == user.id)
+    )
+    user_loaded = result.scalars().first()
+    if not user_loaded:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    courses = [uc.to_api_dict() for uc in user_loaded.courses]
+    badges = [ub.to_api_dict() for ub in user_loaded.badges]
 
     return {
-        "user": user.to_api_dict(db=db),
+        "user": await user_loaded.to_api_dict(db=db),
         "courses": courses,
         "badges": badges,
     }
@@ -29,14 +40,21 @@ def get_current_user_profile(user: User = Depends(get_current_user), db: Session
 # ===== PUBLIC: no auth needed =====
 
 @router.get('/users/{user_id}')
-def get_user_by_id(user_id: str, db: Session = Depends(get_db)):
+async def get_user_by_id(user_id: str, db: AsyncSession = Depends(get_db)):
     import uuid
     try:
         uid = uuid.UUID(user_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid user ID format")
 
-    user = db.query(User).filter_by(id=uid).first()
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.courses).selectinload(UserCourse.course),
+                 selectinload(User.badges).selectinload(UserBadge.badge))
+        .filter_by(id=uid)
+    )
+    user = result.scalars().first()
+    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -44,7 +62,7 @@ def get_user_by_id(user_id: str, db: Session = Depends(get_db)):
     badges = [ub.to_api_dict() for ub in user.badges]
 
     return {
-        "user": user.to_api_dict(db=db),
+        "user": await user.to_api_dict(db=db),
         "courses": courses,
         "badges": badges,
     }
@@ -64,29 +82,37 @@ class XPUpdate(BaseModel):
 # ===== TUTORIAL ENDPOINTS (protected) =====
 
 @router.get('/me/courses/{course_id}/tutorials')
-def get_my_tutorials(course_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    tutorials = (
-        db.query(UserTutorial)
+async def get_my_tutorials(course_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(UserTutorial)
+        .options(selectinload(UserTutorial.tutorial))
         .join(Tutorial, UserTutorial.tutorial_id == Tutorial.id)
         .filter(UserTutorial.user_id == user.id, Tutorial.course_id == course_id)
         .order_by(Tutorial.tutorial_number)
-        .all()
     )
+    result = await db.execute(stmt)
+    tutorials = result.scalars().all()
+    
     if not tutorials:
         raise HTTPException(status_code=404, detail="No tutorial data found")
     return [t.to_api_dict() for t in tutorials]
 
 
 @router.put('/me/courses/{course_id}/tutorials/{tutorial_id}')
-def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
-                    user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
+                    user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     import uuid
     try:
         tut_uuid = uuid.UUID(tutorial_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
-    ut = db.query(UserTutorial).filter_by(user_id=user.id, tutorial_id=tut_uuid).first()
+    result = await db.execute(
+        select(UserTutorial)
+        .options(selectinload(UserTutorial.tutorial))
+        .filter_by(user_id=user.id, tutorial_id=tut_uuid)
+    )
+    ut = result.scalars().first()
     if not ut:
         raise HTTPException(status_code=404, detail="Tutorial not found")
 
@@ -140,7 +166,7 @@ def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
         elif xp >= 500:   user.level = 6
         else:             user.level = 1
 
-    db.commit()
+    await db.commit()
 
     # Broadcast XP change to all connected SSE clients
     if xp_gained > 0:
@@ -158,7 +184,7 @@ def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
 # ===== XP ENDPOINT (protected) =====
 
 @router.post('/me/xp')
-def add_xp(body: XPUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def add_xp(body: XPUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     user.xp_total += body.amount
 
     # Log XP event
@@ -179,7 +205,7 @@ def add_xp(body: XPUpdate, user: User = Depends(get_current_user), db: Session =
     elif xp >= 500:   user.level = 6
     else:             user.level = 1
 
-    db.commit()
+    await db.commit()
 
     # Broadcast XP change to all connected SSE clients
     sse_manager.broadcast_sync({
