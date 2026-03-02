@@ -19,16 +19,12 @@ import type { RadioValue, Tutorial, TutorialField } from '@/types'
 const XP_WATCHED = 10
 const XP_PRACTICED = 10
 const XP_ASSIGNMENT = 5
-const XP_FORUM_ASK = 5
-const XP_FORUM_ANSWER = 5
 
 function calcXP(t: Tutorial): number {
     return (
         (t.watched === 'yes' ? XP_WATCHED : 0) +
         (t.practiced === 'yes' ? XP_PRACTICED : 0) +
-        (t.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
-        (t.forumAsked === 'yes' ? XP_FORUM_ASK : 0) +
-        (t.forumAnswered === 'yes' ? XP_FORUM_ANSWER : 0)
+        (t.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0)
     )
 }
 
@@ -69,7 +65,7 @@ function AnswerSummary({ label, value, isBonus }: { label: string; value: RadioV
 
 interface QuestionRowProps {
     label: string
-    points: number
+    points?: number
     isBonus?: boolean
     value: RadioValue
     fieldId: string
@@ -89,9 +85,11 @@ function QuestionRow({ label, points, isBonus, value, fieldId, onChange, disable
                 {isBonus && (
                     <span className="text-[10px] font-semibold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">Bonus</span>
                 )}
-                <span className={`text-[11px] ${isBonus ? 'text-primary' : 'text-xp-gold'}`}>
-                    +{points}
-                </span>
+                {points != null && points > 0 && (
+                    <span className={`text-[11px] ${isBonus ? 'text-primary' : 'text-xp-gold'}`}>
+                        +{points}
+                    </span>
+                )}
             </div>
 
             {/* Radio: Yes / No */}
@@ -174,24 +172,20 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                                     />
                                 )}
                                 {tutorial.forumAsked === 'yes' ? (
-                                    <AnswerSummary label="Asked a question in the forum" value="yes" isBonus />
+                                    <AnswerSummary label="Asked a question in the forum" value="yes" />
                                 ) : (
                                     <QuestionRow
                                         label="Have you asked a question in the forum?"
-                                        points={XP_FORUM_ASK}
-                                        isBonus
                                         value={tutorial.forumAsked}
                                         fieldId={`t${tutorial.id}-forum-ask`}
                                         onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
                                     />
                                 )}
                                 {tutorial.forumAnswered === 'yes' ? (
-                                    <AnswerSummary label="Answered a question in the forum" value="yes" isBonus />
+                                    <AnswerSummary label="Answered a question in the forum" value="yes" />
                                 ) : (
                                     <QuestionRow
                                         label="Have you answered a question in the forum?"
-                                        points={XP_FORUM_ANSWER}
-                                        isBonus
                                         value={tutorial.forumAnswered}
                                         fieldId={`t${tutorial.id}-forum-ans`}
                                         onChange={(v) => onRadioChange(tutorial.id, 'forumAnswered', v)}
@@ -270,8 +264,6 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                         />
                         <QuestionRow
                             label="Have you asked a question in the forum?"
-                            points={XP_FORUM_ASK}
-                            isBonus
                             value={tutorial.forumAsked}
                             fieldId={`t${tutorial.id}-forum-ask`}
                             onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
@@ -279,8 +271,6 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                         />
                         <QuestionRow
                             label="Have you answered a question in the forum?"
-                            points={XP_FORUM_ANSWER}
-                            isBonus
                             value={tutorial.forumAnswered}
                             fieldId={`t${tutorial.id}-forum-ans`}
                             onChange={(v) => onRadioChange(tutorial.id, 'forumAnswered', v)}
@@ -364,8 +354,6 @@ export function ActiveCourseTracker() {
             if (field === 'watched') xpEarned = XP_WATCHED;
             else if (field === 'practiced') xpEarned = XP_PRACTICED;
             else if (field === 'assignmentDone') xpEarned = XP_ASSIGNMENT;
-            else if (field === 'forumAsked') xpEarned = XP_FORUM_ASK;
-            else if (field === 'forumAnswered') xpEarned = XP_FORUM_ANSWER;
 
             if (xpEarned > 0) {
                 addXP(xpEarned)
@@ -476,7 +464,6 @@ export function ActiveCourseTracker() {
                         <span>Watch = +{XP_WATCHED}</span>
                         <span>Practice = +{XP_PRACTICED}</span>
                         <span className="text-primary">★ Assignment = +{XP_ASSIGNMENT}</span>
-                        <span className="text-primary">★ Forum = +{XP_FORUM_ASK}</span>
                     </div>
                 </CardContent>
             </Card>
