@@ -145,19 +145,19 @@ async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate
 
     # Update user's total XP with the difference and log XP event
     xp_gained = ut.xp_earned - old_xp
-    if xp_gained > 0:
+    if xp_gained != 0:
         user.xp_total += xp_gained
 
         # Log XP event
         xp_event = XPEvent(
             user_id=user.id,
-            source_type="tutorial_completion",
+            source_type="tutorial_completion" if xp_gained > 0 else "tutorial_reversion",
             source_id=str(tut_uuid),
             xp_delta=xp_gained,
         )
         db.add(xp_event)
 
-        # Level up check
+        # Level up/down check
         xp = user.xp_total
         if xp >= 12000:   user.level = 26
         elif xp >= 7000:  user.level = 21
@@ -169,7 +169,7 @@ async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate
     await db.commit()
 
     # Broadcast XP change to all connected SSE clients
-    if xp_gained > 0:
+    if xp_gained != 0:
         sse_manager.broadcast_sync({
             "type": "xp_update",
             "userId": str(user.id),

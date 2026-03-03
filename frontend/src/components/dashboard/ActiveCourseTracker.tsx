@@ -387,8 +387,21 @@ export function ActiveCourseTracker() {
     const handleFeedbackSubmitted = useCallback(() => {
         if (!feedbackModal) return
         updateTutorials(activeCourseId, feedbackModal.tutorialId, feedbackModal.field, 'no')
+
+        if (feedbackModal.oldValue === 'yes') {
+            let xpLost = 0;
+            if (feedbackModal.field === 'watched') xpLost = XP_WATCHED;
+            else if (feedbackModal.field === 'practiced') xpLost = XP_PRACTICED;
+            else if (feedbackModal.field === 'assignmentDone') xpLost = XP_ASSIGNMENT;
+
+            if (xpLost > 0) {
+                // Deduct XP on the frontend to match the backend updates
+                addXP(-xpLost);
+            }
+        }
+
         setFeedbackModal(null)
-    }, [feedbackModal, activeCourseId, updateTutorials])
+    }, [feedbackModal, activeCourseId, updateTutorials, addXP])
 
     // Called when modal is closed without submitting — revert, don't save "No"
     const handleFeedbackCancelled = useCallback(() => {
