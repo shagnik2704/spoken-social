@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
     CheckCircle2, Terminal, Eye,
-    Search, Filter, Trophy, BarChart3, Star,
+    Search, Filter, Trophy, BarChart3, 
+    // Star,
     Clock, Zap, Activity
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -337,132 +338,132 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
 
 // ===== COMPARE COLLEGES TAB =====
 
-function CompareCollegesTab({ colleges, myCollegeId }: { colleges: CollegeSummary[]; myCollegeId: string }) {
-    const ranked = [...colleges].sort((a, b) => b.avgProgress - a.avgProgress)
-    const myRank = ranked.findIndex(c => c.id === myCollegeId) + 1
+// function CompareCollegesTab({ colleges, myCollegeId }: { colleges: CollegeSummary[]; myCollegeId: string }) {
+//     const ranked = [...colleges].sort((a, b) => b.avgProgress - a.avgProgress)
+//     const myRank = ranked.findIndex(c => c.id === myCollegeId) + 1
 
-    return (
-        <div className="space-y-5">
-            {/* My Rank Card */}
-            <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-                <CardContent className="p-5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Trophy className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Your College Rank</p>
-                            <p className="text-2xl font-bold">
-                                #{myRank} <span className="text-sm font-normal text-muted-foreground">of {colleges.length}</span>
-                            </p>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Avg Progress</p>
-                        <p className="text-xl font-bold text-primary">
-                            {colleges.find(c => c.id === myCollegeId)?.avgProgress}%
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
+//     return (
+//         <div className="space-y-5">
+//             {/* My Rank Card */}
+//             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+//                 <CardContent className="p-5 flex items-center justify-between">
+//                     <div className="flex items-center gap-3">
+//                         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+//                             <Trophy className="h-6 w-6 text-primary" />
+//                         </div>
+//                         <div>
+//                             <p className="text-sm text-muted-foreground">Your College Rank</p>
+//                             <p className="text-2xl font-bold">
+//                                 #{myRank} <span className="text-sm font-normal text-muted-foreground">of {colleges.length}</span>
+//                             </p>
+//                         </div>
+//                     </div>
+//                     <div className="text-right">
+//                         <p className="text-sm text-muted-foreground">Avg Progress</p>
+//                         <p className="text-xl font-bold text-primary">
+//                             {colleges.find(c => c.id === myCollegeId)?.avgProgress}%
+//                         </p>
+//                     </div>
+//                 </CardContent>
+//             </Card>
 
-            {/* Comparison Table */}
-            <Card className="border-border/40">
-                <CardContent className="p-4">
-                    <h2 className="text-sm font-bold flex items-center gap-2 mb-5">
-                        <BarChart3 className="h-4 w-4 text-primary" />
-                        All Colleges — Linux Course
-                    </h2>
+//             {/* Comparison Table */}
+//             <Card className="border-border/40">
+//                 <CardContent className="p-4">
+//                     <h2 className="text-sm font-bold flex items-center gap-2 mb-5">
+//                         <BarChart3 className="h-4 w-4 text-primary" />
+//                         All Colleges — Linux Course
+//                     </h2>
 
-                    {/* Table Header */}
-                    <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
-                        <div className="w-8 shrink-0 text-center">Rank</div>
-                        <div className="flex-1">College</div>
-                        <div className="w-16 text-center">Students</div>
-                        <div className="w-24 text-center hidden sm:block">Progress</div>
-                        <div className="w-20 text-center">Completion</div>
-                        <div className="w-16 text-center hidden md:block">Avg XP</div>
-                    </div>
+//                     {/* Table Header */}
+//                     <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
+//                         <div className="w-8 shrink-0 text-center">Rank</div>
+//                         <div className="flex-1">College</div>
+//                         <div className="w-16 text-center">Students</div>
+//                         <div className="w-24 text-center hidden sm:block">Progress</div>
+//                         <div className="w-20 text-center">Completion</div>
+//                         <div className="w-16 text-center hidden md:block">Avg XP</div>
+//                     </div>
 
-                    {/* College Rows */}
-                    <div className="space-y-0.5">
-                        {ranked.map((college, i) => {
-                            const isMe = college.id === myCollegeId
-                            const rank = i + 1
+//                     {/* College Rows */}
+//                     <div className="space-y-0.5">
+//                         {ranked.map((college, i) => {
+//                             const isMe = college.id === myCollegeId
+//                             const rank = i + 1
 
-                            return (
-                                <div
-                                    key={college.id}
-                                    className={`flex items-center gap-3 px-4 py-3.5 rounded-lg transition-colors
-                                        ${isMe
-                                            ? 'bg-primary/5 border border-primary/20'
-                                            : 'hover:bg-muted/30'
-                                        }`}
-                                >
-                                    {/* Rank */}
-                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold shrink-0
-                                        ${rank === 1
-                                            ? 'bg-xp-gold/15 text-xp-gold'
-                                            : rank === 2
-                                                ? 'bg-gray-300/20 text-gray-500'
-                                                : rank === 3
-                                                    ? 'bg-orange-200/20 text-orange-600'
-                                                    : 'bg-muted text-muted-foreground'
-                                        }`}
-                                    >
-                                        #{rank}
-                                    </div>
+//                             return (
+//                                 <div
+//                                     key={college.id}
+//                                     className={`flex items-center gap-3 px-4 py-3.5 rounded-lg transition-colors
+//                                         ${isMe
+//                                             ? 'bg-primary/5 border border-primary/20'
+//                                             : 'hover:bg-muted/30'
+//                                         }`}
+//                                 >
+//                                     {/* Rank */}
+//                                     <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold shrink-0
+//                                         ${rank === 1
+//                                             ? 'bg-xp-gold/15 text-xp-gold'
+//                                             : rank === 2
+//                                                 ? 'bg-gray-300/20 text-gray-500'
+//                                                 : rank === 3
+//                                                     ? 'bg-orange-200/20 text-orange-600'
+//                                                     : 'bg-muted text-muted-foreground'
+//                                         }`}
+//                                     >
+//                                         #{rank}
+//                                     </div>
 
-                                    {/* College Name */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-sm font-semibold truncate">{college.name}</p>
-                                            {isMe && (
-                                                <Badge className="bg-primary/10 text-primary border-0 text-[9px] px-1.5 py-0 h-4 gap-0.5">
-                                                    <Star className="h-2.5 w-2.5" />
-                                                    You
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <p className="text-[11px] text-muted-foreground">{college.location}</p>
-                                    </div>
+//                                     {/* College Name */}
+//                                     <div className="flex-1 min-w-0">
+//                                         <div className="flex items-center gap-2">
+//                                             <p className="text-sm font-semibold truncate">{college.name}</p>
+//                                             {isMe && (
+//                                                 <Badge className="bg-primary/10 text-primary border-0 text-[9px] px-1.5 py-0 h-4 gap-0.5">
+//                                                     <Star className="h-2.5 w-2.5" />
+//                                                     You
+//                                                 </Badge>
+//                                             )}
+//                                         </div>
+//                                         <p className="text-[11px] text-muted-foreground">{college.location}</p>
+//                                     </div>
 
-                                    {/* Students */}
-                                    <div className="w-16 text-center">
-                                        <span className="text-sm font-mono font-semibold">{college.totalStudents}</span>
-                                    </div>
+//                                     {/* Students */}
+//                                     <div className="w-16 text-center">
+//                                         <span className="text-sm font-mono font-semibold">{college.totalStudents}</span>
+//                                     </div>
 
-                                    {/* Progress */}
-                                    <div className="hidden sm:flex items-center gap-2 w-24">
-                                        <Progress value={college.avgProgress} className="h-1.5 flex-1" />
-                                        <span className="text-[11px] font-mono font-semibold w-8 text-right">{college.avgProgress}%</span>
-                                    </div>
+//                                     {/* Progress */}
+//                                     <div className="hidden sm:flex items-center gap-2 w-24">
+//                                         <Progress value={college.avgProgress} className="h-1.5 flex-1" />
+//                                         <span className="text-[11px] font-mono font-semibold w-8 text-right">{college.avgProgress}%</span>
+//                                     </div>
 
-                                    {/* Completion */}
-                                    <div className="w-20 text-center">
-                                        <span className={`text-sm font-bold ${college.completionRate >= 30 ? 'text-success' : college.completionRate >= 15 ? 'text-warning' : 'text-destructive'}`}>
-                                            {college.completionRate}%
-                                        </span>
-                                    </div>
+//                                     {/* Completion */}
+//                                     <div className="w-20 text-center">
+//                                         <span className={`text-sm font-bold ${college.completionRate >= 30 ? 'text-success' : college.completionRate >= 15 ? 'text-warning' : 'text-destructive'}`}>
+//                                             {college.completionRate}%
+//                                         </span>
+//                                     </div>
 
-                                    {/* Avg XP */}
-                                    <div className="hidden md:block w-16 text-center">
-                                        <span className="text-sm font-mono">{college.avgXP}</span>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
+//                                     {/* Avg XP */}
+//                                     <div className="hidden md:block w-16 text-center">
+//                                         <span className="text-sm font-mono">{college.avgXP}</span>
+//                                     </div>
+//                                 </div>
+//                             )
+//                         })}
+//                     </div>
 
-                    {/* Note */}
-                    <p className="text-[10px] text-muted-foreground mt-4 text-center">
-                        Only aggregate metrics are shown. Individual student data is visible only to their college coordinator.
-                    </p>
-                </CardContent>
-            </Card>
-        </div>
-    )
-}
+//                     {/* Note */}
+//                     <p className="text-[10px] text-muted-foreground mt-4 text-center">
+//                         Only aggregate metrics are shown. Individual student data is visible only to their college coordinator.
+//                     </p>
+//                 </CardContent>
+//             </Card>
+//         </div>
+//     )
+// }
 
 // ===== ANALYTICS TAB =====
 
@@ -844,7 +845,7 @@ export default function CoordinatorDashboard() {
     const tabs = [
         { id: 'students' as const, label: 'My Students', icon: Users },
         { id: 'analytics' as const, label: 'Analytics', icon: Activity },
-        { id: 'compare' as const, label: 'Compare Colleges', icon: BarChart3 },
+        // { id: 'compare' as const, label: 'Compare Colleges', icon: BarChart3 },
     ]
 
     if (isLoading) {
@@ -912,12 +913,12 @@ export default function CoordinatorDashboard() {
                 <AnalyticsTab details={myCollegeDetails} />
             )}
 
-            {activeTab === 'compare' && (
+            {/* {activeTab === 'compare' && (
                 <CompareCollegesTab
                     colleges={colleges}
                     myCollegeId={MY_COLLEGE_ID}
                 />
-            )}
+            )} */}
         </div>
     )
 }
