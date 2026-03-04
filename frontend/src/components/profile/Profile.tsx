@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-    Flame, Zap, BookOpen, Trophy, Calendar, MapPin, LinkIcon,
+    Flame, Zap, BookOpen, Trophy, MapPin, LinkIcon,
     Settings, Edit3, Share2, Code, Terminal, BarChart3, FileText,
     CheckCircle2, Lock, MessageCircle, Heart, Star, Clock,
     GraduationCap, TrendingUp, Award, Users

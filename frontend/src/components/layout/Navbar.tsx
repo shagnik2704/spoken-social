@@ -20,7 +20,7 @@ import {
     Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback} from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
     DropdownMenu,
@@ -203,7 +203,6 @@ export function TopBar() {
 
 export function DesktopSidebar() {
     const location = useLocation()
-    const { open: openCompose } = useComposeModal()
     const user = useUserStore(state => state.user)
 
     return (
