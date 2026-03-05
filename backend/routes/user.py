@@ -37,6 +37,42 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
     }
 
 
+class ProfileUpdate(BaseModel):
+    displayName: Optional[str] = None
+    bio: Optional[str] = None
+    departmentYear: Optional[str] = None
+    location: Optional[str] = None
+    website: Optional[str] = None
+
+
+@router.put('/me')
+async def update_current_user_profile(body: ProfileUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Update the logged-in user's editable profile fields."""
+    # Map camelCase frontend keys → snake_case DB columns, with max lengths
+    field_map = {
+        "displayName": ("display_name", 100),
+        "bio": ("bio", 500),
+        "departmentYear": ("department_year", 128),
+        "location": ("location", 100),
+        "website": ("website", 255),
+    }
+
+    updates = body.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    for frontend_key, value in updates.items():
+        col_name, max_len = field_map[frontend_key]
+        if value is not None and len(value) > max_len:
+            raise HTTPException(status_code=400, detail=f"{frontend_key} must be at most {max_len} characters")
+        setattr(user, col_name, value)
+
+    await db.commit()
+    await db.refresh(user)
+
+    return {"user": await user.to_api_dict(db=db)}
+
+
 # ===== PUBLIC: no auth needed =====
 
 @router.get('/users/{user_id}')

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUserStore } from '@/store/userStore'
+import EditProfileDialog from './EditProfileDialog'
 import type { ActivityType } from '@/types'
 
 // Will be replaced with API call later
@@ -49,6 +50,7 @@ const badgeIconMap: Record<string, { icon: React.ElementType; color: string; bgC
 /** Profile Header with Avatar, Name, Bio, and Edit — reads from userStore */
 function ProfileHeader() {
     const user = useUserStore(state => state.user)
+    const [editOpen, setEditOpen] = useState(false)
     if (!user) return null
 
     return (
@@ -79,11 +81,17 @@ function ProfileHeader() {
                         <Share2 className="h-3.5 w-3.5" />
                         Share
                     </Button>
-                    <Button size="sm" className="rounded-full gap-1.5 text-xs bg-primary hover:bg-primary-hover text-white">
+                    <Button
+                        size="sm"
+                        className="rounded-full gap-1.5 text-xs bg-primary hover:bg-primary-hover text-white"
+                        onClick={() => setEditOpen(true)}
+                    >
                         <Settings className="h-3.5 w-3.5" />
                         Edit Profile
                     </Button>
                 </div>
+
+                <EditProfileDialog open={editOpen} onOpenChange={setEditOpen} />
 
                 {/* User Info */}
                 <div className="mt-4 sm:mt-2">
