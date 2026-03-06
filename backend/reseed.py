@@ -11,9 +11,9 @@ Creates:
   - ~150 feedback entries with patterns that tell a coherent story
 
 Login credentials:
-  - Admin:        admin@spoken.in / admin123
-  - Coordinators: coordinator-<college>@spoken.in / password123
-  - Students:     <first>.<last>@<college>.ac.in / password123
+  - Admin:        mock-admin@spoken.in / (no real login — use Spoken Tutorial API)
+  - Coordinators: mock-coord-<college>@spoken.in / (no real login — use Spoken Tutorial API)
+  - Students:     <first>.<last>@<college>.ac.in / (no real login — use Spoken Tutorial API)
 """
 
 import uuid
@@ -52,10 +52,10 @@ COLLEGES = [
 
 # Admin user
 ADMIN = {
-    "username": "@admin",
-    "display_name": "Shagnik Sarkar",
-    "email": "admin@spoken.in",
-    "bio": "Platform administrator for Spoken Social",
+    "username": "@mock_admin",
+    "display_name": "Mock Admin",
+    "email": "mock-admin@spoken.in",
+    "bio": "Platform administrator for Spoken Social (mock data)",
     "department_year": "Admin",
     "location": "Mumbai, India",
     "role": "admin",
@@ -65,10 +65,10 @@ ADMIN = {
 
 # Coordinators (one per college)
 COORDINATORS = [
-    {"username": "@prof_sanjay",   "display_name": "Prof. Sanjay Deshmukh",    "email": "coordinator-vjti@spoken.in",  "college_id": "vjti", "department_year": "CSE Dept, Professor",    "location": "Mumbai, India"},
-    {"username": "@prof_anurag",   "display_name": "Prof. Anurag Mehra",       "email": "coordinator-iitb@spoken.in",  "college_id": "iitb", "department_year": "CSE Dept, Professor",    "location": "Mumbai, India"},
-    {"username": "@prof_lakshmi",  "display_name": "Prof. Lakshmi Narayanan",  "email": "coordinator-nitk@spoken.in",  "college_id": "nitk", "department_year": "IT Dept, Professor",     "location": "Mangalore, India"},
-    {"username": "@prof_ramesh",   "display_name": "Prof. Ramesh Babu",        "email": "coordinator-vit@spoken.in",   "college_id": "vit",  "department_year": "ECE Dept, Professor",    "location": "Vellore, India"},
+    {"username": "@mock_prof_sanjay",   "display_name": "Prof. Sanjay Deshmukh",    "email": "mock-coord-vjti@spoken.in",  "college_id": "vjti", "department_year": "CSE Dept, Professor",    "location": "Mumbai, India"},
+    {"username": "@mock_prof_anurag",   "display_name": "Prof. Anurag Mehra",       "email": "mock-coord-iitb@spoken.in",  "college_id": "iitb", "department_year": "CSE Dept, Professor",    "location": "Mumbai, India"},
+    {"username": "@mock_prof_lakshmi",  "display_name": "Prof. Lakshmi Narayanan",  "email": "mock-coord-nitk@spoken.in",  "college_id": "nitk", "department_year": "IT Dept, Professor",     "location": "Mangalore, India"},
+    {"username": "@mock_prof_ramesh",   "display_name": "Prof. Ramesh Babu",        "email": "mock-coord-vit@spoken.in",   "college_id": "vit",  "department_year": "ECE Dept, Professor",    "location": "Vellore, India"},
 ]
 
 # Students — 10 per college = 40 total
@@ -624,14 +624,9 @@ def reseed():
     print(f"   Follows:       {db.query(Follow).count()}")
     print(f"   XP Events:     {db.query(XPEvent).count()}")
     print("=" * 60)
-    print("\n🔑 Login credentials:")
-    print(f"   Admin:         admin@spoken.in / admin123")
-    print(f"   Coordinators:  coordinator-vjti@spoken.in / password123")
-    print(f"                  coordinator-iitb@spoken.in / password123")
-    print(f"                  coordinator-nitk@spoken.in / password123")
-    print(f"                  coordinator-vit@spoken.in / password123")
-    print(f"   Students:      <first>.<last>@<college>.ac.in / password123")
-    print(f"                  Example: priya.singh@vjti.ac.in / password123")
+    print("\n📝 Note: Mock users cannot log in — use real Spoken Tutorial credentials.")
+    print(f"   Mock data is for populating dashboards, leaderboards, and feed.")
+    print(f"   Real logins: use the Spoken Tutorial API (e.g. kirti@cse.iitb.ac.in)")
     print()
 
     db.close()

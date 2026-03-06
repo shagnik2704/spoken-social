@@ -31,7 +31,10 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     2. If valid → create JWT token → return it
     3. If invalid → 401
     """
+    # user_info = await verify_credentials(body.email, body.password, db)
+    
     user_info = await verify_credentials(body.email, body.password, db)
+
 
     if user_info is None:
         raise HTTPException(
