@@ -320,3 +320,27 @@
     box-shadow: 0 0 40px rgba(40, 53, 147, 0.4), 0 0 80px rgba(251, 191, 36, 0.15);
   }
 }
+
+/* ======================================
+   Recharts — Theme-aware text colors
+   ====================================== */
+
+.recharts-text,
+.recharts-cartesian-axis-tick-value,
+.recharts-label {
+  fill: var(--foreground) !important;
+}
+
+.recharts-legend-item-text {
+  color: var(--foreground) !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--foreground) !important;
+}
+
+.recharts-default-tooltip {
+  background-color: var(--popover) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}

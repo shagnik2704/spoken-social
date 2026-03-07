@@ -7,14 +7,17 @@
 # ============================================================
 
 from fastapi import APIRouter, Depends, Query
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, cast, Date
+from datetime import datetime, date
+import calendar
 
 from database import get_db
 from models import User, College, UserTutorial, Tutorial
 from models.feedback import TutorialFeedback
+from models.xp_event import XPEvent
 from dependencies import require_admin
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -189,6 +192,125 @@ async def get_platform_summary(
         "topPerformers": top_performers,
         "atRiskStudents": at_risk,
         "tutorialCompletion": tutorial_completion,
+    }
+
+
+# ============================================================
+# College Daily Average XP (Line Chart Data)
+# ============================================================
+
+COLLEGE_COLORS = [
+    "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444",
+    "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1",
+    "#14b8a6", "#e11d48", "#0ea5e9", "#a855f7", "#d946ef",
+]
+
+
+@router.get("/college-daily-xp")
+async def get_college_daily_xp(
+    month: Optional[str] = Query(None, description="Month in YYYY-MM format, defaults to current"),
+    college_ids: Optional[str] = Query(None, description="Comma-separated college IDs"),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Returns daily average XP per college for a given month.
+    For each day, we compute: sum of XP that day per student, then average across students.
+    """
+    # Parse month
+    if month:
+        try:
+            year, mo = int(month.split("-")[0]), int(month.split("-")[1])
+        except (ValueError, IndexError):
+            year, mo = datetime.now().year, datetime.now().month
+    else:
+        year, mo = datetime.now().year, datetime.now().month
+
+    days_in_month = calendar.monthrange(year, mo)[1]
+    month_start = date(year, mo, 1)
+    if mo == 12:
+        month_end = date(year + 1, 1, 1)
+    else:
+        month_end = date(year, mo + 1, 1)
+
+    # Get colleges
+    college_filter_ids = None
+    if college_ids:
+        college_filter_ids = [cid.strip() for cid in college_ids.split(",") if cid.strip()]
+
+    colleges_query = select(College.id, College.name)
+    if college_filter_ids:
+        colleges_query = colleges_query.filter(College.id.in_(college_filter_ids))
+    res_colleges = await db.execute(colleges_query.order_by(College.name))
+    colleges = res_colleges.all()
+
+    if not colleges:
+        return {
+            "month": f"{year:04d}-{mo:02d}",
+            "daysInMonth": days_in_month,
+            "colleges": [],
+            "series": [{"day": d} for d in range(1, days_in_month + 1)],
+        }
+
+    college_list = []
+    for i, c in enumerate(colleges):
+        college_list.append({
+            "id": c.id,
+            "name": c.name,
+            "color": COLLEGE_COLORS[i % len(COLLEGE_COLORS)],
+        })
+
+    # Subquery: per-student daily XP sum
+    daily_student_xp = (
+        select(
+            User.college_id.label("college_id"),
+            cast(XPEvent.created_at, Date).label("xp_date"),
+            XPEvent.user_id.label("user_id"),
+            func.sum(XPEvent.xp_delta).label("daily_xp"),
+        )
+        .join(User, XPEvent.user_id == User.id)
+        .filter(
+            User.role == "student",
+            User.college_id.in_([c.id for c in colleges]),
+            cast(XPEvent.created_at, Date) >= month_start,
+            cast(XPEvent.created_at, Date) < month_end,
+        )
+        .group_by(User.college_id, cast(XPEvent.created_at, Date), XPEvent.user_id)
+        .subquery()
+    )
+
+    # Main query: average daily XP per college per day
+    result = await db.execute(
+        select(
+            daily_student_xp.c.college_id,
+            daily_student_xp.c.xp_date,
+            func.round(func.avg(daily_student_xp.c.daily_xp), 1).label("avg_xp"),
+        )
+        .group_by(daily_student_xp.c.college_id, daily_student_xp.c.xp_date)
+        .order_by(daily_student_xp.c.xp_date)
+    )
+    rows = result.all()
+
+    # Build series: one entry per day, with each college as a key
+    series = []
+    for day_num in range(1, days_in_month + 1):
+        entry: dict = {"day": day_num}
+        for c in colleges:
+            entry[c.id] = 0
+        series.append(entry)
+
+    for row in rows:
+        day_num = row.xp_date.day
+        college_id = row.college_id
+        avg_xp = float(row.avg_xp) if row.avg_xp else 0
+        if 1 <= day_num <= days_in_month:
+            series[day_num - 1][college_id] = avg_xp
+
+    return {
+        "month": f"{year:04d}-{mo:02d}",
+        "daysInMonth": days_in_month,
+        "colleges": college_list,
+        "series": series,
     }
 
 

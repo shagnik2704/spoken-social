@@ -1,16 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
     Users, TrendingUp, AlertTriangle,
     CheckCircle2, Eye,
     Search, Filter, Trophy, BarChart3,
     Zap, Activity, ChevronRight, ArrowLeft,
     Shield, Building2, MessageCircleQuestion,
+    X, ChevronDown, CalendarDays,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import {
+    PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
+} from 'recharts'
 import api from '@/lib/axios'
 import { FeedbackPanel } from '@/components/admin/FeedbackPanel'
 import { StudentFeedbackDrawer } from '@/components/admin/StudentFeedbackDrawer'
@@ -383,6 +387,297 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
     )
 }
 
+// ===== COLLEGE DAILY XP CHART =====
+
+interface ChartCollege {
+    id: string
+    name: string
+    color: string
+}
+
+interface DailyXPResponse {
+    month: string
+    daysInMonth: number
+    colleges: ChartCollege[]
+    series: Record<string, number>[]
+}
+
+function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
+    const now = new Date()
+    const [selectedMonth, setSelectedMonth] = useState(
+        `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    )
+    const [selectedCollegeIds, setSelectedCollegeIds] = useState<string[]>(
+        colleges.map(c => c.id)
+    )
+    const [chartData, setChartData] = useState<DailyXPResponse | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+    const [dropdownOpen, setDropdownOpen] = useState(false)
+    const [collegeSearch, setCollegeSearch] = useState('')
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    // Fetch chart data
+    const fetchData = useCallback(async () => {
+        if (selectedCollegeIds.length === 0) {
+            setChartData(null)
+            return
+        }
+        setIsLoading(true)
+        try {
+            const res = await api.get(
+                `/api/admin/college-daily-xp?month=${selectedMonth}&college_ids=${selectedCollegeIds.join(',')}`
+            )
+            setChartData(res.data)
+        } catch (err) {
+            console.error('Failed to fetch college daily XP:', err)
+        } finally {
+            setIsLoading(false)
+        }
+    }, [selectedMonth, selectedCollegeIds])
+
+    useEffect(() => {
+        fetchData()
+    }, [fetchData])
+
+    // Generate month options (last 12 months)
+    const monthOptions: { value: string; label: string }[] = []
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        const label = d.toLocaleString('default', { month: 'long', year: 'numeric' })
+        monthOptions.push({ value: val, label })
+    }
+
+    const toggleCollege = (id: string) => {
+        setSelectedCollegeIds(prev =>
+            prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+        )
+    }
+
+    const filteredColleges = colleges.filter(c =>
+        c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
+        c.id.toLowerCase().includes(collegeSearch.toLowerCase())
+    )
+
+    // Build a color map from API response
+    const colorMap: Record<string, string> = {}
+    chartData?.colleges.forEach(c => { colorMap[c.id] = c.color })
+
+    return (
+        <Card className="border-border/40">
+            <CardContent className="p-4">
+                {/* Header with controls */}
+                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                    <h3 className="text-sm font-bold flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-primary" />
+                        Daily Average XP by College
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        {/* Month Dropdown */}
+                        <div className="relative">
+                            <CalendarDays className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                            <select
+                                value={selectedMonth}
+                                onChange={e => setSelectedMonth(e.target.value)}
+                                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer"
+                            >
+                                {monthOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Multi-select College Dropdown */}
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 text-xs rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
+                            >
+                                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="max-w-[120px] truncate">
+                                    {selectedCollegeIds.length === colleges.length
+                                        ? 'All Colleges'
+                                        : selectedCollegeIds.length === 0
+                                            ? 'Select colleges'
+                                            : `${selectedCollegeIds.length} selected`
+                                    }
+                                </span>
+                                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {dropdownOpen && (
+                                <div className="absolute right-0 top-full mt-1 w-64 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+                                    {/* Search */}
+                                    <div className="p-2 border-b border-border/50">
+                                        <div className="relative">
+                                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search colleges..."
+                                                value={collegeSearch}
+                                                onChange={e => setCollegeSearch(e.target.value)}
+                                                className="w-full pl-7 pr-3 py-1.5 text-xs rounded border border-border/50 bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary/30"
+                                                autoFocus
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Select All / Clear */}
+                                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/30">
+                                        <button
+                                            onClick={() => setSelectedCollegeIds(colleges.map(c => c.id))}
+                                            className="text-[10px] text-primary hover:underline"
+                                        >
+                                            Select All
+                                        </button>
+                                        <button
+                                            onClick={() => setSelectedCollegeIds([])}
+                                            className="text-[10px] text-muted-foreground hover:text-destructive hover:underline"
+                                        >
+                                            Clear All
+                                        </button>
+                                    </div>
+
+                                    {/* College List */}
+                                    <div className="max-h-48 overflow-y-auto">
+                                        {filteredColleges.map(c => {
+                                            const isChecked = selectedCollegeIds.includes(c.id)
+                                            return (
+                                                <button
+                                                    key={c.id}
+                                                    onClick={() => toggleCollege(c.id)}
+                                                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/30 transition-colors"
+                                                >
+                                                    <div className={`h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                                                        isChecked
+                                                            ? 'bg-primary border-primary'
+                                                            : 'border-border'
+                                                    }`}>
+                                                        {isChecked && (
+                                                            <CheckCircle2 className="h-3 w-3 text-white" />
+                                                        )}
+                                                    </div>
+                                                    <span className="text-xs truncate">{c.name}</span>
+                                                    {colorMap[c.id] && (
+                                                        <span
+                                                            className="ml-auto h-2.5 w-2.5 rounded-full shrink-0"
+                                                            style={{ backgroundColor: colorMap[c.id] }}
+                                                        />
+                                                    )}
+                                                </button>
+                                            )
+                                        })}
+                                        {filteredColleges.length === 0 && (
+                                            <p className="text-xs text-muted-foreground text-center py-3">No colleges found</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Selected college chips */}
+                {selectedCollegeIds.length > 0 && selectedCollegeIds.length < colleges.length && (
+                    <div className="flex items-center gap-1.5 flex-wrap mb-3">
+                        {selectedCollegeIds.map(id => {
+                            const col = colleges.find(c => c.id === id)
+                            return (
+                                <span key={id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
+                                    <span
+                                        className="h-2 w-2 rounded-full"
+                                        style={{ backgroundColor: colorMap[id] || '#888' }}
+                                    />
+                                    {col?.name || id}
+                                    <button onClick={() => toggleCollege(id)} className="hover:text-destructive">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            )
+                        })}
+                    </div>
+                )}
+
+                {/* Chart */}
+                {isLoading ? (
+                    <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">
+                        Loading chart data...
+                    </div>
+                ) : !chartData || selectedCollegeIds.length === 0 ? (
+                    <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">
+                        Select at least one college to view the chart
+                    </div>
+                ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                        <LineChart data={chartData.series} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                            <XAxis
+                                dataKey="day"
+                                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                                tickLine={false}
+                                axisLine={{ stroke: 'hsl(var(--border))' }}
+                                label={{ value: 'Day of Month', position: 'insideBottom', offset: -2, fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                            />
+                            <YAxis
+                                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                                tickLine={false}
+                                axisLine={{ stroke: 'hsl(var(--border))' }}
+                                label={{ value: 'Avg XP', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: 'hsl(var(--popover))',
+                                    border: '1px solid hsl(var(--border))',
+                                    borderRadius: '8px',
+                                    fontSize: '12px',
+                                    color: 'hsl(var(--popover-foreground))',
+                                }}
+                                labelStyle={{ color: 'hsl(var(--foreground))' }}
+                                labelFormatter={(label) => `Day ${label}`}
+                                formatter={(value: number, name: string) => {
+                                    const col = chartData.colleges.find(c => c.id === name)
+                                    return [value, col?.name || name]
+                                }}
+                            />
+                            <Legend
+                                formatter={(value) => {
+                                    const col = chartData.colleges.find(c => c.id === value)
+                                    return <span className="text-xs">{col?.name || value}</span>
+                                }}
+                            />
+                            {chartData.colleges
+                                .filter(c => selectedCollegeIds.includes(c.id))
+                                .map(college => (
+                                    <Line
+                                        key={college.id}
+                                        type="monotone"
+                                        dataKey={college.id}
+                                        stroke={college.color}
+                                        strokeWidth={2}
+                                        dot={{ r: 3, fill: college.color }}
+                                        activeDot={{ r: 5 }}
+                                        name={college.id}
+                                    />
+                                ))}
+                        </LineChart>
+                    </ResponsiveContainer>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
 // ===== COLLEGES TAB =====
 // College list uses summary data. Drill-down fetches paginated students on demand.
 
@@ -597,6 +892,7 @@ function CollegesTab({ colleges, onStudentClick }: {
 
     return (
         <div className="space-y-5">
+            <CollegeXPChart colleges={colleges} />
             <Card className="border-border/40">
                 <CardContent className="p-4">
                     <h2 className="text-sm font-bold flex items-center gap-2 mb-5">
