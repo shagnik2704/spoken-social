@@ -14,8 +14,8 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql://spoken_user:supersecretpassword@postgres:5432/spoken_social
-      SECRET_KEY: spoken-social-dev-secret-key-change-me-later
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
     ports:
       - "EG_PORT:8000"
     depends_on:
