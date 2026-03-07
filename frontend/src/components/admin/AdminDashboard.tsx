@@ -645,8 +645,8 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
                                 }}
                                 labelStyle={{ color: 'hsl(var(--foreground))' }}
                                 labelFormatter={(label) => `Day ${label}`}
-                                formatter={(value: number, name: string) => {
-                                    const col = chartData.colleges.find(c => c.id === name)
+                                formatter={(value: any, name: any) => {
+                                    const col = chartData.colleges.find((c: any) => c.id === name)
                                     return [value, col?.name || name]
                                 }}
                             />
