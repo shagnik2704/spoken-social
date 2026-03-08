@@ -3,8 +3,13 @@
 # ============================================================
 # Calls the Spoken Tutorial website's verify-user endpoint,
 # then upserts the user into our local DB.
+#
+# Also supports a single demo student account for testing,
+# configured via DEMO_STUDENT_EMAIL / DEMO_STUDENT_PASSWORD
+# environment variables.
 # ============================================================
 
+import os
 import uuid
 import httpx
 from sqlalchemy import select
@@ -16,14 +21,29 @@ from models.tutorial import Tutorial, UserTutorial
 
 SPOKEN_TUTORIAL_VERIFY_URL = "https://beta.spoken-tutorial.org/api/spoken-social/verify-user/"
 
+# ── Demo student credentials (override via env vars) ──
+DEMO_STUDENT_EMAIL = os.getenv("DEMO_STUDENT_EMAIL", "demo@spoken-social.org")
+DEMO_STUDENT_PASSWORD = os.getenv("DEMO_STUDENT_PASSWORD", "demo123")
+
 
 async def verify_credentials(email: str, password: str, db: AsyncSession) -> dict | None:
     """
-    1. Call the Spoken Tutorial API to verify email + password
-    2. Extract user info from the response
+    1. Check if it's the demo student account (bypass external API)
+    2. Otherwise call the Spoken Tutorial API to verify email + password
     3. Upsert the user in our local DB
     4. Return user info dict (with OUR user_id) for JWT creation
     """
+
+    # ── Step 0: Demo student bypass ──
+    if email == DEMO_STUDENT_EMAIL and password == DEMO_STUDENT_PASSWORD:
+        return await _upsert_user(
+            db,
+            api_username="demo_student",
+            api_email=DEMO_STUDENT_EMAIL,
+            api_role="student",
+            display_name="Demo Student",
+            college_name="IIT Bombay",
+        )
 
     # ── Step 1: Call Spoken Tutorial's external API ──
     async with httpx.AsyncClient(timeout=10.0) as client:
@@ -41,20 +61,6 @@ async def verify_credentials(email: str, password: str, db: AsyncSession) -> dic
 
     data = resp.json()
 
-    # Expected response shape from Spoken Tutorial:
-    # {
-    #   "status": "success",
-    #   "user": {
-    #       "spoken_user_id": 123,
-    #       "username": "priya_singh",
-    #       "email": "priya@vjti.ac.in",
-    #       "first_name": "Priya",
-    #       "last_name": "Singh",
-    #       "role": "student",
-    #       "college_name": "VJTI Mumbai",
-    #   }
-    # }
-
     if data.get("status") != "success":
         return None
 
@@ -71,7 +77,32 @@ async def verify_credentials(email: str, password: str, db: AsyncSession) -> dic
     display_name = f"{first_name} {last_name}".strip() or api_username
     college_name = api_user.get("college_name")
 
-    # ── Step 2.5: Upsert College ──
+    # ── Step 2: Extract & delegate to shared upsert ──
+    return await _upsert_user(
+        db,
+        api_username=api_username,
+        api_email=api_email,
+        api_role=api_role,
+        display_name=display_name,
+        college_name=college_name,
+    )
+
+
+async def _upsert_user(
+    db: AsyncSession,
+    *,
+    api_username: str,
+    api_email: str,
+    api_role: str,
+    display_name: str,
+    college_name: str | None,
+) -> dict:
+    """
+    Shared logic: upsert college → upsert user → auto-enroll → return user dict.
+    Used by both the Spoken Tutorial API path and the demo student bypass.
+    """
+
+    # ── Upsert College ──
     college_id = None
     if college_name:
         result = await db.execute(select(College).filter_by(name=college_name))
@@ -79,18 +110,16 @@ async def verify_credentials(email: str, password: str, db: AsyncSession) -> dic
         if college:
             college_id = college.id
         else:
-            # College doesn't exist yet → create it with a generated slug
             college_id = college_name.lower().replace(" ", "_").replace(",", "")
             db.add(College(id=college_id, name=college_name))
             await db.flush()
 
-    # ── Step 3: Upsert User in our DB ──
+    # ── Upsert User ──
     result = await db.execute(select(User).filter_by(email=api_email))
     user = result.scalars().first()
     is_new_user = user is None
 
     if is_new_user:
-        # First-time login → create a new user row
         user = User(
             id=uuid.uuid4(),
             username=f"@{api_username}",
@@ -105,13 +134,12 @@ async def verify_credentials(email: str, password: str, db: AsyncSession) -> dic
         db.add(user)
         await db.flush()
     else:
-        # Returning user → sync role, display name, and college
         user.role = api_role
         user.display_name = display_name
         user.college_id = college_id
         await db.flush()
 
-    # ── Step 3.5: Auto-enroll in Linux course (students only, first login) ──
+    # ── Auto-enroll in Linux course (students only, first login) ──
     if is_new_user and api_role == "student":
         enrollment = await db.execute(
             select(UserCourse).filter_by(user_id=user.id, course_id="linux")
@@ -124,7 +152,7 @@ async def verify_credentials(email: str, password: str, db: AsyncSession) -> dic
                 progress_percent=0,
             ))
 
-        # ── Step 3.6: Create tutorial progress rows ──
+        # Create tutorial progress rows
         tut_result = await db.execute(
             select(Tutorial).filter_by(course_id="linux").order_by(Tutorial.tutorial_number)
         )
@@ -145,10 +173,10 @@ async def verify_credentials(email: str, password: str, db: AsyncSession) -> dic
 
     await db.commit()
 
-    # ── Step 4: Return dict in the shape routes/auth.py expects ──
     return {
         "user_id": str(user.id),
         "display_name": user.display_name,
         "username": user.username,
         "email": user.email,
     }
+
