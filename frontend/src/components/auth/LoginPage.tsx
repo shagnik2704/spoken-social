@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { BookOpen, Loader2 } from 'lucide-react'
-import {toast} from 'sonner'
+import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function LoginPage() {
     const [email, setEmail] = useState('')
@@ -24,12 +24,12 @@ export function LoginPage() {
         if (success) {
             toast.success('Successfully logged in!',
                 {
-                    description:'Welcome back to Spoken Social'
+                    description: 'Welcome back to Spoken Social'
                 }
             )
             navigate('/')
         }
-        else{
+        else {
             toast.error('Login failed.Please check your credentials')
         }
     }
@@ -41,9 +41,7 @@ export function LoginPage() {
 
                 {/* Logo + Branding */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-4">
-                        <BookOpen className="w-6 h-6 text-primary" />
-                    </div>
+                    <img src="/logo.png" alt="EduPyramids" className="w-16 h-16 object-contain mx-auto mb-4" />
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">
                         Spoken Social
                     </h1>

@@ -15,12 +15,12 @@ import {
     LogOut,
     MessageSquare,
     Trophy,
-    Flame,
+
     Users,
     Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback} from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
     DropdownMenu,
@@ -77,9 +77,7 @@ export function TopBar() {
                 {/* Left — Logo */}
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                            <Flame className="h-5 w-5 text-primary-foreground" />
-                        </div>
+                        <img src="/logo.png" alt="EduPyramids" className="h-8 w-8 object-contain" />
                         <span className="text-lg font-bold tracking-tight hidden sm:inline-block text-foreground">
                             Spoken Social
                         </span>

@@ -21,12 +21,27 @@ function App() {
   const fetchUser = useUserStore(state => state.fetchUser)
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const user = useUserStore(state => state.user)
+  const isUserLoading = useUserStore(state => state.isLoading)
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchUser()
     }
   }, [isAuthenticated])
+
+  // Wait for user data before rendering authenticated routes
+  // This prevents the race condition where navigate('/') fires
+  // before fetchUser() completes, causing wrong role-based redirect
+  if (isAuthenticated && (!user || isUserLoading)) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background text-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Loading your profile...</p>
+        </div>
+      </div>
+    )
+  }
 
 
 
