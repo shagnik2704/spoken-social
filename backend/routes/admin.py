@@ -6,6 +6,7 @@
 # 3. /students/{id}/feedback — Per-student feedback detail
 # ============================================================
 
+from cache import get_cached,set_cached
 from fastapi import APIRouter, Depends, Query
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,6 +33,12 @@ async def get_platform_summary(
     Returns a single, pre-computed payload for the admin Overview + Analytics tabs.
     Everything is done in SQL — no Python loops over students.
     """
+
+    cache_key = "admin:platform_summary"
+    cached = await get_cached(cache_key)
+    if cached:
+        return cached
+
     tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == "linux"))
     total_tutorials = tot_tut_res.scalar() or 20
 
@@ -163,7 +170,7 @@ async def get_platform_summary(
         for t in tutorial_stats
     ]
 
-    return {
+    result = {
         "metrics": {
             "totalStudents": total_students,
             "totalColleges": len(colleges),
@@ -193,7 +200,8 @@ async def get_platform_summary(
         "atRiskStudents": at_risk,
         "tutorialCompletion": tutorial_completion,
     }
-
+    await set_cached(cache_key,result)
+    return result
 
 # ============================================================
 # College Daily Average XP (Line Chart Data)

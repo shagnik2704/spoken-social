@@ -2,13 +2,19 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: spoken_social
-      POSTGRES_USER: spoken_user
-      POSTGRES_PASSWORD: supersecretpassword
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "EG_PORT:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "EG_PORT:6379"
     restart: unless-stopped
 
   backend:
@@ -16,13 +22,14 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       SECRET_KEY: ${SECRET_KEY}
+      REDIS_URL: redis://redis:6379
     ports:
       - "EG_PORT:8000"
     depends_on:
       - postgres
+      - redis
     restart: unless-stopped
 
-  
   frontend:
     build: ./frontend
     ports:
