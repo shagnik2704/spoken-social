@@ -8,17 +8,17 @@ from routes.leaderboard import router as leaderboard_router
 from routes.coordinator import router as coordinator_router
 from routes.feedback import router as feedback_router
 from routes.admin import router as admin_router
-from routes.sse import router as sse_router
-from scheduler import start_scheduler, stop_scheduler
+
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    start_scheduler()
+    from leaderboard_cache import seed_from_db
+    from database import SessionLocal
+    async with SessionLocal() as db:
+        await seed_from_db(db)
     yield
-    # Shutdown
-    stop_scheduler()
+
 
 
 app = FastAPI(lifespan=lifespan)
@@ -37,4 +37,3 @@ app.include_router(leaderboard_router)
 app.include_router(coordinator_router)
 app.include_router(feedback_router)
 app.include_router(admin_router)
-app.include_router(sse_router)

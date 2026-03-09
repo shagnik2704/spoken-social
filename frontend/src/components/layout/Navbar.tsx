@@ -62,12 +62,10 @@ export function TopBar() {
     // This component only re-renders when these specific values change.
     const user = useUserStore(state => state.user)
 
-    // Connect SSE for real-time XP updates app-wide
-    const { connectSSE, disconnectSSE, fetchLeaderboard } = useLeaderboardStore()
+    // Fetch leaderboard data on mount
+    const { fetchLeaderboard } = useLeaderboardStore()
     useEffect(() => {
         fetchLeaderboard()
-        connectSSE()
-        return () => disconnectSSE()
     }, [])
 
 
