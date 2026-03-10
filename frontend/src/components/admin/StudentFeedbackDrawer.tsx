@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
     X, AlertTriangle,
     CheckCircle2, BookOpen,
@@ -32,24 +32,6 @@ interface TutorialGroup {
     entries: FeedbackEntry[]
 }
 
-interface StudentFeedbackData {
-    student: {
-        id: string
-        name: string
-        initials: string
-        rollNo: string
-        collegeName: string
-    }
-    totalEntries: number
-    summary: {
-        mostCommonReason: string | null
-        mostProblematicStep: string | null
-    }
-    reasonBreakdown: { key: string; count: number; percentage: number }[]
-    stepBreakdown: { stepType: string; count: number }[]
-    entries: FeedbackEntry[]
-    tutorialGroups: TutorialGroup[]
-}
 
 
 // ===== ENTRY CARD (Simplified) =====
@@ -152,7 +134,7 @@ interface StudentFeedbackDrawerProps {
 }
 
 export function StudentFeedbackDrawer({ studentId, studentName, studentInitials, onClose }: StudentFeedbackDrawerProps) {
-    const {data,isLoading,error}=useStudentFeedback(studentId)
+    const { data, isLoading, error } = useStudentFeedback(studentId)
     const [viewMode, setViewMode] = useState<ViewMode>('timeline')
 
     const maxReasonCount = data?.reasonBreakdown[0]?.count || 1
@@ -248,7 +230,7 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                                             Reason Breakdown
                                         </h3>
                                         <div className="space-y-2.5">
-                                            {data.reasonBreakdown.map(reason => (
+                                            {data.reasonBreakdown.map((reason: { key: string; count: number; percentage: number }) => (
                                                 <div key={reason.key}>
                                                     <div className="flex items-center justify-between mb-1">
                                                         <span className="text-[11px] font-medium truncate">
@@ -275,7 +257,7 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                             {data.stepBreakdown.length > 0 && (
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-[11px] text-muted-foreground">By step:</span>
-                                    {data.stepBreakdown.map(step => {
+                                    {data.stepBreakdown.map((step: { stepType: string; count: number }) => {
                                         const stepLabel = STEP_TYPE_LABELS[step.stepType] || step.stepType
                                         return (
                                             <Badge key={step.stepType} className="bg-muted text-muted-foreground border-0 text-[10px] px-2 py-0.5">
@@ -319,7 +301,7 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                                         Feedback Timeline
                                     </h3>
                                     <div>
-                                        {data.entries.map(entry => (
+                                        {data.entries.map((entry: FeedbackEntry) => (
                                             <FeedbackEntryCard key={entry.id} entry={entry} />
                                         ))}
                                     </div>
@@ -333,7 +315,7 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                                         Issues by Tutorial
                                     </h3>
                                     <div className="space-y-2">
-                                        {data.tutorialGroups.map(group => (
+                                        {data.tutorialGroups.map((group: TutorialGroup) => (
                                             <TutorialGroupCard key={group.tutorialId} group={group} />
                                         ))}
                                     </div>

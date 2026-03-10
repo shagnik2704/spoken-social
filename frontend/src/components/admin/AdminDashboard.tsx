@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef} from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
     Users, TrendingUp, AlertTriangle,
     CheckCircle2, Eye,
@@ -52,30 +52,6 @@ interface Student {
     status: 'active' | 'completed' | 'inactive' | 'at_risk' | 'not_started'
 }
 
-interface CollegeDetails {
-    college: {
-        id: string
-        name: string
-        location: string
-        coordinatorName: string
-        course: string
-    }
-    metrics: {
-        totalStudents: number
-        activeStudents: number
-        completedStudents: number
-        avgProgress: number
-        avgXP: number
-        completionRate: number
-    }
-    students: Student[]
-    pagination?: {
-        currentPage: number
-        totalPages: number
-        totalRecords: number
-        limit: number
-    }
-}
 
 interface PlatformSummary {
     metrics: {
@@ -396,12 +372,6 @@ interface ChartCollege {
     color: string
 }
 
-interface DailyXPResponse {
-    month: string
-    daysInMonth: number
-    colleges: ChartCollege[]
-    series: Record<string, number>[]
-}
 
 function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const now = new Date()
@@ -452,7 +422,7 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
 
     // Build a color map from API response
     const colorMap: Record<string, string> = {}
-    chartData?.colleges.forEach(c => { colorMap[c.id] = c.color })
+    chartData?.colleges.forEach((c: ChartCollege) => { colorMap[c.id] = c.color })
 
     return (
         <Card className="border-border/40">
@@ -540,8 +510,8 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
                                                     className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/30 transition-colors"
                                                 >
                                                     <div className={`h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors ${isChecked
-                                                            ? 'bg-primary border-primary'
-                                                            : 'border-border'
+                                                        ? 'bg-primary border-primary'
+                                                        : 'border-border'
                                                         }`}>
                                                         {isChecked && (
                                                             <CheckCircle2 className="h-3 w-3 text-white" />
@@ -631,13 +601,13 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
                             />
                             <Legend
                                 formatter={(value) => {
-                                    const col = chartData.colleges.find(c => c.id === value)
+                                    const col = chartData.colleges.find((c: ChartCollege) => c.id === value)
                                     return <span className="text-xs">{col?.name || value}</span>
                                 }}
                             />
                             {chartData.colleges
-                                .filter(c => selectedCollegeIds.includes(c.id))
-                                .map(college => (
+                                .filter((c: ChartCollege) => selectedCollegeIds.includes(c.id))
+                                .map((college: ChartCollege) => (
                                     <Line
                                         key={college.id}
                                         type="monotone"
@@ -808,7 +778,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                             <p className="text-center text-sm text-muted-foreground py-8">Loading students...</p>
                         ) : (
                             <div className="space-y-0.5">
-                                {students.map(student => (
+                                {students.map((student: Student) => (
                                     <StudentRow key={student.id} student={student} onClick={() => onStudentClick({ id: student.id, name: student.name, initials: student.initials })} />
                                 ))}
                                 {students.length === 0 && (
@@ -1140,7 +1110,7 @@ export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>('overview')
     const [selectedStudentForFeedback, setSelectedStudentForFeedback] = useState<{ id: string, name: string, initials: string } | null>(null)
 
-    const totalStudents = colleges.reduce((a, c) => a + c.totalStudents, 0)
+    const totalStudents = colleges.reduce((a: number, c: CollegeSummary) => a + c.totalStudents, 0)
 
     const tabs = [
         { id: 'overview' as const, label: 'Overview', icon: BarChart3 },
