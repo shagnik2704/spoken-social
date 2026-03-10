@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState} from 'react'
 import {
     MessageCircleQuestion, ChevronDown, ChevronUp,
     BookOpen,
@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { REASON_LABELS, STEP_TYPE_LABELS } from '@/lib/feedbackReasons'
-import api from '@/lib/axios'
+import { useFeedbackSummary } from '@/hooks/queries/useAdminQueries'
 
 // ===== TYPES =====
 
@@ -254,39 +254,17 @@ interface FeedbackPanelProps {
 }
 
 export function FeedbackPanel({ onStudentClick }: FeedbackPanelProps) {
-    const [summary, setSummary] = useState<FeedbackSummary | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+
     const [filters, setFilters] = useState({
         tutorialId: '',
         stepType: '',
         reason: '',
     })
-
+    const { data: summary, isLoading } = useFeedbackSummary(filters) as { data: FeedbackSummary | undefined, isLoading: boolean }
     const handleFilterChange = (key: string, value: string) => {
         setFilters(prev => ({ ...prev, [key]: value }))
     }
 
-    useEffect(() => {
-        const fetchFeedback = async () => {
-            setIsLoading(true)
-            try {
-                const params = new URLSearchParams()
-                if (filters.tutorialId) params.set('tutorial_id', filters.tutorialId)
-                if (filters.stepType) params.set('step_type', filters.stepType)
-                if (filters.reason) params.set('reason', filters.reason)
-
-                const qs = params.toString()
-                const url = qs ? `/api/admin/feedback-summary?${qs}` : '/api/admin/feedback-summary'
-                const res = await api.get(url)
-                setSummary(res.data)
-            } catch (error) {
-                console.error('Failed to fetch feedback:', error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-        fetchFeedback()
-    }, [filters])
 
     if (isLoading && !summary) {
         return (
