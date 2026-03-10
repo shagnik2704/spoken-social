@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef} from 'react'
 import {
     Users, TrendingUp, AlertTriangle,
     CheckCircle2, Eye,
@@ -15,9 +15,10 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
     LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts'
-import api from '@/lib/axios'
+
 import { FeedbackPanel } from '@/components/admin/FeedbackPanel'
 import { StudentFeedbackDrawer } from '@/components/admin/StudentFeedbackDrawer'
+import { useCollegeDetails, useColleges, useCollegesDailyXP, usePlatformSummary } from '@/hooks/queries/useAdminQueries'
 
 // ===== TYPES =====
 
@@ -410,8 +411,7 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const [selectedCollegeIds, setSelectedCollegeIds] = useState<string[]>(
         colleges.map(c => c.id)
     )
-    const [chartData, setChartData] = useState<DailyXPResponse | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+    const { data: chartData, isLoading } = useCollegesDailyXP(selectedMonth, selectedCollegeIds)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [collegeSearch, setCollegeSearch] = useState('')
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -427,28 +427,8 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    // Fetch chart data
-    const fetchData = useCallback(async () => {
-        if (selectedCollegeIds.length === 0) {
-            setChartData(null)
-            return
-        }
-        setIsLoading(true)
-        try {
-            const res = await api.get(
-                `/api/admin/college-daily-xp?month=${selectedMonth}&college_ids=${selectedCollegeIds.join(',')}`
-            )
-            setChartData(res.data)
-        } catch (err) {
-            console.error('Failed to fetch college daily XP:', err)
-        } finally {
-            setIsLoading(false)
-        }
-    }, [selectedMonth, selectedCollegeIds])
 
-    useEffect(() => {
-        fetchData()
-    }, [fetchData])
+
 
     // Generate month options (last 12 months)
     const monthOptions: { value: string; label: string }[] = []
@@ -559,11 +539,10 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
                                                     onClick={() => toggleCollege(c.id)}
                                                     className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/30 transition-colors"
                                                 >
-                                                    <div className={`h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                                                        isChecked
+                                                    <div className={`h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors ${isChecked
                                                             ? 'bg-primary border-primary'
                                                             : 'border-border'
-                                                    }`}>
+                                                        }`}>
                                                         {isChecked && (
                                                             <CheckCircle2 className="h-3 w-3 text-white" />
                                                         )}
@@ -686,31 +665,15 @@ function CollegesTab({ colleges, onStudentClick }: {
     onStudentClick: (student: { id: string, name: string, initials: string }) => void
 }) {
     const [selectedCollegeId, setSelectedCollegeId] = useState<string | null>(null)
-    const [collegeDetails, setCollegeDetails] = useState<CollegeDetails | null>(null)
     const [sortBy, setSortBy] = useState<SortBy>('progress')
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
     const [searchQuery, setSearchQuery] = useState('')
     const [page, setPage] = useState(1)
-    const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+    const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, searchQuery)
 
-    // Fetch students when college selection or filters change
-    useEffect(() => {
-        if (!selectedCollegeId) return
-        const fetchDetails = async () => {
-            setIsLoadingDetails(true)
-            try {
-                const res = await api.get(
-                    `/api/coordinator/colleges/${selectedCollegeId}?page=${page}&limit=10&sort=${sortBy}&status=${statusFilter}&search=${searchQuery}`
-                )
-                setCollegeDetails(res.data)
-            } catch (error) {
-                console.error('Failed to fetch college details:', error)
-            } finally {
-                setIsLoadingDetails(false)
-            }
-        }
-        fetchDetails()
-    }, [selectedCollegeId, page, sortBy, statusFilter, searchQuery])
+
+
+
 
     // If a college is selected, show drill-down view
     if (selectedCollegeId) {
@@ -724,7 +687,6 @@ function CollegesTab({ colleges, onStudentClick }: {
                 <button
                     onClick={() => {
                         setSelectedCollegeId(null)
-                        setCollegeDetails(null)
                         setSearchQuery('')
                         setStatusFilter('all')
                         setPage(1)
@@ -1170,30 +1132,13 @@ function AnalyticsTab({ colleges, summary }: {
 // ===== MAIN COMPONENT =====
 
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState<Tab>('overview')
-    const [colleges, setColleges] = useState<CollegeSummary[]>([])
-    const [summary, setSummary] = useState<PlatformSummary | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const [selectedStudentForFeedback, setSelectedStudentForFeedback] = useState<{ id: string, name: string, initials: string } | null>(null)
 
-    // On mount: fetch college summaries + platform summary (2 lightweight calls)
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [collegesRes, summaryRes] = await Promise.all([
-                    api.get('/api/coordinator/colleges'),
-                    api.get('/api/admin/platform-summary'),
-                ])
-                setColleges(collegesRes.data)
-                setSummary(summaryRes.data)
-                setIsLoading(false)
-            } catch (error) {
-                console.error('Failed to fetch admin data:', error)
-                setIsLoading(false)
-            }
-        }
-        fetchData()
-    }, [])
+    const { data: colleges = [], isLoading: collegesLoading } = useColleges()
+    const { data: summary, isLoading: summaryLoading } = usePlatformSummary()
+    const isLoading = collegesLoading || summaryLoading
+
+    const [activeTab, setActiveTab] = useState<Tab>('overview')
+    const [selectedStudentForFeedback, setSelectedStudentForFeedback] = useState<{ id: string, name: string, initials: string } | null>(null)
 
     const totalStudents = colleges.reduce((a, c) => a + c.totalStudents, 0)
 

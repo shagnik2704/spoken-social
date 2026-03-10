@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { REASON_LABELS, STEP_TYPE_LABELS } from '@/lib/feedbackReasons'
-import api from '@/lib/axios'
+import { useStudentFeedback } from '@/hooks/queries/useAdminQueries'
 
 
 // ===== TYPES =====
@@ -152,27 +152,8 @@ interface StudentFeedbackDrawerProps {
 }
 
 export function StudentFeedbackDrawer({ studentId, studentName, studentInitials, onClose }: StudentFeedbackDrawerProps) {
-    const [data, setData] = useState<StudentFeedbackData | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const {data,isLoading,error}=useStudentFeedback(studentId)
     const [viewMode, setViewMode] = useState<ViewMode>('timeline')
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setIsLoading(true)
-                setError(null)
-                const res = await api.get(`/api/admin/students/${studentId}/feedback`)
-                setData(res.data)
-            } catch (err) {
-                console.error('Failed to fetch student feedback:', err)
-                setError('Failed to load feedback data')
-            } finally {
-                setIsLoading(false)
-            }
-        }
-        fetchData()
-    }, [studentId])
 
     const maxReasonCount = data?.reasonBreakdown[0]?.count || 1
 
@@ -225,7 +206,7 @@ export function StudentFeedbackDrawer({ studentId, studentName, studentInitials,
                     {error && (
                         <div className="text-center py-12">
                             <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
-                            <p className="text-sm text-destructive">{error}</p>
+                            <p className="text-sm text-destructive">{error.message}</p>
                         </div>
                     )}
 

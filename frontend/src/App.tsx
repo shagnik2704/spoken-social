@@ -15,6 +15,9 @@ import { useUserStore } from './store/userStore'
 import { LoginPage } from './components/auth/LoginPage'
 import { useAuthStore } from './store/authStore'
 import { Toaster } from '@/components/ui/sonner'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { queryClient } from './lib/queryClient'
 
 function App() {
 
@@ -48,6 +51,7 @@ function App() {
 
 
   return (
+  <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <ThemeProvider>
         <ComposeModalProvider>
@@ -94,6 +98,8 @@ function App() {
         </ComposeModalProvider>
       </ThemeProvider>
     </BrowserRouter>
+    <ReactQueryDevtools initialIsOpen={false}/>
+  </QueryClientProvider>
   )
 }
 
