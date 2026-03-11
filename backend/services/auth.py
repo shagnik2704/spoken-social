@@ -19,11 +19,20 @@ from models.college import College
 from models.course import UserCourse
 from models.tutorial import Tutorial, UserTutorial
 
+<<<<<<< HEAD
 SPOKEN_TUTORIAL_VERIFY_URL = "https://spoken-tutorial.org/api/spoken-social/verify-user/"
 
 # ── Demo student credentials (override via env vars) ──
 DEMO_STUDENT_EMAIL = os.getenv("DEMO_STUDENT_EMAIL", "demo@spoken-social.org")
 DEMO_STUDENT_PASSWORD = os.getenv("DEMO_STUDENT_PASSWORD", "demo123")
+=======
+import os
+
+SPOKEN_TUTORIAL_VERIFY_URL = os.environ.get(
+    "SPOKEN_TUTORIAL_VERIFY_URL",
+    "https://spoken-tutorial.org/api/spoken-social/verify-user/"
+)
+>>>>>>> e251e32 (basic testing changed)
 
 
 async def verify_credentials(email: str, password: str, db: AsyncSession) -> dict | None:
@@ -59,12 +68,16 @@ async def verify_credentials(email: str, password: str, db: AsyncSession) -> dic
             # API is unreachable (network issue, server down, etc.)
             return None
 
-    if resp.status_code != 200:
-        return None
+    data = {}
+    try:
+        data = resp.json()
+    except Exception:
+        pass
 
-    data = resp.json()
-
-    if data.get("status") != "success":
+    if resp.status_code != 200 or data.get("status") != "success":
+        error_msg = data.get("message")
+        if error_msg:
+            return {"error": error_msg, "status_code": resp.status_code if resp.status_code != 200 else 400}
         return None
 
     api_user = data.get("user")

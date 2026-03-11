@@ -41,6 +41,12 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
+        
+    if "error" in user_info:
+        raise HTTPException(
+            status_code=user_info.get("status_code", status.HTTP_400_BAD_REQUEST),
+            detail=user_info["error"],
+        )
 
     # Create a JWT with the user_id (UUID string) baked in
     token = create_access_token(user_info["user_id"])
