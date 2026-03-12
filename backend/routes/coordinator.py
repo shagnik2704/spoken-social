@@ -34,7 +34,10 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
     summaries = []
     for college in colleges:
         # Get all student IDs for this college
-        stu_ids_res = await db.execute(select(User.id).filter(User.college_id == college.id))
+        stu_ids_res = await db.execute(select(User.id).filter(
+            User.college_id == college.id,
+            User.role == "student"
+        ))
         student_ids = stu_ids_res.scalars().all()
         total = len(student_ids)
 
@@ -73,7 +76,8 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
                 Tutorial,
                 (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == "linux")
             ).filter(
-                User.college_id == college.id
+                User.college_id == college.id,
+                User.role == "student"
             ).group_by(User.id)
         )
         student_metrics = student_metrics_res.all()
@@ -98,7 +102,10 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
             else:
                 num_inactive += 1
 
-        avg_xp_res = await db.execute(select(func.avg(User.xp_total)).filter(User.college_id == college.id))
+        avg_xp_res = await db.execute(select(func.avg(User.xp_total)).filter(
+            User.college_id == college.id,
+            User.role == "student"
+        ))
         avg_xp_val = avg_xp_res.scalar() or 0
 
         summaries.append({
