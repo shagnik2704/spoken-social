@@ -20,6 +20,7 @@ const REASONS_BY_STEP: Record<string, { key: string; label: string }[]> = {
         { key: 'no_facilitator_support', label: 'No guidance from the facilitator' },
         { key: 'no_college_support', label: 'No guidance from my college coordinator' },
         { key: 'workload', label: 'Too much academic workload' },
+        { key: 'forum_unanswered', label: 'My questions on the forum are not being answered' },
         { key: 'other', label: 'Other' },
     ],
     assignmentDone: [
@@ -28,6 +29,7 @@ const REASONS_BY_STEP: Record<string, { key: string; label: string }[]> = {
         { key: 'no_facilitator_support', label: 'No guidance from the facilitator' },
         { key: 'no_college_support', label: 'No guidance from my college coordinator' },
         { key: 'workload', label: 'Too much academic workload' },
+        { key: 'forum_unanswered', label: 'My questions on the forum are not being answered' },
         { key: 'other', label: 'Other' },
     ],
     forumAsked: [
