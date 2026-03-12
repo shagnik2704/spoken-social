@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
     CheckCircle2, Terminal, Eye,
-    Search, Filter, Trophy, BarChart3, 
+    Search, Filter, Trophy, BarChart3,
     // Star,
     Clock, Zap, Activity
 } from 'lucide-react'
@@ -500,45 +500,47 @@ function DonutCenterLabel({ value, label }: { value: string; label: string }) {
     )
 }
 
-function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
-    const students = details?.students || []
-    const total = students.length
+function AnalyticsTab({ collegeId }: { collegeId: string }) {
+    const [data, setData] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
 
-    // ── Status Distribution (Donut) ──
-    const statusData = [
-        { name: 'Completed', value: students.filter(s => s.status === 'completed').length, color: 'hsl(142, 76%, 36%)' },
-        { name: 'Active', value: students.filter(s => s.status === 'active').length, color: 'hsl(221, 83%, 53%)' },
-        { name: 'At Risk', value: students.filter(s => s.status === 'at_risk').length, color: 'hsl(38, 92%, 50%)' },
-        { name: 'Inactive', value: students.filter(s => s.status === 'inactive' || s.status === 'not_started').length, color: 'hsl(0, 72%, 51%)' },
-    ].filter(d => d.value > 0)
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            try {
+                const res = await api.get(`/api/coordinator/colleges/${collegeId}/analytics`)
+                setData(res.data)
+            } catch (error) {
+                console.error("Failed to load analytics:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchAnalytics()
+    }, [collegeId])
 
-    // ── Progress Distribution (Donut) ──
-    const progressData = [
-        { name: '0%', value: students.filter(s => s.progress === 0).length, color: 'hsl(0, 72%, 70%)' },
-        { name: '1–25%', value: students.filter(s => s.progress >= 1 && s.progress <= 25).length, color: 'hsl(25, 95%, 60%)' },
-        { name: '26–50%', value: students.filter(s => s.progress >= 26 && s.progress <= 50).length, color: 'hsl(38, 92%, 55%)' },
-        { name: '51–75%', value: students.filter(s => s.progress >= 51 && s.progress <= 75).length, color: 'hsl(221, 83%, 60%)' },
-        { name: '76–99%', value: students.filter(s => s.progress >= 76 && s.progress <= 99).length, color: 'hsl(142, 60%, 50%)' },
-        { name: '100%', value: students.filter(s => s.progress === 100).length, color: 'hsl(142, 76%, 36%)' },
-    ].filter(d => d.value > 0)
+    if (loading) return <div className="p-10 text-center text-muted-foreground animate-pulse">Computing college-wide analytics...</div>
+    if (!data) return <div className="p-10 text-center text-red-500">Failed to load analytics.</div>
 
-    // ── Tutorial-wise Completion ──
-    const tutorialCompletion = TUTORIAL_NAMES.map((name, i) => {
-        const completedCount = students.filter(s => s.tutorialsCompleted > i).length
-        const rate = total > 0 ? Math.round((completedCount / total) * 100) : 0
-        return { name, number: i + 1, completedCount, rate }
-    })
+    const {
+        totalStudents: total,
+        avgProgress,
+        avgWatched,
+        totalTutorials,
+        avgXP,
+        totalXP,
+        statusData,
+        progressData,
+        tutorialCompletion,
+        topPerformers,
+        atRisk
+    } = data
 
-    // ── Top Performers ──
-    const topPerformers = [...students].sort((a, b) => b.xp - a.xp).slice(0, 5)
+    // Attach tutorial names from frontend constants
+    const tutorialCompletionWithNames = tutorialCompletion.map((t: any) => ({
+        ...t,
+        name: TUTORIAL_NAMES[t.number - 1] || `Tutorial ${t.number}`
+    }))
 
-    // ── At-Risk Students ──
-    const atRisk = students.filter(s => s.status === 'at_risk' || s.status === 'inactive' || s.status === 'not_started')
-        .sort((a, b) => a.progress - b.progress)
-
-    // ── Watch Rate ──
-    const avgWatched = total > 0 ? students.reduce((sum, s) => sum + (s.tutorialsWatched || 0), 0) / total : 0
-    const totalTutorials = students.length > 0 ? students[0].totalTutorials : 20
     const watchRate = totalTutorials > 0 ? Math.round((avgWatched / totalTutorials) * 100) : 0
 
     // Custom tooltip for donut charts
@@ -569,9 +571,9 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                 <Card className="border-border/40">
                     <CardContent className="p-4 text-center">
                         <Zap className="h-5 w-5 text-xp-gold mx-auto mb-1" />
-                        <p className="text-2xl font-bold">{total > 0 ? Math.round(students.reduce((a, s) => a + s.xp, 0) / total) : 0}</p>
+                        <p className="text-2xl font-bold">{avgXP}</p>
                         <p className="text-[11px] text-muted-foreground">Avg XP / Student</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{students.reduce((a, s) => a + s.xp, 0)} total</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{totalXP} total</p>
                     </CardContent>
                 </Card>
 
@@ -591,7 +593,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
-                                            data={statusData}
+                                            data={statusData.filter((d: any) => d.value > 0)}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={45}
@@ -600,7 +602,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                                             dataKey="value"
                                             strokeWidth={0}
                                         >
-                                            {statusData.map((entry, index) => (
+                                            {statusData.filter((d: any) => d.value > 0).map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -610,7 +612,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                                 <DonutCenterLabel value={String(total)} label="students" />
                             </div>
                             <div className="flex-1 space-y-2">
-                                {statusData.map(item => (
+                                {statusData.filter((d: any) => d.value > 0).map((item: any) => (
                                     <div key={item.name} className="flex items-center gap-2">
                                         <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                                         <span className="text-xs flex-1">{item.name}</span>
@@ -635,7 +637,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
-                                            data={progressData}
+                                            data={progressData.filter((d: any) => d.value > 0)}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={45}
@@ -644,7 +646,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                                             dataKey="value"
                                             strokeWidth={0}
                                         >
-                                            {progressData.map((entry, index) => (
+                                            {progressData.filter((d: any) => d.value > 0).map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -652,12 +654,12 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <DonutCenterLabel
-                                    value={`${total > 0 ? Math.round(students.reduce((a, s) => a + s.progress, 0) / total) : 0}%`}
+                                    value={`${avgProgress}%`}
                                     label="avg progress"
                                 />
                             </div>
                             <div className="flex-1 space-y-2">
-                                {progressData.map(item => (
+                                {progressData.filter((d: any) => d.value > 0).map((item: any) => (
                                     <div key={item.name} className="flex items-center gap-2">
                                         <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                                         <span className="text-xs flex-1">{item.name}</span>
@@ -679,7 +681,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                         <span className="text-[10px] font-normal text-muted-foreground">— where are students dropping off?</span>
                     </h3>
                     <div className="space-y-1.5">
-                        {tutorialCompletion.map(t => (
+                        {tutorialCompletionWithNames.map((t: any) => (
                             <div key={t.number} className="flex items-center gap-3">
                                 <span className="text-[11px] text-muted-foreground w-5 text-right font-mono shrink-0">{t.number}</span>
                                 <span className="text-xs w-44 truncate shrink-0">{t.name}</span>
@@ -718,7 +720,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                             Top Performers
                         </h3>
                         <div className="space-y-1">
-                            {topPerformers.map((student, i) => (
+                            {topPerformers.map((student: any, i: number) => (
                                 <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
                                     <span className={`text-xs font-bold w-6 text-right ${i === 0 ? 'text-xp-gold' :
                                         i === 1 ? 'text-gray-400' :
@@ -767,7 +769,7 @@ function AnalyticsTab({ details }: { details: CollegeDetails | null }) {
                             </div>
                         ) : (
                             <div className="space-y-1.5">
-                                {atRisk.map(student => (
+                                {atRisk.map((student: any) => (
                                     <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-destructive/5 border border-destructive/10">
                                         <Avatar className="h-7 w-7">
                                             <AvatarFallback className="text-[9px] font-semibold bg-destructive/10 text-destructive">
@@ -816,7 +818,7 @@ export default function CoordinatorDashboard() {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
     const [searchQuery, setSearchQuery] = useState('')
     const [page, setPage] = useState(1)
-    const user = useUserStore(state => state.user) 
+    const user = useUserStore(state => state.user)
     const MY_COLLEGE_ID = user?.collegeId || 'iitb'
 
 
@@ -909,8 +911,8 @@ export default function CoordinatorDashboard() {
                 />
             )}
 
-            {activeTab === 'analytics' && (
-                <AnalyticsTab details={myCollegeDetails} />
+            {activeTab === 'analytics' && myCollege && (
+                <AnalyticsTab collegeId={myCollege.id} />
             )}
 
             {/* {activeTab === 'compare' && (
