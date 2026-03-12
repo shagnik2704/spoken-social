@@ -7,7 +7,7 @@ Creates:
   - 4 colleges (VJTI Mumbai, IIT Bombay, NIT Surathkal, VJTI Mumbai)
   - 1 admin user
   - 4 coordinators (one per college)
-  - 40 students (10 per college) with realistic tutorial progress
+  - 60 students (10 per college for VJTI/NITK/VIT, 30 for IIT Bombay) with realistic tutorial progress
   - ~150 feedback entries with patterns that tell a coherent story
 
 Login credentials:
@@ -100,6 +100,26 @@ STUDENTS_PER_COLLEGE = {
         {"first": "Nikhil",   "last": "Jain",      "profile": "low",  "dept": "B.Tech CSE, Year 2"},
         {"first": "Shreya",   "last": "Nair",      "profile": "high", "dept": "B.Tech CSE, Year 3"},
         {"first": "Deepak",   "last": "Singh",     "profile": "low",  "dept": "B.Tech IT, Year 2"},
+        {"first": "Ankit",    "last": "Mishra",    "profile": "high", "dept": "M.Tech CSE, Year 2"},
+        {"first": "Pooja",    "last": "Agarwal",   "profile": "mid",  "dept": "B.Tech CSE, Year 1"},
+        {"first": "Sahil",    "last": "Bose",      "profile": "low",  "dept": "B.Tech IT, Year 3"},
+        {"first": "Nidhi",    "last": "Kapoor",    "profile": "high", "dept": "B.Tech CSE, Year 4"},
+        {"first": "Varun",    "last": "Tiwari",    "profile": "mid",  "dept": "B.Tech CSE, Year 2"},
+        {"first": "Ishaan",   "last": "Ghosh",     "profile": "low",  "dept": "B.Tech IT, Year 1"},
+        {"first": "Pranjal",  "last": "Saxena",    "profile": "high", "dept": "M.Tech CSE, Year 1"},
+        {"first": "Simran",   "last": "Arora",     "profile": "mid",  "dept": "B.Tech CSE, Year 3"},
+        {"first": "Yash",     "last": "Malhotra",  "profile": "low",  "dept": "B.Tech CSE, Year 2"},
+        {"first": "Tanisha",  "last": "Banerjee",  "profile": "high", "dept": "B.Tech IT, Year 4"},
+        {"first": "Aarav",    "last": "Mehta",     "profile": "high", "dept": "M.Tech CSE, Year 2"},
+        {"first": "Ritika",   "last": "Srivastava","profile": "mid",  "dept": "B.Tech CSE, Year 1"},
+        {"first": "Dhruv",    "last": "Chandra",   "profile": "low",  "dept": "B.Tech EE, Year 2"},
+        {"first": "Anjali",   "last": "Dubey",     "profile": "high", "dept": "B.Tech CSE, Year 3"},
+        {"first": "Parth",    "last": "Shah",      "profile": "mid",  "dept": "B.Tech IT, Year 2"},
+        {"first": "Kritika",  "last": "Yadav",     "profile": "low",  "dept": "B.Tech CSE, Year 1"},
+        {"first": "Ronak",    "last": "Joshi",     "profile": "mid",  "dept": "B.Tech EE, Year 3"},
+        {"first": "Swati",    "last": "Pandey",    "profile": "high", "dept": "M.Tech CSE, Year 1"},
+        {"first": "Mihir",    "last": "Kulkarni",  "profile": "low",  "dept": "B.Tech CSE, Year 2"},
+        {"first": "Bhavna",   "last": "Tripathi",  "profile": "mid",  "dept": "B.Tech IT, Year 4"},
     ],
     "nitk": [
         {"first": "Ananya",   "last": "Patel",     "profile": "mid",  "dept": "B.Tech IT, Year 2"},
@@ -413,7 +433,7 @@ def reseed():
     db.flush()
 
     # ===== STUDENTS =====
-    print("👨‍🎓 Creating 40 students with tutorial progress...")
+    print("👨‍🎓 Creating 60 students with tutorial progress...")
     all_students = []
     all_feedback = []
 

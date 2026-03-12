@@ -12,6 +12,15 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import api from '@/lib/axios'
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+    PaginationEllipsis,
+} from '@/components/ui/pagination'
 import { useUserStore } from '@/store/userStore'
 
 // ===== TYPES =====
@@ -308,26 +317,56 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
 
                     {/* Pagination */}
                     {details?.pagination && details.pagination.totalPages > 1 && (
-                        <div className="flex items-center justify-between pt-4 border-t border-border/30">
-                            <p className="text-xs text-muted-foreground">
-                                Page {details.pagination.currentPage} of {details.pagination.totalPages} · {details.pagination.totalRecords} students
-                            </p>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setPage(page - 1)}
-                                    disabled={page <= 1}
-                                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border disabled:opacity-30 hover:bg-muted/50 transition-colors"
-                                >
-                                    ← Prev
-                                </button>
-                                <button
-                                    onClick={() => setPage(page + 1)}
-                                    disabled={page >= details.pagination.totalPages}
-                                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border disabled:opacity-30 hover:bg-muted/50 transition-colors"
-                                >
-                                    Next →
-                                </button>
-                            </div>
+                        <div className="pt-4 border-t border-border/30">
+                            <Pagination>
+                                <PaginationContent>
+                                    {/* Previous */}
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            onClick={(e) => { e.preventDefault(); if (page > 1) setPage(page - 1) }}
+                                            aria-disabled={page <= 1}
+                                            className={page <= 1 ? 'pointer-events-none opacity-30' : 'cursor-pointer'}
+                                        />
+                                    </PaginationItem>
+
+                                    {/* Page numbers */}
+                                    {Array.from({ length: details.pagination.totalPages }, (_, i) => i + 1).map((p) => {
+                                        const total = details.pagination!.totalPages
+                                        // Show first, last, current ±1, and ellipsis for the rest
+                                        const show = p === 1 || p === total || Math.abs(p - page) <= 1
+                                        const showEllipsisBefore = p === page - 2 && page - 2 > 1
+                                        const showEllipsisAfter  = p === page + 2 && page + 2 < total
+                                        if (showEllipsisBefore || showEllipsisAfter) {
+                                            return (
+                                                <PaginationItem key={`ellipsis-${p}`}>
+                                                    <PaginationEllipsis />
+                                                </PaginationItem>
+                                            )
+                                        }
+                                        if (!show) return null
+                                        return (
+                                            <PaginationItem key={p}>
+                                                <PaginationLink
+                                                    isActive={p === page}
+                                                    onClick={(e) => { e.preventDefault(); setPage(p) }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {p}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        )
+                                    })}
+
+                                    {/* Next */}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            onClick={(e) => { e.preventDefault(); if (page < details.pagination!.totalPages) setPage(page + 1) }}
+                                            aria-disabled={page >= details.pagination.totalPages}
+                                            className={page >= details.pagination.totalPages ? 'pointer-events-none opacity-30' : 'cursor-pointer'}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
                         </div>
                     )}
                 </CardContent>
