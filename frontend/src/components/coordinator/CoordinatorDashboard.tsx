@@ -11,7 +11,12 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import api from '@/lib/axios'
+import {
+    useCoordinatorColleges,
+    useCoordinatorCollegeDetails,
+    useCoordinatorCollegeAnalytics
+} from '@/hooks/queries/useCoordinatorQueries'
+
 import {
     Pagination,
     PaginationContent,
@@ -335,7 +340,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                                         // Show first, last, current ±1, and ellipsis for the rest
                                         const show = p === 1 || p === total || Math.abs(p - page) <= 1
                                         const showEllipsisBefore = p === page - 2 && page - 2 > 1
-                                        const showEllipsisAfter  = p === page + 2 && page + 2 < total
+                                        const showEllipsisAfter = p === page + 2 && page + 2 < total
                                         if (showEllipsisBefore || showEllipsisAfter) {
                                             return (
                                                 <PaginationItem key={`ellipsis-${p}`}>
@@ -540,22 +545,7 @@ function DonutCenterLabel({ value, label }: { value: string; label: string }) {
 }
 
 function AnalyticsTab({ collegeId }: { collegeId: string }) {
-    const [data, setData] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchAnalytics = async () => {
-            try {
-                const res = await api.get(`/api/coordinator/colleges/${collegeId}/analytics`)
-                setData(res.data)
-            } catch (error) {
-                console.error("Failed to load analytics:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchAnalytics()
-    }, [collegeId])
+    const {data,isLoading:loading}=useCoordinatorCollegeAnalytics(collegeId)
 
     if (loading) return <div className="p-10 text-center text-muted-foreground animate-pulse">Computing college-wide analytics...</div>
     if (!data) return <div className="p-10 text-center text-red-500">Failed to load analytics.</div>
@@ -850,9 +840,6 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
 
 export default function CoordinatorDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>('students')
-    const [colleges, setColleges] = useState<CollegeSummary[]>([])
-    const [myCollegeDetails, setMyCollegeDetails] = useState<CollegeDetails | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
     const [sortBy, setSortBy] = useState<SortBy>('progress')
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
     const [searchQuery, setSearchQuery] = useState('')
@@ -860,28 +847,19 @@ export default function CoordinatorDashboard() {
     const user = useUserStore(state => state.user)
     const MY_COLLEGE_ID = user?.collegeId || 'iitb'
 
+    const {data:colleges=[],isLoading:isLoadingColleges}=useCoordinatorColleges()
 
+    const {data:myCollegeDetails,isLoading:isLoadingDetails}=useCoordinatorCollegeDetails(
+        MY_COLLEGE_ID,
+        page,
+        sortBy,
+        statusFilter,
+        searchQuery
+    )
 
-    // Fetch all colleges + my college's student details
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [collegesRes, detailsRes] = await Promise.all([
-                    api.get('/api/coordinator/colleges'),
-                    api.get(`/api/coordinator/colleges/${MY_COLLEGE_ID}?page=${page}&limit=10&sort=${sortBy}&status=${statusFilter}&search=${searchQuery}`),
-                ])
-                setColleges(collegesRes.data)
-                setMyCollegeDetails(detailsRes.data)
-                setIsLoading(false)
-            } catch (error) {
-                console.error('Failed to fetch coordinator data:', error)
-                setIsLoading(false)
-            }
-        }
-        fetchData()
-    }, [page, sortBy, statusFilter, searchQuery])
+    const isLoading = isLoadingColleges||isLoadingDetails
 
-    const myCollege = colleges.find(c => c.id === MY_COLLEGE_ID)
+    const myCollege = colleges.find((c: CollegeSummary) => c.id === MY_COLLEGE_ID)
 
     const tabs = [
         { id: 'students' as const, label: 'My Students', icon: Users },
