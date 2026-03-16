@@ -3,6 +3,7 @@ import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
     CheckCircle2, Terminal, Eye,
     Search, Filter, Trophy, BarChart3,
+    MessageCircleQuestion,
     // Star,
     Clock, Zap, Activity
 } from 'lucide-react'
@@ -14,8 +15,10 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import {
     useCoordinatorColleges,
     useCoordinatorCollegeDetails,
-    useCoordinatorCollegeAnalytics
+    useCoordinatorCollegeAnalytics,
+    useCoordinatorFeedbackSummary
 } from '@/hooks/queries/useCoordinatorQueries'
+import { FeedbackPanel } from '@/components/admin/FeedbackPanel'
 
 import {
     Pagination,
@@ -85,7 +88,7 @@ interface CollegeDetails {
     }
 }
 
-type Tab = 'students' | 'analytics' | 'compare'
+type Tab = 'students' | 'analytics' | 'feedback' | 'compare'
 type SortBy = 'name' | 'progress' | 'xp'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
@@ -836,6 +839,16 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
 }
 
 
+// ===== COORDINATOR FEEDBACK TAB =====
+
+function CoordinatorFeedbackTab({ collegeId }: { collegeId: string }) {
+    const feedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
+        useCoordinatorFeedbackSummary(collegeId, filters)
+
+    return <FeedbackPanel useFeedbackData={feedbackHook} />
+}
+
+
 // ===== MAIN COMPONENT =====
 
 export default function CoordinatorDashboard() {
@@ -864,6 +877,7 @@ export default function CoordinatorDashboard() {
     const tabs = [
         { id: 'students' as const, label: 'My Students', icon: Users },
         { id: 'analytics' as const, label: 'Analytics', icon: Activity },
+        { id: 'feedback' as const, label: 'Feedback', icon: MessageCircleQuestion },
         // { id: 'compare' as const, label: 'Compare Colleges', icon: BarChart3 },
     ]
 
@@ -930,6 +944,10 @@ export default function CoordinatorDashboard() {
 
             {activeTab === 'analytics' && myCollege && (
                 <AnalyticsTab collegeId={myCollege.id} />
+            )}
+
+            {activeTab === 'feedback' && myCollege && (
+                <CoordinatorFeedbackTab collegeId={myCollege.id} />
             )}
 
             {/* {activeTab === 'compare' && (
