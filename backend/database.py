@@ -25,8 +25,8 @@ if ASYNC_DATABASE_URL and ASYNC_DATABASE_URL.startswith("postgresql://"):
 engine = create_async_engine(
     ASYNC_DATABASE_URL,
     echo=False,
-    pool_size=20,
-    max_overflow=10,
+    pool_size=10,
+    max_overflow=5,
     pool_pre_ping=True
 )
 
