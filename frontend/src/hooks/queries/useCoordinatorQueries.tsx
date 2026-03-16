@@ -47,3 +47,30 @@ export function useCoordinatorCollegeAnalytics(
         enabled:!!collegeId
     })
 }
+
+const fetchCoordinatorFeedbackSummary = async (
+    collegeId: string,
+    filters: { tutorialId: string; stepType: string; reason: string }
+) => {
+    const params = new URLSearchParams()
+    if (filters.tutorialId) params.set('tutorial_id', filters.tutorialId)
+    if (filters.stepType) params.set('step_type', filters.stepType)
+    if (filters.reason) params.set('reason', filters.reason)
+    const qs = params.toString()
+    const url = qs
+        ? `/api/coordinator/colleges/${collegeId}/feedback-summary?${qs}`
+        : `/api/coordinator/colleges/${collegeId}/feedback-summary`
+    const { data } = await api.get(url)
+    return data
+}
+
+export function useCoordinatorFeedbackSummary(
+    collegeId: string | null,
+    filters: { tutorialId: string; stepType: string; reason: string }
+) {
+    return useQuery({
+        queryKey: ['coordinator', 'feedback-summary', collegeId, filters],
+        queryFn: () => fetchCoordinatorFeedbackSummary(collegeId!, filters),
+        enabled: !!collegeId
+    })
+}

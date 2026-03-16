@@ -76,14 +76,24 @@ export function LoginPage() {
                                     type="email"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    placeholder="priya@vjti.ac.in"
+                                    placeholder="user@example.com"
                                     required
                                 />
                             </div>
 
                             {/* Password field */}
                             <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="password">Password</Label>
+                                    <a
+                                        href="https://spoken-tutorial.org/accounts/forgot-password/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline transition-colors"
+                                    >
+                                        Forgot Password?
+                                    </a>
+                                </div>
                                 <Input
                                     id="password"
                                     type="password"
@@ -105,11 +115,6 @@ export function LoginPage() {
                                     'Sign In'
                                 )}
                             </Button>
-
-                            {/* Test credentials hint */}
-                            <p className="text-xs text-muted-foreground text-center pt-2">
-                                Test: priya@vjti.ac.in / password123
-                            </p>
                         </form>
                     </CardContent>
                 </Card>

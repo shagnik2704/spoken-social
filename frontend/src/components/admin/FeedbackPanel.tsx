@@ -251,16 +251,19 @@ function FilterBar({ options, filters, onFilterChange }: {
 
 interface FeedbackPanelProps {
     onStudentClick?: (student: { id: string; name: string; initials: string }) => void
+    useFeedbackData?: (filters: { tutorialId: string; stepType: string; reason: string }) => { data: FeedbackSummary | undefined; isLoading: boolean }
 }
 
-export function FeedbackPanel({ onStudentClick }: FeedbackPanelProps) {
+export function FeedbackPanel({ onStudentClick, useFeedbackData }: FeedbackPanelProps) {
 
     const [filters, setFilters] = useState({
         tutorialId: '',
         stepType: '',
         reason: '',
     })
-    const { data: summary, isLoading } = useFeedbackSummary(filters) as { data: FeedbackSummary | undefined, isLoading: boolean }
+    const defaultHook = useFeedbackSummary
+    const hookFn = useFeedbackData || defaultHook
+    const { data: summary, isLoading } = hookFn(filters) as { data: FeedbackSummary | undefined, isLoading: boolean }
     const handleFilterChange = (key: string, value: string) => {
         setFilters(prev => ({ ...prev, [key]: value }))
     }
