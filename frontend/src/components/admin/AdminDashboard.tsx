@@ -132,12 +132,17 @@ function MetricCard({ icon: Icon, label, value, subtext, color }: {
 
 // ===== STUDENT TABLE ROW =====
 
-function StudentRow({ student, collegeName, onClick }: { student: Student | EnrichedStudent; collegeName?: string; onClick?: () => void }) {
+function StudentRow({ student, collegeName, onClick, index }: { student: Student | EnrichedStudent; collegeName?: string; onClick?: () => void; index?: number }) {
     const statusConfig = getStatusConfig(student.status)
     const cName = collegeName || ('collegeName' in student ? student.collegeName : undefined)
 
     return (
         <button onClick={onClick} className="w-full text-left flex items-center gap-3 px-3 sm:px-4 py-3 rounded-lg hover:bg-muted/30 transition-colors">
+            {index !== undefined && (
+                <div className="w-6 shrink-0 text-xs font-semibold text-muted-foreground text-center">
+                    {index}
+                </div>
+            )}
             <Avatar className="h-8 w-8 shrink-0">
                 <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
                     {student.initials}
@@ -639,6 +644,8 @@ function CollegesTab({ colleges, onStudentClick }: {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
     const [searchQuery, setSearchQuery] = useState('')
     const [page, setPage] = useState(1)
+    const [collegeSearch, setCollegeSearch] = useState('')
+    const [collegeSort, setCollegeSort] = useState<'progress' | 'name' | 'students' | 'completion' | 'xp'>('progress')
     const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, searchQuery)
 
 
@@ -762,6 +769,7 @@ function CollegesTab({ colleges, onStudentClick }: {
 
                         {/* Table Header */}
                         <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
+                            <div className="w-6 shrink-0 text-center">#</div>
                             <div className="w-8 shrink-0" />
                             <div className="flex-1">Student</div>
                             <div className="hidden sm:block w-28 text-center">Progress</div>
@@ -778,8 +786,13 @@ function CollegesTab({ colleges, onStudentClick }: {
                             <p className="text-center text-sm text-muted-foreground py-8">Loading students...</p>
                         ) : (
                             <div className="space-y-0.5">
-                                {students.map((student: Student) => (
-                                    <StudentRow key={student.id} student={student} onClick={() => onStudentClick({ id: student.id, name: student.name, initials: student.initials })} />
+                                {students.map((student: Student, idx: number) => (
+                                    <StudentRow 
+                                        key={student.id} 
+                                        student={student} 
+                                        index={(page - 1) * 10 + idx + 1}
+                                        onClick={() => onStudentClick({ id: student.id, name: student.name, initials: student.initials })} 
+                                    />
                                 ))}
                                 {students.length === 0 && (
                                     <p className="text-center text-sm text-muted-foreground py-8">
@@ -820,17 +833,67 @@ function CollegesTab({ colleges, onStudentClick }: {
     }
 
     // Default: College list view
-    const ranked = [...colleges].sort((a, b) => b.avgProgress - a.avgProgress)
+    const collegesWithRank = [...colleges]
+        .sort((a, b) => b.avgProgress - a.avgProgress)
+        .map((c, i) => ({ ...c, rank: i + 1 }))
+
+    const filteredColleges = collegesWithRank.filter(c => 
+        c.name.toLowerCase().includes(collegeSearch.toLowerCase()) || 
+        c.location.toLowerCase().includes(collegeSearch.toLowerCase()) ||
+        c.coordinatorName.toLowerCase().includes(collegeSearch.toLowerCase())
+    )
+    
+    const sortedColleges = [...filteredColleges].sort((a, b) => {
+        if (collegeSort === 'progress') return b.avgProgress - a.avgProgress
+        if (collegeSort === 'completion') return b.completionRate - a.completionRate
+        if (collegeSort === 'students') return b.totalStudents - a.totalStudents
+        if (collegeSort === 'xp') return b.avgXP - a.avgXP
+        return a.name.localeCompare(b.name)
+    })
 
     return (
         <div className="space-y-5">
             <CollegeXPChart colleges={colleges} />
             <Card className="border-border/40">
                 <CardContent className="p-4">
-                    <h2 className="text-sm font-bold flex items-center gap-2 mb-5">
-                        <Building2 className="h-4 w-4 text-primary" />
-                        All Colleges — Click to view students
-                    </h2>
+                    <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 mb-5">
+                        <h2 className="text-sm font-bold flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-primary shrink-0" />
+                            All Colleges — Click to view students
+                        </h2>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full xl:w-auto">
+                            <div className="relative w-full sm:w-auto">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    placeholder="Search name, location, coordinator..."
+                                    value={collegeSearch}
+                                    onChange={(e) => setCollegeSearch(e.target.value)}
+                                    className="pl-8 pr-3 py-1.5 text-xs rounded-full border border-border bg-muted/30 w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-primary/30"
+                                />
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground bg-muted/20 px-2 py-1.5 rounded-lg border border-border/30 overflow-x-auto w-full sm:w-auto">
+                                <Filter className="h-3 w-3 shrink-0" />
+                                <span className="shrink-0 font-medium">Sort:</span>
+                                {([
+                                    { id: 'progress', label: 'Progress' },
+                                    { id: 'completion', label: 'Completion' },
+                                    { id: 'students', label: 'Students' },
+                                    { id: 'xp', label: 'XP' },
+                                    { id: 'name', label: 'Name' },
+                                ] as const).map(sort => (
+                                    <button
+                                        key={sort.id}
+                                        onClick={() => setCollegeSort(sort.id)}
+                                        className={`px-2 py-0.5 rounded text-[10px] transition-colors shrink-0
+                                            ${collegeSort === sort.id ? 'bg-primary/10 text-primary font-bold shadow-sm' : 'hover:text-foreground'}`}
+                                    >
+                                        {sort.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Table Header */}
                     <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
@@ -845,8 +908,8 @@ function CollegesTab({ colleges, onStudentClick }: {
 
                     {/* College Rows */}
                     <div className="space-y-0.5">
-                        {ranked.map((college, i) => {
-                            const rank = i + 1
+                        {sortedColleges.map((college) => {
+                            const rank = college.rank
                             return (
                                 <button
                                     key={college.id}
