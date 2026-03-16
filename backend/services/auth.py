@@ -19,20 +19,14 @@ from models.college import College
 from models.course import UserCourse
 from models.tutorial import Tutorial, UserTutorial
 
-<<<<<<< HEAD
-SPOKEN_TUTORIAL_VERIFY_URL = "https://spoken-tutorial.org/api/spoken-social/verify-user/"
-
-# ── Demo student credentials (override via env vars) ──
-DEMO_STUDENT_EMAIL = os.getenv("DEMO_STUDENT_EMAIL", "demo@spoken-social.org")
-DEMO_STUDENT_PASSWORD = os.getenv("DEMO_STUDENT_PASSWORD", "demo123")
-=======
-import os
-
 SPOKEN_TUTORIAL_VERIFY_URL = os.environ.get(
     "SPOKEN_TUTORIAL_VERIFY_URL",
     "https://spoken-tutorial.org/api/spoken-social/verify-user/"
 )
->>>>>>> e251e32 (basic testing changed)
+
+# ── Demo student credentials (override via env vars) ──
+DEMO_STUDENT_EMAIL = os.getenv("DEMO_STUDENT_EMAIL", "demo@spoken-social.org")
+DEMO_STUDENT_PASSWORD = os.getenv("DEMO_STUDENT_PASSWORD", "demo123")
 
 
 async def verify_credentials(email: str, password: str, db: AsyncSession) -> dict | None:
