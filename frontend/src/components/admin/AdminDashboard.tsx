@@ -29,6 +29,7 @@ interface CollegeSummary {
     coordinatorName: string
     course: string
     totalStudents: number
+    totalCourseStudents: number
     activeStudents: number
     inactiveStudents: number
     atRiskStudents: number
@@ -258,7 +259,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                                     #{i + 1}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold truncate">{college.name}</p>
+                                    <p className="text-sm font-semibold truncate">{college.name} <span className="text-muted-foreground font-normal">({college.totalCourseStudents} enrolled)</span></p>
                                     <p className="text-[11px] text-muted-foreground">
                                         {college.totalStudents} students · {college.coordinatorName}
                                     </p>
@@ -680,7 +681,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                         <CardContent className="p-5">
                             <div className="flex items-center justify-between flex-wrap gap-3">
                                 <div>
-                                    <h2 className="text-lg font-bold">{college.name}</h2>
+                                    <h2 className="text-lg font-bold">{college.name} <span className="text-base font-normal text-muted-foreground">({college.totalCourseStudents} enrolled)</span></h2>
                                     <p className="text-sm text-muted-foreground">
                                         {college.location} · {college.coordinatorName} · {college.course}
                                     </p>
@@ -926,7 +927,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold truncate">{college.name}</p>
+                                        <p className="text-sm font-semibold truncate">{college.name} <span className="text-muted-foreground font-normal">({college.totalCourseStudents})</span></p>
                                         <p className="text-[11px] text-muted-foreground">{college.location} · {college.coordinatorName}</p>
                                     </div>
 
@@ -1142,7 +1143,7 @@ function AnalyticsTab({ colleges, summary }: {
                     <div className="space-y-2">
                         {[...colleges].sort((a, b) => b.avgProgress - a.avgProgress).map(college => (
                             <div key={college.id} className="flex items-center gap-3">
-                                <span className="text-xs w-32 truncate shrink-0 font-medium">{college.name}</span>
+                                <span className="text-xs w-32 truncate shrink-0 font-medium">{college.name} <span className="text-muted-foreground font-normal">({college.totalCourseStudents})</span></span>
                                 <div className="flex-1 h-6 bg-muted/30 rounded overflow-hidden relative">
                                     <div
                                         className="h-full rounded bg-primary/50 transition-all duration-500"

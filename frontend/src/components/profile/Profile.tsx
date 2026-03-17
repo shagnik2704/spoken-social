@@ -2,8 +2,8 @@ import { useState } from 'react'
 import {
     Flame, Zap, BookOpen, Trophy, MapPin, LinkIcon,
     Settings, Edit3, Share2, Code, Terminal, BarChart3, FileText,
-    CheckCircle2, Lock, MessageCircle, Heart, Star, Clock,
-    GraduationCap, TrendingUp, Award, Users
+    CheckCircle2, Lock, MessageCircle, Heart, Clock,
+    GraduationCap, Users, Shield, TrendingUp, Target
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -13,17 +13,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUserStore } from '@/store/userStore'
 import { useCoordinatorColleges } from '@/hooks/queries/useCoordinatorQueries'
+import { useColleges, usePlatformSummary } from '@/hooks/queries/useAdminQueries'
 import EditProfileDialog from './EditProfileDialog'
-import type { ActivityType } from '@/types'
 
-// Will be replaced with API call later
-const ACTIVITY = [
-    { id: '1', type: 'achievement' as ActivityType, text: 'Completed C/C++ course with 85% test score', time: '3 days ago' },
-    { id: '2', type: 'post' as ActivityType, text: 'Shared a tip about Python dictionaries', time: '5 days ago' },
-    { id: '3', type: 'badge' as ActivityType, text: 'Earned the "Quick Learner" badge', time: '1 week ago' },
-    { id: '5', type: 'course' as ActivityType, text: 'Started learning Scilab', time: '2 weeks ago' },
-    { id: '6', type: 'answer' as ActivityType, text: 'Answered a question about Linux file permissions', time: '2 weeks ago' },
-]
 
 // ===== ICON MAPS =====
 
@@ -98,7 +90,7 @@ function ProfileHeader() {
                 <div className="mt-4 sm:mt-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="text-xl sm:text-2xl font-bold">{user.displayName}</h1>
-                        {user.role !== 'coordinator' && (
+                        {user.role === 'student' && (
                             <Badge variant="secondary" className="text-[10px] px-2 py-0.5 gap-1">
                                 <Zap className="h-3 w-3 text-xp-gold" />
                                 Level {user.level} — {user.levelTitle}
@@ -109,7 +101,7 @@ function ProfileHeader() {
                     <p className="text-sm mt-3 leading-relaxed">{user.bio}</p>
 
                     {/* Meta Info */}
-                    {user.role !== 'coordinator' && (
+                    {user.role === 'student' && (
                         <>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
@@ -147,7 +139,7 @@ function StatsRow() {
     const courses = useUserStore(state => state.courses)
 
 
-    if (!user || user.role === 'coordinator') return null
+    if (!user || user.role !== 'student') return null
 
     const stats = [
         { label: 'Total XP', value: user.xpTotal.toLocaleString(), icon: Zap, color: 'text-xp-gold' },
@@ -318,47 +310,82 @@ function InProgressCoursesSection() {
     )
 }
 
-/** Recent Activity Timeline */
-function ActivityTimeline() {
-    const getActivityIcon = (type: ActivityType) => {
-        switch (type) {
-            case 'achievement': return { icon: Trophy, color: 'text-xp-gold', bg: 'bg-xp-gold/10' }
-            case 'post': return { icon: MessageCircle, color: 'text-primary', bg: 'bg-primary/10' }
 
-            case 'badge': return { icon: Award, color: 'text-secondary', bg: 'bg-secondary/10' }
-            case 'course': return { icon: BookOpen, color: 'text-success', bg: 'bg-success/10' }
-            case 'answer': return { icon: Star, color: 'text-primary-light', bg: 'bg-primary-light/10' }
-            default: return { icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted/50' }
-        }
+
+/** Admin Details (shown for admins instead of student sections) */
+function AdminDetails() {
+    const user = useUserStore(state => state.user)
+    const { data: summary, isLoading } = usePlatformSummary()
+    const { data: colleges } = useColleges()
+
+    if (!user || user.role !== 'admin') return null
+
+    if (isLoading) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-[200px] w-full rounded-xl" />
+            </div>
+        )
     }
 
-    return (
-        <div className="space-y-1">
-            {ACTIVITY.map((activity, index) => {
-                const config = getActivityIcon(activity.type)
-                const Icon = config.icon
-                return (
-                    <div key={activity.id} className="flex gap-3 group">
-                        {/* Timeline line + dot */}
-                        <div className="flex flex-col items-center">
-                            <div className={`h-8 w-8 rounded-full ${config.bg} flex items-center justify-center shrink-0
-                                            group-hover:scale-110 transition-transform duration-200`}>
-                                <Icon className={`h-4 w-4 ${config.color}`} />
-                            </div>
-                            {index < ACTIVITY.length - 1 && (
-                                <div className="w-px h-full bg-border/50 min-h-[16px]" />
-                            )}
-                        </div>
+    const metrics = summary?.metrics
+    const totalEnrolled = (colleges ?? []).reduce((sum: number, c: any) => sum + (c.totalCourseStudents || 0), 0)
 
-                        {/* Content */}
-                        <div className="pb-4 min-w-0">
-                            <p className="text-sm leading-relaxed">{activity.text}</p>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">{activity.time}</p>
+    const stats = [
+        { label: 'Total Enrolled', value: totalEnrolled, icon: BookOpen, color: 'text-xp-gold', bgColor: 'bg-xp-gold/5', borderColor: 'border-xp-gold/10' },
+        { label: 'On Platform', value: metrics?.totalStudents ?? 0, icon: Users, color: 'text-primary', bgColor: 'bg-primary/5', borderColor: 'border-primary/10' },
+        { label: 'Total Colleges', value: metrics?.totalColleges ?? 0, icon: GraduationCap, color: 'text-secondary', bgColor: 'bg-secondary/5', borderColor: 'border-secondary/10' },
+        { label: 'Avg Progress', value: `${metrics?.avgProgress ?? 0}%`, icon: TrendingUp, color: 'text-success', bgColor: 'bg-success/5', borderColor: 'border-success/10' },
+        { label: 'Completion Rate', value: `${metrics?.completionRate ?? 0}%`, icon: Target, color: 'text-warning', bgColor: 'bg-warning/5', borderColor: 'border-warning/10' },
+    ]
+
+    return (
+        <Card className="border-border/40 mt-5">
+            <CardContent className="p-6">
+                <h3 className="text-sm font-semibold mb-6 flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    Platform Overview
+                </h3>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    {stats.map(stat => {
+                        const Icon = stat.icon
+                        return (
+                            <div key={stat.label} className={`${stat.bgColor} p-4 rounded-xl border ${stat.borderColor}`}>
+                                <Icon className={`h-5 w-5 ${stat.color} mb-2`} />
+                                <p className="text-2xl font-bold">{stat.value}</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</p>
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {/* Status Breakdown */}
+                {metrics && (
+                    <div className="mt-6 pt-5 border-t border-border/40">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Student Status Breakdown</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="flex items-center gap-2">
+                                <div className="h-2.5 w-2.5 rounded-full bg-success" />
+                                <span className="text-sm"><span className="font-semibold">{metrics.totalCompleted}</span> <span className="text-muted-foreground">Completed</span></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                                <span className="text-sm"><span className="font-semibold">{metrics.totalActive}</span> <span className="text-muted-foreground">Active</span></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="h-2.5 w-2.5 rounded-full bg-warning" />
+                                <span className="text-sm"><span className="font-semibold">{metrics.totalAtRisk}</span> <span className="text-muted-foreground">At Risk</span></span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="h-2.5 w-2.5 rounded-full bg-danger" />
+                                <span className="text-sm"><span className="font-semibold">{metrics.totalInactive}</span> <span className="text-muted-foreground">Inactive</span></span>
+                            </div>
                         </div>
                     </div>
-                )
-            })}
-        </div>
+                )}
+            </CardContent>
+        </Card>
     )
 }
 
@@ -499,11 +526,14 @@ export default function Profile() {
             {/* Stats Row (Hidden for Coordinators) */}
             <StatsRow />
 
+            {/* Admin Specific Details */}
+            {user?.role === 'admin' && <AdminDetails />}
+
             {/* Coordinator Specific Details */}
             {user?.role === 'coordinator' && <CoordinatorDetails />}
 
-            {/* Tabs (Hidden for Coordinators) */}
-            {user?.role !== 'coordinator' && (
+            {/* Tabs (Students only) */}
+            {user?.role === 'student' && (
                 <>
                     <div className="flex items-center gap-1 border-b border-border/50 overflow-x-auto">
                         {tabs.map(tab => {
@@ -537,12 +567,12 @@ export default function Profile() {
                     <div>
                         {activeTab === 'activity' && (
                             <Card className="border-border/40">
-                                <CardContent className="p-5">
-                                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                                        <TrendingUp className="h-4 w-4 text-primary" />
-                                        Recent Activity
-                                    </h3>
-                                    <ActivityTimeline />
+                                <CardContent className="p-8 flex flex-col items-center justify-center text-center">
+                                    <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                                        <Clock className="h-6 w-6 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold mb-1">Activity Timeline</h3>
+                                    <p className="text-xs text-muted-foreground">Your recent activity will appear here soon.</p>
                                 </CardContent>
                             </Card>
                         )}
