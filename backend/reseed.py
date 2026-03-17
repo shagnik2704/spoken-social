@@ -182,7 +182,7 @@ REASON_MAP = {
 }
 
 # Weighted feedback patterns per college (tells a story)
-# nitk has more infra issues, vit has more workload issues, iitb has fewest issues
+# nitk has more infra issues, vit has more workload issues, iitb has fewest issuestt 
 COLLEGE_FEEDBACK_WEIGHT = {
     "vjti": {"watched": 0.25, "practiced": 0.30, "assignmentDone": 0.20, "forumAsked": 0.15, "forumAnswered": 0.10},
     "iitb": {"watched": 0.15, "practiced": 0.20, "assignmentDone": 0.25, "forumAsked": 0.20, "forumAnswered": 0.20},
