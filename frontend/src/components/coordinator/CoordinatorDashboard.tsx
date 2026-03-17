@@ -139,11 +139,16 @@ function MetricCard({ icon: Icon, label, value, subtext, color }: {
 
 // ===== STUDENT TABLE ROW =====
 
-function StudentRow({ student }: { student: Student }) {
+function StudentRow({ student, index }: { student: Student; index?: number }) {
     const statusConfig = getStatusConfig(student.status)
 
     return (
         <div className="flex items-center gap-3 px-3 sm:px-4 py-3 rounded-lg hover:bg-muted/30 transition-colors">
+            {index !== undefined && (
+                <div className="w-6 shrink-0 text-xs font-mono text-muted-foreground tabular-nums text-center">
+                    {index}
+                </div>
+            )}
             <Avatar className="h-8 w-8 shrink-0">
                 <AvatarFallback className="text-[10px] font-semibold bg-primary/10 text-primary">
                     {student.initials}
@@ -323,6 +328,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
 
                     {/* Table Header */}
                     <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
+                        <div className="w-6 shrink-0 text-center">#</div>
                         <div className="w-8 shrink-0" />
                         <div className="flex-1">Student</div>
                         <div className="hidden sm:block w-28 text-center">Progress</div>
@@ -359,8 +365,12 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
 
                     {/* Student Rows */}
                     <div className="space-y-0.5">
-                        {filteredStudents.map(student => (
-                            <StudentRow key={student.id} student={student} />
+                        {filteredStudents.map((student, idx) => (
+                            <StudentRow 
+                                key={student.id} 
+                                student={student} 
+                                index={(page - 1) * (details?.pagination?.limit || 10) + idx + 1}
+                            />
                         ))}
                         {filteredStudents.length === 0 && (
                             <p className="text-center text-sm text-muted-foreground py-8">
