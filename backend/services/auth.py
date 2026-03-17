@@ -37,6 +37,17 @@ async def verify_credentials(email: str, password: str, db: AsyncSession) -> dic
     4. Return user info dict (with OUR user_id) for JWT creation
     """
 
+    # ── Dev Bypass for Ambalika Coordinator ──
+    if email == "ambalika-coord@spoken.in" and password == "password123":
+        return await _upsert_user(
+            db,
+            api_username="ambalika_coord",
+            api_email=email,
+            api_role="coordinator",
+            display_name="Ambalika Coordinator",
+            college_name="Ambalika Institute of Management & Technology",
+        )
+
     # ── Dev Bypass for Test Users ──
     if password == "password123":
         result = await db.execute(select(User).filter_by(email=email))
