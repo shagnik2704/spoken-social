@@ -25,8 +25,11 @@ from models.college import College
 from models.course import UserCourse
 from models.tutorial import Tutorial, UserTutorial
 
-# Path to CSV relative to backend/
-CSV_PATH = Path(__file__).parent.parent / "participant_data_institue - unique user.csv"
+# Path to CSV — check backend/ first (Docker), then project root (local dev)
+_CSV_NAME = "participant_data_institue - unique user.csv"
+_CSV_IN_BACKEND = Path(__file__).parent / _CSV_NAME
+_CSV_IN_ROOT = Path(__file__).parent.parent / _CSV_NAME
+CSV_PATH = _CSV_IN_BACKEND if _CSV_IN_BACKEND.exists() else _CSV_IN_ROOT
 
 BATCH_SIZE = 100  # commit every N users to avoid huge transactions
 
