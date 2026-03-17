@@ -2,7 +2,7 @@
 # College model — represents a participating institution
 # ============================================================
 
-from sqlalchemy import Column, String, DateTime, Text
+from sqlalchemy import Column, String, DateTime, Text, Integer
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime, timezone
@@ -16,6 +16,7 @@ class College(Base):
     location = Column(String(255))                      # e.g. "Mumbai, Maharashtra"
     coordinator_name = Column(String(255))              # e.g. "Prof. Sanjay Deshmukh"
     course_id = Column(String(50), default="linux")     # Focus course for now
+    total_course_students = Column(Integer, default=0)  # Students registered for the course at this college
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
