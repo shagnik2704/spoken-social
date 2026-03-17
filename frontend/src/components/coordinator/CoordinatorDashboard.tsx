@@ -11,7 +11,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 import {
     useCoordinatorColleges,
     useCoordinatorCollegeDetails,
@@ -39,6 +40,7 @@ interface CollegeSummary {
     location: string
     coordinatorName: string
     course: string
+    totalCourseStudents: number
     totalStudents: number
     activeStudents: number
     inactiveStudents: number
@@ -169,6 +171,10 @@ function StudentRow({ student }: { student: Student }) {
                 </span>
             </div>
 
+            <div className="hidden sm:flex w-16 items-center gap-1 justify-center" title="XP">
+                <Zap className="h-3 w-3 text-xp-gold shrink-0" />
+                <span className="text-xs font-mono font-semibold tabular-nums">{student.xp}</span>
+            </div>
 
             <div className="w-24 shrink-0 flex justify-center">
                 <Badge className={`${statusConfig.color} border-0 text-[10px] px-2 py-0.5`}>
@@ -197,35 +203,52 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
     const filteredStudents = (details?.students || [])
     return (
         <div className="space-y-5">
-            {/* Metric Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <MetricCard
-                    icon={Users}
-                    label="Total Students"
-                    value={college.totalStudents}
-                    subtext={`${college.activeStudents} active`}
-                    color="bg-primary/10 text-primary"
-                />
-                <MetricCard
-                    icon={TrendingUp}
-                    label="Avg Progress"
-                    value={`${college.avgProgress}%`}
-                    color="bg-secondary/10 text-secondary"
-                />
-                <MetricCard
-                    icon={CheckCircle2}
-                    label="Completion Rate"
-                    value={`${college.completionRate}%`}
-                    subtext={`${college.completedStudents} completed`}
-                    color="bg-success/10 text-success"
-                />
-                <MetricCard
-                    icon={AlertTriangle}
-                    label="At Risk"
-                    value={college.atRiskStudents}
-                    subtext={`${college.inactiveStudents} inactive`}
-                    color="bg-warning/10 text-warning"
-                />
+            {/* Metric Cards — horizontally scrollable */}
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+                <div className="min-w-[200px] flex-shrink-0 snap-start">
+                    <MetricCard
+                        icon={GraduationCap}
+                        label="Registered for Course"
+                        value={college.totalCourseStudents}
+                        subtext={`${college.activeStudents} active on platform`}
+                        color="bg-secondary/10 text-secondary"
+                    />
+                </div>
+                <div className="min-w-[200px] flex-shrink-0 snap-start">
+                    <MetricCard
+                        icon={Users}
+                        label="Registered on Spoken Social"
+                        value={college.totalStudents}
+                        subtext={`${college.totalCourseStudents > 0 ? Math.round((college.totalStudents / college.totalCourseStudents) * 100) : 0}% of ${college.totalCourseStudents} course registrations`}
+                        color="bg-primary/10 text-primary"
+                    />
+                </div>
+                <div className="min-w-[200px] flex-shrink-0 snap-start">
+                    <MetricCard
+                        icon={TrendingUp}
+                        label="Avg Progress"
+                        value={`${college.avgProgress}%`}
+                        color="bg-primary/10 text-primary"
+                    />
+                </div>
+                <div className="min-w-[200px] flex-shrink-0 snap-start">
+                    <MetricCard
+                        icon={CheckCircle2}
+                        label="Completion Rate"
+                        value={`${college.completionRate}%`}
+                        subtext={`${college.completedStudents} completed`}
+                        color="bg-success/10 text-success"
+                    />
+                </div>
+                <div className="min-w-[200px] flex-shrink-0 snap-start">
+                    <MetricCard
+                        icon={AlertTriangle}
+                        label="At Risk"
+                        value={college.atRiskStudents}
+                        subtext={`${college.inactiveStudents} inactive`}
+                        color="bg-warning/10 text-warning"
+                    />
+                </div>
             </div>
 
             {/* Student Table */}
@@ -304,10 +327,33 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         <div className="flex-1">Student</div>
                         <div className="hidden sm:block w-28 text-center">Progress</div>
                         <div className="hidden md:flex w-32 items-center gap-4 justify-center">
-                            <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" /> Watched</span>
-                            <span className="flex items-center gap-0.5"><CheckCircle2 className="h-3 w-3" /> Completed</span>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="flex items-center gap-0.5 cursor-help"><Eye className="h-3 w-3" /> Watched</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">Only watched the tutorials</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="flex items-center gap-0.5 cursor-help"><CheckCircle2 className="h-3 w-3" /> Completed</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">Watched & practiced the tutorials</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
-
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="hidden sm:flex w-16 items-center gap-0.5 justify-center cursor-help"><Zap className="h-3 w-3" /> XP</div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    Experience Points — earned by completing tutorials, practicing, and participating in forums
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                         <div className="w-24 shrink-0 text-center">Status</div>
                     </div>
 
@@ -638,7 +684,7 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
-                                        <Tooltip content={<CustomTooltip />} />
+                                        <RechartsTooltip content={<CustomTooltip />} />
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <DonutCenterLabel value={String(total)} label="students" />
@@ -682,7 +728,7 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
-                                        <Tooltip content={<CustomTooltip />} />
+                                        <RechartsTooltip content={<CustomTooltip />} />
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <DonutCenterLabel
@@ -899,7 +945,7 @@ export default function CoordinatorDashboard() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Terminal className="h-4 w-4" />
-                    <span>{myCollege?.name} • Linux Course • {myCollege?.totalStudents} students</span>
+                    <span>{myCollege?.name} • Linux Course • No. of students registered: {myCollege?.totalCourseStudents}</span>
                 </div>
             </div>
 

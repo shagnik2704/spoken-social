@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useUserStore } from '@/store/userStore'
+import { useCoordinatorColleges } from '@/hooks/queries/useCoordinatorQueries'
 import EditProfileDialog from './EditProfileDialog'
 import type { ActivityType } from '@/types'
 
@@ -97,38 +98,43 @@ function ProfileHeader() {
                 <div className="mt-4 sm:mt-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         <h1 className="text-xl sm:text-2xl font-bold">{user.displayName}</h1>
-                        <Badge variant="secondary" className="text-[10px] px-2 py-0.5 gap-1">
-                            <Zap className="h-3 w-3 text-xp-gold" />
-                            Level {user.level} — {user.levelTitle}
-                        </Badge>
+                        {user.role !== 'coordinator' && (
+                            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 gap-1">
+                                <Zap className="h-3 w-3 text-xp-gold" />
+                                Level {user.level} — {user.levelTitle}
+                            </Badge>
+                        )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{user.username}</p>
                     <p className="text-sm mt-3 leading-relaxed">{user.bio}</p>
 
                     {/* Meta Info */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5" />
-                            {user.location}
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <LinkIcon className="h-3.5 w-3.5" />
-                            <a href="#" className="text-primary hover:underline">{user.website}</a>
-                        </span>
+                    {user.role !== 'coordinator' && (
+                        <>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                    <MapPin className="h-3.5 w-3.5" />
+                                    {user.location}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <LinkIcon className="h-3.5 w-3.5" />
+                                    <a href="#" className="text-primary hover:underline">{user.website}</a>
+                                </span>
+                            </div>
 
-                    </div>
-
-                    {/* Follower Counts */}
-                    <div className="flex items-center gap-4 mt-3 text-sm">
-                        <button className="hover:underline">
-                            <span className="font-semibold">{user.following}</span>
-                            <span className="text-muted-foreground ml-1">Following</span>
-                        </button>
-                        <button className="hover:underline">
-                            <span className="font-semibold">{user.followers}</span>
-                            <span className="text-muted-foreground ml-1">Followers</span>
-                        </button>
-                    </div>
+                            {/* Follower Counts */}
+                            <div className="flex items-center gap-4 mt-3 text-sm">
+                                <button className="hover:underline">
+                                    <span className="font-semibold">{user.following}</span>
+                                    <span className="text-muted-foreground ml-1">Following</span>
+                                </button>
+                                <button className="hover:underline">
+                                    <span className="font-semibold">{user.followers}</span>
+                                    <span className="text-muted-foreground ml-1">Followers</span>
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </CardContent>
         </Card>
@@ -141,7 +147,7 @@ function StatsRow() {
     const courses = useUserStore(state => state.courses)
 
 
-    if (!user) return null
+    if (!user || user.role === 'coordinator') return null
 
     const stats = [
         { label: 'Total XP', value: user.xpTotal.toLocaleString(), icon: Zap, color: 'text-xp-gold' },
@@ -356,11 +362,72 @@ function ActivityTimeline() {
     )
 }
 
+/** Coordinator Details (shown for coordinators instead of student sections) */
+function CoordinatorDetails() {
+    const user = useUserStore(state => state.user)
+    const { data: colleges, isLoading } = useCoordinatorColleges()
+
+    if (!user || user.role !== 'coordinator') return null
+
+    if (isLoading) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-[200px] w-full rounded-xl" />
+            </div>
+        )
+    }
+
+    const myCollege = colleges?.find((c: any) => c.id === user.collegeId)
+
+    if (!myCollege) {
+        return (
+            <Card className="border-border/40 mt-5">
+                <CardContent className="p-8 text-center text-muted-foreground">
+                    College details not available
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card className="border-border/40 mt-5">
+            <CardContent className="p-6">
+                <h3 className="text-sm font-semibold mb-6 flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5 text-primary" />
+                    College Analytics Summary
+                </h3>
+                
+                <div className="grid sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Coordinating College</p>
+                        <p className="text-xl font-semibold">{myCollege.name}</p>
+                        <p className="text-sm text-muted-foreground">{myCollege.location}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                            <p className="text-xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">Course Regis.</p>
+                            <p className="text-3xl font-bold text-primary">{myCollege.totalCourseStudents}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 leading-tight">Enrolled for Linux</p>
+                        </div>
+                        <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                            <p className="text-xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">On Platform</p>
+                            <p className="text-3xl font-bold text-primary">{myCollege.totalStudents}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 leading-tight">Created accounts</p>
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
 // ===== MAIN PROFILE PAGE =====
 
 type ProfileTab = 'activity' | 'courses' | 'badges'
 
 export default function Profile() {
+    const user = useUserStore(state => state.user)
     const [activeTab, setActiveTab] = useState<ProfileTab>('activity')
     const courses = useUserStore(state => state.courses)
     const badges = useUserStore(state => state.badges)
@@ -429,67 +496,74 @@ export default function Profile() {
             {/* Profile Header */}
             <ProfileHeader />
 
-            {/* Stats Row */}
+            {/* Stats Row (Hidden for Coordinators) */}
             <StatsRow />
 
-            {/* Tabs */}
-            <div className="flex items-center gap-1 border-b border-border/50 overflow-x-auto">
-                {tabs.map(tab => {
-                    const Icon = tab.icon
-                    const isActive = activeTab === tab.id
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium
-                                        border-b-2 transition-all duration-200 whitespace-nowrap
-                                        ${isActive
-                                    ? 'border-primary text-primary'
-                                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                                }`}
-                        >
-                            <Icon className="h-4 w-4" />
-                            {tab.label}
-                            {tab.count !== undefined && (
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono
-                                    ${isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                    {tab.count}
-                                </span>
-                            )}
-                        </button>
-                    )
-                })}
-            </div>
+            {/* Coordinator Specific Details */}
+            {user?.role === 'coordinator' && <CoordinatorDetails />}
 
-            {/* Tab Content */}
-            <div>
-                {activeTab === 'activity' && (
-                    <Card className="border-border/40">
-                        <CardContent className="p-5">
-                            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4 text-primary" />
-                                Recent Activity
-                            </h3>
-                            <ActivityTimeline />
-                        </CardContent>
-                    </Card>
-                )}
-
-                {activeTab === 'courses' && (
-                    <div className="space-y-5">
-                        <CompletedCoursesSection />
-                        <InProgressCoursesSection />
+            {/* Tabs (Hidden for Coordinators) */}
+            {user?.role !== 'coordinator' && (
+                <>
+                    <div className="flex items-center gap-1 border-b border-border/50 overflow-x-auto">
+                        {tabs.map(tab => {
+                            const Icon = tab.icon
+                            const isActive = activeTab === tab.id
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium
+                                                border-b-2 transition-all duration-200 whitespace-nowrap
+                                                ${isActive
+                                            ? 'border-primary text-primary'
+                                            : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                                        }`}
+                                >
+                                    <Icon className="h-4 w-4" />
+                                    {tab.label}
+                                    {tab.count !== undefined && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono
+                                            ${isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                            {tab.count}
+                                        </span>
+                                    )}
+                                </button>
+                            )
+                        })}
                     </div>
-                )}
 
-                {activeTab === 'badges' && (
-                    <Card className="border-border/40">
-                        <CardContent className="p-5">
-                            <BadgeWall />
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
+                    {/* Tab Content */}
+                    <div>
+                        {activeTab === 'activity' && (
+                            <Card className="border-border/40">
+                                <CardContent className="p-5">
+                                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                                        <TrendingUp className="h-4 w-4 text-primary" />
+                                        Recent Activity
+                                    </h3>
+                                    <ActivityTimeline />
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {activeTab === 'courses' && (
+                            <div className="space-y-5">
+                                <CompletedCoursesSection />
+                                <InProgressCoursesSection />
+                            </div>
+                        )}
+
+                        {activeTab === 'badges' && (
+                            <Card className="border-border/40">
+                                <CardContent className="p-5">
+                                    <BadgeWall />
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     )
 }

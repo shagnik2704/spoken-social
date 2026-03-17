@@ -44,10 +44,10 @@ NOW = datetime.now(timezone.utc)
 # ============================================================
 
 COLLEGES = [
-    {"id": "vjti",  "name": "VJTI Mumbai",     "location": "Mumbai, Maharashtra",      "coordinator_name": "Prof. Sanjay Deshmukh"},
-    {"id": "iitb",  "name": "IIT Bombay",      "location": "Mumbai, Maharashtra",      "coordinator_name": "Prof. Anurag Mehra"},
-    {"id": "nitk",  "name": "NIT Surathkal",   "location": "Mangalore, Karnataka",     "coordinator_name": "Prof. Lakshmi Narayanan"},
-    {"id": "vit",   "name": "VIT Vellore",     "location": "Vellore, Tamil Nadu",       "coordinator_name": "Prof. Ramesh Babu"},
+    {"id": "vjti",  "name": "VJTI Mumbai",     "location": "Mumbai, Maharashtra",      "coordinator_name": "Prof. Sanjay Deshmukh",    "total_course_students": 15},
+    {"id": "iitb",  "name": "IIT Bombay",      "location": "Mumbai, Maharashtra",      "coordinator_name": "Prof. Anurag Mehra",       "total_course_students": 40},
+    {"id": "nitk",  "name": "NIT Surathkal",   "location": "Mangalore, Karnataka",     "coordinator_name": "Prof. Lakshmi Narayanan",  "total_course_students": 14},
+    {"id": "vit",   "name": "VIT Vellore",     "location": "Vellore, Tamil Nadu",       "coordinator_name": "Prof. Ramesh Babu",        "total_course_students": 16},
 ]
 
 # Admin user
@@ -349,7 +349,7 @@ def reseed():
     # ===== COLLEGES =====
     print("🏫 Creating colleges...")
     for c in COLLEGES:
-        db.add(College(id=c["id"], name=c["name"], location=c["location"], coordinator_name=c["coordinator_name"]))
+        db.add(College(id=c["id"], name=c["name"], location=c["location"], coordinator_name=c["coordinator_name"], total_course_students=c["total_course_students"]))
     db.flush()
 
     # ===== ADMIN USER =====
