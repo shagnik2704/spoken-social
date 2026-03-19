@@ -1,3 +1,4 @@
+from middleware.logging import LoggingMiddleware
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -8,6 +9,9 @@ from routes.leaderboard import router as leaderboard_router
 from routes.coordinator import router as coordinator_router
 from routes.feedback import router as feedback_router
 from routes.admin import router as admin_router
+from prometheus_fastapi_instrumentator import Instrumentator
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 
@@ -22,6 +26,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+Instrumentator().instrument(app).expose(app)
+
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,6 +36,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(LoggingMiddleware)
 
 app.include_router(auth_router)
 app.include_router(user_router)
