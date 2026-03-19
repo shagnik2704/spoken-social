@@ -9,3 +9,4 @@ asyncpg==0.31.0
 httpx==0.28.1
 redis>=7.2.1
 prometheus-fastapi-instrumentator
+fastmcp
