@@ -7,7 +7,7 @@ LOKI_URL = os.getenv("LOKI_URL", "http://loki:3100")
 
 @mcp.tool()
 def search_logs(query: str, minutes: int = 30, limit: int = 50) -> list[dict]:
-    """Search logs using a LogQL query against Loki."""
+    """Search logs using a LogQL query against Loki. Useful example query: '{container=~".*backend.*"}'"""
     end = datetime.now(timezone.utc)
     start = end - timedelta(minutes=minutes)
 
@@ -15,8 +15,8 @@ def search_logs(query: str, minutes: int = 30, limit: int = 50) -> list[dict]:
         f"{LOKI_URL}/loki/api/v1/query_range",
         params={
             "query": query,
-            "start": str(int(start.timestamp())),
-            "end": str(int(end.timestamp())),
+            "start": start.isoformat(),
+            "end": end.isoformat(),
             "limit": limit,
         },
         timeout=10,
@@ -42,8 +42,8 @@ def get_log_volume(minutes: int = 60) -> dict:
     end = datetime.now(timezone.utc)
     start = end - timedelta(minutes=minutes)
     time_params = {
-        "start": str(int(start.timestamp())),
-        "end": str(int(end.timestamp())),
+        "start": start.isoformat(),
+        "end": end.isoformat(),
     }
 
     counts = {}
@@ -52,7 +52,8 @@ def get_log_volume(minutes: int = 60) -> dict:
             f"{LOKI_URL}/loki/api/v1/query",
             params={
                 **time_params,
-                "query": f'count_over_time({{container="backend"}} |= "{level}" [{minutes}m])',
+                # Use regex match for container to catch '/spoken-social-backend-1' and 'backend'
+                "query": f'count_over_time({{container=~".*backend.*"}} |= "{level}" [{minutes}m])',
             },
             timeout=10,
         )
