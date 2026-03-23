@@ -88,7 +88,7 @@ export const useUserStore = create<UserState>((set, get) => ({
                 const updated = { ...t, [field]: value }
                 if (field === 'practiced' && value === 'yes') updated.completed = true
 
-                const XP: Record<string, number> = { watched: 10, practiced: 10, assignmentDone: 5, forumAsked: 5, forumAnswered: 5 }
+                const XP: Record<string, number> = { watched: 10, practiced: 10, assignmentDone: 5, forumAsked: 5, forumAnswered: 10 }
                 updated.xpEarned = Object.entries(XP).reduce((sum, [f, pts]) => sum + (updated[f as TutorialField] === 'yes' ? pts : 0), 0)
                 return updated
             })

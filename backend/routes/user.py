@@ -173,7 +173,13 @@ async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate
         ut.status = "completed"
 
     # Recalculate XP
-    XP_MAP = {"watched": 10, "practiced": 10, "assignment_done": 5}
+    XP_MAP = {
+        "watched": 10, 
+        "practiced": 10, 
+        "assignment_done": 5,
+        "forum_asked": 5,
+        "forum_answered": 10
+    }
     old_xp = ut.xp_earned
     ut.xp_earned = sum(
         XP_MAP[col] for col in XP_MAP

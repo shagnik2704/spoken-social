@@ -19,12 +19,16 @@ import type { RadioValue, Tutorial, TutorialField } from '@/types'
 const XP_WATCHED = 10
 const XP_PRACTICED = 10
 const XP_ASSIGNMENT = 5
+const XP_FORUM_ASK = 5
+const XP_FORUM_ANS = 10
 
 function calcXP(t: Tutorial): number {
     return (
         (t.watched === 'yes' ? XP_WATCHED : 0) +
         (t.practiced === 'yes' ? XP_PRACTICED : 0) +
-        (t.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0)
+        (t.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
+        (t.forumAsked === 'yes' ? XP_FORUM_ASK : 0) +
+        (t.forumAnswered === 'yes' ? XP_FORUM_ANS : 0)
     )
 }
 
@@ -172,20 +176,24 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                                     />
                                 )}
                                 {tutorial.forumAsked === 'yes' ? (
-                                    <AnswerSummary label="Asked a question in the forum" value="yes" />
+                                    <AnswerSummary label="Asked a question in the forum" value="yes" isBonus />
                                 ) : (
                                     <QuestionRow
                                         label="Have you asked a question in the forum?"
+                                        points={XP_FORUM_ASK}
+                                        isBonus
                                         value={tutorial.forumAsked}
                                         fieldId={`t${tutorial.id}-forum-ask`}
                                         onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
                                     />
                                 )}
                                 {tutorial.forumAnswered === 'yes' ? (
-                                    <AnswerSummary label="Answered a question in the forum" value="yes" />
+                                    <AnswerSummary label="Answered a question in the forum" value="yes" isBonus />
                                 ) : (
                                     <QuestionRow
                                         label="Have you answered a question in the forum?"
+                                        points={XP_FORUM_ANS}
+                                        isBonus
                                         value={tutorial.forumAnswered}
                                         fieldId={`t${tutorial.id}-forum-ans`}
                                         onChange={(v) => onRadioChange(tutorial.id, 'forumAnswered', v)}
@@ -264,6 +272,8 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                         />
                         <QuestionRow
                             label="Have you asked a question in the forum?"
+                            points={XP_FORUM_ASK}
+                            isBonus
                             value={tutorial.forumAsked}
                             fieldId={`t${tutorial.id}-forum-ask`}
                             onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
@@ -271,6 +281,8 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                         />
                         <QuestionRow
                             label="Have you answered a question in the forum?"
+                            points={XP_FORUM_ANS}
+                            isBonus
                             value={tutorial.forumAnswered}
                             fieldId={`t${tutorial.id}-forum-ans`}
                             onChange={(v) => onRadioChange(tutorial.id, 'forumAnswered', v)}
@@ -354,6 +366,8 @@ export function ActiveCourseTracker() {
             if (field === 'watched') xpEarned = XP_WATCHED;
             else if (field === 'practiced') xpEarned = XP_PRACTICED;
             else if (field === 'assignmentDone') xpEarned = XP_ASSIGNMENT;
+            else if (field === 'forumAsked') xpEarned = XP_FORUM_ASK;
+            else if (field === 'forumAnswered') xpEarned = XP_FORUM_ANS;
 
             if (xpEarned > 0) {
                 addXP(xpEarned)
@@ -393,6 +407,8 @@ export function ActiveCourseTracker() {
             if (feedbackModal.field === 'watched') xpLost = XP_WATCHED;
             else if (feedbackModal.field === 'practiced') xpLost = XP_PRACTICED;
             else if (feedbackModal.field === 'assignmentDone') xpLost = XP_ASSIGNMENT;
+            else if (feedbackModal.field === 'forumAsked') xpLost = XP_FORUM_ASK;
+            else if (feedbackModal.field === 'forumAnswered') xpLost = XP_FORUM_ANS;
 
             if (xpLost > 0) {
                 // Deduct XP on the frontend to match the backend updates
@@ -477,6 +493,8 @@ export function ActiveCourseTracker() {
                         <span>Watch = +{XP_WATCHED}</span>
                         <span>Practice = +{XP_PRACTICED}</span>
                         <span className="text-primary">★ Assignment = +{XP_ASSIGNMENT}</span>
+                        <span className="text-success">Ask = +{XP_FORUM_ASK}</span>
+                        <span className="text-success">Answer = +{XP_FORUM_ANS}</span>
                     </div>
                 </CardContent>
             </Card>
