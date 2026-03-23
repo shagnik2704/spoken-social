@@ -1,2 +1,0 @@
-Using pip 24.0 from /media/ubuntu/work_volume/spoken-social/backend/venv/lib/python3.12/site-packages/pip (python 3.12)
-Requirement already satisfied: redis in ./venv/lib/python3.12/site-packages (7.3.0)
