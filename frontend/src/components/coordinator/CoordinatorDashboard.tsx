@@ -954,7 +954,7 @@ export default function CoordinatorDashboard() {
     if (isLoading) {
         return (
             <div className="max-w-5xl mx-auto p-6 text-center text-muted-foreground">
-                Loading coordinator dashboard...
+                Loading College (Coordinator) Dashboard...
             </div>
         )
     }
@@ -966,7 +966,7 @@ export default function CoordinatorDashboard() {
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <GraduationCap className="h-6 w-6 text-primary" />
-                        <h1 className="text-xl sm:text-2xl font-bold">Coordinator Dashboard</h1>
+                        <h1 className="text-xl sm:text-2xl font-bold">College (Coordinator) Dashboard</h1>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Terminal className="h-4 w-4" />
