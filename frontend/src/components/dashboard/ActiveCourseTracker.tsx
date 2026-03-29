@@ -211,7 +211,7 @@ function ForumActivitySection({
             {/* Helper message for pending posts */}
             {hasPending && (
                 <p className="text-[10px] text-muted-foreground/70 mb-2 leading-snug">
-                    <strong className="font-semibold text-muted-foreground">Pending Admin Review:</strong> XP will be awarded 24 hours after your post is approved by an admin.
+                    <strong className="font-semibold text-muted-foreground">Pending Admin Review:</strong> Xp will be awarded after verifying the relevance of the question (about 24 hours).
                 </p>
             )}
 
