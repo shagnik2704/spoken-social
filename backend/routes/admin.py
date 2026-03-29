@@ -14,6 +14,9 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func, case, cast, Date
 from datetime import datetime, date
 import calendar
+import io
+from fastapi.responses import StreamingResponse
+import openpyxl
 
 from database import get_db
 from models import User, College, UserTutorial, Tutorial
@@ -202,6 +205,97 @@ async def get_platform_summary(
     }
     await set_cached(cache_key,result)
     return result
+
+
+@router.get("/colleges/export")
+async def export_all_colleges(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Exports the macro view of all colleges and their stats to an Excel file.
+    """
+    # Import the same logic used to calculate their summary
+    from routes.coordinator import _build_college_summary
+    
+    colleges_summary = await _build_college_summary(db)
+
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    wb = openpyxl.Workbook()
+    sheet = wb.active
+    sheet.title = "Colleges Report"
+
+    # ── Column config: (header, width) ──
+    columns = [
+        ("S.No.", 10),
+        ("College Name", 45),
+        ("Total Students Enrolled", 28),
+        ("Active Students", 22),
+        ("Fully Completed Students", 28),
+        ("Average Progress Percentage", 32),
+    ]
+
+    # Set column widths
+    for col_idx, (_, width) in enumerate(columns, start=1):
+        col_letter = openpyxl.utils.get_column_letter(col_idx)
+        sheet.column_dimensions[col_letter].width = width
+
+    # ── Header row ──
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    header_align = Alignment(horizontal="center", vertical="center")
+
+    for col_idx, (title, _) in enumerate(columns, start=1):
+        cell = sheet.cell(row=1, column=col_idx, value=title)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+    sheet.row_dimensions[1].height = 28
+
+    # ── Styling helpers ──
+    thin_border = Border(
+        left=Side(style="thin", color="D9D9D9"),
+        right=Side(style="thin", color="D9D9D9"),
+        top=Side(style="thin", color="D9D9D9"),
+        bottom=Side(style="thin", color="D9D9D9"),
+    )
+    center_align = Alignment(horizontal="center", vertical="center")
+    left_align = Alignment(horizontal="left", vertical="center", indent=1)
+    even_fill = PatternFill(start_color="F2F7FB", end_color="F2F7FB", fill_type="solid")
+
+    # ── Data rows ──
+    for index, col in enumerate(colleges_summary, start=1):
+        row_num = index + 1
+        row_data = [
+            index,
+            col["name"],
+            col["totalCourseStudents"],
+            col["activeStudents"],
+            col["completedStudents"],
+            f"{col['avgProgress']}%",
+        ]
+        for col_idx, value in enumerate(row_data, start=1):
+            cell = sheet.cell(row=row_num, column=col_idx, value=value)
+            cell.border = thin_border
+            cell.alignment = left_align if col_idx == 2 else center_align
+            if index % 2 == 0:
+                cell.fill = even_fill
+        sheet.row_dimensions[row_num].height = 22
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    headers_resp = {
+        "Content-Disposition": 'attachment; filename="Platform_Colleges_Report.xlsx"'
+    }
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers_resp,
+    )
+
 
 # ============================================================
 # College Daily Average XP (Line Chart Data)

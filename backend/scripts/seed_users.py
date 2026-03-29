@@ -19,6 +19,13 @@ import sys
 import os
 from pathlib import Path
 
+# Ensure the backend root (parent of scripts/) is on sys.path
+# so that `database`, `models.*`, etc. can be imported regardless
+# of the current working directory.
+_BACKEND_ROOT = str(Path(__file__).resolve().parent.parent)
+if _BACKEND_ROOT not in sys.path:
+    sys.path.insert(0, _BACKEND_ROOT)
+
 from database import SyncSessionLocal
 from models.user import User
 from models.college import College
@@ -27,9 +34,9 @@ from models.tutorial import Tutorial, UserTutorial
 
 # Path to CSV — check backend/ first (Docker), then project root (local dev)
 _CSV_NAME = "participant_data_institue - unique user.csv"
-_CSV_IN_BACKEND = Path(__file__).parent / _CSV_NAME
-_CSV_IN_ROOT = Path(__file__).parent.parent / _CSV_NAME
-CSV_PATH = _CSV_IN_BACKEND if _CSV_IN_BACKEND.exists() else _CSV_IN_ROOT
+_CSV_IN_DATA = Path(__file__).parent / "data" / _CSV_NAME
+_CSV_IN_ROOT = Path(__file__).parent.parent.parent / _CSV_NAME
+CSV_PATH = _CSV_IN_DATA if _CSV_IN_DATA.exists() else _CSV_IN_ROOT
 
 BATCH_SIZE = 100  # commit every N users to avoid huge transactions
 

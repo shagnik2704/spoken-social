@@ -26,9 +26,7 @@ function calcXP(t: Tutorial): number {
     return (
         (t.watched === 'yes' ? XP_WATCHED : 0) +
         (t.practiced === 'yes' ? XP_PRACTICED : 0) +
-        (t.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0) +
-        (t.forumAsked === 'yes' ? XP_FORUM_ASK : 0) +
-        (t.forumAnswered === 'yes' ? XP_FORUM_ANS : 0)
+        (t.assignmentDone === 'yes' ? XP_ASSIGNMENT : 0)
     )
 }
 
@@ -166,11 +164,9 @@ function ForumPostCard({ post, label, points }: { post: ForumPost; label: string
 // ===== FORUM ACTIVITY SECTION (replaces the old radio buttons) =====
 
 function ForumActivitySection({
-    tutorialTitle,
     forumCategory,
     forumPosts,
 }: {
-    tutorialTitle: string
     forumCategory?: string | null
     forumPosts: ForumPost[]
 }) {
@@ -215,7 +211,7 @@ function ForumActivitySection({
             {/* Helper message for pending posts */}
             {hasPending && (
                 <p className="text-[10px] text-muted-foreground/70 mb-2 leading-snug">
-                    <strong className="font-semibold text-muted-foreground">Relevance Check:</strong> Points will be securely awarded 24 hours after posting if the content remains relevant on the forum.
+                    <strong className="font-semibold text-muted-foreground">Pending Admin Review:</strong> XP will be awarded 24 hours after your post is approved by an admin.
                 </p>
             )}
 
@@ -254,15 +250,6 @@ function ForumActivitySection({
                         Participate in the Spoken Tutorial Forum to earn bonus XP.
                         Your activity will be detected automatically.
                     </p>
-                    <a
-                        href={forumDeepLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
-                    >
-                        Go to Forum: {tutorialTitle}
-                        <ArrowUpRight className="h-3 w-3" />
-                    </a>
                 </div>
             )}
 
@@ -288,12 +275,13 @@ function ForumActivitySection({
 
 interface TutorialCardProps {
     tutorial: Tutorial
+    courseTitle: string
     onRadioChange: (tutorialId: string, field: TutorialField, value: RadioValue) => void
     forumPosts: ForumPost[]
     forumCategory?: string | null
 }
 
-function TutorialCard({ tutorial, onRadioChange, forumPosts, forumCategory }: TutorialCardProps) {
+function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumCategory }: TutorialCardProps) {
     const [isOpen, setIsOpen] = useState(!tutorial.completed)
     const currentXP = calcXP(tutorial)
     const isWatched = tutorial.watched === 'yes'
@@ -347,12 +335,37 @@ function TutorialCard({ tutorial, onRadioChange, forumPosts, forumCategory }: Tu
                                     />
                                 )}
 
-                                {/* Forum Activity — verified, not self-reported */}
-                                <ForumActivitySection
-                                    tutorialTitle={tutorial.title}
-                                    forumCategory={forumCategory}
-                                    forumPosts={forumPosts}
-                                />
+                                {/* New Forum Intent Question */}
+                                <div className="mt-1.5 pt-1.5 border-t border-dashed border-border/30">
+                                    {tutorial.forumAsked === 'yes' ? (
+                                        <div className="pb-1">
+                                            <AnswerSummary label="Wants to ask a question" value="yes" />
+                                            <div className="pl-2 pt-1">
+                                                <a
+                                                    href={forumCategory ? `https://forums.spoken-tutorial.org/filter/${forumCategory.replace(/ /g, '-')}/` : 'https://forums.spoken-tutorial.org/'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+                                                >
+                                                    Go to Forum: {forumCategory || courseTitle}
+                                                    <ArrowUpRight className="h-3 w-3" />
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <QuestionRow
+                                            label="Do you want to ask a question in the forum?"
+                                            value={tutorial.forumAsked}
+                                            fieldId={`t${tutorial.id}-forumAsked`}
+                                            onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
+                                        />
+                                    )}
+
+                                    <ForumActivitySection
+                                        forumCategory={forumCategory}
+                                        forumPosts={forumPosts}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </CollapsibleContent>
@@ -419,12 +432,33 @@ function TutorialCard({ tutorial, onRadioChange, forumPosts, forumCategory }: Tu
                             disabled={!isPracticed}
                         />
 
-                        {/* Forum Activity — always visible, verified via webhooks */}
-                        <ForumActivitySection
-                            tutorialTitle={tutorial.title}
-                            forumCategory={forumCategory}
-                            forumPosts={forumPosts}
-                        />
+                        {/* New Forum Intent Question */}
+                        <div className="mt-1.5 pt-1.5 border-t border-dashed border-border/30">
+                            <QuestionRow
+                                label="Do you want to ask a question in the forum?"
+                                value={tutorial.forumAsked}
+                                fieldId={`t${tutorial.id}-forumAsked`}
+                                onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
+                            />
+                            {tutorial.forumAsked === 'yes' && (
+                                <div className="pl-8 pb-3 pt-1">
+                                    <a
+                                        href={forumCategory ? `https://forums.spoken-tutorial.org/filter/${forumCategory.replace(/ /g, '-')}/` : 'https://forums.spoken-tutorial.org/'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+                                    >
+                                        Go to Forum: {forumCategory || courseTitle}
+                                        <ArrowUpRight className="h-3 w-3" />
+                                    </a>
+                                </div>
+                            )}
+
+                            <ForumActivitySection
+                                forumCategory={forumCategory}
+                                forumPosts={forumPosts}
+                            />
+                        </div>
                     </div>
                 </CollapsibleContent>
             </div>
@@ -620,6 +654,7 @@ export function ActiveCourseTracker() {
                             <TutorialCard
                                 key={tutorial.id}
                                 tutorial={tutorial}
+                                courseTitle={courseTitle}
                                 onRadioChange={handleRadioChange}
                                 forumPosts={forumActivity[tutorial.id] || []}
                                 forumCategory={forumCategory}

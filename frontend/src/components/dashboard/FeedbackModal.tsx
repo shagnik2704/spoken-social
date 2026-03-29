@@ -33,8 +33,13 @@ const REASONS_BY_STEP: Record<string, { key: string; label: string }[]> = {
         { key: 'other', label: 'Other' },
     ],
     forumAsked: [
+        { key: 'no_questions', label: "I didn't have any doubts or questions to ask" },
+        { key: 'found_answer_search', label: "I found my answer by searching the forum instead" },
+        { key: 'found_answer_elsewhere', label: "I found my answer on Google or documentation" },
         { key: 'didnt_know_forum', label: "I didn't know about the forum" },
         { key: 'forum_unanswered', label: 'My previous forum questions were not answered' },
+        { key: 'difficult_to_use', label: "The forum is difficult to use or navigate" },
+        { key: 'prefer_offline', label: "I prefer asking my teachers or peers directly" },
         { key: 'other', label: 'Other' },
     ],
     forumAnswered: [

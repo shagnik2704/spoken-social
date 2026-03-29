@@ -5,8 +5,9 @@ import {
     Search, Filter, Trophy, BarChart3,
     Zap, Activity, ChevronRight, ArrowLeft,
     Shield, Building2, MessageCircleQuestion,
-    X, ChevronDown, CalendarDays,
+    X, ChevronDown, CalendarDays, Download
 } from 'lucide-react'
+import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -1194,18 +1195,40 @@ export default function AdminDashboard() {
     return (
         <div className="max-w-6xl mx-auto space-y-5">
             {/* Header */}
-            <div>
-                <div className="flex items-center gap-2 mb-1">
-                    <Shield className="h-6 w-6 text-primary" />
-                    <h1 className="text-xl sm:text-2xl font-bold">Admin Panel</h1>
-                    <Badge className="bg-primary/10 text-primary border-0 text-[10px] px-2 py-0.5">
-                        Platform Admin
-                    </Badge>
+            <div className="flex items-start sm:items-center justify-between flex-wrap gap-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <Shield className="h-6 w-6 text-primary" />
+                        <h1 className="text-xl sm:text-2xl font-bold">Admin Panel</h1>
+                        <Badge className="bg-primary/10 text-primary border-0 text-[10px] px-2 py-0.5">
+                            Platform Admin
+                        </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        <span>{colleges.length} colleges • {totalStudents} students • Linux Course</span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{colleges.length} colleges • {totalStudents} students • Linux Course</span>
-                </div>
+
+                <button
+                    onClick={async () => {
+                        try {
+                            const response = await api.get(`/api/admin/colleges/export`, { responseType: 'blob' });
+                            const url = window.URL.createObjectURL(new Blob([response.data]));
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', 'Platform_Colleges_Report.xlsx');
+                            document.body.appendChild(link);
+                            link.click();
+                        } catch (e) {
+                            console.error('Failed to export', e);
+                        }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
+                >
+                    <Download className="h-3.5 w-3.5" />
+                    Download Report
+                </button>
             </div>
 
             {/* Tabs */}

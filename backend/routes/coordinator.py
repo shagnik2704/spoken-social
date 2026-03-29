@@ -11,6 +11,9 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func, case, literal
+import io
+from fastapi.responses import StreamingResponse
+import openpyxl
 
 from database import get_db
 from models import User, College, UserCourse, UserTutorial, Tutorial
@@ -346,6 +349,105 @@ async def get_college_details(
         "students": student_data["students"],
         "pagination": student_data["pagination"],
     }
+
+
+@router.get("/colleges/{college_id}/export")
+async def export_college_students(
+    college_id: str,
+    user: User = Depends(require_coordinator),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Exports a list of all students and their progress to an Excel file.
+    """
+    if user.role == "coordinator" and str(user.college_id) != str(college_id):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only export your own college's students",
+        )
+
+    # Fetch max students for export
+    student_data = await _get_student_rows(
+        db, college_id,
+        page=1, limit=10000, sort="progress",
+        status_filter="all", search="",
+    )
+
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    wb = openpyxl.Workbook()
+    sheet = wb.active
+    sheet.title = "Student Progress"
+
+    # ── Column config: (header, width) ──
+    columns = [
+        ("S.No.", 10),
+        ("Student Name", 35),
+        ("Progress Percentage", 25),
+        ("Tutorials Completed", 25),
+    ]
+
+    # Set column widths
+    for col_idx, (_, width) in enumerate(columns, start=1):
+        col_letter = openpyxl.utils.get_column_letter(col_idx)
+        sheet.column_dimensions[col_letter].width = width
+
+    # ── Header row ──
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    header_align = Alignment(horizontal="center", vertical="center")
+
+    for col_idx, (title, _) in enumerate(columns, start=1):
+        cell = sheet.cell(row=1, column=col_idx, value=title)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+    sheet.row_dimensions[1].height = 28
+
+    # ── Styling helpers ──
+    thin_border = Border(
+        left=Side(style="thin", color="D9D9D9"),
+        right=Side(style="thin", color="D9D9D9"),
+        top=Side(style="thin", color="D9D9D9"),
+        bottom=Side(style="thin", color="D9D9D9"),
+    )
+    center_align = Alignment(horizontal="center", vertical="center")
+    left_align = Alignment(horizontal="left", vertical="center", indent=1)
+    even_fill = PatternFill(start_color="F2F7FB", end_color="F2F7FB", fill_type="solid")
+
+    # ── Data rows ──
+    for index, student in enumerate(student_data["students"], start=1):
+        row_num = index + 1  # row 1 is header
+        row_data = [
+            index,
+            student["name"],
+            f"{student['progress']}%",
+            f"{student['tutorialsCompleted']}/{student['totalTutorials']}",
+        ]
+        for col_idx, value in enumerate(row_data, start=1):
+            cell = sheet.cell(row=row_num, column=col_idx, value=value)
+            cell.border = thin_border
+            cell.alignment = left_align if col_idx == 2 else center_align
+            if index % 2 == 0:
+                cell.fill = even_fill
+        sheet.row_dimensions[row_num].height = 22
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    res_col = await db.execute(select(College.name).filter(College.id == college_id))
+    college = res_col.scalars().first()
+    cname = college.replace(" ", "_").replace(",", "") if college else "College"
+
+    resp_headers = {
+        "Content-Disposition": f'attachment; filename="{cname}_Students_Report.xlsx"'
+    }
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=resp_headers,
+    )
 
 
 @router.get("/colleges/{college_id}/analytics")

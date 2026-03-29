@@ -5,8 +5,9 @@ import {
     Search, Filter, Trophy, BarChart3,
     MessageCircleQuestion,
     // Star,
-    Clock, Zap, Activity
+    Clock, Zap, Activity, Download
 } from 'lucide-react'
+import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -948,15 +949,37 @@ export default function CoordinatorDashboard() {
     return (
         <div className="max-w-5xl mx-auto space-y-5">
             {/* Header */}
-            <div>
-                <div className="flex items-center gap-2 mb-1">
-                    <GraduationCap className="h-6 w-6 text-primary" />
-                    <h1 className="text-xl sm:text-2xl font-bold">Coordinator Dashboard</h1>
+            <div className="flex items-start sm:items-center justify-between flex-wrap gap-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <GraduationCap className="h-6 w-6 text-primary" />
+                        <h1 className="text-xl sm:text-2xl font-bold">Coordinator Dashboard</h1>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Terminal className="h-4 w-4" />
+                        <span>{myCollege?.name} • Linux Course • No. of students registered: {myCollege?.totalCourseStudents}</span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Terminal className="h-4 w-4" />
-                    <span>{myCollege?.name} • Linux Course • No. of students registered: {myCollege?.totalCourseStudents}</span>
-                </div>
+
+                <button
+                    onClick={async () => {
+                        try {
+                            const response = await api.get(`/api/coordinator/colleges/${MY_COLLEGE_ID}/export`, { responseType: 'blob' });
+                            const url = window.URL.createObjectURL(new Blob([response.data]));
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', `${(myCollege?.name || 'College').replace(/[^a-zA-Z0-9]/g, '_')}_Students_Report.xlsx`);
+                            document.body.appendChild(link);
+                            link.click();
+                        } catch (e) {
+                            console.error('Failed to export', e);
+                        }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
+                >
+                    <Download className="h-3.5 w-3.5" />
+                    Download Report
+                </button>
             </div>
 
             {/* Tabs */}
