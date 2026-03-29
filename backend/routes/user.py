@@ -9,6 +9,7 @@ from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
 from models.xp_event import XPEvent
 from leaderboard_cache import update_user_xp
+from services.forum import get_forum_activity_for_tutorial
 
 
 
@@ -133,6 +134,30 @@ async def get_my_tutorials(course_id: str, user: User = Depends(get_current_user
     if not tutorials:
         raise HTTPException(status_code=404, detail="No tutorial data found")
     return [t.to_api_dict() for t in tutorials]
+
+
+@router.get('/me/courses/{course_id}/forum-activity')
+async def get_my_forum_activity(course_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    Returns verified forum activity grouped by tutorial_id.
+    Used by the ActiveCourseTracker to show verified forum posts.
+    """
+    # Get all tutorials for this course
+    stmt = (
+        select(Tutorial)
+        .filter(Tutorial.course_id == course_id)
+        .order_by(Tutorial.tutorial_number)
+    )
+    result = await db.execute(stmt)
+    tutorials = result.scalars().all()
+
+    activity_by_tutorial = {}
+    for tutorial in tutorials:
+        activities = await get_forum_activity_for_tutorial(db, user.id, tutorial.id)
+        if activities:
+            activity_by_tutorial[str(tutorial.id)] = activities
+
+    return activity_by_tutorial
 
 
 @router.put('/me/courses/{course_id}/tutorials/{tutorial_id}')

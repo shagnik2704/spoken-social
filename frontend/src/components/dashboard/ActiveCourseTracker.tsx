@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect, } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
     CheckCircle2, ChevronDown, Sparkles, Lock,
     Zap, Code, Terminal, BarChart3, Settings, FileText,
-    BookOpenCheck
+    BookOpenCheck, Link2, ShieldCheck, ArrowUpRight, Circle, Clock,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CelebrationModal, type CelebrationType } from './CelebrationModal'
 import { FeedbackModal } from './FeedbackModal'
 import { useUserStore } from '@/store/userStore'
-import type { RadioValue, Tutorial, TutorialField } from '@/types'
+import type { RadioValue, Tutorial, TutorialField, ForumPost } from '@/types'
 
 // ===== POINTS =====
 
@@ -40,8 +40,6 @@ const courseIconMap: Record<string, React.ReactNode> = {
     'C/C++': <Settings className="h-5 w-5" />,
     'LibreOffice': <FileText className="h-5 w-5" />,
 }
-
-
 
 // ===== ANSWER DISPLAY (read-only, for completed tutorials) =====
 
@@ -115,14 +113,187 @@ function QuestionRow({ label, points, isBonus, value, fieldId, onChange, disable
     )
 }
 
+// ===== FORUM POST CARD (individual verified post) =====
+
+function ForumPostCard({ post, label, points }: { post: ForumPost; label: string; points: number }) {
+    const postedDate = post.postedAt
+        ? new Date(post.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : null
+
+    const isPending = !post.xpAwarded
+
+    return (
+        <div className={`py-1.5 ${isPending ? 'opacity-70' : ''}`}>
+            <div className="flex items-center gap-2">
+                {isPending ? (
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                )}
+                <span className="text-sm text-foreground font-medium flex-1">{label}</span>
+                <span className={`text-[11px] font-medium ${isPending ? 'text-muted-foreground' : 'text-emerald-500'}`}>
+                    +{points} {isPending && '(Pending)'}
+                </span>
+            </div>
+            {post.title && (
+                <p className="text-[12px] text-muted-foreground pl-6 truncate mt-0.5">
+                    &ldquo;{post.title}&rdquo;
+                </p>
+            )}
+            <div className="flex items-center gap-2 pl-6 mt-0.5">
+                {postedDate && (
+                    <span className="text-[10px] text-muted-foreground/60">{postedDate}</span>
+                )}
+                {postedDate && post.forumUrl && (
+                    <span className="text-muted-foreground/30">&middot;</span>
+                )}
+                {post.forumUrl && (
+                    <a
+                        href={post.forumUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-primary/70 hover:text-primary flex items-center gap-0.5 transition-colors"
+                    >
+                        View on forum
+                        <ArrowUpRight className="h-2.5 w-2.5" />
+                    </a>
+                )}
+            </div>
+        </div>
+    )
+}
+
+// ===== FORUM ACTIVITY SECTION (replaces the old radio buttons) =====
+
+function ForumActivitySection({
+    tutorialTitle,
+    forumCategory,
+    forumPosts,
+}: {
+    tutorialTitle: string
+    forumCategory?: string | null
+    forumPosts: ForumPost[]
+}) {
+    const questions = forumPosts.filter(p => p.activityType === 'question')
+    const answers = forumPosts.filter(p => p.activityType === 'answer')
+    const hasAsked = questions.length > 0
+    const hasAnswered = answers.length > 0
+    const hasAnyActivity = hasAsked || hasAnswered
+    const isFullyPending = forumPosts.length > 0 && forumPosts.every(p => !p.xpAwarded)
+    const hasPending = forumPosts.some(p => !p.xpAwarded)
+
+    const forumDeepLink = forumCategory
+        ? `https://forums.spoken-tutorial.org/filter/${forumCategory.replace(/ /g, '-')}/`
+        : 'https://forums.spoken-tutorial.org/'
+
+    return (
+        <div
+            className={`mt-2.5 rounded-lg border transition-colors ${
+                hasAnyActivity
+                    ? isFullyPending ? 'border-border/60 bg-muted/10' : 'border-emerald-500/25 bg-emerald-500/[0.03]'
+                    : 'border-border/40 bg-muted/[0.06]'
+            } px-3 pt-3 pb-5`}
+        >
+            {/* Section header */}
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                    <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        Forum Activity
+                    </span>
+                </div>
+                {hasAnyActivity && (
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                        isFullyPending ? 'text-muted-foreground bg-muted' : 'text-emerald-500 bg-emerald-500/10'
+                    }`}>
+                        {isFullyPending ? <Clock className="h-3 w-3" /> : <ShieldCheck className="h-3 w-3" />}
+                        {isFullyPending ? 'pending' : 'verified'}
+                    </span>
+                )}
+            </div>
+
+            {/* Helper message for pending posts */}
+            {hasPending && (
+                <p className="text-[10px] text-muted-foreground/70 mb-2 leading-snug">
+                    <strong className="font-semibold text-muted-foreground">Relevance Check:</strong> Points will be securely awarded 24 hours after posting if the content remains relevant on the forum.
+                </p>
+            )}
+
+            {/* Verified question cards */}
+            {questions.map(post => (
+                <ForumPostCard key={post.id} post={post} label="Asked a question" points={XP_FORUM_ASK} />
+            ))}
+
+            {/* Verified answer cards */}
+            {answers.map(post => (
+                <ForumPostCard key={post.id} post={post} label="Answered a question" points={XP_FORUM_ANS} />
+            ))}
+
+            {/* Unearned: Ask */}
+            {!hasAsked && (
+                <div className="flex items-center gap-2 py-1.5">
+                    <Circle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
+                    <span className="text-sm text-muted-foreground/50">Ask a question</span>
+                    <span className="text-[11px] text-primary/60 ml-auto">+{XP_FORUM_ASK}</span>
+                </div>
+            )}
+
+            {/* Unearned: Answer */}
+            {!hasAnswered && (
+                <div className="flex items-center gap-2 py-1.5">
+                    <Circle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
+                    <span className="text-sm text-muted-foreground/50">Answer a question</span>
+                    <span className="text-[11px] text-primary/60 ml-auto">+{XP_FORUM_ANS}</span>
+                </div>
+            )}
+
+            {/* Nudge + CTA when no activity yet */}
+            {!hasAnyActivity && (
+                <div className="mt-2 pt-2 border-t border-border/20">
+                    <p className="text-[11px] text-muted-foreground/50 leading-relaxed mb-2.5">
+                        Participate in the Spoken Tutorial Forum to earn bonus XP.
+                        Your activity will be detected automatically.
+                    </p>
+                    <a
+                        href={forumDeepLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+                    >
+                        Go to Forum: {tutorialTitle}
+                        <ArrowUpRight className="h-3 w-3" />
+                    </a>
+                </div>
+            )}
+
+            {/* Partial activity: show CTA for what's missing */}
+            {hasAnyActivity && (!hasAsked || !hasAnswered) && (
+                <div className="mt-1.5 pt-1.5 border-t border-emerald-500/10">
+                    <a
+                        href={forumDeepLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-primary/60 hover:text-primary flex items-center gap-1 transition-colors"
+                    >
+                        Visit forum to earn more XP
+                        <ArrowUpRight className="h-2.5 w-2.5" />
+                    </a>
+                </div>
+            )}
+        </div>
+    )
+}
+
 // ===== TUTORIAL CARD =====
 
 interface TutorialCardProps {
     tutorial: Tutorial
     onRadioChange: (tutorialId: string, field: TutorialField, value: RadioValue) => void
+    forumPosts: ForumPost[]
+    forumCategory?: string | null
 }
 
-function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
+function TutorialCard({ tutorial, onRadioChange, forumPosts, forumCategory }: TutorialCardProps) {
     const [isOpen, setIsOpen] = useState(!tutorial.completed)
     const currentXP = calcXP(tutorial)
     const isWatched = tutorial.watched === 'yes'
@@ -175,30 +346,13 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                                         onChange={(v) => onRadioChange(tutorial.id, 'assignmentDone', v)}
                                     />
                                 )}
-                                {tutorial.forumAsked === 'yes' ? (
-                                    <AnswerSummary label="Asked a question in the forum" value="yes" isBonus />
-                                ) : (
-                                    <QuestionRow
-                                        label="Have you asked a question in the forum?"
-                                        points={XP_FORUM_ASK}
-                                        isBonus
-                                        value={tutorial.forumAsked}
-                                        fieldId={`t${tutorial.id}-forum-ask`}
-                                        onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
-                                    />
-                                )}
-                                {tutorial.forumAnswered === 'yes' ? (
-                                    <AnswerSummary label="Answered a question in the forum" value="yes" isBonus />
-                                ) : (
-                                    <QuestionRow
-                                        label="Have you answered a question in the forum?"
-                                        points={XP_FORUM_ANS}
-                                        isBonus
-                                        value={tutorial.forumAnswered}
-                                        fieldId={`t${tutorial.id}-forum-ans`}
-                                        onChange={(v) => onRadioChange(tutorial.id, 'forumAnswered', v)}
-                                    />
-                                )}
+
+                                {/* Forum Activity — verified, not self-reported */}
+                                <ForumActivitySection
+                                    tutorialTitle={tutorial.title}
+                                    forumCategory={forumCategory}
+                                    forumPosts={forumPosts}
+                                />
                             </div>
                         </div>
                     </CollapsibleContent>
@@ -254,13 +408,7 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                             disabled={!isWatched}
                         />
 
-                        {/* BONUS — locked until practiced */}
-                        {!isPracticed && (
-                            <div className="flex items-center gap-1.5 py-2 text-[11px] text-muted-foreground/60">
-                                <Lock className="h-3 w-3" />
-                                <span>{!isWatched ? 'Watch and practice the tutorial to unlock bonus questions' : 'Practice the tutorial to unlock bonus questions'}</span>
-                            </div>
-                        )}
+                        {/* BONUS — assignment locked until practiced */}
                         <QuestionRow
                             label="Have you finished the assignment?"
                             points={XP_ASSIGNMENT}
@@ -270,23 +418,12 @@ function TutorialCard({ tutorial, onRadioChange }: TutorialCardProps) {
                             onChange={(v) => onRadioChange(tutorial.id, 'assignmentDone', v)}
                             disabled={!isPracticed}
                         />
-                        <QuestionRow
-                            label="Have you asked a question in the forum?"
-                            points={XP_FORUM_ASK}
-                            isBonus
-                            value={tutorial.forumAsked}
-                            fieldId={`t${tutorial.id}-forum-ask`}
-                            onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
-                            disabled={!isPracticed}
-                        />
-                        <QuestionRow
-                            label="Have you answered a question in the forum?"
-                            points={XP_FORUM_ANS}
-                            isBonus
-                            value={tutorial.forumAnswered}
-                            fieldId={`t${tutorial.id}-forum-ans`}
-                            onChange={(v) => onRadioChange(tutorial.id, 'forumAnswered', v)}
-                            disabled={!isPracticed}
+
+                        {/* Forum Activity — always visible, verified via webhooks */}
+                        <ForumActivitySection
+                            tutorialTitle={tutorial.title}
+                            forumCategory={forumCategory}
+                            forumPosts={forumPosts}
                         />
                     </div>
                 </CollapsibleContent>
@@ -302,6 +439,8 @@ export function ActiveCourseTracker() {
         tutorials,
         activeCourseId,
         fetchTutorials,
+        fetchForumActivity,
+        forumActivity,
         updateTutorials,
         addXP,
         courses
@@ -309,10 +448,12 @@ export function ActiveCourseTracker() {
 
     const currentCourse = courses.find(c => c.id == activeCourseId)
     const courseTitle = currentCourse?.title || 'Course'
+    const forumCategory = currentCourse?.forumCategory || null
 
     useEffect(() => {
         if (activeCourseId) {
             fetchTutorials(activeCourseId)
+            fetchForumActivity(activeCourseId)
         }
     }, [])
 
@@ -366,8 +507,6 @@ export function ActiveCourseTracker() {
             if (field === 'watched') xpEarned = XP_WATCHED;
             else if (field === 'practiced') xpEarned = XP_PRACTICED;
             else if (field === 'assignmentDone') xpEarned = XP_ASSIGNMENT;
-            else if (field === 'forumAsked') xpEarned = XP_FORUM_ASK;
-            else if (field === 'forumAnswered') xpEarned = XP_FORUM_ANS;
 
             if (xpEarned > 0) {
                 addXP(xpEarned)
@@ -378,14 +517,14 @@ export function ActiveCourseTracker() {
                         setCelebration({
                             type: 'course_complete',
                             xpEarned,
-                            title: `${courseTitle} Complete! 🏆`,
+                            title: `${courseTitle} Complete!`,
                             subtitle: `You've mastered all ${tutorials.length} tutorials!`,
                         })
                     } else {
                         setCelebration({
                             type: 'tutorial_complete',
                             xpEarned,
-                            title: 'Tutorial Complete! ✨',
+                            title: 'Tutorial Complete!',
                             subtitle: `+${xpEarned} XP earned`,
                         })
                     }
@@ -407,8 +546,6 @@ export function ActiveCourseTracker() {
             if (feedbackModal.field === 'watched') xpLost = XP_WATCHED;
             else if (feedbackModal.field === 'practiced') xpLost = XP_PRACTICED;
             else if (feedbackModal.field === 'assignmentDone') xpLost = XP_ASSIGNMENT;
-            else if (feedbackModal.field === 'forumAsked') xpLost = XP_FORUM_ASK;
-            else if (feedbackModal.field === 'forumAnswered') xpLost = XP_FORUM_ANS;
 
             if (xpLost > 0) {
                 // Deduct XP on the frontend to match the backend updates
@@ -461,7 +598,7 @@ export function ActiveCourseTracker() {
                         <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 animate-in fade-in slide-in-from-top-2 duration-300">
                             <Sparkles className="h-4 w-4 text-primary shrink-0" />
                             <span className="text-xs text-primary font-medium">
-                                +{bonusFeedback.xp} bonus XP earned for "{bonusFeedback.title}"!
+                                +{bonusFeedback.xp} bonus XP earned for &ldquo;{bonusFeedback.title}&rdquo;!
                             </span>
                         </div>
                     )}
@@ -470,7 +607,7 @@ export function ActiveCourseTracker() {
                     {allDone && (
                         <div className="mb-3 p-4 rounded-lg bg-gradient-to-r from-success/10 to-primary/10 border border-success/20 text-center">
                             <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-1" />
-                            <h3 className="font-bold text-sm">Course Complete! 🏆</h3>
+                            <h3 className="font-bold text-sm">Course Complete!</h3>
                             <p className="text-xs text-muted-foreground mt-0.5">
                                 All {tutorials.length} tutorials · {totalXP} XP earned
                             </p>
@@ -484,6 +621,8 @@ export function ActiveCourseTracker() {
                                 key={tutorial.id}
                                 tutorial={tutorial}
                                 onRadioChange={handleRadioChange}
+                                forumPosts={forumActivity[tutorial.id] || []}
+                                forumCategory={forumCategory}
                             />
                         ))}
                     </div>
@@ -492,9 +631,9 @@ export function ActiveCourseTracker() {
                     <div className="flex items-center justify-center gap-3 mt-3 text-[9px] text-muted-foreground flex-wrap">
                         <span>Watch = +{XP_WATCHED}</span>
                         <span>Practice = +{XP_PRACTICED}</span>
-                        <span className="text-primary">★ Assignment = +{XP_ASSIGNMENT}</span>
-                        <span className="text-success">Ask = +{XP_FORUM_ASK}</span>
-                        <span className="text-success">Answer = +{XP_FORUM_ANS}</span>
+                        <span className="text-primary">Assignment = +{XP_ASSIGNMENT}</span>
+                        <span className="text-emerald-500">Ask = +{XP_FORUM_ASK}</span>
+                        <span className="text-emerald-500">Answer = +{XP_FORUM_ANS}</span>
                     </div>
                 </CardContent>
             </Card>

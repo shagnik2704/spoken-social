@@ -11,6 +11,7 @@ class Course(Base):
     id = Column(String(50), primary_key=True)
     title = Column(String(255), nullable=False)
     description = Column(Text)
+    forum_category = Column(String(200))  # e.g., "Linux New" — maps to forum's FOSS category
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
@@ -45,4 +46,5 @@ class UserCourse(Base):
             "status": self.status,
             "progressPercent": float(self.progress_percent or 0),
             "completedAt": self.completed_at.isoformat() if self.completed_at else None,
+            "forumCategory": self.course.forum_category if self.course else None,
         }

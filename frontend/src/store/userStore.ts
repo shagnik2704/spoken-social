@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { User, Course, Badge, Tutorial, RadioValue, TutorialField } from '@/types'
+import type { User, Course, Badge, Tutorial, RadioValue, TutorialField, ForumActivityMap } from '@/types'
 import api from '@/lib/axios'
 
 
@@ -12,12 +12,14 @@ interface UserState {
     courses: Course[]
     badges: Badge[]
     tutorials: Tutorial[]
+    forumActivity: ForumActivityMap
     activeCourseId: string
     weeklyGoal: any
 
 
 
     fetchTutorials: (courseId: string) => Promise<void>
+    fetchForumActivity: (courseId: string) => Promise<void>
     updateTutorials: (courseId: string, tutorialId: string, field: TutorialField, value: RadioValue) => void
     fetchUser: () => Promise<void>
     login: (user: User) => void
@@ -35,6 +37,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     courses: [],
     badges: [],
     tutorials: [],
+    forumActivity: {},
     activeCourseId: 'linux',
     weeklyGoal: null,
 
@@ -75,6 +78,15 @@ export const useUserStore = create<UserState>((set, get) => ({
         }
         catch (error) {
             console.error('Failed to fetch tutorials', error)
+        }
+    },
+
+    fetchForumActivity: async (courseId) => {
+        try {
+            const { data } = await api.get(`/api/me/courses/${courseId}/forum-activity`)
+            set({ forumActivity: data })
+        } catch (error) {
+            console.error('Failed to fetch forum activity', error)
         }
     },
 

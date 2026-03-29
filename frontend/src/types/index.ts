@@ -42,6 +42,7 @@ export interface Course {
     status: CourseStatus
     progressPercent: number
     completedAt?: string | null
+    forumCategory?: string | null
 }
 
 // ----- Badges -----
@@ -163,3 +164,18 @@ export interface Tutorial {
     forumAnswered: RadioValue
     xpEarned: number
 }
+
+// ----- Forum Activity (verified via webhooks) -----
+
+export interface ForumPost {
+    id: number
+    forumPostId: number
+    activityType: 'question' | 'answer'
+    title: string | null
+    forumUrl: string
+    postedAt: string | null
+    xpAwarded: boolean
+    xpAmount: number
+}
+
+export type ForumActivityMap = Record<string, ForumPost[]>
