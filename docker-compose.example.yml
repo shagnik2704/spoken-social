@@ -30,6 +30,18 @@ services:
       - redis
     restart: unless-stopped
 
+  worker:
+    build: ./backend
+    command: arq worker.WorkerSettings
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      TZ: Asia/Kolkata
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
     ports:
