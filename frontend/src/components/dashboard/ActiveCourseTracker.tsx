@@ -3,6 +3,7 @@ import {
     CheckCircle2, ChevronDown, Sparkles, Lock,
     Zap, Code, Terminal, BarChart3, Settings, FileText,
     BookOpenCheck, Link2, ShieldCheck, ArrowUpRight, Circle, Clock,
+    ClipboardList,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -211,7 +212,7 @@ function ForumActivitySection({
             {/* Helper message for pending posts */}
             {hasPending && (
                 <p className="text-[10px] text-muted-foreground/70 mb-2 leading-snug">
-                    <strong className="font-semibold text-muted-foreground">Pending Admin Review:</strong> Xp will be awarded after verifying the relevance of the question (about 24 hours).
+                    <strong className="font-semibold text-muted-foreground">Pending Admin Review:</strong> Xp will be awarded after verifying the relevance of the post (about 24 hours).
                 </p>
             )}
 
@@ -335,6 +336,28 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                     />
                                 )}
 
+                                {/* Mini-Task Opt-In Question */}
+                                <div className="mt-1.5 pt-1.5 border-t border-dashed border-border/30">
+                                    <QuestionRow
+                                        label="Interested in doing a minitask mentored by an expert?"
+                                        value={tutorial.minitaskOpted}
+                                        fieldId={`t${tutorial.id}-minitask`}
+                                        onChange={(v) => onRadioChange(tutorial.id, 'minitaskOpted', v)}
+                                    />
+                                    {tutorial.minitaskOpted === 'yes' && (
+                                        <div className="flex items-center gap-2 pb-2 pl-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                                            <ClipboardList className="h-3.5 w-3.5 text-primary shrink-0" />
+                                            <span className="text-[12px] text-primary font-medium">Great! You've opted in to do a mentored mini-task.</span>
+                                        </div>
+                                    )}
+                                    {tutorial.minitaskOpted === 'no' && (
+                                        <div className="flex items-center gap-2 pb-2 pl-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                                            <ClipboardList className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+                                            <span className="text-[12px] text-muted-foreground">Okay, you will not be assigned a mini-task.</span>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* New Forum Intent Question */}
                                 <div className="mt-1.5 pt-1.5 border-t border-dashed border-border/30">
                                     {tutorial.forumAsked === 'yes' ? (
@@ -432,6 +455,28 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                             disabled={!isPracticed}
                         />
 
+                        {/* Mini-Task Opt-In Question */}
+                        <div className="mt-1.5 pt-1.5 border-t border-dashed border-border/30">
+                            <QuestionRow
+                                label="Interested in doing a minitask mentored by an expert?"
+                                value={tutorial.minitaskOpted}
+                                fieldId={`t${tutorial.id}-minitask`}
+                                onChange={(v) => onRadioChange(tutorial.id, 'minitaskOpted', v)}
+                            />
+                            {tutorial.minitaskOpted === 'yes' && (
+                                <div className="flex items-center gap-2 pb-2 pl-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                                    <ClipboardList className="h-3.5 w-3.5 text-primary shrink-0" />
+                                    <span className="text-[12px] text-primary font-medium">Great! You've opted in to do a mentored mini-task.</span>
+                                </div>
+                            )}
+                            {tutorial.minitaskOpted === 'no' && (
+                                <div className="flex items-center gap-2 pb-2 pl-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                                    <ClipboardList className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+                                    <span className="text-[12px] text-muted-foreground">Okay, you will not be assigned a mini-task.</span>
+                                </div>
+                            )}
+                        </div>
+
                         {/* New Forum Intent Question */}
                         <div className="mt-1.5 pt-1.5 border-t border-dashed border-border/30">
                             <QuestionRow
@@ -520,6 +565,12 @@ export function ActiveCourseTracker() {
         if (!tutorial) return
 
         const oldValue = tutorial[field]
+
+        // Mini-task opt-in: save immediately for both yes and no (no feedback needed)
+        if (field === 'minitaskOpted') {
+            updateTutorials(activeCourseId, tutorialId, field, value)
+            return
+        }
 
         // When "No" is selected: DON'T save yet — open feedback modal first
         if (value === 'no') {

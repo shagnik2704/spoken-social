@@ -5,7 +5,7 @@ import {
     Search, Filter, Trophy, BarChart3,
     Zap, Activity, ChevronRight, ArrowLeft,
     Shield, Building2, MessageCircleQuestion,
-    X, ChevronDown, CalendarDays, Download
+    X, ChevronDown, CalendarDays, Download, ClipboardList
 } from 'lucide-react'
 import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
@@ -47,6 +47,7 @@ interface Student {
     rollNo: string
     tutorialsWatched: number
     tutorialsCompleted: number
+    minitasksOpted: number
     totalTutorials: number
     progress: number
     xp: number
@@ -164,20 +165,26 @@ function StudentRow({ student, collegeName, onClick, index }: { student: Student
                 <span className="text-[11px] text-muted-foreground font-mono w-8 text-right">{student.progress}%</span>
             </div>
 
-            <div className="hidden md:flex w-32 items-center gap-4 justify-center">
-                <span className="flex items-center gap-1 text-muted-foreground" title="Watched">
-                    <Eye className="h-3 w-3 shrink-0" />
-                    <span className="text-xs font-mono tabular-nums w-5 text-right">
-                        {'tutorialsWatched' in student ? student.tutorialsWatched : student.watched}
-                    </span>
-                </span>
-                <span className="flex items-center gap-1" title="Completed">
-                    <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
-                    <span className="text-xs font-mono font-medium tabular-nums w-5 text-right">
-                        {'tutorialsCompleted' in student ? student.tutorialsCompleted : student.completed}
-                    </span>
+            <div className="hidden md:flex w-14 items-center gap-1 justify-center" title="Watched">
+                <Eye className="h-3 w-3 text-muted-foreground shrink-0" />
+                <span className="text-xs font-mono tabular-nums">
+                    {'tutorialsWatched' in student ? student.tutorialsWatched : student.watched}
                 </span>
             </div>
+
+            <div className="hidden md:flex w-14 items-center gap-1 justify-center" title="Completed">
+                <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
+                <span className="text-xs font-mono font-medium tabular-nums">
+                    {'tutorialsCompleted' in student ? student.tutorialsCompleted : student.completed}
+                </span>
+            </div>
+
+            {'minitasksOpted' in student && (
+                <div className="hidden md:flex w-12 items-center gap-1 justify-center" title="Mini-Tasks Opted">
+                    <ClipboardList className="h-3 w-3 text-primary shrink-0" />
+                    <span className="text-xs font-mono font-medium tabular-nums">{student.minitasksOpted}</span>
+                </div>
+            )}
 
             <div className="hidden lg:flex items-center gap-1 w-16 justify-end">
                 <Zap className="h-3 w-3 text-xp-gold" />
@@ -775,10 +782,9 @@ function CollegesTab({ colleges, onStudentClick }: {
                             <div className="w-8 shrink-0" />
                             <div className="flex-1">Student</div>
                             <div className="hidden sm:block w-28 text-center">Progress</div>
-                            <div className="hidden md:flex w-32 items-center gap-4 justify-center">
-                                <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" /> Watched</span>
-                                <span className="flex items-center gap-0.5"><CheckCircle2 className="h-3 w-3" /> Done</span>
-                            </div>
+                            <div className="hidden md:flex w-14 items-center gap-0.5 justify-center"><Eye className="h-3 w-3" /> Watched</div>
+                            <div className="hidden md:flex w-14 items-center gap-0.5 justify-center"><CheckCircle2 className="h-3 w-3" /> Done</div>
+                            <div className="hidden md:flex w-12 items-center gap-0.5 justify-center"><ClipboardList className="h-3 w-3" /> Tasks</div>
                             <div className="hidden lg:block w-16 text-right">XP</div>
                             <div className="w-24 shrink-0 text-center">Status</div>
                         </div>

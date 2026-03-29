@@ -149,7 +149,7 @@ export interface ProfileStat {
 
 export type RadioValue = 'yes' | 'no' | null
 
-export type TutorialField = 'watched' | 'practiced' | 'assignmentDone' | 'forumAsked' | 'forumAnswered'
+export type TutorialField = 'watched' | 'practiced' | 'assignmentDone' | 'forumAsked' | 'forumAnswered' | 'minitaskOpted'
 
 export interface Tutorial {
     id: string
@@ -162,6 +162,7 @@ export interface Tutorial {
     assignmentDone: RadioValue
     forumAsked: RadioValue
     forumAnswered: RadioValue
+    minitaskOpted: RadioValue
     xpEarned: number
 }
 

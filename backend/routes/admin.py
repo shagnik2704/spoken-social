@@ -59,6 +59,9 @@ async def get_platform_summary(
         func.count(
             case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
         ).label("completed"),
+        func.count(
+            case((UserTutorial.minitask_opted == True, UserTutorial.tutorial_id), else_=None)
+        ).label("minitasks_opted"),
     ).outerjoin(
         UserTutorial, UserTutorial.user_id == User.id
     ).outerjoin(
@@ -82,7 +85,7 @@ async def get_platform_summary(
     total_progress = 0
 
     for row in student_metrics:
-        uid, name, username, xp, college_id, watched, completed = row
+        uid, name, username, xp, college_id, watched, completed, minitasks_opted = row
         progress = round((completed / total_tutorials) * 100) if total_tutorials > 0 else 0
         total_progress += progress
 
@@ -125,6 +128,7 @@ async def get_platform_summary(
             "status": status,
             "watched": watched,
             "completed": completed,
+            "minitasksOpted": minitasks_opted,
             "collegeName": college_names.get(college_id, "Unknown"),
         })
 

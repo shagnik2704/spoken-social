@@ -66,7 +66,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         try {
             const { data } = await api.get(`/api/me/courses/${courseId}/tutorials`)
             // Backend returns boolean values — convert to 'yes'/'no' strings for RadioGroup
-            const fields = ['watched', 'practiced', 'assignmentDone', 'forumAsked', 'forumAnswered'] as const
+            const fields = ['watched', 'practiced', 'assignmentDone', 'forumAsked', 'forumAnswered', 'minitaskOpted'] as const
             const converted = data.map((t: any) => {
                 const out = { ...t }
                 for (const f of fields) {

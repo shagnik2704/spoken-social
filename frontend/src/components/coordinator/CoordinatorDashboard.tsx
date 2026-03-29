@@ -3,7 +3,7 @@ import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
     CheckCircle2, Terminal, Eye,
     Search, Filter, Trophy, BarChart3,
-    MessageCircleQuestion,
+    MessageCircleQuestion, ClipboardList,
     // Star,
     Clock, Zap, Activity, Download
 } from 'lucide-react'
@@ -59,6 +59,7 @@ interface Student {
     rollNo: string
     tutorialsWatched: number
     tutorialsCompleted: number
+    minitasksOpted: number
     totalTutorials: number
     progress: number
     xp: number
@@ -166,15 +167,19 @@ function StudentRow({ student, index }: { student: Student; index?: number }) {
                 <span className="text-[11px] text-muted-foreground font-mono w-8 text-right">{student.progress}%</span>
             </div>
 
-            <div className="hidden md:flex w-32 items-center gap-4 justify-center">
-                <span className="flex items-center gap-1 text-muted-foreground" title="Watched">
-                    <Eye className="h-3 w-3 shrink-0" />
-                    <span className="text-xs font-mono tabular-nums w-5 text-right">{student.tutorialsWatched}</span>
-                </span>
-                <span className="flex items-center gap-1" title="Completed">
-                    <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
-                    <span className="text-xs font-mono font-medium tabular-nums w-5 text-right">{student.tutorialsCompleted}</span>
-                </span>
+            <div className="hidden md:flex w-14 items-center gap-1 justify-center" title="Watched">
+                <Eye className="h-3 w-3 text-muted-foreground shrink-0" />
+                <span className="text-xs font-mono tabular-nums">{student.tutorialsWatched}</span>
+            </div>
+
+            <div className="hidden md:flex w-14 items-center gap-1 justify-center" title="Completed">
+                <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
+                <span className="text-xs font-mono font-medium tabular-nums">{student.tutorialsCompleted}</span>
+            </div>
+
+            <div className="hidden md:flex w-12 items-center gap-1 justify-center" title="Mini-Tasks Opted">
+                <ClipboardList className="h-3 w-3 text-primary shrink-0" />
+                <span className="text-xs font-mono font-medium tabular-nums">{student.minitasksOpted}</span>
             </div>
 
             <div className="hidden sm:flex w-16 items-center gap-1 justify-center" title="XP">
@@ -333,24 +338,32 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         <div className="w-8 shrink-0" />
                         <div className="flex-1">Student</div>
                         <div className="hidden sm:block w-28 text-center">Progress</div>
-                        <div className="hidden md:flex w-32 items-center gap-4 justify-center">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="flex items-center gap-0.5 cursor-help"><Eye className="h-3 w-3" /> Watched</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">Only watched the tutorials</TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="flex items-center gap-0.5 cursor-help"><CheckCircle2 className="h-3 w-3" /> Completed</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">Watched & practiced the tutorials</TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="hidden md:flex w-14 items-center gap-0.5 justify-center cursor-help"><Eye className="h-3 w-3" /> Watched</div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Only watched the tutorials</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="hidden md:flex w-14 items-center gap-0.5 justify-center cursor-help"><CheckCircle2 className="h-3 w-3" /> Done</div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">Watched & practiced the tutorials</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="hidden md:flex w-12 items-center gap-0.5 justify-center cursor-help"><ClipboardList className="h-3 w-3" /> Tasks</div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    Number of tutorials where the student opted for a mini-task
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>

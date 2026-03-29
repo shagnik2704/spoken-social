@@ -185,6 +185,7 @@ async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate
         "assignmentDone": "assignment_done",
         "forumAsked": "forum_asked",
         "forumAnswered": "forum_answered",
+        "minitaskOpted": "minitask_opted",
     }
 
     if body.field not in field_map:

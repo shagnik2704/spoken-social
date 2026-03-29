@@ -39,6 +39,7 @@ class UserTutorial(Base):
     assignment_done = Column(Boolean, default=False)
     forum_asked = Column(Boolean, default=False)
     forum_answered = Column(Boolean, default=False)
+    minitask_opted = Column(Boolean, default=False)
     xp_earned = Column(Integer, default=0)
     completed_at = Column(DateTime(timezone=True))
 
@@ -63,5 +64,6 @@ class UserTutorial(Base):
             "assignmentDone": self.assignment_done,
             "forumAsked": self.forum_asked,
             "forumAnswered": self.forum_answered,
+            "minitaskOpted": self.minitask_opted,
             "xpEarned": self.xp_earned,
         }

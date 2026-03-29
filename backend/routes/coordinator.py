@@ -156,6 +156,10 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
         case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
     ).label("tutorials_completed")
 
+    minitask_col = func.count(
+        case((UserTutorial.minitask_opted == True, UserTutorial.tutorial_id), else_=None)
+    ).label("minitasks_opted")
+
     # Progress as a percentage (integer 0–100), computed in SQL
     progress_col = case(
         (literal(total_tutorials) > 0,
@@ -189,6 +193,7 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
         User.xp_total,
         watched_col,
         completed_col,
+        minitask_col,
         progress_col,
         status_col,
     ).outerjoin(
@@ -260,6 +265,7 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
             "rollNo": "",  # Not in DB yet — placeholder
             "tutorialsWatched": row.tutorials_watched,
             "tutorialsCompleted": row.tutorials_completed,
+            "minitasksOpted": row.minitasks_opted,
             "totalTutorials": total_tutorials,
             "progress": int(row.progress),
             "xp": row.xp_total,
@@ -385,6 +391,7 @@ async def export_college_students(
         ("Student Name", 35),
         ("Progress Percentage", 25),
         ("Tutorials Completed", 25),
+        ("Mini-Tasks Opted", 22),
     ]
 
     # Set column widths
@@ -423,6 +430,7 @@ async def export_college_students(
             student["name"],
             f"{student['progress']}%",
             f"{student['tutorialsCompleted']}/{student['totalTutorials']}",
+            student.get("minitasksOpted", 0),
         ]
         for col_idx, value in enumerate(row_data, start=1):
             cell = sheet.cell(row=row_num, column=col_idx, value=value)
