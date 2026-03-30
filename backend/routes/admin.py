@@ -237,6 +237,7 @@ async def export_all_colleges(
         ("Total Students Enrolled", 28),
         ("Active Students", 22),
         ("Fully Completed Students", 28),
+        ("Students Opted for Minitasks", 30),
         ("Average Progress Percentage", 32),
     ]
 
@@ -277,6 +278,7 @@ async def export_all_colleges(
             col["totalCourseStudents"],
             col["activeStudents"],
             col["completedStudents"],
+            col.get("studentsWithMinitasks", 0),
             f"{col['avgProgress']}%",
         ]
         for col_idx, value in enumerate(row_data, start=1):

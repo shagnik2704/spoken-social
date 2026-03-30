@@ -113,7 +113,7 @@ export function TopBar() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="relative text-muted-foreground hover:text-foreground"
+                        className="hidden relative text-muted-foreground hover:text-foreground"
                     >
                         <Bell className="h-5 w-5" />
                         {notificationCount > 0 && (
@@ -127,7 +127,7 @@ export function TopBar() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="hidden sm:flex text-muted-foreground hover:text-foreground"
+                        className="hidden text-muted-foreground hover:text-foreground"
                     >
                         <MessageSquare className="h-5 w-5" />
                     </Button>

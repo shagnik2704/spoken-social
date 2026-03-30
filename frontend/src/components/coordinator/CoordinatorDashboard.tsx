@@ -93,7 +93,7 @@ interface CollegeDetails {
 }
 
 type Tab = 'students' | 'analytics' | 'feedback' | 'compare'
-type SortBy = 'name' | 'progress' | 'xp'
+type SortBy = 'name' | 'progress' | 'xp' | 'tasks'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
 
@@ -317,6 +317,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                             { id: 'progress', label: 'Progress' },
                             { id: 'name', label: 'Name' },
                             { id: 'xp', label: 'XP' },
+                            { id: 'tasks', label: 'Tasks' },
                         ] as { id: SortBy; label: string }[]).map(sort => (
                             <button
                                 key={sort.id}

@@ -88,7 +88,7 @@ interface EnrichedStudent {
 }
 
 type Tab = 'overview' | 'colleges' | 'analytics' | 'feedback'
-type SortBy = 'name' | 'progress' | 'xp'
+type SortBy = 'name' | 'progress' | 'xp' | 'tasks'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
 // ===== STATUS HELPERS =====
@@ -764,6 +764,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                                 { id: 'progress', label: 'Progress' },
                                 { id: 'name', label: 'Name' },
                                 { id: 'xp', label: 'XP' },
+                                { id: 'tasks', label: 'Tasks' },
                             ] as { id: SortBy; label: string }[]).map(sort => (
                                 <button
                                     key={sort.id}

@@ -77,6 +77,9 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
                 func.count(
                     case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
                 ).label("completed"),
+                func.count(
+                    case((UserTutorial.minitask_opted == True, UserTutorial.tutorial_id), else_=None)
+                ).label("minitasks_opted"),
             ).outerjoin(
                 UserTutorial, UserTutorial.user_id == User.id
             ).outerjoin(
@@ -94,11 +97,15 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
         num_at_risk = 0
         num_inactive = 0
         total_progress = 0
+        students_with_minitasks = 0
 
         for row in student_metrics:
-            uid, xp, watched_count, completed_count = row
+            uid, xp, watched_count, completed_count, minitasks_count = row
             progress = round((completed_count / total_tutorials) * 100) if total_tutorials > 0 else 0
             total_progress += progress
+
+            if minitasks_count > 0:
+                students_with_minitasks += 1
 
             if completed_count >= total_tutorials:
                 num_completed += 1
@@ -130,6 +137,7 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
             "avgProgress": round(total_progress / total) if total > 0 else 0,
             "avgXP": round(float(avg_xp_val)),
             "completionRate": round((num_completed / total) * 100) if total > 0 else 0,
+            "studentsWithMinitasks": students_with_minitasks,
         })
 
     return summaries
@@ -238,6 +246,8 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
         outer = outer.order_by(sub.c.xp_total.desc())
     elif sort == "name":
         outer = outer.order_by(func.coalesce(sub.c.display_name, sub.c.username))
+    elif sort == "tasks":
+        outer = outer.order_by(sub.c.minitasks_opted.desc())
     else:
         outer = outer.order_by(sub.c.progress.desc())
 
