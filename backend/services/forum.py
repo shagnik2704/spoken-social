@@ -31,6 +31,34 @@ XP_FORUM_ASK = 5
 XP_FORUM_ANS = 10
 
 
+async def _sync_user_tutorial_forum_radios(
+    db: AsyncSession,
+    *,
+    user_id,
+    tutorial_id,
+    activity_type: str,
+) -> None:
+    """
+    Set forum_asked / forum_answered on UserTutorial when forum activity exists.
+
+    XP is still awarded later by the worker; this only updates the dashboard Yes/No radios
+    so they match detected forum posts immediately.
+    """
+    if tutorial_id is None:
+        return
+    ut_result = await db.execute(
+        select(UserTutorial).filter_by(user_id=user_id, tutorial_id=tutorial_id)
+    )
+    ut = ut_result.scalars().first()
+    if not ut:
+        return
+    if activity_type == "question":
+        ut.forum_asked = True
+    elif activity_type == "answer":
+        ut.forum_answered = True
+    await db.flush()
+
+
 async def find_user_by_forum_uid(db: AsyncSession, forum_user_id: int) -> User | None:
     """
     Look up a spoken-social user by their Spoken Tutorial forum user ID.
@@ -141,6 +169,12 @@ async def process_forum_event(
         existing.xp_awarded = False
         existing.xp_amount = 0
         await db.flush()
+        await _sync_user_tutorial_forum_radios(
+            db,
+            user_id=user.id,
+            tutorial_id=existing.tutorial_id,
+            activity_type=activity_type,
+        )
         return {"status": "restored", "forum_post_id": forum_post_id}
 
     # 6. Insert new ForumActivity row
@@ -165,6 +199,14 @@ async def process_forum_event(
 
     # 7. Note: We DO NOT award XP here anymore! It stays 0 and False.
     # The 24-hour ARQ background worker will pick it up and award it.
+    #
+    # Sync dashboard radios (forumAsked / forumAnswered) so the UI shows "Yes" immediately.
+    await _sync_user_tutorial_forum_radios(
+        db,
+        user_id=user.id,
+        tutorial_id=tutorial_id,
+        activity_type=activity_type,
+    )
 
     await db.flush()
     return {
