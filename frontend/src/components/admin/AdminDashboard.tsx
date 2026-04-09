@@ -1217,25 +1217,46 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <button
-                    onClick={async () => {
-                        try {
-                            const response = await api.get(`/api/admin/colleges/export`, { responseType: 'blob' });
-                            const url = window.URL.createObjectURL(new Blob([response.data]));
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.setAttribute('download', 'Platform_Colleges_Report.xlsx');
-                            document.body.appendChild(link);
-                            link.click();
-                        } catch (e) {
-                            console.error('Failed to export', e);
-                        }
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
-                >
-                    <Download className="h-3.5 w-3.5" />
-                    Download Report
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={async () => {
+                            try {
+                                const response = await api.get(`/api/admin/minitask-students/export`, { responseType: 'blob' });
+                                const url = window.URL.createObjectURL(new Blob([response.data]));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.setAttribute('download', 'MiniTask_OptIn_Report.xlsx');
+                                document.body.appendChild(link);
+                                link.click();
+                            } catch (e) {
+                                console.error('Failed to export mini-tasks', e);
+                            }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-primary text-primary hover:bg-primary/10 transition-colors rounded-md"
+                    >
+                        <ClipboardList className="h-3.5 w-3.5" />
+                        Export Mini-Tasks Report
+                    </button>
+                    <button
+                        onClick={async () => {
+                            try {
+                                const response = await api.get(`/api/admin/colleges/export`, { responseType: 'blob' });
+                                const url = window.URL.createObjectURL(new Blob([response.data]));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.setAttribute('download', 'Platform_Colleges_Report.xlsx');
+                                document.body.appendChild(link);
+                                link.click();
+                            } catch (e) {
+                                console.error('Failed to export', e);
+                            }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
+                    >
+                        <Download className="h-3.5 w-3.5" />
+                        Download Report
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}

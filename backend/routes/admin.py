@@ -304,6 +304,193 @@ async def export_all_colleges(
 
 
 # ============================================================
+# Mini-Task Opt-in Export
+# ============================================================
+
+@router.get("/minitask-students/export")
+async def export_minitask_students(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Exports a flat list of all students who opted for mini-tasks.
+    One row per (student, tutorial) pair where minitask_opted = True.
+    Columns: S.No., Student Name, Email, College, Tutorial #, Tutorial Title
+    Sorted by tutorial number, then student name.
+    """
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    # Query all minitask opt-ins with student + tutorial + college info
+    res = await db.execute(
+        select(
+            User.display_name,
+            User.username,
+            User.email,
+            College.name.label("college_name"),
+            Tutorial.tutorial_number,
+            Tutorial.title.label("tutorial_title"),
+        )
+        .join(UserTutorial, UserTutorial.user_id == User.id)
+        .join(Tutorial, Tutorial.id == UserTutorial.tutorial_id)
+        .outerjoin(College, College.id == User.college_id)
+        .filter(
+            User.role == "student",
+            UserTutorial.minitask_opted == True,
+            Tutorial.course_id == "linux",
+        )
+        .order_by(Tutorial.tutorial_number, User.display_name)
+    )
+    rows = res.all()
+
+    wb = openpyxl.Workbook()
+    sheet = wb.active
+    sheet.title = "Mini-Task Opt-ins"
+
+    # Column config: (header, width)
+    columns = [
+        ("S.No.", 10),
+        ("Student Name", 35),
+        ("Email", 40),
+        ("College", 45),
+        ("Tutorial #", 14),
+        ("Tutorial Title", 45),
+    ]
+
+    for col_idx, (_, width) in enumerate(columns, start=1):
+        col_letter = openpyxl.utils.get_column_letter(col_idx)
+        sheet.column_dimensions[col_letter].width = width
+
+    # Header row
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    header_align = Alignment(horizontal="center", vertical="center")
+
+    for col_idx, (title, _) in enumerate(columns, start=1):
+        cell = sheet.cell(row=1, column=col_idx, value=title)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+    sheet.row_dimensions[1].height = 28
+
+    # Styling helpers
+    thin_border = Border(
+        left=Side(style="thin", color="D9D9D9"),
+        right=Side(style="thin", color="D9D9D9"),
+        top=Side(style="thin", color="D9D9D9"),
+        bottom=Side(style="thin", color="D9D9D9"),
+    )
+    center_align = Alignment(horizontal="center", vertical="center")
+    left_align = Alignment(horizontal="left", vertical="center", indent=1)
+    even_fill = PatternFill(start_color="F2F7FB", end_color="F2F7FB", fill_type="solid")
+
+    # Data rows
+    for index, row in enumerate(rows, start=1):
+        row_num = index + 1
+        student_name = row.display_name or row.username or ""
+        row_data = [
+            index,
+            student_name,
+            row.email or "",
+            row.college_name or "Unknown",
+            row.tutorial_number,
+            row.tutorial_title,
+        ]
+        for col_idx, value in enumerate(row_data, start=1):
+            cell = sheet.cell(row=row_num, column=col_idx, value=value)
+            cell.border = thin_border
+            # Left-align name, email, college, tutorial title; center the rest
+            cell.alignment = left_align if col_idx in (2, 3, 4, 6) else center_align
+            if index % 2 == 0:
+                cell.fill = even_fill
+        sheet.row_dimensions[row_num].height = 22
+
+    # Enable AutoFilter on all columns so admin can filter/sort directly in Excel
+    last_row = len(rows) + 1  # header + data rows
+    last_col = openpyxl.utils.get_column_letter(len(columns))
+    sheet.auto_filter.ref = f"A1:{last_col}{last_row}"
+
+    # Freeze the header row so it stays visible when scrolling
+    sheet.freeze_panes = "A2"
+
+    # ── Sheet 2: Unique Students (one row per student) ──
+    sheet2 = wb.create_sheet(title="Unique Students")
+
+    # Group rows by email
+    from collections import OrderedDict
+    student_map = OrderedDict()
+    for row in rows:
+        email = row.email or ""
+        if email not in student_map:
+            student_map[email] = {
+                "name": row.display_name or row.username or "",
+                "email": email,
+                "college": row.college_name or "Unknown",
+                "tutorials": [],
+            }
+        student_map[email]["tutorials"].append(
+            f"{row.tutorial_number}. {row.tutorial_title}"
+        )
+
+    cols2 = [
+        ("S.No.", 10),
+        ("Student Name", 35),
+        ("Email", 40),
+        ("College", 45),
+        ("Total Mini-Tasks", 18),
+        ("Tutorials Opted", 70),
+    ]
+
+    for col_idx, (_, width) in enumerate(cols2, start=1):
+        col_letter = openpyxl.utils.get_column_letter(col_idx)
+        sheet2.column_dimensions[col_letter].width = width
+
+    for col_idx, (title, _) in enumerate(cols2, start=1):
+        cell = sheet2.cell(row=1, column=col_idx, value=title)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+    sheet2.row_dimensions[1].height = 28
+
+    for index, (email, info) in enumerate(student_map.items(), start=1):
+        row_num = index + 1
+        tutorials_str = ", ".join(info["tutorials"])
+        row_data = [
+            index,
+            info["name"],
+            info["email"],
+            info["college"],
+            len(info["tutorials"]),
+            tutorials_str,
+        ]
+        for col_idx, value in enumerate(row_data, start=1):
+            cell = sheet2.cell(row=row_num, column=col_idx, value=value)
+            cell.border = thin_border
+            cell.alignment = left_align if col_idx in (2, 3, 4, 6) else center_align
+            if index % 2 == 0:
+                cell.fill = even_fill
+        sheet2.row_dimensions[row_num].height = 22
+
+    # AutoFilter + freeze on Sheet 2
+    last_row2 = len(student_map) + 1
+    last_col2 = openpyxl.utils.get_column_letter(len(cols2))
+    sheet2.auto_filter.ref = f"A1:{last_col2}{last_row2}"
+    sheet2.freeze_panes = "A2"
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    headers_resp = {
+        "Content-Disposition": 'attachment; filename="MiniTask_OptIn_Report.xlsx"'
+    }
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers_resp,
+    )
+
+
+# ============================================================
 # College Daily Average XP (Line Chart Data)
 # ============================================================
 
