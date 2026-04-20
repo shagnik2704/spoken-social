@@ -5,3 +5,7 @@ __pycache__
 node_modules
 .pyc
 docker-compose.yml
+
+# Database backups
+*.sql
+backend/scripts/data/backups/
