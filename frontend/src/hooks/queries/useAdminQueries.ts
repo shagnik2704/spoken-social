@@ -6,8 +6,9 @@ const fetchColleges = async () => {
     return data
 }
 
-const fetchPlatformSummary = async () => {
-    const { data } = await api.get('/api/admin/platform-summary')
+const fetchPlatformSummary = async (state?: string) => {
+    const url = state && state !== 'all' ? `/api/admin/platform-summary?state=${encodeURIComponent(state)}` : '/api/admin/platform-summary'
+    const { data } = await api.get(url)
     return data
 }
 
@@ -48,10 +49,10 @@ export function useColleges() {
     })
 }
 
-export function usePlatformSummary() {
+export function usePlatformSummary(state?: string) {
     return useQuery({
-        queryKey: ['admin', 'platform-summary'],
-        queryFn: fetchPlatformSummary
+        queryKey: ['admin', 'platform-summary', state || 'all'],
+        queryFn: () => fetchPlatformSummary(state)
     })
 }
 

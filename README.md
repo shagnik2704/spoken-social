@@ -63,7 +63,7 @@ Coordinators need to see the "health" of their college. Calculating this in Pyth
 - **Status Computation:** The database returns individual student metrics (`watched`, `completed`). The backend then clusters them into cohorts:
   - `completed`: Finished all tutorials.
   - `active`: Watched > 30% of materials.
-  - `at_risk`: Watched a few, but no recent completion.
+  - `at_risk`: At Risk of Completion (watched a few, but no recent completion).
   - `inactive`: Registered but 0 progress.
 - **Pagination:** The route handles server-side pagination, searching, and sorting with O(1) memory overhead, regardless of the college's size.
 

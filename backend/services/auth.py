@@ -154,11 +154,11 @@ async def _upsert_user(
         )
         db.add(user)
         await db.flush()
-    else:
-        user.role = api_role
-        user.display_name = display_name
-        user.college_id = college_id
-        await db.flush()
+    # else:
+    #     # user.role = api_role
+    #     # user.display_name = display_name
+    #     # user.college_id = college_id
+    #     # await db.flush()
 
     # ── Auto-enroll in Linux course (students only, first login) ──
     if is_new_user and api_role == "student":

@@ -104,7 +104,7 @@ function getStatusConfig(status: Student['status']) {
     switch (status) {
         case 'completed': return { label: 'Completed', color: 'bg-success/10 text-success', dot: 'bg-success' }
         case 'active': return { label: 'Active', color: 'bg-primary/10 text-primary', dot: 'bg-primary' }
-        case 'at_risk': return { label: 'At Risk', color: 'bg-warning/10 text-warning', dot: 'bg-warning' }
+        case 'at_risk': return { label: 'At Risk of Completion', color: 'bg-warning/10 text-warning', dot: 'bg-warning' }
         case 'inactive': return { label: 'Inactive', color: 'bg-destructive/10 text-destructive', dot: 'bg-destructive' }
         case 'not_started': return { label: 'Not Started', color: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground' }
     }
@@ -187,7 +187,7 @@ function StudentRow({ student, index }: { student: Student; index?: number }) {
                 <span className="text-xs font-mono font-semibold tabular-nums">{student.xp}</span>
             </div>
 
-            <div className="w-24 shrink-0 flex justify-center">
+            <div className="w-40 shrink-0 flex justify-center">
                 <Badge className={`${statusConfig.color} border-0 text-[10px] px-2 py-0.5`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${statusConfig.dot} mr-1.5`} />
                     {statusConfig.label}
@@ -254,7 +254,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                 <div className="min-w-[200px] flex-shrink-0 snap-start">
                     <MetricCard
                         icon={AlertTriangle}
-                        label="At Risk"
+                        label="At Risk of Completion"
                         value={college.atRiskStudents}
                         subtext={`${college.inactiveStudents} inactive`}
                         color="bg-warning/10 text-warning"
@@ -289,7 +289,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                             { id: 'all', label: 'All', count: details?.students.length },
                             { id: 'active', label: 'Active', count: details?.students.filter(s => s.status === 'active').length },
                             { id: 'completed', label: 'Completed', count: details?.students.filter(s => s.status === 'completed').length },
-                            { id: 'at_risk', label: 'At Risk', count: details?.students.filter(s => s.status === 'at_risk').length },
+                            { id: 'at_risk', label: 'At Risk of Completion', count: details?.students.filter(s => s.status === 'at_risk').length },
                             { id: 'inactive', label: 'Inactive', count: details?.students.filter(s => s.status === 'inactive' || s.status === 'not_started').length },
                         ] as { id: StatusFilter; label: string; count?: number }[]).map(filter => (
                             <button
@@ -375,7 +375,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-                        <div className="w-24 shrink-0 text-center">Status</div>
+                        <div className="w-40 shrink-0 text-center">Status</div>
                     </div>
 
                     {/* Student Rows */}
@@ -894,7 +894,7 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
                                                 student.status === 'not_started' ? 'bg-muted text-muted-foreground' :
                                                     'bg-destructive/10 text-destructive'
                                                 }`}>
-                                                {student.status === 'at_risk' ? 'At Risk' :
+                                                {student.status === 'at_risk' ? 'At Risk of Completion' :
                                                     student.status === 'not_started' ? 'Not Started' : 'Inactive'}
                                             </Badge>
                                         </div>

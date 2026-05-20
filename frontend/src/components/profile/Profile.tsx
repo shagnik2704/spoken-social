@@ -375,7 +375,7 @@ function AdminDetails() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="h-2.5 w-2.5 rounded-full bg-warning" />
-                                <span className="text-sm"><span className="font-semibold">{metrics.totalAtRisk}</span> <span className="text-muted-foreground">At Risk</span></span>
+                                <span className="text-sm"><span className="font-semibold">{metrics.totalAtRisk}</span> <span className="text-muted-foreground">At Risk of Completion</span></span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="h-2.5 w-2.5 rounded-full bg-danger" />

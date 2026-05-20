@@ -609,7 +609,7 @@ async def get_college_analytics(
         "statusData": [
             {"name": "Completed", "value": status_counts["completed"], "color": "hsl(142, 76%, 36%)"},
             {"name": "Active", "value": status_counts["active"], "color": "hsl(221, 83%, 53%)"},
-            {"name": "At Risk", "value": status_counts["at_risk"], "color": "hsl(38, 92%, 50%)"},
+            {"name": "At Risk of Completion", "value": status_counts["at_risk"], "color": "hsl(38, 92%, 50%)"},
             {"name": "Inactive", "value": status_counts["inactive"], "color": "hsl(0, 72%, 51%)"}
         ],
         "progressData": [

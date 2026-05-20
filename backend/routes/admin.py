@@ -29,6 +29,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 @router.get("/platform-summary")
 async def get_platform_summary(
+    state: Optional[str] = Query(None),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -37,7 +38,7 @@ async def get_platform_summary(
     Everything is done in SQL — no Python loops over students.
     """
 
-    cache_key = "admin:platform_summary"
+    cache_key = f"admin:platform_summary:{state or 'all'}"
     cached = await get_cached(cache_key)
     if cached:
         return cached
@@ -46,8 +47,7 @@ async def get_platform_summary(
     total_tutorials = tot_tut_res.scalar() or 20
 
     # ----- Per-student metrics (one query) -----
-    res_metrics = await db.execute(
-        select(
+    query = select(
         User.id,
         User.display_name,
         User.username,
@@ -67,16 +67,27 @@ async def get_platform_summary(
     ).outerjoin(
         Tutorial,
         (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == "linux")
-    ).filter(
-        User.role == "student",
-    ).group_by(User.id)
     )
+
+    if state:
+        query = query.join(College, College.id == User.college_id).filter(
+            User.role == "student",
+            College.location.ilike(f"%{state}%")
+        )
+    else:
+        query = query.filter(User.role == "student")
+
+    query = query.group_by(User.id)
+    res_metrics = await db.execute(query)
     student_metrics = res_metrics.all()
 
     # ----- Build college name lookup -----
-    colleges_res = await db.execute(select(College.id, College.name))
-    colleges = colleges_res.all()
-    college_names = {c.id: c.name for c in colleges}
+    if state:
+        colleges_res = await db.execute(select(College.id, College.name).filter(College.location.ilike(f"%{state}%")))
+    else:
+        colleges_res = await db.execute(select(College.id, College.name))
+    colleges_loaded = colleges_res.all()
+    college_names = {c.id: c.name for c in colleges_loaded}
 
     # ----- Compute derived metrics -----
     students_enriched = []
@@ -148,8 +159,7 @@ async def get_platform_summary(
 
     # ----- Tutorial-wise completion rates -----
     # For each tutorial number, count how many students have completed it
-    res_stats = await db.execute(
-        select(
+    stats_query = select(
         Tutorial.tutorial_number,
         Tutorial.title,
         func.count(
@@ -157,14 +167,25 @@ async def get_platform_summary(
         ).label("completed_count"),
     ).outerjoin(
         UserTutorial, UserTutorial.tutorial_id == Tutorial.id
-    ).filter(
-        Tutorial.course_id == "linux",
-    ).group_by(
+    )
+
+    if state:
+        stats_query = stats_query.join(User, User.id == UserTutorial.user_id).join(College, College.id == User.college_id).filter(
+            Tutorial.course_id == "linux",
+            User.role == "student",
+            College.location.ilike(f"%{state}%")
+        )
+    else:
+        stats_query = stats_query.filter(
+            Tutorial.course_id == "linux"
+        )
+
+    stats_query = stats_query.group_by(
         Tutorial.tutorial_number, Tutorial.title
     ).order_by(
         Tutorial.tutorial_number
     )
-    )
+    res_stats = await db.execute(stats_query)
     tutorial_stats = res_stats.all()
 
     tutorial_completion = [
@@ -180,7 +201,7 @@ async def get_platform_summary(
     result = {
         "metrics": {
             "totalStudents": total_students,
-            "totalColleges": len(colleges),
+            "totalColleges": len(colleges_loaded),
             "avgProgress": avg_progress,
             "avgXP": avg_xp,
             "completionRate": completion_rate,
@@ -192,7 +213,7 @@ async def get_platform_summary(
         "statusDistribution": [
             {"name": "Completed", "value": status_counts["completed"], "color": "hsl(142, 76%, 36%)"},
             {"name": "Active", "value": status_counts["active"], "color": "hsl(221, 83%, 53%)"},
-            {"name": "At Risk", "value": status_counts["at_risk"], "color": "hsl(38, 92%, 50%)"},
+            {"name": "At Risk of Completion", "value": status_counts["at_risk"], "color": "hsl(38, 92%, 50%)"},
             {"name": "Inactive", "value": status_counts["inactive"] + status_counts["not_started"], "color": "hsl(0, 72%, 51%)"},
         ],
         "progressDistribution": [
@@ -207,7 +228,7 @@ async def get_platform_summary(
         "atRiskStudents": at_risk,
         "tutorialCompletion": tutorial_completion,
     }
-    await set_cached(cache_key,result)
+    await set_cached(cache_key, result)
     return result
 
 

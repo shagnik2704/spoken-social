@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
     Users, TrendingUp, AlertTriangle,
     CheckCircle2, Eye,
     Search, Filter, Trophy, BarChart3,
     Zap, Activity, ChevronRight, ArrowLeft,
     Shield, Building2, MessageCircleQuestion,
-    X, ChevronDown, CalendarDays, Download, ClipboardList
+    X, ChevronDown, CalendarDays, Download, ClipboardList, MapPin
 } from 'lucide-react'
 import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
@@ -97,7 +97,7 @@ function getStatusConfig(status: string) {
     switch (status) {
         case 'completed': return { label: 'Completed', color: 'bg-success/10 text-success', dot: 'bg-success' }
         case 'active': return { label: 'Active', color: 'bg-primary/10 text-primary', dot: 'bg-primary' }
-        case 'at_risk': return { label: 'At Risk', color: 'bg-warning/10 text-warning', dot: 'bg-warning' }
+        case 'at_risk': return { label: 'At Risk of Completion', color: 'bg-warning/10 text-warning', dot: 'bg-warning' }
         case 'inactive': return { label: 'Inactive', color: 'bg-destructive/10 text-destructive', dot: 'bg-destructive' }
         case 'not_started': return { label: 'Not Started', color: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground' }
         default: return { label: status, color: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground' }
@@ -191,7 +191,7 @@ function StudentRow({ student, collegeName, onClick, index }: { student: Student
                 <span className="text-xs font-mono font-semibold tabular-nums">{student.xp}</span>
             </div>
 
-            <div className="w-24 shrink-0 flex justify-center">
+            <div className="w-40 shrink-0 flex justify-center">
                 <Badge className={`${statusConfig.color} border-0 text-[10px] px-2 py-0.5`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${statusConfig.dot} mr-1.5`} />
                     {statusConfig.label}
@@ -240,7 +240,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                     icon={AlertTriangle}
                     label="Need Attention"
                     value={m.totalAtRisk + m.totalInactive}
-                    subtext={`${m.totalAtRisk} at risk · ${m.totalInactive} inactive`}
+                    subtext={`${m.totalAtRisk} at risk of completion · ${m.totalInactive} inactive`}
                     color="bg-warning/10 text-warning"
                 />
             </div>
@@ -392,6 +392,7 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const [selectedMonth, setSelectedMonth] = useState(
         `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     )
+    const [selectedState, setSelectedState] = useState<string>('all')
     const [selectedCollegeIds, setSelectedCollegeIds] = useState<string[]>(
         colleges.map(c => c.id)
     )
@@ -399,6 +400,27 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [collegeSearch, setCollegeSearch] = useState('')
     const dropdownRef = useRef<HTMLDivElement>(null)
+
+    // Extract unique states dynamically from college locations
+    const states = useMemo(() => {
+        const set = new Set<string>()
+        colleges.forEach(c => {
+            if (c.location) {
+                const parts = c.location.split(',')
+                const state = parts[parts.length - 1].trim()
+                if (state) set.add(state)
+            }
+        })
+        return Array.from(set)
+    }, [colleges])
+
+    // Update selectedCollegeIds when state filter changes to auto-select that state's colleges
+    useEffect(() => {
+        const stateColleges = colleges.filter(c => 
+            selectedState === 'all' || (c.location && c.location.includes(selectedState))
+        )
+        setSelectedCollegeIds(stateColleges.map(c => c.id))
+    }, [selectedState, colleges])
 
     // Close dropdown on outside click
     useEffect(() => {
@@ -410,9 +432,6 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
-
-
-
 
     // Generate month options (last 12 months)
     const monthOptions: { value: string; label: string }[] = []
@@ -429,10 +448,12 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
         )
     }
 
-    const filteredColleges = colleges.filter(c =>
-        c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
-        c.id.toLowerCase().includes(collegeSearch.toLowerCase())
-    )
+    const filteredColleges = colleges.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
+            c.id.toLowerCase().includes(collegeSearch.toLowerCase())
+        const matchesState = selectedState === 'all' || (c.location && c.location.includes(selectedState))
+        return matchesSearch && matchesState
+    })
 
     // Build a color map from API response
     const colorMap: Record<string, string> = {}
@@ -458,6 +479,21 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
                             >
                                 {monthOptions.map(opt => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* State Dropdown */}
+                        <div className="relative">
+                            <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                            <select
+                                value={selectedState}
+                                onChange={e => setSelectedState(e.target.value)}
+                                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer"
+                            >
+                                <option value="all">All States</option>
+                                {states.map(state => (
+                                    <option key={state} value={state}>{state}</option>
                                 ))}
                             </select>
                         </div>
@@ -655,7 +691,21 @@ function CollegesTab({ colleges, onStudentClick }: {
     const [page, setPage] = useState(1)
     const [collegeSearch, setCollegeSearch] = useState('')
     const [collegeSort, setCollegeSort] = useState<'progress' | 'name' | 'students' | 'completion' | 'xp'>('progress')
+    const [selectedState, setSelectedState] = useState<string>('all')
     const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, searchQuery)
+
+    // Extract unique states dynamically
+    const states = useMemo(() => {
+        const set = new Set<string>()
+        colleges.forEach(c => {
+            if (c.location) {
+                const parts = c.location.split(',')
+                const state = parts[parts.length - 1].trim()
+                if (state) set.add(state)
+            }
+        })
+        return Array.from(set)
+    }, [colleges])
 
 
 
@@ -739,7 +789,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                                 { id: 'all', label: 'All' },
                                 { id: 'active', label: 'Active' },
                                 { id: 'completed', label: 'Completed' },
-                                { id: 'at_risk', label: 'At Risk' },
+                                { id: 'at_risk', label: 'At Risk of Completion' },
                                 { id: 'inactive', label: 'Inactive' },
                             ] as { id: StatusFilter; label: string }[]).map(filter => (
                                 <button
@@ -787,7 +837,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                             <div className="hidden md:flex w-14 items-center gap-0.5 justify-center"><CheckCircle2 className="h-3 w-3" /> Done</div>
                             <div className="hidden md:flex w-12 items-center gap-0.5 justify-center"><ClipboardList className="h-3 w-3" /> Tasks</div>
                             <div className="hidden lg:block w-16 text-right">XP</div>
-                            <div className="w-24 shrink-0 text-center">Status</div>
+                            <div className="w-40 shrink-0 text-center">Status</div>
                         </div>
 
                         {/* Student Rows */}
@@ -846,11 +896,13 @@ function CollegesTab({ colleges, onStudentClick }: {
         .sort((a, b) => b.avgProgress - a.avgProgress)
         .map((c, i) => ({ ...c, rank: i + 1 }))
 
-    const filteredColleges = collegesWithRank.filter(c => 
-        c.name.toLowerCase().includes(collegeSearch.toLowerCase()) || 
-        c.location.toLowerCase().includes(collegeSearch.toLowerCase()) ||
-        c.coordinatorName.toLowerCase().includes(collegeSearch.toLowerCase())
-    )
+    const filteredColleges = collegesWithRank.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(collegeSearch.toLowerCase()) || 
+            c.location.toLowerCase().includes(collegeSearch.toLowerCase()) ||
+            c.coordinatorName.toLowerCase().includes(collegeSearch.toLowerCase())
+        const matchesState = selectedState === 'all' || (c.location && c.location.includes(selectedState))
+        return matchesSearch && matchesState
+    })
     
     const sortedColleges = [...filteredColleges].sort((a, b) => {
         if (collegeSort === 'progress') return b.avgProgress - a.avgProgress
@@ -880,6 +932,22 @@ function CollegesTab({ colleges, onStudentClick }: {
                                     onChange={(e) => setCollegeSearch(e.target.value)}
                                     className="pl-8 pr-3 py-1.5 text-xs rounded-full border border-border bg-muted/30 w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-primary/30"
                                 />
+                            </div>
+
+                            {/* State Dropdown Filter */}
+                            <div className="relative w-full sm:w-auto">
+                                <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                                <select
+                                    value={selectedState}
+                                    onChange={e => setSelectedState(e.target.value)}
+                                    className="pl-8 pr-8 py-1.5 text-xs rounded-full border border-border bg-muted/30 focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer w-full sm:w-40"
+                                >
+                                    <option value="all">All States</option>
+                                    {states.map(state => (
+                                        <option key={state} value={state}>{state}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                             </div>
                             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground bg-muted/20 px-2 py-1.5 rounded-lg border border-border/30 overflow-x-auto w-full sm:w-auto">
                                 <Filter className="h-3 w-3 shrink-0" />
@@ -981,13 +1049,37 @@ function DonutCenterLabel({ value, label }: { value: string; label: string }) {
     )
 }
 
-function AnalyticsTab({ colleges, summary }: {
+function AnalyticsTab({ colleges }: {
     colleges: CollegeSummary[]
-    summary: PlatformSummary
 }) {
+    const [selectedState, setSelectedState] = useState<string>('all')
+    const { data: summary, isLoading } = usePlatformSummary(selectedState)
+
+    // Extract unique states dynamically
+    const states = useMemo(() => {
+        const set = new Set<string>()
+        colleges.forEach(c => {
+            if (c.location) {
+                const parts = c.location.split(',')
+                const state = parts[parts.length - 1].trim()
+                if (state) set.add(state)
+            }
+        })
+        return Array.from(set)
+    }, [colleges])
+
+    if (isLoading || !summary) {
+        return (
+            <div className="max-w-6xl mx-auto p-12 text-center text-muted-foreground bg-background/50 rounded-lg border border-border/30">
+                <Activity className="h-8 w-8 text-primary animate-pulse mx-auto mb-2" />
+                Loading state analytics...
+            </div>
+        )
+    }
+
     const m = summary.metrics
-    const statusData = summary.statusDistribution.filter(d => d.value > 0)
-    const progressData = summary.progressDistribution.filter(d => d.value > 0)
+    const statusData = summary.statusDistribution.filter((d: any) => d.value > 0)
+    const progressData = summary.progressDistribution.filter((d: any) => d.value > 0)
 
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
@@ -1003,6 +1095,33 @@ function AnalyticsTab({ colleges, summary }: {
 
     return (
         <div className="space-y-5">
+            {/* Filter Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/10 p-3 rounded-lg border border-border/30">
+                <div>
+                    <h2 className="text-sm font-bold flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-primary" />
+                        State-wise Analytics Dashboard
+                    </h2>
+                    <p className="text-[11px] text-muted-foreground">Slices all platform-wide charts, completion drop-offs, and stats by state</p>
+                </div>
+                
+                {/* State Dropdown */}
+                <div className="relative w-full sm:w-auto shrink-0">
+                    <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                    <select
+                        value={selectedState}
+                        onChange={e => setSelectedState(e.target.value)}
+                        className="pl-8 pr-8 py-1.5 text-xs rounded-full border border-border bg-muted/30 focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer w-full sm:w-48"
+                    >
+                        <option value="all">All States (Platform-wide)</option>
+                        {states.map(state => (
+                            <option key={state} value={state}>{state}</option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                </div>
+            </div>
+
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-3">
                 <Card className="border-border/40">
@@ -1043,7 +1162,7 @@ function AnalyticsTab({ colleges, summary }: {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie data={statusData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                                            {statusData.map((entry, index) => (
+                                            {statusData.map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -1053,7 +1172,7 @@ function AnalyticsTab({ colleges, summary }: {
                                 <DonutCenterLabel value={String(m.totalStudents)} label="students" />
                             </div>
                             <div className="flex-1 space-y-2">
-                                {statusData.map(item => (
+                                {statusData.map((item: any) => (
                                     <div key={item.name} className="flex items-center gap-2">
                                         <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                                         <span className="text-xs flex-1">{item.name}</span>
@@ -1078,7 +1197,7 @@ function AnalyticsTab({ colleges, summary }: {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie data={progressData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                                            {progressData.map((entry, index) => (
+                                            {progressData.map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -1091,7 +1210,7 @@ function AnalyticsTab({ colleges, summary }: {
                                 />
                             </div>
                             <div className="flex-1 space-y-2">
-                                {progressData.map(item => (
+                                {progressData.map((item: any) => (
                                     <div key={item.name} className="flex items-center gap-2">
                                         <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                                         <span className="text-xs flex-1">{item.name}</span>
@@ -1113,7 +1232,7 @@ function AnalyticsTab({ colleges, summary }: {
                         <span className="text-[10px] font-normal text-muted-foreground">— where are students dropping off?</span>
                     </h3>
                     <div className="space-y-1.5">
-                        {summary.tutorialCompletion.map(t => (
+                        {summary.tutorialCompletion.map((t: any) => (
                             <div key={t.number} className="flex items-center gap-3">
                                 <span className="text-[11px] text-muted-foreground w-5 text-right font-mono shrink-0">{t.number}</span>
                                 <span className="text-xs w-44 truncate shrink-0">{t.name}</span>
@@ -1149,20 +1268,23 @@ function AnalyticsTab({ colleges, summary }: {
                         College Performance Comparison
                     </h3>
                     <div className="space-y-2">
-                        {[...colleges].sort((a, b) => b.avgProgress - a.avgProgress).map(college => (
-                            <div key={college.id} className="flex items-center gap-3">
-                                <span className="text-xs w-32 truncate shrink-0 font-medium">{college.name} <span className="text-muted-foreground font-normal">({college.totalCourseStudents})</span></span>
-                                <div className="flex-1 h-6 bg-muted/30 rounded overflow-hidden relative">
-                                    <div
-                                        className="h-full rounded bg-primary/50 transition-all duration-500"
-                                        style={{ width: `${college.avgProgress}%` }}
-                                    />
-                                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono font-semibold">
-                                        {college.avgProgress}% avg · {college.completionRate}% done · {college.totalStudents} students
-                                    </span>
+                        {[...colleges]
+                            .filter(c => selectedState === 'all' || (c.location && c.location.includes(selectedState)))
+                            .sort((a, b) => b.avgProgress - a.avgProgress)
+                            .map(college => (
+                                <div key={college.id} className="flex items-center gap-3">
+                                    <span className="text-xs w-32 truncate shrink-0 font-medium">{college.name} <span className="text-muted-foreground font-normal">({college.totalCourseStudents})</span></span>
+                                    <div className="flex-1 h-6 bg-muted/30 rounded overflow-hidden relative">
+                                        <div
+                                            className="h-full rounded bg-primary/50 transition-all duration-500"
+                                            style={{ width: `${college.avgProgress}%` }}
+                                        />
+                                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono font-semibold">
+                                            {college.avgProgress}% avg · {college.completionRate}% done · {college.totalStudents} students
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
                     </div>
                 </CardContent>
             </Card>
@@ -1292,7 +1414,7 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'analytics' && (
-                <AnalyticsTab colleges={colleges} summary={summary} />
+                <AnalyticsTab colleges={colleges} />
             )}
 
             {activeTab === 'feedback' && (
