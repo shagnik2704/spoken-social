@@ -23,10 +23,15 @@ from dependencies import get_current_user, require_coordinator, require_admin
 router = APIRouter(prefix="/api/coordinator", tags=["coordinator"])
 
 
-async def _build_college_summary(db: AsyncSession, college_id: str | None = None) -> list[dict]:
+async def _build_college_summary(
+    db: AsyncSession, 
+    college_id: str | None = None,
+    course_id: str = "linux",
+    batch_id: str | None = None
+) -> list[dict]:
     """
     Builds college summaries using individual SQL queries per college.
-    This approach is clearer and avoids complex correlated subqueries.
+    Now course and batch aware.
     """
     if college_id:
         result = await db.execute(select(College).filter(College.id == college_id))
@@ -34,16 +39,24 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
         result = await db.execute(select(College))
     colleges = result.scalars().all()
 
-    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == "linux"))
+    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
     total_tutorials = tot_tut_res.scalar() or 20
 
     summaries = []
     for college in colleges:
         # Get all student IDs for this college
-        stu_ids_res = await db.execute(select(User.id).filter(
+        # Filter by enrollment in this course/batch if specified
+        stu_query = select(User.id).filter(
             User.college_id == college.id,
             User.role == "student"
-        ))
+        )
+        
+        # Join with UserCourse to ensure they are enrolled in this course/batch
+        stu_query = stu_query.join(UserCourse, UserCourse.user_id == User.id).filter(UserCourse.course_id == course_id)
+        if batch_id:
+            stu_query = stu_query.filter(UserCourse.batch_id == batch_id)
+
+        stu_ids_res = await db.execute(stu_query)
         student_ids = stu_ids_res.scalars().all()
         total = len(student_ids)
 
@@ -53,7 +66,7 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
                 "name": college.name,
                 "location": college.location or "",
                 "coordinatorName": college.coordinator_name or "",
-                "course": college.course_id or "linux",
+                "course": course_id,
                 "totalCourseStudents": 0,
                 "totalStudents": 0,
                 "activeStudents": 0,
@@ -67,29 +80,28 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
             continue
 
         # Per-student metrics via SQL
-        student_metrics_res = await db.execute(
-            select(
-                User.id,
-                User.xp_total,
-                func.count(
-                    case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
-                ).label("watched"),
-                func.count(
-                    case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
-                ).label("completed"),
-                func.count(
-                    case((UserTutorial.minitask_opted == True, UserTutorial.tutorial_id), else_=None)
-                ).label("minitasks_opted"),
-            ).outerjoin(
-                UserTutorial, UserTutorial.user_id == User.id
-            ).outerjoin(
-                Tutorial,
-                (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == "linux")
-            ).filter(
-                User.college_id == college.id,
-                User.role == "student"
-            ).group_by(User.id)
-        )
+        student_metrics_query = select(
+            User.id,
+            User.xp_total,
+            func.count(
+                case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
+            ).label("watched"),
+            func.count(
+                case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
+            ).label("completed"),
+            func.count(
+                case((UserTutorial.minitask_opted == True, UserTutorial.tutorial_id), else_=None)
+            ).label("minitasks_opted"),
+        ).outerjoin(
+            UserTutorial, UserTutorial.user_id == User.id
+        ).outerjoin(
+            Tutorial,
+            (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id)
+        ).filter(
+            User.id.in_(student_ids) # Only students for this college/course/batch
+        ).group_by(User.id)
+        
+        student_metrics_res = await db.execute(student_metrics_query)
         student_metrics = student_metrics_res.all()
 
         num_completed = 0
@@ -127,7 +139,7 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
             "name": college.name,
             "location": college.location or "",
             "coordinatorName": college.coordinator_name or "",
-            "course": college.course_id or "linux",
+            "course": course_id,
             "totalCourseStudents": total,
             "totalStudents": total,
             "activeStudents": num_active + num_completed,
@@ -143,19 +155,36 @@ async def _build_college_summary(db: AsyncSession, college_id: str | None = None
     return summaries
 
 
-async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = "linux",
-                      page: int = 1, limit: int = 50,
-                      sort: str = "progress", status_filter: str = "all",
-                      search: str = ""):
+async def _get_student_rows(
+    db: AsyncSession, 
+    college_id: str, 
+    course_id: str = "linux",
+    batch_id: str | None = None,
+    page: int = 1, 
+    limit: int = 50,
+    sort: str = "progress", 
+    status_filter: str = "all",
+    search: str = ""
+):
     """
-    Returns paginated student rows for a specific college.
-    Status calculation, filtering, sorting, and pagination are ALL done in SQL.
-    PostgreSQL only returns the exact rows needed for the requested page.
+    Returns paginated student rows for a specific college and course/batch.
     """
     tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
     total_tutorials = tot_tut_res.scalar() or 20
 
-    # ── Step 1: Build a subquery that computes per-student aggregations ──
+    # ── Step 1: Build the student IDs query (filtered by college, course, batch) ──
+    stu_id_query = select(User.id).filter(
+        User.college_id == college_id,
+        User.role == "student"
+    )
+    stu_id_query = stu_id_query.join(UserCourse, UserCourse.user_id == User.id).filter(UserCourse.course_id == course_id)
+    if batch_id:
+        stu_id_query = stu_id_query.filter(UserCourse.batch_id == batch_id)
+        
+    stu_ids_res = await db.execute(stu_id_query)
+    student_ids = stu_ids_res.scalars().all()
+
+    # ── Step 2: Build the aggregation query ──
     watched_col = func.count(
         case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
     ).label("tutorials_watched")
@@ -168,7 +197,6 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
         case((UserTutorial.minitask_opted == True, UserTutorial.tutorial_id), else_=None)
     ).label("minitasks_opted")
 
-    # Progress as a percentage (integer 0–100), computed in SQL
     progress_col = case(
         (literal(total_tutorials) > 0,
          func.round(
@@ -179,7 +207,6 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
         else_=literal(0),
     ).label("progress")
 
-    # Status derived in SQL using the same business rules as before
     status_col = case(
         (func.count(
             case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
@@ -210,8 +237,7 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
         Tutorial,
         (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id)
     ).filter(
-        User.college_id == college_id,
-        User.role == "student",
+        User.id.in_(student_ids)
     ).group_by(User.id)
 
     # Search filter (applied before aggregation since it's on User columns)
@@ -297,21 +323,35 @@ async def _get_student_rows(db: AsyncSession, college_id: str, course_id: str = 
 # ===== ROUTES =====
 
 
+@router.get("/public/list")
+async def get_public_colleges(db: AsyncSession = Depends(get_db)):
+    """Publicly accessible list of colleges for the login dropdown."""
+    result = await db.execute(select(College.id, College.name).order_by(College.name))
+    return [{"id": row.id, "name": row.name} for row in result.all()]
+
+
 @router.get("/colleges")
 async def get_all_colleges(
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
     user: User = Depends(require_coordinator),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Returns all colleges with computed metrics.
-    Coordinator and Admin both have access.
+    Returns all colleges with computed metrics for a course/batch.
     """
-    return await _build_college_summary(db)
+    college_id = None
+    if user.effective_role == "coordinator":
+        college_id = user.college_id
+
+    return await _build_college_summary(db, college_id=college_id, course_id=course_id, batch_id=batch_id)
 
 
 @router.get("/colleges/{college_id}")
 async def get_college_details(
     college_id: str,
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200),
     sort: str = Query("progress"),
@@ -321,11 +361,10 @@ async def get_college_details(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Returns a specific college's details + paginated student list.
-    Coordinator can only access their own college; admin can access any.
+    Returns a specific college's details + paginated student list for a course/batch.
     """
     # Coordinator can only see their own college
-    if user.role == "coordinator" and str(user.college_id) != str(college_id):
+    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
         raise HTTPException(
             status_code=403,
             detail="You can only view your own college's students",
@@ -336,12 +375,12 @@ async def get_college_details(
     if not college:
         raise HTTPException(status_code=404, detail="College not found")
 
-    summary = await _build_college_summary(db, college_id=college_id)
+    summary = await _build_college_summary(db, college_id=college_id, course_id=course_id, batch_id=batch_id)
     if not summary:
         raise HTTPException(status_code=404, detail="College not found")
 
     student_data = await _get_student_rows(
-        db, college_id,
+        db, college_id, course_id=course_id, batch_id=batch_id,
         page=page, limit=limit, sort=sort,
         status_filter=status, search=search,
     )
@@ -352,7 +391,7 @@ async def get_college_details(
             "name": college.name,
             "location": college.location or "",
             "coordinatorName": college.coordinator_name or "",
-            "course": college.course_id or "linux",
+            "course": course_id,
         },
         "metrics": {
             "totalStudents": summary[0]["totalStudents"],
@@ -370,13 +409,15 @@ async def get_college_details(
 @router.get("/colleges/{college_id}/export")
 async def export_college_students(
     college_id: str,
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
     user: User = Depends(require_coordinator),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Exports a list of all students and their progress to an Excel file.
     """
-    if user.role == "coordinator" and str(user.college_id) != str(college_id):
+    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
         raise HTTPException(
             status_code=403,
             detail="You can only export your own college's students",
@@ -384,7 +425,7 @@ async def export_college_students(
 
     # Fetch max students for export
     student_data = await _get_student_rows(
-        db, college_id,
+        db, college_id, course_id=course_id, batch_id=batch_id,
         page=1, limit=10000, sort="progress",
         status_filter="all", search="",
     )

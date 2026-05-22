@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { TopBar, DesktopSidebar, MobileBottomNav } from '@/components/layout/Navbar'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { ComposeModalProvider } from '@/hooks/useComposeModal'
@@ -18,6 +18,8 @@ import { Toaster } from '@/components/ui/sonner'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
+import { ImpersonationBanner } from '@/components/layout/ImpersonationBanner'
+import { LandingPage } from './components/auth/LandingPage'
 
 function App() {
 
@@ -61,6 +63,9 @@ function App() {
             </Routes>
           ) : (
             <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
+              {/* Impersonation Banner */}
+              <ImpersonationBanner />
+
               {/* Top Bar — fixed, never scrolls */}
               <TopBar />
 
@@ -72,7 +77,8 @@ function App() {
                 <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 pb-20 lg:pb-6">
                   <Suspense fallback={<div className="flex h-full items-center justify-center p-8">Loading page...</div>}>
                     <Routes>
-                      <Route path="/" element={<Navigate to={user?.role === 'admin' ? '/admin' : user?.role === 'coordinator' ? '/coordinator' : '/dashboard'} replace />} />
+                      <Route path="/" element={<LandingPage />} />
+                      <Route path="/landing" element={<LandingPage />} />
                       {/* <Route path="/feed" element={<Feed />} /> */}
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/profile" element={<Profile />} />

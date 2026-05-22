@@ -18,6 +18,7 @@ import {
 
     Users,
     Shield,
+    Calendar,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useAuthStore } from '@/store/authStore'
 import { useLeaderboardStore } from '@/store/leaderboardStore'
+// import { CourseBatchSelector } from './CourseBatchSelector'
 
 // Navigation items for the sidebar/bottom nav
 const navItems = [
@@ -47,6 +49,7 @@ const navItems = [
     { icon: User, label: 'Profile', path: '/profile', roles: ['student', 'coordinator', 'admin'] },
     { icon: Users, label: 'My Students', path: '/coordinator', roles: ['coordinator'] },
     { icon: Shield, label: 'Admin Panel', path: '/admin', roles: ['admin'] },
+    { icon: Calendar, label: 'Switch Batch', path: '/landing', roles: ['student', 'coordinator', 'admin'] },
 ]
 
 
@@ -96,6 +99,8 @@ export function TopBar() {
                         />
                     </div>
                 </div>
+
+                {/* Center-Right — Global Selector removed as per request */}
 
                 {/* Right — Actions */}
                 <div className="flex items-center gap-1 sm:gap-2">

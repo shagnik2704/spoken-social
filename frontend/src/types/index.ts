@@ -29,6 +29,8 @@ export interface User {
     following: number
     postsCount: number
     role: UserRole
+    effectiveRole: UserRole
+    isImpersonating: boolean
     collegeId?: string | null
 }
 

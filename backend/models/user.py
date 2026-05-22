@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Text, Index, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, Text, Index, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from database import Base
@@ -21,7 +21,8 @@ class User(Base):
     xp_total = Column(Integer, nullable=False, default=0)
     xp_last_week = Column(Integer, nullable=False, default=0)
     role = Column(String(20), nullable=False, default="student")  # student | coordinator | admin
-    college_id = Column(String(50), ForeignKey("colleges.id"), nullable=True)  # which college they belong to
+    college_id = Column(String(50), ForeignKey("colleges.id", ondelete="SET NULL"), nullable=True)  # which college they belong to
+    is_test_account = Column(Boolean, default=False)  # Marks auto-generated test students
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
@@ -41,7 +42,7 @@ class User(Base):
         Index("idx_users_xp_total", xp_total.desc()),
     )
 
-    async def to_api_dict(self, db=None):
+    async def to_api_dict(self, db=None, active_course_id=None):
         """Convert to the JSON shape the frontend expects."""
         from models.post import Post
         from models.follow import Follow
@@ -86,7 +87,7 @@ class User(Base):
         # Compute xp_for_next_level using formula: 100 * (level+1)^2
         xp_for_next_level = 100 * (self.level + 1) * (self.level + 1)
 
-        return {
+        res = {
             "id": str(self.id),
             "username": self.username,
             "displayName": self.display_name,
@@ -105,9 +106,25 @@ class User(Base):
             "followers": followers_count,
             "following": following_count,
             "postsCount": posts_count,
-            "role": self.role,
+            "role": self.__dict__.get("effective_role", self.role),
+            "effectiveRole": self.__dict__.get("effective_role", self.role),
+            "isImpersonating": self.__dict__.get("is_impersonating", False),
             "collegeId": self.college_id,
+            "active_batch_id": None,
+            "active_batch_is_active": True,
         }
+
+        # Try to find batch info from UserCourse
+        if self.courses:
+            # If active_course_id provided, use that, otherwise use first
+            target_course = active_course_id or (self.courses[0].course_id if self.courses else None)
+            uc = next((c for c in self.courses if c.course_id == target_course), self.courses[0] if self.courses else None)
+            if uc:
+                res["active_batch_id"] = uc.batch_id
+                if uc.batch:
+                    res["active_batch_is_active"] = uc.batch.status == "active"
+
+        return res
 
     def _level_title(self):
         if self.xp_total >= 12000: return "Spoken Legend"

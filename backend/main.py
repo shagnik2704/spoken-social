@@ -12,6 +12,7 @@ from routes.coordinator import router as coordinator_router
 from routes.feedback import router as feedback_router
 from routes.admin import router as admin_router
 from routes.webhooks import router as webhooks_router
+from routes.course import router as course_router
 
 
 
@@ -29,7 +30,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -42,3 +43,4 @@ app.include_router(coordinator_router)
 app.include_router(feedback_router)
 app.include_router(admin_router)
 app.include_router(webhooks_router)
+app.include_router(course_router)

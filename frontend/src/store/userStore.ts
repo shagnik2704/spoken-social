@@ -4,7 +4,6 @@ import api from '@/lib/axios'
 
 
 interface UserState {
-
     user: User | null
     isLoading: boolean
     error: string | null
@@ -14,9 +13,9 @@ interface UserState {
     tutorials: Tutorial[]
     forumActivity: ForumActivityMap
     activeCourseId: string
+    activeBatchId: string | null
+    activeBatchIsActive: boolean
     weeklyGoal: any
-
-
 
     fetchTutorials: (courseId: string) => Promise<void>
     fetchForumActivity: (courseId: string) => Promise<void>
@@ -26,10 +25,11 @@ interface UserState {
     logout: () => void
     updateProfile: (updates: Partial<User>) => void
     addXP: (amount: number) => void
+    setActiveCourse: (courseId: string) => void
+    setActiveBatch: (batchId: string | null, isActive?: boolean) => void
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
-
     user: null,
     isLoading: false,
     error: null,
@@ -39,6 +39,8 @@ export const useUserStore = create<UserState>((set, get) => ({
     tutorials: [],
     forumActivity: {},
     activeCourseId: 'linux',
+    activeBatchId: null,
+    activeBatchIsActive: true,
     weeklyGoal: null,
 
 
@@ -53,6 +55,9 @@ export const useUserStore = create<UserState>((set, get) => ({
                 courses: data.courses,
                 badges: data.badges,
                 isAuthenticated: true,
+                activeCourseId: data.courses?.[0]?.id || 'linux',
+                activeBatchId: data.active_batch_id || null,
+                activeBatchIsActive: data.active_batch_is_active ?? true
             })
         }
         catch (error) {
@@ -65,7 +70,6 @@ export const useUserStore = create<UserState>((set, get) => ({
     fetchTutorials: async (courseId) => {
         try {
             const { data } = await api.get(`/api/me/courses/${courseId}/tutorials`)
-            // Backend returns boolean values — convert to 'yes'/'no' strings for RadioGroup
             const fields = ['watched', 'practiced', 'assignmentDone', 'forumAsked', 'forumAnswered', 'minitaskOpted'] as const
             const converted = data.map((t: any) => {
                 const out = { ...t }
@@ -91,7 +95,8 @@ export const useUserStore = create<UserState>((set, get) => ({
     },
 
     updateTutorials(courseId, tutorialId, field, value) {
-        // Convert 'yes'/'no' to boolean for the backend API
+        if (!get().activeBatchIsActive) return
+
         const boolValue = value === 'yes' ? true : value === 'no' ? false : null
 
         set({
@@ -133,31 +138,24 @@ export const useUserStore = create<UserState>((set, get) => ({
     },
 
     addXP: (amount) => {
+        if (!get().activeBatchIsActive) return
         const { user } = get()
         if (!user) return
 
         const newXP = user.xpTotal + amount
-        const newXPToday = user.xpToday + amount
-        const newXPWeek = user.xpThisWeek + amount
-
-        let newLevel = user.level
-        let newTitle = user.levelTitle
-        if (newXP >= 12000) { newLevel = 26; newTitle = 'Spoken Legend' }
-        else if (newXP >= 7000) { newLevel = 21; newTitle = 'Master' }
-        else if (newXP >= 3500) { newLevel = 16; newTitle = 'Expert' }
-        else if (newXP >= 1500) { newLevel = 11; newTitle = 'Practitioner' }
-        else if (newXP >= 500) { newLevel = 6; newTitle = 'Explorer' }
-        else { newLevel = 1; newTitle = 'Beginner' }
-
         set({
             user: {
                 ...user,
                 xpTotal: newXP,
-                xpToday: newXPToday,
-                xpThisWeek: newXPWeek,
-                level: newLevel,
-                levelTitle: newTitle,
             },
         })
     },
+
+    setActiveCourse: (courseId) => {
+        set({ activeCourseId: courseId, activeBatchId: null })
+    },
+
+    setActiveBatch: (batchId, isActive = true) => {
+        set({ activeBatchId: batchId, activeBatchIsActive: isActive })
+    }
 }))

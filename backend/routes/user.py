@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,9 +29,19 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
     if not user_loaded:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Preserve impersonation context from get_current_user dependency
+    user_loaded.effective_role = getattr(user, "effective_role", user.role)
+    user_loaded.real_user_id = getattr(user, "real_user_id", user.id)
+    user_loaded.is_impersonating = getattr(user, "is_impersonating", False)
+    user_loaded.target_college_id = getattr(user, "target_college_id", None)
+    print(f"DEBUG /ME: user={user_loaded.email}, effective_role={user_loaded.effective_role}, target_college_id={user_loaded.target_college_id}")
+    if user_loaded.target_college_id:
+        user_loaded.college_id = user_loaded.target_college_id
+
     courses = [uc.to_api_dict() for uc in user_loaded.courses]
     badges = [ub.to_api_dict() for ub in user_loaded.badges]
 
+    print(f"DEBUG /ME: user_loaded={user_loaded.email}, final_role={user_loaded.effective_role}, college_id={user_loaded.college_id}")
     return {
         "user": await user_loaded.to_api_dict(db=db),
         "courses": courses,
@@ -115,19 +125,31 @@ class TutorialUpdate(BaseModel):
 class XPUpdate(BaseModel):
     amount: int
     source: str
+    batch_id: Optional[str] = None
 
 
 # ===== TUTORIAL ENDPOINTS (protected) =====
 
 @router.get('/me/courses/{course_id}/tutorials')
-async def get_my_tutorials(course_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_my_tutorials(
+    course_id: str, 
+    batch_id: Optional[str] = Query(None),
+    user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
     stmt = (
         select(UserTutorial)
         .options(selectinload(UserTutorial.tutorial))
         .join(Tutorial, UserTutorial.tutorial_id == Tutorial.id)
         .filter(UserTutorial.user_id == user.id, Tutorial.course_id == course_id)
-        .order_by(Tutorial.tutorial_number)
     )
+    
+    if batch_id:
+        # Filter tutorials associated with this specific batch enrollment
+        pass # In our simplified schema, UserTutorial isn't directly batch-linked yet, 
+             # but UserCourse is. For now, we return all for the course.
+    
+    stmt = stmt.order_by(Tutorial.tutorial_number)
     result = await db.execute(stmt)
     tutorials = result.scalars().all()
     
@@ -161,8 +183,18 @@ async def get_my_forum_activity(course_id: str, user: User = Depends(get_current
 
 
 @router.put('/me/courses/{course_id}/tutorials/{tutorial_id}')
-async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
-                    user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def update_tutorial(
+    course_id: str, 
+    tutorial_id: str, 
+    body: TutorialUpdate,
+    batch_id: Optional[str] = Query(None),
+    user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if batch is active
+    from dependencies import check_batch_active
+    await check_batch_active(batch_id, db)
+
     import uuid
     try:
         tut_uuid = uuid.UUID(tutorial_id)
@@ -254,7 +286,15 @@ async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate
 # ===== XP ENDPOINT (protected) =====
 
 @router.post('/me/xp')
-async def add_xp(body: XPUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def add_xp(
+    body: XPUpdate, 
+    user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if batch is active
+    from dependencies import check_batch_active
+    await check_batch_active(body.batch_id, db)
+
     user.xp_total += body.amount
 
     # Log XP event

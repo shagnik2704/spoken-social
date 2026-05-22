@@ -5,7 +5,7 @@ import {
     Search, Filter, Trophy, BarChart3,
     Zap, Activity, ChevronRight, ArrowLeft,
     Shield, Building2, MessageCircleQuestion,
-    X, ChevronDown, CalendarDays, Download, ClipboardList, MapPin
+    X, ChevronDown, CalendarDays, Download, ClipboardList, MapPin, Lock
 } from 'lucide-react'
 import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,7 +19,9 @@ import {
 
 import { FeedbackPanel } from '@/components/admin/FeedbackPanel'
 import { StudentFeedbackDrawer } from '@/components/admin/StudentFeedbackDrawer'
-import { useCollegeDetails, useColleges, useCollegesDailyXP, usePlatformSummary } from '@/hooks/queries/useAdminQueries'
+import { useColleges, usePlatformSummary, useFeedbackSummary, useCollegesDailyXP, useCollegeDetails } from '@/hooks/queries/useAdminQueries'
+import { useAuthStore } from '@/store/authStore'
+import { useUserStore } from '@/store/userStore'
 
 // ===== TYPES =====
 
@@ -87,7 +89,7 @@ interface EnrichedStudent {
     collegeName: string
 }
 
-type Tab = 'overview' | 'colleges' | 'analytics' | 'feedback'
+type Tab = 'overview' | 'colleges' | 'analytics' | 'feedback' | 'minitasks'
 type SortBy = 'name' | 'progress' | 'xp' | 'tasks'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
@@ -680,9 +682,10 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
 // ===== COLLEGES TAB =====
 // College list uses summary data. Drill-down fetches paginated students on demand.
 
-function CollegesTab({ colleges, onStudentClick }: {
+function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
     colleges: CollegeSummary[]
     onStudentClick: (student: { id: string, name: string, initials: string }) => void
+    onImpersonate?: (collegeId: string) => void
 }) {
     const [selectedCollegeId, setSelectedCollegeId] = useState<string | null>(null)
     const [sortBy, setSortBy] = useState<SortBy>('progress')
@@ -692,7 +695,9 @@ function CollegesTab({ colleges, onStudentClick }: {
     const [collegeSearch, setCollegeSearch] = useState('')
     const [collegeSort, setCollegeSort] = useState<'progress' | 'name' | 'students' | 'completion' | 'xp'>('progress')
     const [selectedState, setSelectedState] = useState<string>('all')
-    const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, searchQuery)
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, searchQuery, activeCourseId, activeBatchId)
 
     // Extract unique states dynamically
     const states = useMemo(() => {
@@ -744,18 +749,27 @@ function CollegesTab({ colleges, onStudentClick }: {
                                         {college.location} · {college.coordinatorName} · {college.course}
                                     </p>
                                 </div>
-                                <div className="flex gap-4">
-                                    <div className="text-center">
-                                        <p className="text-xl font-bold">{college.totalStudents}</p>
-                                        <p className="text-[10px] text-muted-foreground">Students</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-xl font-bold text-primary">{college.avgProgress}%</p>
-                                        <p className="text-[10px] text-muted-foreground">Progress</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className={`text-xl font-bold ${college.completionRate >= 30 ? 'text-success' : 'text-warning'}`}>{college.completionRate}%</p>
-                                        <p className="text-[10px] text-muted-foreground">Completed</p>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => onImpersonate?.(college.id)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors rounded-md"
+                                    >
+                                        <Shield className="h-3.5 w-3.5" />
+                                        Impersonate Coordinator
+                                    </button>
+                                    <div className="flex gap-4">
+                                        <div className="text-center">
+                                            <p className="text-xl font-bold">{college.totalStudents}</p>
+                                            <p className="text-[10px] text-muted-foreground">Students</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-xl font-bold text-primary">{college.avgProgress}%</p>
+                                            <p className="text-[10px] text-muted-foreground">Progress</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className={`text-xl font-bold ${college.completionRate >= 30 ? 'text-success' : 'text-warning'}`}>{college.completionRate}%</p>
+                                            <p className="text-[10px] text-muted-foreground">Completed</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1094,7 +1108,7 @@ function AnalyticsTab({ colleges }: {
     }
 
     return (
-        <div className="space-y-5">
+        <div className="max-w-6xl mx-auto space-y-6">
             {/* Filter Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/10 p-3 rounded-lg border border-border/30">
                 <div>
@@ -1294,16 +1308,33 @@ function AnalyticsTab({ colleges }: {
 
 
 // ===== MAIN COMPONENT =====
+import { MiniTaskAnalysis } from './MiniTaskAnalysis'
 
 export default function AdminDashboard() {
-
-    const { data: colleges = [], isLoading: collegesLoading } = useColleges()
-    const { data: summary, isLoading: summaryLoading } = usePlatformSummary()
-    const isLoading = collegesLoading || summaryLoading
-
-    const [activeTab, setActiveTab] = useState<Tab>('overview')
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
+    const [_selectedStudent, _setSelectedStudent] = useState<{ id: string, name: string, initials: string } | null>(null)
     const [selectedStudentForFeedback, setSelectedStudentForFeedback] = useState<{ id: string, name: string, initials: string } | null>(null)
+    const [platformStateFilter, _setPlatformStateFilter] = useState<string>('all')
+    const impersonate = useAuthStore(state => state.impersonate)
+    const [activeTab, setActiveTab] = useState<Tab>('overview')
 
+    const handleImpersonateCoordinator = async (collegeId: string) => {
+        try {
+            await impersonate(collegeId, 'coordinator')
+        } catch (e) {
+            console.error('Failed to impersonate coordinator', e)
+        }
+    }
+
+    const { data: colleges = [], isLoading: isLoadingColleges } = useColleges(activeCourseId, activeBatchId)
+    const { data: summary, isLoading: isLoadingSummary } = usePlatformSummary(platformStateFilter, activeCourseId, activeBatchId)
+
+    const feedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
+        useFeedbackSummary(filters, activeCourseId, activeBatchId)
+
+    const isLoading = isLoadingColleges || isLoadingSummary
     const totalStudents = colleges.reduce((a: number, c: CollegeSummary) => a + c.totalStudents, 0)
 
     const tabs = [
@@ -1311,6 +1342,7 @@ export default function AdminDashboard() {
         { id: 'colleges' as const, label: 'Colleges', icon: Building2 },
         { id: 'analytics' as const, label: 'Analytics', icon: Activity },
         { id: 'feedback' as const, label: 'Feedback', icon: MessageCircleQuestion },
+        { id: 'minitasks' as const, label: 'MiniTasks', icon: ClipboardList },
     ]
 
     if (isLoading || !summary) {
@@ -1322,7 +1354,13 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-5">
+        <div className="max-w-6xl mx-auto p-6 space-y-6">
+            {!activeBatchIsActive && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch — Read Only Mode</p>
+                </div>
+            )}
             {/* Header */}
             <div className="flex items-start sm:items-center justify-between flex-wrap gap-4">
                 <div>
@@ -1357,7 +1395,7 @@ export default function AdminDashboard() {
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-primary text-primary hover:bg-primary/10 transition-colors rounded-md"
                     >
                         <ClipboardList className="h-3.5 w-3.5" />
-                        Export Mini-Tasks Report
+                        MiniTask EOI
                     </button>
                     <button
                         onClick={async () => {
@@ -1376,7 +1414,7 @@ export default function AdminDashboard() {
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
                     >
                         <Download className="h-3.5 w-3.5" />
-                        Download Report
+                        Download Progress Report
                     </button>
                 </div>
             </div>
@@ -1410,7 +1448,11 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'colleges' && (
-                <CollegesTab colleges={colleges} onStudentClick={setSelectedStudentForFeedback} />
+                <CollegesTab 
+                    colleges={colleges} 
+                    onStudentClick={setSelectedStudentForFeedback} 
+                    onImpersonate={handleImpersonateCoordinator}
+                />
             )}
 
             {activeTab === 'analytics' && (
@@ -1418,7 +1460,13 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'feedback' && (
-                <FeedbackPanel onStudentClick={setSelectedStudentForFeedback} />
+                <FeedbackPanel useFeedbackData={feedbackHook} onStudentClick={setSelectedStudentForFeedback} />
+            )}
+
+            {activeTab === 'minitasks' && (
+                <div className="bg-card/30 rounded-2xl p-6 lg:p-8 border border-border/50">
+                    <MiniTaskAnalysis />
+                </div>
             )}
 
             {selectedStudentForFeedback && (

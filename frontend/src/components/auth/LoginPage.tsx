@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import api from '@/lib/axios'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,15 +12,23 @@ import { toast } from 'sonner'
 export function LoginPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [role, setRole] = useState<'student' | 'coordinator' | 'admin'>('student')
     const [isLoading, setIsLoading] = useState(false)
+    const [colleges, setColleges] = useState<{ id: string, name: string }[]>([])
+    const [selectedCollegeId, setSelectedCollegeId] = useState('')
+
     const login = useAuthStore(state => state.login)
     const error = useAuthStore(state => state.error)
     const navigate = useNavigate()
 
+    useEffect(() => {
+        api.get('/api/coordinator/public/list').then(res => setColleges(res.data))
+    }, [])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
-        const success = await login(email, password)
+        const success = await login(email, password, role, selectedCollegeId)
         setIsLoading(false)
         if (success) {
             toast.success('Successfully logged in!',
@@ -30,7 +39,7 @@ export function LoginPage() {
             navigate('/')
         }
         else {
-            toast.error('Login failed.Please check your credentials')
+            toast.error('Login failed. Please check your credentials')
         }
     }
 
@@ -60,6 +69,23 @@ export function LoginPage() {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* Role selection tabs */}
+                            <div className="flex p-1 bg-muted rounded-lg mb-2">
+                                {(['student', 'coordinator', 'admin'] as const).map((r) => (
+                                    <button
+                                        key={r}
+                                        type="button"
+                                        onClick={() => setRole(r)}
+                                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                            role === r 
+                                            ? 'bg-background text-foreground shadow-sm' 
+                                            : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
 
                             {/* Error message */}
                             {error && (
@@ -103,6 +129,27 @@ export function LoginPage() {
                                     required
                                 />
                             </div>
+
+                            {/* College Selection (Conditional) */}
+                            {role !== 'admin' && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                    <Label htmlFor="college">College</Label>
+                                    <select
+                                        id="college"
+                                        value={selectedCollegeId}
+                                        onChange={e => setSelectedCollegeId(e.target.value)}
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        required
+                                    >
+                                        <option value="">Select a college...</option>
+                                        {colleges.map(c => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             {/* Submit button */}
                             <Button type="submit" className="w-full" disabled={isLoading}>

@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 import openpyxl
 
 from database import get_db
-from models import User, College, UserTutorial, Tutorial
+from models import User, College, UserTutorial, Tutorial, UserCourse
 from models.feedback import TutorialFeedback
 from models.xp_event import XPEvent
 from dependencies import require_admin
@@ -29,21 +29,23 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 @router.get("/platform-summary")
 async def get_platform_summary(
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Returns a single, pre-computed payload for the admin Overview + Analytics tabs.
-    Everything is done in SQL — no Python loops over students.
+    Now course and batch aware.
     """
 
-    cache_key = f"admin:platform_summary:{state or 'all'}"
+    cache_key = f"admin:platform_summary:{course_id}:{batch_id or 'all'}:{state or 'all'}"
     cached = await get_cached(cache_key)
     if cached:
         return cached
 
-    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == "linux"))
+    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
     total_tutorials = tot_tut_res.scalar() or 20
 
     # ----- Per-student metrics (one query) -----
@@ -66,8 +68,15 @@ async def get_platform_summary(
         UserTutorial, UserTutorial.user_id == User.id
     ).outerjoin(
         Tutorial,
-        (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == "linux")
+        (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id)
+    ).join(
+        UserCourse, UserCourse.user_id == User.id
+    ).filter(
+        UserCourse.course_id == course_id
     )
+
+    if batch_id:
+        query = query.filter(UserCourse.batch_id == batch_id)
 
     if state:
         query = query.join(College, College.id == User.college_id).filter(
@@ -171,13 +180,13 @@ async def get_platform_summary(
 
     if state:
         stats_query = stats_query.join(User, User.id == UserTutorial.user_id).join(College, College.id == User.college_id).filter(
-            Tutorial.course_id == "linux",
+            Tutorial.course_id == course_id,
             User.role == "student",
             College.location.ilike(f"%{state}%")
         )
     else:
         stats_query = stats_query.filter(
-            Tutorial.course_id == "linux"
+            Tutorial.course_id == course_id
         )
 
     stats_query = stats_query.group_by(
@@ -232,8 +241,60 @@ async def get_platform_summary(
     return result
 
 
+@router.get("/minitask-analysis")
+async def get_minitask_analysis(
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Returns aggregated minitask opt-in data by college and tutorial.
+    """
+    # Query all minitask opt-ins
+    query = (
+        select(
+            College.name.label("college_name"),
+            Tutorial.tutorial_number,
+            func.count(UserTutorial.user_id).label("count")
+        )
+        .join(User, User.id == UserTutorial.user_id)
+        .join(Tutorial, Tutorial.id == UserTutorial.tutorial_id)
+        .join(UserCourse, UserCourse.user_id == User.id)
+        .outerjoin(College, College.id == User.college_id)
+        .filter(
+            User.role == "student",
+            UserTutorial.minitask_opted == True,
+            Tutorial.course_id == course_id,
+            UserCourse.course_id == course_id
+        )
+    )
+
+    if batch_id:
+        query = query.filter(UserCourse.batch_id == batch_id)
+    
+    query = query.group_by(College.name, Tutorial.tutorial_number).order_by(College.name, Tutorial.tutorial_number)
+    
+    res = await db.execute(query)
+    rows = res.all()
+
+    # Structure the data for frontend: {college_name: {tut_num: count}}
+    analysis = {}
+    for row in rows:
+        cname = row.college_name or "Unknown"
+        if cname not in analysis:
+            analysis[cname] = {}
+        analysis[cname][row.tutorial_number] = row.count
+
+    return analysis
+
+
+
+
 @router.get("/colleges/export")
 async def export_all_colleges(
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -243,7 +304,7 @@ async def export_all_colleges(
     # Import the same logic used to calculate their summary
     from routes.coordinator import _build_college_summary
     
-    colleges_summary = await _build_college_summary(db)
+    colleges_summary = await _build_college_summary(db, course_id=course_id, batch_id=batch_id)
 
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 

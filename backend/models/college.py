@@ -15,9 +15,9 @@ class College(Base):
     name = Column(String(255), nullable=False)          # e.g. "VJTI Mumbai"
     location = Column(String(255))                      # e.g. "Mumbai, Maharashtra"
     coordinator_name = Column(String(255))              # e.g. "Prof. Sanjay Deshmukh"
-    course_id = Column(String(50), default="linux")     # Focus course for now
     total_course_students = Column(Integer, default=0)  # Students registered for the course at this college
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
+    college_courses = relationship("CollegeCourse", back_populates="college", cascade="all, delete-orphan")
     students = relationship("User", back_populates="college")

@@ -1,0 +1,15 @@
+INFO:     Started server process [238999]
+INFO:     Waiting for application startup.
+WARNING:leaderboard_cache:Unable to seed leaderboard because of Error 111 connecting to localhost:6379. Connection refused.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:42760 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42770 - "GET /api/coordinator/colleges?course_id=linux HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57444 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57444 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40172 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40172 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [238999]

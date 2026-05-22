@@ -269,24 +269,28 @@ function UpcomingDeadlines() {
 // ===== MAIN DASHBOARD PAGE =====
 
 export default function Dashboard() {
-    const isLoading = useUserStore(state=>state.isLoading) 
-    if(isLoading)
-    {
+    const { user, isLoading } = useUserStore()
+    const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
+
+    if (isLoading) {
         return (
             <div className="max-w-3xl mx-auto space-y-6">
-                {/* Skeleton cards */}
-                {[1, 2, 3].map(i => (
-                    <div key={i} className="p-4 rounded-xl border bg-muted/50 space-y-3 animate-pulse">
-                        <div className="h-4 w-1/3 bg-muted rounded" />
-                        <div className="h-4 w-full bg-muted rounded" />
-                        <div className="h-4 w-2/3 bg-muted rounded" />
-                    </div>
-                ))}
+                <div className="h-24 bg-muted/40 animate-pulse rounded-2xl" />
+                <div className="h-64 bg-muted/20 animate-pulse rounded-2xl" />
             </div>
         )
     }
+
+    if (!user) return null
+
     return (
         <div className="max-w-3xl mx-auto space-y-6">
+            {!activeBatchIsActive && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch — Read Only Mode</p>
+                </div>
+            )}
             {/* Section 1 & 2: Greeting + XP side by side on desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <GreetingBanner />

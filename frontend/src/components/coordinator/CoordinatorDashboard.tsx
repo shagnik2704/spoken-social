@@ -1,11 +1,11 @@
-import { useState} from 'react'
+import { useState } from 'react'
 import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
     CheckCircle2, Terminal, Eye,
     Search, Filter, Trophy, BarChart3,
     MessageCircleQuestion, ClipboardList,
     // Star,
-    Clock, Zap, Activity, Download
+    Clock, Zap, Activity, Download, Lock
 } from 'lucide-react'
 import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,6 +32,7 @@ import {
     PaginationEllipsis,
 } from '@/components/ui/pagination'
 import { useUserStore } from '@/store/userStore'
+import { useAuthStore } from '@/store/authStore'
 
 // ===== TYPES =====
 
@@ -141,7 +142,11 @@ function MetricCard({ icon: Icon, label, value, subtext, color }: {
 
 // ===== STUDENT TABLE ROW =====
 
-function StudentRow({ student, index }: { student: Student; index?: number }) {
+function StudentRow({ student, index, onViewAsStudent }: { 
+    student: Student; 
+    index?: number;
+    onViewAsStudent?: (studentId: string) => void
+}) {
     const statusConfig = getStatusConfig(student.status)
 
     return (
@@ -193,13 +198,21 @@ function StudentRow({ student, index }: { student: Student; index?: number }) {
                     {statusConfig.label}
                 </Badge>
             </div>
+
+            <button
+                onClick={(e) => { e.stopPropagation(); onViewAsStudent?.(student.id) }}
+                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                title="View as Student"
+            >
+                <Eye className="h-4 w-4" />
+            </button>
         </div>
     )
 }
 
 // ===== MY STUDENTS TAB =====
 
-function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setStatusFilter, searchQuery, setSearchQuery, page, setPage }: {
+function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setStatusFilter, searchQuery, setSearchQuery, page, setPage, onViewAsStudent }: {
     college: CollegeSummary
     details: CollegeDetails | null
     sortBy: SortBy
@@ -210,6 +223,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
     setSearchQuery: (s: string) => void
     page: number
     setPage: (p: number) => void
+    onViewAsStudent: (studentId: string) => void
 }) {
     const filteredStudents = (details?.students || [])
     return (
@@ -385,6 +399,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                                 key={student.id} 
                                 student={student} 
                                 index={(page - 1) * (details?.pagination?.limit || 10) + idx + 1}
+                                onViewAsStudent={onViewAsStudent}
                             />
                         ))}
                         {filteredStudents.length === 0 && (
@@ -618,8 +633,8 @@ function DonutCenterLabel({ value, label }: { value: string; label: string }) {
     )
 }
 
-function AnalyticsTab({ collegeId }: { collegeId: string }) {
-    const {data,isLoading:loading}=useCoordinatorCollegeAnalytics(collegeId)
+function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, courseId?: string, batchId?: string | null }) {
+    const {data,isLoading:loading}=useCoordinatorCollegeAnalytics(collegeId, courseId, batchId)
 
     if (loading) return <div className="p-10 text-center text-muted-foreground animate-pulse">Computing college-wide analytics...</div>
     if (!data) return <div className="p-10 text-center text-red-500">Failed to load analytics.</div>
@@ -912,9 +927,9 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
 
 // ===== COORDINATOR FEEDBACK TAB =====
 
-function CoordinatorFeedbackTab({ collegeId }: { collegeId: string }) {
+function CoordinatorFeedbackTab({ collegeId, courseId, batchId }: { collegeId: string, courseId?: string, batchId?: string | null }) {
     const feedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
-        useCoordinatorFeedbackSummary(collegeId, filters)
+        useCoordinatorFeedbackSummary(collegeId, filters, courseId, batchId)
 
     return <FeedbackPanel useFeedbackData={feedbackHook} />
 }
@@ -923,6 +938,10 @@ function CoordinatorFeedbackTab({ collegeId }: { collegeId: string }) {
 // ===== MAIN COMPONENT =====
 
 export default function CoordinatorDashboard() {
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const impersonate = useAuthStore(state => state.impersonate)
+
     const [activeTab, setActiveTab] = useState<Tab>('students')
     const [sortBy, setSortBy] = useState<SortBy>('progress')
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -931,14 +950,24 @@ export default function CoordinatorDashboard() {
     const user = useUserStore(state => state.user)
     const MY_COLLEGE_ID = user?.collegeId || 'iitb'
 
-    const {data:colleges=[],isLoading:isLoadingColleges}=useCoordinatorColleges()
+    const handleViewAsStudent = async (_studentId: string) => {
+        try {
+            await impersonate(MY_COLLEGE_ID, 'student')
+        } catch (e) {
+            console.error('Failed to impersonate student', e)
+        }
+    }
+
+    const {data:colleges=[],isLoading:isLoadingColleges}=useCoordinatorColleges(activeCourseId, activeBatchId)
 
     const {data:myCollegeDetails,isLoading:isLoadingDetails}=useCoordinatorCollegeDetails(
         MY_COLLEGE_ID,
         page,
         sortBy,
         statusFilter,
-        searchQuery
+        searchQuery,
+        activeCourseId,
+        activeBatchId
     )
 
     const isLoading = isLoadingColleges||isLoadingDetails
@@ -961,7 +990,13 @@ export default function CoordinatorDashboard() {
     }
 
     return (
-        <div className="max-w-5xl mx-auto space-y-5">
+        <div className="max-w-6xl mx-auto p-6 space-y-6">
+            {!useUserStore.getState().activeBatchIsActive && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch — Read Only Mode</p>
+                </div>
+            )}
             {/* Header */}
             <div className="flex items-start sm:items-center justify-between flex-wrap gap-4">
                 <div>
@@ -1032,15 +1067,16 @@ export default function CoordinatorDashboard() {
                     setSearchQuery={(s) => { setSearchQuery(s); setPage(1) }}
                     page={page}
                     setPage={setPage}
+                    onViewAsStudent={handleViewAsStudent}
                 />
             )}
 
             {activeTab === 'analytics' && myCollege && (
-                <AnalyticsTab collegeId={myCollege.id} />
+                <AnalyticsTab collegeId={myCollege.id} courseId={activeCourseId} batchId={activeBatchId} />
             )}
 
             {activeTab === 'feedback' && myCollege && (
-                <CoordinatorFeedbackTab collegeId={myCollege.id} />
+                <CoordinatorFeedbackTab collegeId={myCollege.id} courseId={activeCourseId} batchId={activeBatchId} />
             )}
 
             {/* {activeTab === 'compare' && (
