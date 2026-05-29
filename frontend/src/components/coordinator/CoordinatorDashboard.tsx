@@ -33,6 +33,9 @@ import {
 } from '@/components/ui/pagination'
 import { useUserStore } from '@/store/userStore'
 import { useAuthStore } from '@/store/authStore'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+
 
 // ===== TYPES =====
 
@@ -253,6 +256,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         icon={TrendingUp}
                         label="Avg Progress"
                         value={`${college.avgProgress}%`}
+                        subtext={`${college.avgXP} avg XP`}
                         color="bg-primary/10 text-primary"
                     />
                 </div>
@@ -653,10 +657,10 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
         atRisk
     } = data
 
-    // Attach tutorial names from frontend constants
+    // Attach tutorial names from backend or frontend constants
     const tutorialCompletionWithNames = tutorialCompletion.map((t: any) => ({
         ...t,
-        name: TUTORIAL_NAMES[t.number - 1] || `Tutorial ${t.number}`
+        name: t.title || TUTORIAL_NAMES[t.number - 1] || `Tutorial ${t.number}`
     }))
 
     const watchRate = totalTutorials > 0 ? Math.round((avgWatched / totalTutorials) * 100) : 0
@@ -940,7 +944,9 @@ function CoordinatorFeedbackTab({ collegeId, courseId, batchId }: { collegeId: s
 export default function CoordinatorDashboard() {
     const activeCourseId = useUserStore(state => state.activeCourseId)
     const activeBatchId = useUserStore(state => state.activeBatchId)
+    const courses = useUserStore(state => state.courses)
     const impersonate = useAuthStore(state => state.impersonate)
+    const navigate = useNavigate()
 
     const [activeTab, setActiveTab] = useState<Tab>('students')
     const [sortBy, setSortBy] = useState<SortBy>('progress')
@@ -953,12 +959,17 @@ export default function CoordinatorDashboard() {
     const handleViewAsStudent = async (_studentId: string) => {
         try {
             await impersonate(MY_COLLEGE_ID, 'student')
+            await useUserStore.getState().fetchUser()
+            toast.success('Viewing platform as a student')
+            navigate('/dashboard')
         } catch (e) {
             console.error('Failed to impersonate student', e)
         }
     }
 
-    const {data:colleges=[],isLoading:isLoadingColleges}=useCoordinatorColleges(activeCourseId, activeBatchId)
+    const isCoordinator = user?.role === 'coordinator'
+
+    const {data:colleges=[],isLoading:isLoadingColleges}=useCoordinatorColleges(activeCourseId, activeBatchId, isCoordinator)
 
     const {data:myCollegeDetails,isLoading:isLoadingDetails}=useCoordinatorCollegeDetails(
         MY_COLLEGE_ID,
@@ -967,10 +978,15 @@ export default function CoordinatorDashboard() {
         statusFilter,
         searchQuery,
         activeCourseId,
-        activeBatchId
+        activeBatchId,
+        isCoordinator
     )
 
     const isLoading = isLoadingColleges||isLoadingDetails
+
+    if (!isCoordinator) {
+        return null
+    }
 
     const myCollege = colleges.find((c: CollegeSummary) => c.id === MY_COLLEGE_ID)
 
@@ -994,7 +1010,7 @@ export default function CoordinatorDashboard() {
             {!useUserStore.getState().activeBatchIsActive && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
                     <Lock className="h-4 w-4 shrink-0" />
-                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch — Read Only Mode</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch</p>
                 </div>
             )}
             {/* Header */}
@@ -1006,29 +1022,48 @@ export default function CoordinatorDashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Terminal className="h-4 w-4" />
-                        <span>{myCollege?.name} • Linux Course • No. of students registered: {myCollege?.totalCourseStudents}</span>
+                        <span>{myCollege?.name} • {courses.find(c => c.id === activeCourseId)?.title || 'Course'} • No. of students registered: {myCollege?.totalCourseStudents}</span>
                     </div>
                 </div>
 
-                <button
-                    onClick={async () => {
-                        try {
-                            const response = await api.get(`/api/coordinator/colleges/${MY_COLLEGE_ID}/export`, { responseType: 'blob' });
-                            const url = window.URL.createObjectURL(new Blob([response.data]));
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.setAttribute('download', `${(myCollege?.name || 'College').replace(/[^a-zA-Z0-9]/g, '_')}_Students_Report.xlsx`);
-                            document.body.appendChild(link);
-                            link.click();
-                        } catch (e) {
-                            console.error('Failed to export', e);
-                        }
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
-                >
-                    <Download className="h-3.5 w-3.5" />
-                    Download Report
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={async () => {
+                            try {
+                                await impersonate(MY_COLLEGE_ID, 'student')
+                                await useUserStore.getState().fetchUser()
+                                toast.success('Viewing platform as a student')
+                                navigate('/dashboard')
+                            } catch (e) {
+                                console.error('Failed to switch to student view', e)
+                            }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 border border-border/40 transition-colors rounded-md shadow-sm"
+                    >
+                        <Eye className="h-3.5 w-3.5" />
+                        View as Student
+                    </button>
+
+                    <button
+                        onClick={async () => {
+                            try {
+                                const response = await api.get(`/api/coordinator/colleges/${MY_COLLEGE_ID}/export`, { responseType: 'blob' });
+                                const url = window.URL.createObjectURL(new Blob([response.data]));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.setAttribute('download', `${(myCollege?.name || 'College').replace(/[^a-zA-Z0-9]/g, '_')}_Students_Report.xlsx`);
+                                document.body.appendChild(link);
+                                link.click();
+                            } catch (e) {
+                                console.error('Failed to export', e);
+                            }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
+                    >
+                        <Download className="h-3.5 w-3.5" />
+                        Download Report
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}

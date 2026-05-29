@@ -542,7 +542,7 @@ export function ActiveCourseTracker() {
             fetchTutorials(activeCourseId)
             fetchForumActivity(activeCourseId)
         }
-    }, [])
+    }, [activeCourseId, fetchTutorials, fetchForumActivity])
 
 
     // Bonus feedback toast
@@ -565,7 +565,7 @@ export function ActiveCourseTracker() {
     } | null>(null)
 
     const completedCount = tutorials.filter(t => t.completed).length
-    const overallProgress = Math.round((completedCount / tutorials.length) * 100)
+    const overallProgress = tutorials.length > 0 ? Math.round((completedCount / tutorials.length) * 100) : 0
     const totalXP = tutorials.reduce((sum, t) => sum + t.xpEarned, 0)
 
     const handleRadioChange = useCallback((tutorialId: string, field: TutorialField, value: RadioValue) => {

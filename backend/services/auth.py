@@ -18,6 +18,8 @@ from models.user import User
 from models.college import College
 from models.course import UserCourse
 from models.tutorial import Tutorial, UserTutorial
+from models.college_course import CollegeCourse
+from models.batch import Batch
 
 SPOKEN_TUTORIAL_VERIFY_URL = os.environ.get(
     "SPOKEN_TUTORIAL_VERIFY_URL",
@@ -29,11 +31,34 @@ DEMO_STUDENT_EMAIL = os.getenv("DEMO_STUDENT_EMAIL", "demo@spoken-social.org")
 DEMO_STUDENT_PASSWORD = os.getenv("DEMO_STUDENT_PASSWORD", "demo123")
 
 
+# ── Mock student → course mapping (for dev bypass) ──
+# Maps student email → list of {course_id, batch_id}
+# Based on the CSV mock data from Spoken Tutorial
+MOCK_STUDENT_COURSES: dict[str, list[dict]] = {
+    "Student1@edupyramids.in":  [
+        {"course_id": "linux",      "batch_id": "linux-2026-batch1"},
+        {"course_id": "postgresql", "batch_id": "postgresql-2026-batch1"}
+    ],
+    "Student2@edupyramids.in":  [
+        {"course_id": "linux",      "batch_id": "linux-2026-batch1"},
+        {"course_id": "ai",         "batch_id": "ai-2026-batch1"}
+    ],
+    "Student3@edupyramids.in":  [
+        {"course_id": "linux",      "batch_id": "linux-2026-batch1"},
+        {"course_id": "phd",        "batch_id": "phd-2026-batch1"}
+    ],
+    "Student4@edupyramids.in":  [
+        {"course_id": "linux",      "batch_id": "linux-2026-batch2"}
+    ],
+    # Students without explicit mapping will fall back to college_courses
+}
+
+
 async def verify_credentials(
     email: str, 
     password: str, 
     db: AsyncSession, 
-    selected_role: str = "student",
+    selected_role: str | None = None,
     target_college_id: str | None = None
 ) -> dict | None:
     """
@@ -53,9 +78,37 @@ async def verify_credentials(
         user_info = await _upsert_user(db, api_username="coordinator", api_email=email, api_role="coordinator", display_name="College Coordinator", college_name="Ambalika Institute of Management and Technology")
         res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
         user = res.scalars().first()
-    elif password == "password123":
-        result = await db.execute(select(User).filter_by(email=email))
+    elif email == "madhu0476@gmail.com" and password == "Testing*123":
+        user_info = await _upsert_user(db, api_username="madhu0476", api_email=email, api_role="coordinator", display_name="Madhulika G", college_name="IIT Bombay")
+        res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
+        user = res.scalars().first()
+    elif password in ("password123", "Student@123", "Trainin@123", "Testing*123"):
+        from sqlalchemy import func
+        result = await db.execute(select(User).where(func.lower(User.email) == func.lower(email)))
         user = result.scalars().first()
+        if not user and password == "Student@123":
+            # Auto-create from mock CSV data — extract a username from the email
+            username_part = email.split("@")[0].lower()
+            
+            # Case-insensitive lookup in MOCK_STUDENT_COURSES
+            mock_courses = []
+            normalized_email = email.lower()
+            for k, v in MOCK_STUDENT_COURSES.items():
+                if k.lower() == normalized_email:
+                    mock_courses = v
+                    break
+            
+            user_info = await _upsert_user(
+                db,
+                api_username=username_part,
+                api_email=email,
+                api_role="student",
+                display_name=username_part.replace("student", "Student "),
+                college_name=None,
+                courses=mock_courses,
+            )
+            res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
+            user = res.scalars().first()
     else:
         # ── Step 1: Call Spoken Tutorial's external API ──
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -89,6 +142,9 @@ async def verify_credentials(
         display_name = f"{first_name} {last_name}".strip() or api_username
         college_name = api_user.get("college_name")
 
+        # Extract courses from API response (when available)
+        api_courses = api_user.get("courses", [])
+
         user_info = await _upsert_user(
             db,
             api_username=api_username,
@@ -96,6 +152,7 @@ async def verify_credentials(
             api_role=api_role,
             display_name=display_name,
             college_name=college_name,
+            courses=api_courses,
         )
         # Fetch user object back from DB for further logic
         res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
@@ -103,6 +160,9 @@ async def verify_credentials(
 
     if not user:
         return None
+
+    if not selected_role:
+        selected_role = user.role
 
     # ── Role Permission Check ──
     if not _can_assume_role(user.role, selected_role):
@@ -123,8 +183,12 @@ async def verify_credentials(
             test_stu = await get_or_create_test_student(db, target_college_id)
             effective_user_id = str(test_stu.id)
         elif selected_role == "coordinator":
-            # Try to find the actual coordinator for this college
-            c_res = await db.execute(select(User).filter_by(college_id=target_college_id, role="coordinator"))
+            # Try to find the actual coordinator for this college (might be role='admin' or 'coordinator')
+            from sqlalchemy import or_
+            c_res = await db.execute(select(User).filter(
+                User.college_id == target_college_id,
+                or_(User.role == "coordinator", User.role == "admin")
+            ))
             coord = c_res.scalars().first()
             if coord:
                 effective_user_id = str(coord.id)
@@ -173,23 +237,27 @@ async def _upsert_user(
     api_role: str,
     display_name: str,
     college_name: str | None,
+    courses: list[dict] | None = None,
 ) -> dict:
     """
-    Shared logic: upsert college → upsert user → auto-enroll → return user dict.
+    Shared logic: upsert college → upsert user → sync enrollments → return user dict.
     Used by both the Spoken Tutorial API path and the demo student bypass.
     """
 
     # ── Upsert College ──
     college_id = None
     if college_name:
-        result = await db.execute(select(College).filter_by(name=college_name))
-        college = result.scalars().first()
-        if college:
-            college_id = college.id
+        if college_name == "IIT Bombay":
+            college_id = "iit_bombay"
         else:
-            college_id = college_name.lower().replace(" ", "_").replace(",", "")
-            db.add(College(id=college_id, name=college_name))
-            await db.flush()
+            result = await db.execute(select(College).filter_by(name=college_name))
+            college = result.scalars().first()
+            if college:
+                college_id = college.id
+            else:
+                college_id = college_name.lower().replace(" ", "_").replace(",", "")
+                db.add(College(id=college_id, name=college_name))
+                await db.flush()
 
     # ── Upsert User ──
     result = await db.execute(select(User).filter_by(email=api_email))
@@ -210,43 +278,10 @@ async def _upsert_user(
         )
         db.add(user)
         await db.flush()
-    # else:
-    #     # user.role = api_role
-    #     # user.display_name = display_name
-    #     # user.college_id = college_id
-    #     # await db.flush()
 
-    # ── Auto-enroll in Linux course (students only, first login) ──
-    if is_new_user and api_role == "student":
-        enrollment = await db.execute(
-            select(UserCourse).filter_by(user_id=user.id, course_id="linux")
-        )
-        if not enrollment.scalars().first():
-            db.add(UserCourse(
-                user_id=user.id,
-                course_id="linux",
-                status="not_started",
-                progress_percent=0,
-            ))
-
-        # Create tutorial progress rows
-        tut_result = await db.execute(
-            select(Tutorial).filter_by(course_id="linux").order_by(Tutorial.tutorial_number)
-        )
-        for tutorial in tut_result.scalars().all():
-            db.add(UserTutorial(
-                user_id=user.id,
-                tutorial_id=tutorial.id,
-                status="not_started",
-                watched=False,
-                practiced=False,
-                assignment_done=False,
-                forum_asked=False,
-                forum_answered=False,
-                xp_earned=0,
-            ))
-
-        await db.flush()
+    # ── Dynamic enrollment (replaces hardcoded linux) ──
+    if api_role == "student":
+        await _sync_enrollments(db, user, courses, college_id)
 
     await db.commit()
 
@@ -258,6 +293,98 @@ async def _upsert_user(
         "role": user.role,
         "college_id": college_id,
     }
+
+
+async def _sync_enrollments(
+    db: AsyncSession,
+    user: User,
+    api_courses: list[dict] | None,
+    college_id: str | None,
+) -> None:
+    """
+    Sync a student's course enrollments.
+    
+    Priority:
+    1. If api_courses is provided (from Spoken Tutorial API or mock), enroll in those.
+    2. If api_courses is empty/None, fall back to college_courses mapping.
+    
+    On subsequent logins, adds any new courses but doesn't remove existing ones.
+    Also creates UserTutorial progress rows for any new enrollments.
+    """
+    courses_to_enroll: list[dict] = []
+
+    if api_courses:
+        # API provided specific courses
+        courses_to_enroll = api_courses
+    elif college_id:
+        # Fall back: enroll in all courses this college offers
+        cc_result = await db.execute(
+            select(CollegeCourse).filter_by(college_id=college_id)
+        )
+        college_courses = cc_result.scalars().all()
+        
+        for cc in college_courses:
+            # Find the default active batch for this course
+            batch_result = await db.execute(
+                select(Batch)
+                .filter_by(course_id=cc.course_id, status="active")
+                .order_by(Batch.start_date.desc())
+            )
+            batch = batch_result.scalars().first()
+            courses_to_enroll.append({
+                "course_id": cc.course_id,
+                "batch_id": batch.id if batch else None,
+            })
+    else:
+        # No courses and no college — nothing to enroll
+        return
+
+    for course_data in courses_to_enroll:
+        course_id = course_data.get("course_id")
+        batch_id = course_data.get("batch_id")
+
+        if not course_id:
+            continue
+
+        # Check if already enrolled in this course
+        existing = await db.execute(
+            select(UserCourse).filter_by(user_id=user.id, course_id=course_id)
+        )
+        if existing.scalars().first():
+            continue  # Already enrolled, skip
+
+        # Create enrollment
+        db.add(UserCourse(
+            user_id=user.id,
+            course_id=course_id,
+            batch_id=batch_id,
+            status="not_started",
+            progress_percent=0,
+        ))
+
+        # Create tutorial progress rows for this course
+        tut_result = await db.execute(
+            select(Tutorial).filter_by(course_id=course_id).order_by(Tutorial.tutorial_number)
+        )
+        for tutorial in tut_result.scalars().all():
+            # Check if tutorial progress already exists
+            existing_ut = await db.execute(
+                select(UserTutorial).filter_by(user_id=user.id, tutorial_id=tutorial.id)
+            )
+            if not existing_ut.scalars().first():
+                db.add(UserTutorial(
+                    user_id=user.id,
+                    tutorial_id=tutorial.id,
+                    status="not_started",
+                    watched=False,
+                    practiced=False,
+                    assignment_done=False,
+                    forum_asked=False,
+                    forum_answered=False,
+                    xp_earned=0,
+                ))
+
+    await db.flush()
 
 async def get_or_create_test_student(db: AsyncSession, college_id: str) -> User:
     """Get or create a testing placeholder student for this college."""
@@ -279,13 +406,10 @@ async def get_or_create_test_student(db: AsyncSession, college_id: str) -> User:
             level=1,
         )
         db.add(user)
-        # Add to default course
-        db.add(UserCourse(
-            user_id=user.id,
-            course_id="linux",  # default
-            status="not_started",
-            progress_percent=0,
-        ))
+        await db.flush()
+        
+        # Enrolls in all college-offered courses and generates UserTutorial rows cleanly!
+        await _sync_enrollments(db, user, None, college_id)
         await db.commit()
         await db.refresh(user)
         

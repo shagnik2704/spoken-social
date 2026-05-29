@@ -6,7 +6,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from database import get_db
 from dependencies import get_current_user
-from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
+from models import User, UserCourse, UserTutorial, UserBadge, Tutorial, Course, CollegeCourse
 from models.xp_event import XPEvent
 from leaderboard_cache import update_user_xp
 from services.forum import get_forum_activity_for_tutorial
@@ -22,6 +22,7 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
     result = await db.execute(
         select(User)
         .options(selectinload(User.courses).selectinload(UserCourse.course),
+                 selectinload(User.courses).selectinload(UserCourse.batch),
                  selectinload(User.badges).selectinload(UserBadge.badge))
         .where(User.id == user.id)
     )
@@ -38,7 +39,55 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
     if user_loaded.target_college_id:
         user_loaded.college_id = user_loaded.target_college_id
 
-    courses = [uc.to_api_dict() for uc in user_loaded.courses]
+    if user_loaded.effective_role == "admin":
+        # Fetch all courses with their batches
+        courses_res = await db.execute(
+            select(Course)
+            .options(selectinload(Course.batches))
+            .order_by(Course.title)
+        )
+        all_courses = courses_res.scalars().all()
+        courses = []
+        for c in all_courses:
+            c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
+            c_dict["batches"] = [b.to_api_dict() for b in c.batches]
+            active_b = next((b for b in c.batches if b.status == "active"), c.batches[0] if c.batches else None)
+            if active_b:
+                c_dict["batchId"] = str(active_b.id)
+                c_dict["batchName"] = active_b.name
+                c_dict["batchStatus"] = active_b.computed_status
+            else:
+                c_dict["batchId"] = None
+                c_dict["batchName"] = None
+                c_dict["batchStatus"] = "inactive"
+            courses.append(c_dict)
+    elif user_loaded.effective_role == "coordinator":
+        # Fetch courses enabled for coordinator's college, with batches
+        courses_res = await db.execute(
+            select(Course)
+            .join(CollegeCourse, CollegeCourse.course_id == Course.id)
+            .filter(CollegeCourse.college_id == user_loaded.college_id)
+            .options(selectinload(Course.batches))
+            .order_by(Course.title)
+        )
+        col_courses = courses_res.scalars().all()
+        courses = []
+        for c in col_courses:
+            c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
+            c_dict["batches"] = [b.to_api_dict() for b in c.batches]
+            active_b = next((b for b in c.batches if b.status == "active"), c.batches[0] if c.batches else None)
+            if active_b:
+                c_dict["batchId"] = str(active_b.id)
+                c_dict["batchName"] = active_b.name
+                c_dict["batchStatus"] = active_b.computed_status
+            else:
+                c_dict["batchId"] = None
+                c_dict["batchName"] = None
+                c_dict["batchStatus"] = "inactive"
+            courses.append(c_dict)
+    else:
+        courses = [uc.to_api_dict() for uc in user_loaded.courses]
+
     badges = [ub.to_api_dict() for ub in user_loaded.badges]
 
     print(f"DEBUG /ME: user_loaded={user_loaded.email}, final_role={user_loaded.effective_role}, college_id={user_loaded.college_id}")
@@ -98,6 +147,7 @@ async def get_user_by_id(user_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(User)
         .options(selectinload(User.courses).selectinload(UserCourse.course),
+                 selectinload(User.courses).selectinload(UserCourse.batch),
                  selectinload(User.badges).selectinload(UserBadge.badge))
         .filter_by(id=uid)
     )

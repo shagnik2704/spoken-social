@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class LoginRequest(BaseModel):
     email: str
     password: str
-    role: str = "student"  # selected role (student | coordinator | admin)
+    role: str | None = None  # selected role (student | coordinator | admin)
     college_id: str | None = None # target college for impersonation during login
 
 class LoginResponse(BaseModel):
@@ -74,7 +74,7 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
     token = create_access_token(
         user_id=user_info.get("real_user_id", user_info["user_id"]),
         effective_user_id=user_info["user_id"],
-        effective_role=body.role,
+        effective_role=body.role or user_info["role"],
         is_impersonating=user_info.get("real_user_id") != user_info["user_id"] or user_info.get("college_id") is not None,
         target_college_id=user_info.get("college_id")
     )
@@ -138,8 +138,12 @@ async def impersonate(
         target_user_id = str(test_student.id)
     else:
         # Coordinator impersonation by Admin
-        # Find the coordinator for this college
-        result = await db.execute(select(User).filter_by(college_id=body.college_id, role="coordinator"))
+        # Find the coordinator for this college (who might have role='admin' or role='coordinator' in DB)
+        from sqlalchemy import or_
+        result = await db.execute(select(User).filter(
+            User.college_id == body.college_id,
+            or_(User.role == "coordinator", User.role == "admin")
+        ))
         coord = result.scalars().first()
         if not coord:
             raise HTTPException(status_code=404, detail="No coordinator found for this college")

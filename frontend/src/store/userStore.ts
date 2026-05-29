@@ -38,7 +38,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     badges: [],
     tutorials: [],
     forumActivity: {},
-    activeCourseId: 'linux',
+    activeCourseId: '',
     activeBatchId: null,
     activeBatchIsActive: true,
     weeklyGoal: null,
@@ -55,9 +55,9 @@ export const useUserStore = create<UserState>((set, get) => ({
                 courses: data.courses,
                 badges: data.badges,
                 isAuthenticated: true,
-                activeCourseId: data.courses?.[0]?.id || 'linux',
-                activeBatchId: data.active_batch_id || null,
-                activeBatchIsActive: data.active_batch_is_active ?? true
+                activeCourseId: data.courses?.[0]?.id || '',
+                activeBatchId: data.courses?.[0]?.batchId || null,
+                activeBatchIsActive: data.courses?.[0]?.batchStatus !== 'inactive',
             })
         }
         catch (error) {
@@ -152,7 +152,13 @@ export const useUserStore = create<UserState>((set, get) => ({
     },
 
     setActiveCourse: (courseId) => {
-        set({ activeCourseId: courseId, activeBatchId: null })
+        const courses = get().courses
+        const course = courses.find(c => c.id === courseId)
+        set({
+            activeCourseId: courseId,
+            activeBatchId: course?.batchId || null,
+            activeBatchIsActive: course?.batchStatus !== 'inactive',
+        })
     },
 
     setActiveBatch: (batchId, isActive = true) => {

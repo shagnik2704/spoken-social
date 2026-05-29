@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useAuthStore } from '@/store/authStore'
 import { useLeaderboardStore } from '@/store/leaderboardStore'
-// import { CourseBatchSelector } from './CourseBatchSelector'
+import { CourseBatchSelector } from './CourseBatchSelector'
 
 // Navigation items for the sidebar/bottom nav
 const navItems = [
@@ -100,7 +100,10 @@ export function TopBar() {
                     </div>
                 </div>
 
-                {/* Center-Right — Global Selector removed as per request */}
+                {/* Center-Right — Global Course Selector */}
+                <div className="hidden md:flex items-center">
+                    <CourseBatchSelector />
+                </div>
 
                 {/* Right — Actions */}
                 <div className="flex items-center gap-1 sm:gap-2">

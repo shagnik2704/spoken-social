@@ -51,4 +51,8 @@ class UserCourse(Base):
             "progressPercent": float(self.progress_percent or 0),
             "completedAt": self.completed_at.isoformat() if self.completed_at else None,
             "forumCategory": self.course.forum_category if self.course else None,
+            "batchId": self.batch_id,
+            "batchName": self.batch.name if self.batch else None,
+            "batchStatus": self.batch.computed_status if self.batch else "active",
+            "batches": [self.batch.to_api_dict()] if self.batch else [],
         }

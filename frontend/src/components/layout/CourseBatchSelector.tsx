@@ -1,78 +1,59 @@
 import { useUserStore } from '@/store/userStore'
 import { Badge } from '@/components/ui/badge'
-import api from '@/lib/axios'
-import { useEffect, useState } from 'react'
+import { BookOpen } from 'lucide-react'
 
 export function CourseBatchSelector() {
     const user = useUserStore(state => state.user)
     const activeCourseId = useUserStore(state => state.activeCourseId)
-    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
     const setActiveCourse = useUserStore(state => state.setActiveCourse)
-    const setActiveBatch = useUserStore(state => state.setActiveBatch)
-
-    const [batches, setBatches] = useState<any[]>([])
     const courses = useUserStore(state => state.courses)
 
-    // Show for all authenticated users
-    if (!user) {
+// Only show for authenticated users with enrolled courses
+    if (!user || courses.length === 0) {
         return null
     }
 
-    useEffect(() => {
-        if (activeCourseId) {
-            api.get(`/api/courses/${activeCourseId}/batches`).then(({ data }) => {
-                setBatches(data)
-                // If no active batch selected, default to the most recent active one
-                if (!activeBatchId && data.length > 0) {
-                    const active = data.find((b: any) => b.is_active) || data[0]
-                    setActiveBatch(active.id, active.is_active)
-                }
-            })
-        }
-    }, [activeCourseId])
+    // Don't show selector if only one course enrolled
+    if (courses.length === 1) {
+        const c = courses[0]
+        return (
+            <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 h-8 bg-primary/10 border border-primary/20 rounded-md px-2.5">
+                    <BookOpen className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-semibold text-primary">{c.title}</span>
+                    {c.batchName && (
+                        <span className="text-[10px] text-muted-foreground ml-1">
+                            — {c.batchName}
+                        </span>
+                    )}
+                </div>
+            </div>
+        )
+    }
 
-    const activeBatch = batches.find(b => b.id === activeBatchId)
+    const activeCourse = courses.find(c => c.id === activeCourseId)
 
     return (
         <div className="flex items-center gap-2">
-            {/* Course Selector */}
+            <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
             <select 
                 value={activeCourseId} 
                 onChange={(e) => setActiveCourse(e.target.value)}
-                className="h-8 bg-muted border border-input rounded-md px-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-                {courses.length > 0 ? (
-                    courses.map(c => (
-                        <option key={c.id} value={c.id}>{c.title}</option>
-                    ))
-                ) : (
-                    <option value="linux">LINUX</option>
-                )}
-            </select>
-
-            {/* Batch Selector */}
-            <select 
-                value={activeBatchId || ''} 
-                onChange={(e) => {
-                    const batchId = e.target.value
-                    const batch = batches.find(b => b.id === batchId)
-                    setActiveBatch(batchId, batch?.is_active)
+                className="h-8 bg-muted border border-input rounded-md px-2 pr-7 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring appearance-none cursor-pointer"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.25rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.25em 1.25em',
                 }}
-                className="h-8 bg-muted border border-input rounded-md px-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring"
             >
-                <option value="" disabled>Select Batch</option>
-                {batches.map(b => (
-                    <option key={b.id} value={b.id}>
-                        Batch {b.batch_number} {!b.is_active ? '(Archived)' : ''}
+                {courses.map(c => (
+                    <option key={c.id} value={c.id}>
+                        {c.title}{c.batchName ? ` — ${c.batchName}` : ''}
                     </option>
                 ))}
             </select>
-
-            {activeBatch && !activeBatch.is_active && (
-                <Badge variant="destructive" className="text-[10px] px-1.5 h-5 animate-pulse">
-                    READ ONLY
-                </Badge>
-            )}
         </div>
     )
 }

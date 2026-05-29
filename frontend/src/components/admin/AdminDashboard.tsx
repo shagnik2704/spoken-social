@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Users, TrendingUp, AlertTriangle,
     CheckCircle2, Eye,
@@ -22,6 +23,8 @@ import { StudentFeedbackDrawer } from '@/components/admin/StudentFeedbackDrawer'
 import { useColleges, usePlatformSummary, useFeedbackSummary, useCollegesDailyXP, useCollegeDetails } from '@/hooks/queries/useAdminQueries'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
+import { toast } from 'sonner'
+
 
 // ===== TYPES =====
 
@@ -754,8 +757,8 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                                         onClick={() => onImpersonate?.(college.id)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors rounded-md"
                                     >
-                                        <Shield className="h-3.5 w-3.5" />
-                                        Impersonate Coordinator
+                                        <Eye className="h-3.5 w-3.5" />
+                                        View as Coordinator
                                     </button>
                                     <div className="flex gap-4">
                                         <div className="text-center">
@@ -1311,30 +1314,44 @@ function AnalyticsTab({ colleges }: {
 import { MiniTaskAnalysis } from './MiniTaskAnalysis'
 
 export default function AdminDashboard() {
+    const navigate = useNavigate()
     const activeCourseId = useUserStore(state => state.activeCourseId)
     const activeBatchId = useUserStore(state => state.activeBatchId)
     const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
     const [_selectedStudent, _setSelectedStudent] = useState<{ id: string, name: string, initials: string } | null>(null)
     const [selectedStudentForFeedback, setSelectedStudentForFeedback] = useState<{ id: string, name: string, initials: string } | null>(null)
     const [platformStateFilter, _setPlatformStateFilter] = useState<string>('all')
+    const courses = useUserStore(state => state.courses)
+    const activeCourseTitle = courses.find(c => c.id === activeCourseId)?.title || 'Linux'
     const impersonate = useAuthStore(state => state.impersonate)
     const [activeTab, setActiveTab] = useState<Tab>('overview')
 
     const handleImpersonateCoordinator = async (collegeId: string) => {
         try {
             await impersonate(collegeId, 'coordinator')
+            await useUserStore.getState().fetchUser()
+            toast.success('Viewing platform as a coordinator')
+            navigate('/coordinator')
         } catch (e) {
             console.error('Failed to impersonate coordinator', e)
         }
     }
 
-    const { data: colleges = [], isLoading: isLoadingColleges } = useColleges(activeCourseId, activeBatchId)
-    const { data: summary, isLoading: isLoadingSummary } = usePlatformSummary(platformStateFilter, activeCourseId, activeBatchId)
+    const user = useUserStore(state => state.user)
+    const isAdmin = user?.role === 'admin'
+
+    const { data: colleges = [], isLoading: isLoadingColleges } = useColleges(activeCourseId, activeBatchId, isAdmin)
+    const { data: summary, isLoading: isLoadingSummary } = usePlatformSummary(platformStateFilter, activeCourseId, activeBatchId, isAdmin)
 
     const feedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
-        useFeedbackSummary(filters, activeCourseId, activeBatchId)
+        useFeedbackSummary(filters, activeCourseId, activeBatchId, isAdmin)
 
     const isLoading = isLoadingColleges || isLoadingSummary
+
+    if (!isAdmin) {
+        return null
+    }
+
     const totalStudents = colleges.reduce((a: number, c: CollegeSummary) => a + c.totalStudents, 0)
 
     const tabs = [
@@ -1358,7 +1375,7 @@ export default function AdminDashboard() {
             {!activeBatchIsActive && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
                     <Lock className="h-4 w-4 shrink-0" />
-                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch — Read Only Mode</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch</p>
                 </div>
             )}
             {/* Header */}
@@ -1373,7 +1390,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
-                        <span>{colleges.length} colleges • {totalStudents} students • Linux Course</span>
+                        <span>{colleges.length} colleges • {totalStudents} students • {activeCourseTitle} Course</span>
                     </div>
                 </div>
 

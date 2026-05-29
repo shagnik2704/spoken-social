@@ -76,17 +76,19 @@ const fetchFeedbackSummary = async (
     return data
 }
 
-export function useColleges(courseId?: string, batchId?: string | null) {
+export function useColleges(courseId?: string, batchId?: string | null, enabled: boolean = true) {
     return useQuery({
         queryKey: ['colleges', courseId, batchId],
-        queryFn: () => fetchColleges(courseId, batchId)
+        queryFn: () => fetchColleges(courseId, batchId),
+        enabled
     })
 }
 
-export function usePlatformSummary(state?: string, courseId?: string, batchId?: string | null) {
+export function usePlatformSummary(state?: string, courseId?: string, batchId?: string | null, enabled: boolean = true) {
     return useQuery({
         queryKey: ['admin', 'platform-summary', state || 'all', courseId, batchId],
-        queryFn: () => fetchPlatformSummary(state, courseId, batchId)
+        queryFn: () => fetchPlatformSummary(state, courseId, batchId),
+        enabled
     })
 }
 
@@ -125,10 +127,12 @@ export function useStudentFeedback(studentId: string) {
 export function useFeedbackSummary(
     filters: { tutorialId: string; stepType: string; reason: string },
     courseId?: string,
-    batchId?: string | null
+    batchId?: string | null,
+    enabled: boolean = true
 ) {
     return useQuery({
         queryKey: ['admin', 'feedback-summary', filters, courseId, batchId],
         queryFn: () => fetchFeedbackSummary(filters, courseId, batchId),
+        enabled
     })
 }

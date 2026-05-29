@@ -34,24 +34,6 @@ function App() {
     }
   }, [isAuthenticated])
 
-  // Wait for user data before rendering authenticated routes
-  // This prevents the race condition where navigate('/') fires
-  // before fetchUser() completes, causing wrong role-based redirect
-  if (isAuthenticated && (!user || isUserLoading)) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background text-foreground">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Loading your profile...</p>
-        </div>
-      </div>
-    )
-  }
-
-
-
-
-
   return (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
@@ -61,6 +43,15 @@ function App() {
             <Routes>
               <Route path="*" element={<LoginPage />} />
             </Routes>
+          ) : isUserLoading || !user ? (
+            /* Loading guard is INSIDE BrowserRouter so the router never unmounts.
+               This keeps navigate() functions valid across impersonation transitions. */
+            <div className="h-screen flex items-center justify-center bg-background text-foreground">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <p className="text-sm text-muted-foreground">Loading your profile...</p>
+              </div>
+            </div>
           ) : (
             <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
               {/* Impersonation Banner */}

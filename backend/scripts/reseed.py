@@ -33,6 +33,8 @@ from models.xp_event import XPEvent
 from models.activity import Activity
 from models.college import College
 from models.feedback import TutorialFeedback
+from models.batch import Batch
+
 
 random.seed(42)  # reproducible
 
@@ -171,6 +173,20 @@ LINUX_TUTORIALS = [
     "Introduction to the Stream Editor sed",
     "Text Editing using sed",
 ]
+
+PYTHON_TUTORIALS = [
+    "Introduction to Python",
+    "Variables and Data Types",
+    "Control Flow and Loops",
+    "Functions and Modules",
+    "Lists, Tuples and Dictionaries",
+    "File Input and Output",
+    "Exceptions Handling",
+    "Object-Oriented Programming in Python",
+    "Regular Expressions in Python",
+    "Standard Library Modules",
+]
+
 
 # Feedback reason pools per step type (realistic)
 REASON_MAP = {
@@ -335,6 +351,7 @@ def reseed():
     db.query(UserBadge).delete()
     db.query(UserTutorial).delete()
     db.query(UserCourse).delete()
+    db.query(Batch).delete()
     db.query(Follow).delete()
     db.query(Post).delete()
     db.query(Hashtag).delete()
@@ -398,15 +415,63 @@ def reseed():
         Course(id="libreoffice", title="LibreOffice", description="Productivity suite tutorials"),
     ]
     db.add_all(courses)
+    db.flush()
+
+    # ===== BATCHES =====
+    print("📅 Creating batches...")
+    today_dt = datetime.now(timezone.utc).date()
+    batches = [
+        Batch(
+            id="linux-active",
+            course_id="linux",
+            name="Linux — Batch 1",
+            start_date=today_dt - timedelta(days=30),
+            end_date=today_dt + timedelta(days=60),
+            status="active"
+        ),
+        Batch(
+            id="linux-archived",
+            course_id="linux",
+            name="Linux — Batch 2 (Archived)",
+            start_date=today_dt - timedelta(days=120),
+            end_date=today_dt - timedelta(days=10),
+            status="inactive"
+        ),
+        Batch(
+            id="python-active",
+            course_id="python",
+            name="Python — Batch 1",
+            start_date=today_dt - timedelta(days=15),
+            end_date=today_dt + timedelta(days=75),
+            status="active"
+        ),
+        Batch(
+            id="python-archived",
+            course_id="python",
+            name="Python — Batch 2 (Archived)",
+            start_date=today_dt - timedelta(days=100),
+            end_date=today_dt - timedelta(days=20),
+            status="inactive"
+        )
+    ]
+    db.add_all(batches)
+    db.flush()
 
     # ===== TUTORIALS =====
-    print("📖 Creating Linux tutorials...")
-    tutorial_objects = []
+    print("📖 Creating tutorials...")
+    linux_tutorial_objects = []
     for i, title in enumerate(LINUX_TUTORIALS, start=1):
         tid = uuid.uuid5(uuid.NAMESPACE_DNS, f"linux-tut-{i}")
         t = Tutorial(id=tid, course_id="linux", tutorial_number=i, title=title, xp_reward=35)
         db.add(t)
-        tutorial_objects.append(t)
+        linux_tutorial_objects.append(t)
+
+    python_tutorial_objects = []
+    for i, title in enumerate(PYTHON_TUTORIALS, start=1):
+        tid = uuid.uuid5(uuid.NAMESPACE_DNS, f"python-tut-{i}")
+        t = Tutorial(id=tid, course_id="python", tutorial_number=i, title=title, xp_reward=35)
+        db.add(t)
+        python_tutorial_objects.append(t)
     db.flush()
 
     # ===== BADGES =====
@@ -441,13 +506,23 @@ def reseed():
         for s in student_list:
             first, last, profile, dept = s["first"], s["last"], s["profile"], s["dept"]
             
-            # Generate progress first to compute XP
-            progress = _generate_tutorial_progress(profile)
-            total_xp = sum(p["xp_earned"] for p in progress)
+            # Decide batches
+            linux_batch_id = "linux-active" if random.random() < 0.7 else "linux-archived"
+            enroll_python = random.random() < 0.6
+            python_batch_id = "python-active" if random.random() < 0.75 else "python-archived" if enroll_python else None
             
-            # Add some random bonus XP
-            bonus_xp = random.randint(0, 200) if profile == "high" else random.randint(0, 50)
-            total_xp += bonus_xp
+            # Generate progress for Linux (20 tutorials)
+            linux_progress_data = _generate_tutorial_progress(profile, num_tutorials=20)
+            linux_xp = sum(p["xp_earned"] for p in linux_progress_data)
+            
+            # Generate progress for Python (10 tutorials) if enrolled
+            python_xp = 0
+            python_progress_data = []
+            if enroll_python:
+                python_progress_data = _generate_tutorial_progress(profile, num_tutorials=10)
+                python_xp = sum(p["xp_earned"] for p in python_progress_data)
+            
+            total_xp = linux_xp + python_xp + (random.randint(0, 200) if profile == "high" else random.randint(0, 50))
             
             user = User(
                 id=uuid.uuid4(),
@@ -459,19 +534,19 @@ def reseed():
                 location=next(c["location"] for c in COLLEGES if c["id"] == college_id),
                 role="student",
                 xp_total=total_xp,
-                xp_last_week=random.randint(20, min(total_xp, 300)),
+                xp_last_week=random.randint(0, max(0, min(total_xp, 300))),
                 level=_level_from_xp(total_xp),
                 college_id=college_id,
             )
             db.add(user)
             db.flush()  # get user.id
             all_students.append(user)
-
-            # ── Tutorial Progress ──
-            watched_count = 0
-            completed_count = 0
-            for idx, tut in enumerate(tutorial_objects):
-                p = progress[idx]
+            
+            # ── Linux Tutorial Progress ──
+            linux_watched_count = 0
+            linux_completed_count = 0
+            for idx, tut in enumerate(linux_tutorial_objects):
+                p = linux_progress_data[idx]
                 status = "completed" if p["practiced"] else ("in_progress" if p["watched"] else "not_started")
                 db.add(UserTutorial(
                     user_id=user.id,
@@ -485,28 +560,64 @@ def reseed():
                     xp_earned=p["xp_earned"],
                 ))
                 if p["watched"]:
-                    watched_count += 1
+                    linux_watched_count += 1
                 if p["practiced"]:
-                    completed_count += 1
-
-            # ── Course enrollment ──
-            linux_progress = round((completed_count / 20) * 100)
-            linux_status = "completed" if linux_progress == 100 else ("in_progress" if watched_count > 0 else "not_started")
+                    linux_completed_count += 1
+            
+            # Linux Course enrollment
+            linux_prog_percent = round((linux_completed_count / 20) * 100)
+            linux_status = "completed" if linux_prog_percent == 100 else ("in_progress" if linux_watched_count > 0 else "not_started")
             db.add(UserCourse(
                 user_id=user.id,
                 course_id="linux",
-                progress_percent=linux_progress,
+                batch_id=linux_batch_id,
+                progress_percent=linux_prog_percent,
                 status=linux_status,
                 completed_at=(NOW - timedelta(days=random.randint(1, 30))) if linux_status == "completed" else None,
             ))
-
+            
+            # ── Python Tutorial Progress & Course Enrollment ──
+            if enroll_python:
+                python_watched_count = 0
+                python_completed_count = 0
+                for idx, tut in enumerate(python_tutorial_objects):
+                    p = python_progress_data[idx]
+                    status = "completed" if p["practiced"] else ("in_progress" if p["watched"] else "not_started")
+                    db.add(UserTutorial(
+                        user_id=user.id,
+                        tutorial_id=tut.id,
+                        status=status,
+                        watched=p["watched"],
+                        practiced=p["practiced"],
+                        assignment_done=p["assignment_done"],
+                        forum_asked=p["forum_asked"],
+                        forum_answered=p["forum_answered"],
+                        xp_earned=p["xp_earned"],
+                    ))
+                    if p["watched"]:
+                        python_watched_count += 1
+                    if p["practiced"]:
+                        python_completed_count += 1
+                
+                python_prog_percent = round((python_completed_count / 10) * 100)
+                python_status = "completed" if python_prog_percent == 100 else ("in_progress" if python_watched_count > 0 else "not_started")
+                db.add(UserCourse(
+                    user_id=user.id,
+                    course_id="python",
+                    batch_id=python_batch_id,
+                    progress_percent=python_prog_percent,
+                    status=python_status,
+                    completed_at=(NOW - timedelta(days=random.randint(1, 30))) if python_status == "completed" else None,
+                ))
+            
             # ── Badges ──
-            # Assign badges based on achievements
             earned_badges = []
-            if watched_count >= 7:
+            if linux_watched_count >= 7:
                 earned_badges.append("b1")  # streak
-            if completed_count >= 20:
+            if linux_completed_count >= 20:
                 earned_badges.append("b4")  # course completer
+            if enroll_python and python_completed_count >= 10:
+                earned_badges.append("b2")  # 5 courses (using as multiple completed)
             if total_xp >= 300:
                 earned_badges.append("b3")  # first post (proxy)
             if total_xp >= 500:
@@ -518,11 +629,16 @@ def reseed():
                     badge_id=bid,
                     earned_at=NOW - timedelta(days=random.randint(1, 60)),
                 ))
-
+            
             # ── Feedback ──
-            feedback_entries = _generate_feedback_for_student(user, tutorial_objects, college_id, profile)
+            feedback_entries = _generate_feedback_for_student(
+                user, 
+                linux_tutorial_objects + python_tutorial_objects, 
+                college_id, 
+                profile
+            )
             all_feedback.extend(feedback_entries)
-
+            
     db.add_all(all_feedback)
 
     # ===== FOLLOWS (random connections) =====
@@ -636,6 +752,7 @@ def reseed():
     print("✅ RESEED COMPLETE")
     print("=" * 60)
     print(f"   Colleges:      {db.query(College).count()}")
+    print(f"   Batches:       {db.query(Batch).count()}")
     print(f"   Users:         {db.query(User).count()} (1 admin + 4 coordinators + {len(all_students)} students)")
     print(f"   Tutorials:     {db.query(Tutorial).count()}")
     print(f"   UserTutorials: {db.query(UserTutorial).count()}")

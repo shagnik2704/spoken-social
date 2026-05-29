@@ -34,19 +34,35 @@ export function LandingPage() {
     const navigate = useNavigate()
 
     useEffect(() => {
-        api.get('/api/courses/all-with-batches')
+        const endpoint = '/api/courses/me';
+        console.log('DEBUG LANDING: user role =', user?.role, 'fetching endpoint =', endpoint);
+        api.get(endpoint)
             .then(res => {
+                console.log('DEBUG LANDING: fetched courses length =', res.data?.length, 'data =', res.data);
                 setCourses(res.data)
-                // Default to Linux if available
-                const linux = res.data.find((c: any) => c.id === 'linux')
-                if (linux) setSelectedCourse(linux)
+                
+                // Default to Linux if present, otherwise select the first available course
+                const defaultCourse = res.data.find((c: any) => c.id === 'linux') || res.data[0]
+                if (defaultCourse) {
+                    console.log('DEBUG LANDING: setting defaultCourse =', defaultCourse.id);
+                    setSelectedCourse(defaultCourse)
+                }
                 setIsLoading(false)
             })
             .catch(err => {
                 console.error('Failed to fetch courses', err)
                 setIsLoading(false)
             })
-    }, [])
+    }, [user])
+
+    useEffect(() => {
+        // Auto-select batch if there is exactly 1 batch available
+        if (selectedCourse && selectedCourse.batches?.length === 1) {
+            setSelectedBatchId(selectedCourse.batches[0].id)
+        } else {
+            setSelectedBatchId(null)
+        }
+    }, [selectedCourse])
 
     const handleProceed = () => {
         if (selectedCourse && selectedBatchId) {
@@ -97,7 +113,6 @@ export function LandingPage() {
                                     key={course.id}
                                     onClick={() => {
                                         setSelectedCourse(course)
-                                        setSelectedBatchId(null)
                                     }}
                                     className={`w-full text-left p-4 rounded-xl border transition-all duration-300 group
                                         ${selectedCourse?.id === course.id 
@@ -111,10 +126,17 @@ export function LandingPage() {
                                                 {course.title}
                                             </p>
                                             <div className="flex items-center gap-1.5">
-                                                <span className={`h-2 w-2 rounded-full ${course.id === 'linux' ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500'}`} />
-                                                <span className="text-[10px] uppercase font-bold tracking-tighter text-muted-foreground">
-                                                    {course.id === 'linux' ? 'Active' : 'Inactive'}
-                                                </span>
+                                                {(() => {
+                                                    const isCourseActive = course.batches && course.batches.some(b => b.is_active);
+                                                    return (
+                                                        <>
+                                                            <span className={`h-2 w-2 rounded-full ${isCourseActive ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500'}`} />
+                                                            <span className="text-[10px] uppercase font-bold tracking-tighter text-muted-foreground">
+                                                                {isCourseActive ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                         <ArrowRight className={`w-4 h-4 transition-all duration-300 ${selectedCourse?.id === course.id ? 'translate-x-1 text-primary' : 'opacity-0 -translate-x-2'}`} />
@@ -184,7 +206,7 @@ export function LandingPage() {
                         <div className="mt-8 pt-6 border-t border-border flex justify-end">
                             <Button 
                                 size="lg" 
-                                disabled={!selectedBatchId || !selectedCourse?.batches.find(b => b.id === selectedBatchId)?.is_active}
+                                disabled={!selectedBatchId}
                                 onClick={handleProceed}
                                 className="group px-8 rounded-full shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30"
                             >

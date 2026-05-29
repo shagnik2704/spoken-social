@@ -49,10 +49,11 @@ const fetchCollegeAnalytics = async (collegeId: string, courseId?: string, batch
 }
 
 
-export function useCoordinatorColleges(courseId?: string, batchId?: string | null) {
+export function useCoordinatorColleges(courseId?: string, batchId?: string | null, enabled: boolean = true) {
     return useQuery({
         queryKey: ['coordinator', 'colleges', courseId, batchId],
-        queryFn: () => fetchColleges(courseId, batchId)
+        queryFn: () => fetchColleges(courseId, batchId),
+        enabled
     })
 }
 
@@ -63,24 +64,26 @@ export function useCoordinatorCollegeDetails(
     statusFilter: string,
     searchQuery: string,
     courseId?: string,
-    batchId?: string | null
+    batchId?: string | null,
+    enabled: boolean = true
 ) {
     return useQuery({
         queryKey: ['coordinator', 'college-details', collegeId, page, sortBy, statusFilter, searchQuery, courseId, batchId],
         queryFn: () => fetchCollegeDetails(collegeId!, page, sortBy, statusFilter, searchQuery, courseId, batchId),
-        enabled: !!collegeId
+        enabled: enabled && !!collegeId
     })
 }
 
 export function useCoordinatorCollegeAnalytics(
     collegeId: string | null,
     courseId?: string,
-    batchId?: string | null
+    batchId?: string | null,
+    enabled: boolean = true
 ) {
     return useQuery({
         queryKey: ['coordinator', 'college-analytics', collegeId, courseId, batchId],
         queryFn: () => fetchCollegeAnalytics(collegeId!, courseId, batchId),
-        enabled: !!collegeId
+        enabled: enabled && !!collegeId
     })
 }
 
@@ -109,11 +112,12 @@ export function useCoordinatorFeedbackSummary(
     collegeId: string | null,
     filters: { tutorialId: string; stepType: string; reason: string },
     courseId?: string,
-    batchId?: string | null
+    batchId?: string | null,
+    enabled: boolean = true
 ) {
     return useQuery({
         queryKey: ['coordinator', 'feedback-summary', collegeId, filters, courseId, batchId],
         queryFn: () => fetchCoordinatorFeedbackSummary(collegeId!, filters, courseId, batchId),
-        enabled: !!collegeId
+        enabled: enabled && !!collegeId
     })
 }

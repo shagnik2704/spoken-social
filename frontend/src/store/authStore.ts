@@ -21,10 +21,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     isImpersonating: localStorage.getItem('isImpersonating') === 'true',
     error: null,
 
-    login: async (email, password, role = 'student', collegeId?: string) => {
+    login: async (email, password, role?: string, collegeId?: string) => {
         set({ error: null, isLoading: true })
         try {
-            const { data } = await api.post('/api/auth/login', { email, password, role, college_id: collegeId })
+            const payload: any = { email, password }
+            if (role) payload.role = role
+            if (collegeId) payload.college_id = collegeId
+            
+            const { data } = await api.post('/api/auth/login', payload)
             localStorage.setItem('token', data.access_token)
             localStorage.removeItem('isImpersonating')
             set({

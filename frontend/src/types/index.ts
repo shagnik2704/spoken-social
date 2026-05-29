@@ -45,6 +45,9 @@ export interface Course {
     progressPercent: number
     completedAt?: string | null
     forumCategory?: string | null
+    batchId?: string | null
+    batchName?: string | null
+    batchStatus?: string
 }
 
 // ----- Badges -----

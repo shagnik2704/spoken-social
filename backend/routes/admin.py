@@ -53,16 +53,16 @@ async def get_platform_summary(
         User.id,
         User.display_name,
         User.username,
-        User.xp_total,
+        func.coalesce(func.sum(UserTutorial.xp_earned), 0).label("xp_total"),
         User.college_id,
         func.count(
-            case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
+            case((UserTutorial.watched == True, Tutorial.id), else_=None)
         ).label("watched"),
         func.count(
-            case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
+            case((UserTutorial.practiced == True, Tutorial.id), else_=None)
         ).label("completed"),
         func.count(
-            case((UserTutorial.minitask_opted == True, UserTutorial.tutorial_id), else_=None)
+            case((UserTutorial.minitask_opted == True, Tutorial.id), else_=None)
         ).label("minitasks_opted"),
     ).outerjoin(
         UserTutorial, UserTutorial.user_id == User.id
