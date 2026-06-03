@@ -33,7 +33,25 @@ from models.college_course import CollegeCourse
 random.seed(42)
 
 NOW = datetime.now(timezone.utc)
-CSV_FILE_PATH = "/Users/shagniksarkar/Desktop/spoken-social/Website_DB_Template (1).xlsx - Master Registry.csv"
+
+# Resolve CSV path dynamically so it works locally and inside Docker container
+possible_csv_paths = [
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "Website_DB_Template (1).xlsx - Master Registry.csv"),
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Website_DB_Template (1).xlsx - Master Registry.csv"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "Website_DB_Template (1).xlsx - Master Registry.csv"),
+    "/Users/shagniksarkar/Desktop/spoken-social/Website_DB_Template (1).xlsx - Master Registry.csv",
+]
+
+CSV_FILE_PATH = None
+for p in possible_csv_paths:
+    if os.path.exists(p):
+        CSV_FILE_PATH = p
+        break
+
+if not CSV_FILE_PATH:
+    # Sensible fallback
+    CSV_FILE_PATH = possible_csv_paths[0]
+
 
 # ============================================================
 # TUTORIAL DEFINITIONS PER COURSE
