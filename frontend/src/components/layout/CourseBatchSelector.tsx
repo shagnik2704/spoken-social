@@ -1,11 +1,9 @@
 import { useUserStore } from '@/store/userStore'
-import { Badge } from '@/components/ui/badge'
 import { BookOpen } from 'lucide-react'
 
 export function CourseBatchSelector() {
     const user = useUserStore(state => state.user)
     const activeCourseId = useUserStore(state => state.activeCourseId)
-    const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
     const setActiveCourse = useUserStore(state => state.setActiveCourse)
     const courses = useUserStore(state => state.courses)
 
@@ -32,7 +30,6 @@ export function CourseBatchSelector() {
         )
     }
 
-    const activeCourse = courses.find(c => c.id === activeCourseId)
 
     return (
         <div className="flex items-center gap-2">
