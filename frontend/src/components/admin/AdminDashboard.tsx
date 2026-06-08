@@ -394,6 +394,7 @@ interface ChartCollege {
 
 function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const now = new Date()
+    const activeCourseId = useUserStore(state => state.activeCourseId)
     const [selectedMonth, setSelectedMonth] = useState(
         `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     )
@@ -401,7 +402,7 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const [selectedCollegeIds, setSelectedCollegeIds] = useState<string[]>(
         colleges.map(c => c.id)
     )
-    const { data: chartData, isLoading } = useCollegesDailyXP(selectedMonth, selectedCollegeIds)
+    const { data: chartData, isLoading } = useCollegesDailyXP(selectedMonth, selectedCollegeIds, activeCourseId)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [collegeSearch, setCollegeSearch] = useState('')
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -1398,11 +1399,11 @@ export default function AdminDashboard() {
                     <button
                         onClick={async () => {
                             try {
-                                const response = await api.get(`/api/admin/minitask-students/export`, { responseType: 'blob' });
+                                const response = await api.get(`/api/admin/minitask-students/export?course_id=${activeCourseId}`, { responseType: 'blob' });
                                 const url = window.URL.createObjectURL(new Blob([response.data]));
                                 const link = document.createElement('a');
                                 link.href = url;
-                                link.setAttribute('download', 'MiniTask_OptIn_Report.xlsx');
+                                link.setAttribute('download', `MiniTask_OptIn_${activeCourseId}_Report.xlsx`);
                                 document.body.appendChild(link);
                                 link.click();
                             } catch (e) {
@@ -1417,7 +1418,9 @@ export default function AdminDashboard() {
                     <button
                         onClick={async () => {
                             try {
-                                const response = await api.get(`/api/admin/colleges/export`, { responseType: 'blob' });
+                                const params = new URLSearchParams({ course_id: activeCourseId });
+                                if (activeBatchId) params.set('batch_id', activeBatchId);
+                                const response = await api.get(`/api/admin/colleges/export?${params.toString()}`, { responseType: 'blob' });
                                 const url = window.URL.createObjectURL(new Blob([response.data]));
                                 const link = document.createElement('a');
                                 link.href = url;

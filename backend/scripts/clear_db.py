@@ -1,6 +1,9 @@
 import sys
 import os
 
+# Add backend directory to system path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from database import SyncSessionLocal
 from models import (
     College, User, Course, Tutorial, Badge, Follow, UserCourse,

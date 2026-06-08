@@ -54,6 +54,40 @@ MOCK_STUDENT_COURSES: dict[str, list[dict]] = {
 }
 
 
+async def _create_dynamic_admin(db: AsyncSession, email: str) -> User:
+    username_part = email.split("@")[0].lower()
+    username_clean = "".join(c for c in username_part if c.isalnum() or c == "_")
+    if not username_clean:
+        username_clean = "admin"
+    
+    # Ensure username uniqueness
+    username = f"@{username_clean}_admin"
+    u_res = await db.execute(select(User).filter_by(username=username))
+    u_check = u_res.scalars().first()
+    suffix = 1
+    while u_check:
+        username = f"@{username_clean}_admin_{suffix}"
+        u_res = await db.execute(select(User).filter_by(username=username))
+        u_check = u_res.scalars().first()
+        suffix += 1
+        
+    user = User(
+        id=uuid.uuid4(),
+        username=username,
+        display_name=username_part.capitalize(),
+        email=email.lower(),
+        role="admin",
+        bio="Admin",
+        location="India",
+        level=1,
+        xp_total=0,
+        xp_last_week=0
+    )
+    db.add(user)
+    await db.flush()
+    return user
+
+
 async def verify_credentials(
     email: str, 
     password: str, 
@@ -87,7 +121,10 @@ async def verify_credentials(
         result = await db.execute(select(User).where(func.lower(User.email) == func.lower(email)))
         user = result.scalars().first()
         if not user:
-            return {"error": "Bypass login failed: User is not pre-registered on Spoken Social", "status_code": 403}
+            if email.lower().endswith("@edupyramids.org"):
+                user = await _create_dynamic_admin(db, email)
+            else:
+                return {"error": "Bypass login failed: User is not pre-registered on Spoken Social", "status_code": 403}
     else:
         # ── Step 1: Call Spoken Tutorial's external API ──
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -117,10 +154,13 @@ async def verify_credentials(
         user = result.scalars().first()
         
         if not user:
-            return {
-                "error": "Your account is verified on Spoken Tutorial but is not pre-registered on Spoken Social. Please contact your coordinator.",
-                "status_code": 403
-            }
+            if email.lower().endswith("@edupyramids.org"):
+                user = await _create_dynamic_admin(db, email)
+            else:
+                return {
+                    "error": "Your account is verified on Spoken Tutorial but is not pre-registered on Spoken Social. Please contact your coordinator.",
+                    "status_code": 403
+                }
 
     if not user:
         return None

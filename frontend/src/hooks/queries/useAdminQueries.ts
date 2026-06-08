@@ -25,8 +25,11 @@ const fetchPlatformSummary = async (state?: string, courseId?: string, batchId?:
     return data
 }
 
-const fetchCollegeDailyXP = async (month: string, collegesId: string[]) => {
-    const { data } = await api.get(`/api/admin/college-daily-xp?month=${month}&college_ids=${collegesId.join(',')}`)
+const fetchCollegeDailyXP = async (month: string, collegesId: string[], courseId?: string) => {
+    let url = `/api/admin/college-daily-xp?month=${month}`
+    if (collegesId.length > 0) url += `&college_ids=${collegesId.join(',')}`
+    if (courseId) url += `&course_id=${courseId}`
+    const { data } = await api.get(url)
     return data
 }
 
@@ -92,10 +95,10 @@ export function usePlatformSummary(state?: string, courseId?: string, batchId?: 
     })
 }
 
-export function useCollegesDailyXP(month: string, collegesIds: string[]) {
+export function useCollegesDailyXP(month: string, collegesIds: string[], courseId?: string) {
     return useQuery({
-        queryKey: ['admin', 'college-daily-xp', month, collegesIds],
-        queryFn: () => fetchCollegeDailyXP(month, collegesIds),
+        queryKey: ['admin', 'college-daily-xp', month, collegesIds, courseId],
+        queryFn: () => fetchCollegeDailyXP(month, collegesIds, courseId),
         enabled: collegesIds.length > 0
     })
 }

@@ -199,8 +199,8 @@ def main():
     # ============================================================
     print("\n📅 Checking active batches for FDP events...")
     fdp_batches = {}
-    start_d = date(2026, 6, 1)
-    end_d = date(2026, 12, 31)
+    start_d = date(2026, 6, 8)
+    end_d = date(2026, 6, 22)
     
     for evt_id, meta in COURSE_MAPPINGS.items():
         course_id = meta["id"]

@@ -35,9 +35,22 @@ async def _build_college_summary(
     """
     if college_id:
         result = await db.execute(select(College).filter(College.id == college_id))
+        colleges = result.scalars().all()
     else:
-        result = await db.execute(select(College))
-    colleges = result.scalars().all()
+        college_query = (
+            select(College)
+            .join(User, User.college_id == College.id)
+            .join(UserCourse, UserCourse.user_id == User.id)
+            .filter(
+                User.role == "student",
+                UserCourse.course_id == course_id
+            )
+        )
+        if batch_id:
+            college_query = college_query.filter(UserCourse.batch_id == batch_id)
+        college_query = college_query.distinct().order_by(College.name)
+        result = await db.execute(college_query)
+        colleges = result.scalars().all()
 
     tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
     total_tutorials = tot_tut_res.scalar() or 20
