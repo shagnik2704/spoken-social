@@ -114,6 +114,8 @@ export interface Activity {
     time: string
 }
 
+
+
 // ----- Upcoming Events -----
 
 export type EventType = 'test' | 'workshop'

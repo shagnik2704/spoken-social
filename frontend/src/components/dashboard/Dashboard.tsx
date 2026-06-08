@@ -11,13 +11,12 @@ import { ActiveCourseTracker } from './ActiveCourseTracker'
 
 
 import { useUserStore } from '@/store/userStore'
+import type { UpcomingEvent } from '@/types'
 
 // Will be replaced with API call later
-const UPCOMING = [
-    { id: '1', type: 'test' as const, title: 'Python Online Test', date: 'Feb 28', daysAway: 4, location: 'Lab 201, 10:00 AM' },
-    { id: '2', type: 'workshop' as const, title: 'Linux Training Workshop', date: 'Mar 5', daysAway: 9, location: 'Computer Lab, 2:00 PM' },
-    { id: '3', type: 'test' as const, title: 'Scilab Online Test', date: 'Mar 12', daysAway: 16, location: 'TBD' },
-]
+const UPCOMING: UpcomingEvent[] = []
+
+
 
 
 const courseIconMap: Record<string, React.ReactNode> = {
@@ -288,30 +287,38 @@ function UpcomingDeadlines() {
                     <CalendarClock className="h-4 w-4 text-primary" />
                     Upcoming
                 </h2>
-                <div className="space-y-3">
-                    {UPCOMING.map((event) => (
-                        <div
-                            key={event.id}
-                            className={`flex items-start gap-3 p-3 rounded-lg bg-muted/30 border-l-[3px] ${getUrgencyColor(event.daysAway)}`}
-                        >
-                            {getTypeIcon(event.type)}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{event.title}</p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">{event.location}</p>
+                {UPCOMING.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground/60">
+                        <CalendarClock className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                        <p className="text-sm">No upcoming events. You're all clear! 🎉</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {UPCOMING.map((event) => (
+                            <div
+                                key={event.id}
+                                className={`flex items-start gap-3 p-3 rounded-lg bg-muted/30 border-l-[3px] ${getUrgencyColor(event.daysAway)}`}
+                            >
+                                {getTypeIcon(event.type)}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{event.title}</p>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">{event.location}</p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <p className="text-xs font-semibold">{event.date}</p>
+                                    <p className={`text-[11px] mt-0.5 ${event.daysAway <= 3 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                                        {event.daysAway === 1 ? 'Tomorrow!' : `${event.daysAway} days`}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="text-right shrink-0">
-                                <p className="text-xs font-semibold">{event.date}</p>
-                                <p className={`text-[11px] mt-0.5 ${event.daysAway <= 3 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
-                                    {event.daysAway === 1 ? 'Tomorrow!' : `${event.daysAway} days`}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </CardContent>
         </Card>
     )
 }
+
 
 // ===== MAIN DASHBOARD PAGE =====
 
@@ -351,7 +358,6 @@ export default function Dashboard() {
 
             {/* Section 5: My Courses */}
             <MyCourses />
-
             {/* Section 6 & 7: Achievements + Upcoming side by side on desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <AchievementsPreview />
