@@ -205,7 +205,7 @@ function StudentRow({ student, index, onViewAsStudent }: {
             <button
                 onClick={(e) => { e.stopPropagation(); onViewAsStudent?.(student.id) }}
                 className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
-                title="View as Student"
+                title="View as Learner"
             >
                 <Eye className="h-4 w-4" />
             </button>
@@ -287,7 +287,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                     <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                         <h2 className="text-sm font-bold flex items-center gap-2">
                             <Users className="h-4 w-4 text-primary" />
-                            Student Tracker — {college.name}
+                            Learner Tracker — {college.name}
                         </h2>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -355,7 +355,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                     <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                         <div className="w-6 shrink-0 text-center">#</div>
                         <div className="w-8 shrink-0" />
-                        <div className="flex-1">Student</div>
+                        <div className="flex-1">Learner</div>
                         <div className="hidden sm:block w-28 text-center">Progress</div>
                         <TooltipProvider>
                             <Tooltip>
@@ -408,7 +408,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         ))}
                         {filteredStudents.length === 0 && (
                             <p className="text-center text-sm text-muted-foreground py-8">
-                                No students match your filters
+                                No learners match your filters
                             </p>
                         )}
                     </div>
@@ -671,7 +671,7 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
             return (
                 <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-md">
                     <p className="text-sm font-medium">{payload[0].name}</p>
-                    <p className="text-xs text-muted-foreground">{payload[0].value} students ({total > 0 ? Math.round((payload[0].value / total) * 100) : 0}%)</p>
+                    <p className="text-xs text-muted-foreground">{payload[0].value} learners ({total > 0 ? Math.round((payload[0].value / total) * 100) : 0}%)</p>
                 </div>
             )
         }
@@ -687,14 +687,14 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
                         <Eye className="h-5 w-5 text-primary mx-auto mb-1" />
                         <p className="text-2xl font-bold">{watchRate}%</p>
                         <p className="text-[11px] text-muted-foreground">Watch Rate</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">avg {avgWatched.toFixed(1)} / {totalTutorials} per student</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">avg {avgWatched.toFixed(1)} / {totalTutorials} per learner</p>
                     </CardContent>
                 </Card>
                 <Card className="border-border/40">
                     <CardContent className="p-4 text-center">
                         <Zap className="h-5 w-5 text-xp-gold mx-auto mb-1" />
                         <p className="text-2xl font-bold">{avgXP}</p>
-                        <p className="text-[11px] text-muted-foreground">Avg XP / Student</p>
+                        <p className="text-[11px] text-muted-foreground">Avg XP / Learner</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{totalXP} total</p>
                     </CardContent>
                 </Card>
@@ -731,7 +731,7 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
                                         <RechartsTooltip content={<CustomTooltip />} />
                                     </PieChart>
                                 </ResponsiveContainer>
-                                <DonutCenterLabel value={String(total)} label="students" />
+                                <DonutCenterLabel value={String(total)} label="learners" />
                             </div>
                             <div className="flex-1 space-y-2">
                                 {statusData.filter((d: any) => d.value > 0).map((item: any) => (
@@ -800,7 +800,7 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
                     <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                         <CheckCircle2 className="h-4 w-4 text-success" />
                         Tutorial-wise Completion
-                        <span className="text-[10px] font-normal text-muted-foreground">— where are students dropping off?</span>
+                        <span className="text-[10px] font-normal text-muted-foreground">— where are learners dropping off?</span>
                     </h3>
                     <div className="space-y-1.5">
                         {tutorialCompletionWithNames.map((t: any) => (
@@ -876,7 +876,7 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
                     <CardContent className="p-4">
                         <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                             <AlertTriangle className="h-4 w-4 text-warning" />
-                            At-Risk Students
+                            At-Risk Learners
                             {atRisk.length > 0 && (
                                 <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] px-1.5 py-0 h-4">
                                     {atRisk.length} need attention
@@ -886,8 +886,8 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
                         {atRisk.length === 0 ? (
                             <div className="text-center py-6">
                                 <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
-                                <p className="text-sm font-medium">All students on track! 🎉</p>
-                                <p className="text-xs text-muted-foreground">No at-risk students right now</p>
+                                <p className="text-sm font-medium">All learners on track! 🎉</p>
+                                <p className="text-xs text-muted-foreground">No at-risk learners right now</p>
                             </div>
                         ) : (
                             <div className="space-y-1.5">
@@ -960,7 +960,7 @@ export default function CoordinatorDashboard() {
         try {
             await impersonate(MY_COLLEGE_ID, 'student')
             await useUserStore.getState().fetchUser()
-            toast.success('Viewing platform as a student')
+            toast.success('Viewing platform as a learner')
             navigate('/dashboard')
         } catch (e) {
             console.error('Failed to impersonate student', e)
@@ -991,7 +991,7 @@ export default function CoordinatorDashboard() {
     const myCollege = colleges.find((c: CollegeSummary) => c.id === MY_COLLEGE_ID)
 
     const tabs = [
-        { id: 'students' as const, label: 'My Students', icon: Users },
+        { id: 'students' as const, label: 'My Learners', icon: Users },
         { id: 'analytics' as const, label: 'Analytics', icon: Activity },
         { id: 'feedback' as const, label: 'Feedback', icon: MessageCircleQuestion },
         // { id: 'compare' as const, label: 'Compare Colleges', icon: BarChart3 },
@@ -1022,7 +1022,7 @@ export default function CoordinatorDashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Terminal className="h-4 w-4" />
-                        <span>{myCollege?.name} • {courses.find(c => c.id === activeCourseId)?.title || 'Course'} • No. of students registered: {myCollege?.totalCourseStudents}</span>
+                        <span>{myCollege?.name} • {courses.find(c => c.id === activeCourseId)?.title || 'Course'} • No. of learners registered: {myCollege?.totalCourseStudents}</span>
                     </div>
                 </div>
 
@@ -1032,7 +1032,7 @@ export default function CoordinatorDashboard() {
                             try {
                                 await impersonate(MY_COLLEGE_ID, 'student')
                                 await useUserStore.getState().fetchUser()
-                                toast.success('Viewing platform as a student')
+                                toast.success('Viewing platform as a learner')
                                 navigate('/dashboard')
                             } catch (e) {
                                 console.error('Failed to switch to student view', e)
@@ -1041,7 +1041,7 @@ export default function CoordinatorDashboard() {
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 border border-border/40 transition-colors rounded-md shadow-sm"
                     >
                         <Eye className="h-3.5 w-3.5" />
-                        View as Student
+                        View as Learner
                     </button>
 
                     <button
@@ -1051,7 +1051,7 @@ export default function CoordinatorDashboard() {
                                 const url = window.URL.createObjectURL(new Blob([response.data]));
                                 const link = document.createElement('a');
                                 link.href = url;
-                                link.setAttribute('download', `${(myCollege?.name || 'College').replace(/[^a-zA-Z0-9]/g, '_')}_Students_Report.xlsx`);
+                                link.setAttribute('download', `${(myCollege?.name || 'College').replace(/[^a-zA-Z0-9]/g, '_')}_Learners_Report.xlsx`);
                                 document.body.appendChild(link);
                                 link.click();
                             } catch (e) {

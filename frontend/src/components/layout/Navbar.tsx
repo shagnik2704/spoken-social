@@ -47,7 +47,7 @@ const navItems = [
     { icon: PlusCircle, label: 'Post', path: '/post', roles: ['student'] },
     { icon: Trophy, label: 'Leaderboard', path: '/leaderboard', roles: ['student'] },
     { icon: User, label: 'Profile', path: '/profile', roles: ['student', 'coordinator', 'admin'] },
-    { icon: Users, label: 'My Students', path: '/coordinator', roles: ['coordinator'] },
+    { icon: Users, label: 'My Learners', path: '/coordinator', roles: ['coordinator'] },
     { icon: Shield, label: 'Admin Panel', path: '/admin', roles: ['admin'] },
     { icon: Calendar, label: 'Switch Batch', path: '/landing', roles: ['student', 'coordinator', 'admin'] },
 ]

@@ -17,7 +17,7 @@ export function ImpersonationBanner() {
     const handleExit = async () => {
         const success = await exitImpersonation()
         if (success) {
-            toast.success('Exited student view', {
+            toast.success('Exited learner view', {
                 description: 'You are now back to your original account.'
             })
             await fetchUser()
@@ -33,7 +33,7 @@ export function ImpersonationBanner() {
         }
     }
 
-    const roleDisplayName = user?.role === 'student' ? 'Student' : 'Coordinator'
+    const roleDisplayName = user?.role === 'student' ? 'Learner' : 'Coordinator'
 
     return (
         <div className="bg-sky-500/10 border-b border-sky-500/20 text-sky-400 px-4 py-2 flex items-center justify-between z-[100] backdrop-blur-sm">
@@ -47,7 +47,7 @@ export function ImpersonationBanner() {
                 className="h-6 text-[10px] font-bold px-3 border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:text-sky-300 transition-colors uppercase tracking-wider"
                 onClick={handleExit}
             >
-                Exit Student View
+                Exit Learner View
             </Button>
         </div>
     )

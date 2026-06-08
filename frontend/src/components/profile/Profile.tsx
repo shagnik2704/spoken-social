@@ -363,7 +363,7 @@ function AdminDetails() {
                 {/* Status Breakdown */}
                 {metrics && (
                     <div className="mt-6 pt-5 border-t border-border/40">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Student Status Breakdown</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Learner Status Breakdown</p>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div className="flex items-center gap-2">
                                 <div className="h-2.5 w-2.5 rounded-full bg-success" />

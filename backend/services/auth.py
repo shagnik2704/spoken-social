@@ -86,29 +86,8 @@ async def verify_credentials(
         from sqlalchemy import func
         result = await db.execute(select(User).where(func.lower(User.email) == func.lower(email)))
         user = result.scalars().first()
-        if not user and password == "Student@123":
-            # Auto-create from mock CSV data — extract a username from the email
-            username_part = email.split("@")[0].lower()
-            
-            # Case-insensitive lookup in MOCK_STUDENT_COURSES
-            mock_courses = []
-            normalized_email = email.lower()
-            for k, v in MOCK_STUDENT_COURSES.items():
-                if k.lower() == normalized_email:
-                    mock_courses = v
-                    break
-            
-            user_info = await _upsert_user(
-                db,
-                api_username=username_part,
-                api_email=email,
-                api_role="student",
-                display_name=username_part.replace("student", "Student "),
-                college_name=None,
-                courses=mock_courses,
-            )
-            res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
-            user = res.scalars().first()
+        if not user:
+            return {"error": "Bypass login failed: User is not pre-registered on Spoken Social", "status_code": 403}
     else:
         # ── Step 1: Call Spoken Tutorial's external API ──
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -132,31 +111,16 @@ async def verify_credentials(
                 return {"error": error_msg, "status_code": resp.status_code if resp.status_code != 200 else 400}
             return None
             
-        # ── Step 2: Extract user info & Upsert ──
-        api_user = data.get("user")
-        api_username = api_user.get("username", "")
-        api_email = api_user.get("email", email)
-        api_role = api_user.get("role", "student")
-        first_name = api_user.get("first_name", "")
-        last_name = api_user.get("last_name", "")
-        display_name = f"{first_name} {last_name}".strip() or api_username
-        college_name = api_user.get("college_name")
-
-        # Extract courses from API response (when available)
-        api_courses = api_user.get("courses", [])
-
-        user_info = await _upsert_user(
-            db,
-            api_username=api_username,
-            api_email=api_email,
-            api_role=api_role,
-            display_name=display_name,
-            college_name=college_name,
-            courses=api_courses,
-        )
-        # Fetch user object back from DB for further logic
-        res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
-        user = res.scalars().first()
+        # ── Step 2: Verify user exists in our DB ──
+        from sqlalchemy import func
+        result = await db.execute(select(User).where(func.lower(User.email) == func.lower(email)))
+        user = result.scalars().first()
+        
+        if not user:
+            return {
+                "error": "Your account is verified on Spoken Tutorial but is not pre-registered on Spoken Social. Please contact your coordinator.",
+                "status_code": 403
+            }
 
     if not user:
         return None

@@ -71,7 +71,7 @@ function TutorialGroupCard({ group, onStudentClick }: {
                         Tutorial {group.tutorialNumber}: {group.tutorialTitle}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                        {group.studentCount} {group.studentCount === 1 ? 'student' : 'students'} · {group.entries.length} {group.entries.length === 1 ? 'issue' : 'issues'}
+                        {group.studentCount} {group.studentCount === 1 ? 'learner' : 'learners'} · {group.entries.length} {group.entries.length === 1 ? 'issue' : 'issues'}
                     </p>
                 </div>
                 <span className="text-lg font-bold text-amber-500 tabular-nums shrink-0">
@@ -292,8 +292,8 @@ export function FeedbackPanel({ onStudentClick, useFeedbackData }: FeedbackPanel
                     <MessageCircleQuestion className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                    <h2 className="text-sm font-bold">Student Feedback</h2>
-                    <p className="text-[11px] text-muted-foreground">Why students say "No"</p>
+                    <h2 className="text-sm font-bold">Learner Feedback</h2>
+                    <p className="text-[11px] text-muted-foreground">Why learners say "No"</p>
                 </div>
                 {summary.totalEntries > 0 && (
                     <Badge className="bg-amber-500/10 text-amber-500 border-0 text-[10px] px-2 py-0.5 ml-1">
@@ -325,7 +325,7 @@ export function FeedbackPanel({ onStudentClick, useFeedbackData }: FeedbackPanel
                             <Users className="h-3.5 w-3.5 text-primary/60" />
                             <span className="font-bold tabular-nums">{summary.uniqueStudents}</span>
                             <span className="text-xs text-muted-foreground">
-                                {summary.uniqueStudents === 1 ? 'student' : 'students'} affected
+                                {summary.uniqueStudents === 1 ? 'learner' : 'learners'} affected
                             </span>
                         </div>
                         {hasActiveFilters && (
@@ -349,7 +349,7 @@ export function FeedbackPanel({ onStudentClick, useFeedbackData }: FeedbackPanel
                         <p className="text-xs text-muted-foreground mt-1">
                             {hasActiveFilters
                                 ? 'Try adjusting or clearing your filters'
-                                : 'When students select "No" on tutorial steps, their reasons will appear here'}
+                                : 'When learners select "No" on tutorial steps, their reasons will appear here'}
                         </p>
                     </CardContent>
                 </Card>

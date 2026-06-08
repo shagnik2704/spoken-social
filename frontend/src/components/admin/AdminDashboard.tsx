@@ -224,7 +224,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                     icon={Building2}
                     label="Total Colleges"
                     value={m.totalColleges}
-                    subtext={`${m.totalStudents} students enrolled`}
+                    subtext={`${m.totalStudents} learners enrolled`}
                     color="bg-primary/10 text-primary"
                 />
                 <MetricCard
@@ -274,7 +274,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold truncate">{college.name} <span className="text-muted-foreground font-normal">({college.totalCourseStudents} enrolled)</span></p>
                                     <p className="text-[11px] text-muted-foreground">
-                                        {college.totalStudents} students · {college.coordinatorName}
+                                        {college.totalStudents} learners · {college.coordinatorName}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
@@ -339,7 +339,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                     <CardContent className="p-4">
                         <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                             <AlertTriangle className="h-4 w-4 text-warning" />
-                            At-Risk Students — All Colleges
+                            At-Risk Learners — All Colleges
                             {summary.atRiskStudents.length > 0 && (
                                 <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] px-1.5 py-0 h-4">
                                     {summary.atRiskStudents.length} need attention
@@ -349,7 +349,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                         {summary.atRiskStudents.length === 0 ? (
                             <div className="text-center py-6">
                                 <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
-                                <p className="text-sm font-medium">All students on track! 🎉</p>
+                                <p className="text-sm font-medium">All learners on track! 🎉</p>
                             </div>
                         ) : (
                             <div className="space-y-1.5">
@@ -763,7 +763,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                                     <div className="flex gap-4">
                                         <div className="text-center">
                                             <p className="text-xl font-bold">{college.totalStudents}</p>
-                                            <p className="text-[10px] text-muted-foreground">Students</p>
+                                            <p className="text-[10px] text-muted-foreground">Learners</p>
                                         </div>
                                         <div className="text-center">
                                             <p className="text-xl font-bold text-primary">{college.avgProgress}%</p>
@@ -786,7 +786,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                             <h2 className="text-sm font-bold flex items-center gap-2">
                                 <Users className="h-4 w-4 text-primary" />
-                                Students — {college?.name || selectedCollegeId}
+                                Learners — {college?.name || selectedCollegeId}
                             </h2>
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -848,7 +848,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                         <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                             <div className="w-6 shrink-0 text-center">#</div>
                             <div className="w-8 shrink-0" />
-                            <div className="flex-1">Student</div>
+                            <div className="flex-1">Learner</div>
                             <div className="hidden sm:block w-28 text-center">Progress</div>
                             <div className="hidden md:flex w-14 items-center gap-0.5 justify-center"><Eye className="h-3 w-3" /> Watched</div>
                             <div className="hidden md:flex w-14 items-center gap-0.5 justify-center"><CheckCircle2 className="h-3 w-3" /> Done</div>
@@ -859,7 +859,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
 
                         {/* Student Rows */}
                         {isLoadingDetails ? (
-                            <p className="text-center text-sm text-muted-foreground py-8">Loading students...</p>
+                            <p className="text-center text-sm text-muted-foreground py-8">Loading learners...</p>
                         ) : (
                             <div className="space-y-0.5">
                                 {students.map((student: Student, idx: number) => (
@@ -872,7 +872,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                                 ))}
                                 {students.length === 0 && (
                                     <p className="text-center text-sm text-muted-foreground py-8">
-                                        No students match your filters
+                                        No learners match your filters
                                     </p>
                                 )}
                             </div>
@@ -882,7 +882,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                         {pagination && pagination.totalPages > 1 && (
                             <div className="flex items-center justify-between pt-4 border-t border-border/30">
                                 <p className="text-xs text-muted-foreground">
-                                    Page {pagination.currentPage} of {pagination.totalPages} · {pagination.totalRecords} students
+                                    Page {pagination.currentPage} of {pagination.totalPages} · {pagination.totalRecords} learners
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -972,7 +972,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                                 {([
                                     { id: 'progress', label: 'Progress' },
                                     { id: 'completion', label: 'Completion' },
-                                    { id: 'students', label: 'Students' },
+                                    { id: 'students', label: 'Learners' },
                                     { id: 'xp', label: 'XP' },
                                     { id: 'name', label: 'Name' },
                                 ] as const).map(sort => (
@@ -993,7 +993,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                     <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                         <div className="w-8 shrink-0 text-center">Rank</div>
                         <div className="flex-1">College</div>
-                        <div className="w-16 text-center">Students</div>
+                        <div className="w-16 text-center">Learners</div>
                         <div className="w-24 text-center hidden sm:block">Progress</div>
                         <div className="w-20 text-center">Completion</div>
                         <div className="w-16 text-center hidden md:block">Avg XP</div>
@@ -1103,7 +1103,7 @@ function AnalyticsTab({ colleges }: {
             return (
                 <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-md">
                     <p className="text-sm font-medium">{payload[0].name}</p>
-                    <p className="text-xs text-muted-foreground">{payload[0].value} students ({m.totalStudents > 0 ? Math.round((payload[0].value / m.totalStudents) * 100) : 0}%)</p>
+                    <p className="text-xs text-muted-foreground">{payload[0].value} learners ({m.totalStudents > 0 ? Math.round((payload[0].value / m.totalStudents) * 100) : 0}%)</p>
                 </div>
             )
         }
@@ -1152,7 +1152,7 @@ function AnalyticsTab({ colleges }: {
                     <CardContent className="p-4 text-center">
                         <Zap className="h-5 w-5 text-xp-gold mx-auto mb-1" />
                         <p className="text-2xl font-bold">{m.avgXP}</p>
-                        <p className="text-[11px] text-muted-foreground">Avg XP / Student</p>
+                        <p className="text-[11px] text-muted-foreground">Avg XP / Learner</p>
                     </CardContent>
                 </Card>
                 <Card className="border-border/40">
@@ -1160,7 +1160,7 @@ function AnalyticsTab({ colleges }: {
                         <Building2 className="h-5 w-5 text-primary mx-auto mb-1" />
                         <p className="text-2xl font-bold">{m.totalColleges}</p>
                         <p className="text-[11px] text-muted-foreground">Colleges</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{m.totalStudents} students</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{m.totalStudents} learners</p>
                     </CardContent>
                 </Card>
             </div>
@@ -1186,7 +1186,7 @@ function AnalyticsTab({ colleges }: {
                                         <Tooltip content={<CustomTooltip />} />
                                     </PieChart>
                                 </ResponsiveContainer>
-                                <DonutCenterLabel value={String(m.totalStudents)} label="students" />
+                                <DonutCenterLabel value={String(m.totalStudents)} label="learners" />
                             </div>
                             <div className="flex-1 space-y-2">
                                 {statusData.map((item: any) => (

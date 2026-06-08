@@ -92,7 +92,7 @@ export function LandingPage() {
                 {/* Header Section */}
                 <div className="text-center space-y-2">
                     <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider">
-                        Welcome back, {user?.displayName || 'Student'}
+                        Welcome back, {user?.displayName || 'Learner'}
                     </Badge>
                     <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
                         Choose Your Course & Batch
