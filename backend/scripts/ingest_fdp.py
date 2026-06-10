@@ -254,6 +254,8 @@ def main():
             
         course_id = COURSE_MAPPINGS[evt_id]["id"]
         c_key = college_name.lower()
+        state_name = row.get("state_name", "").strip()
+        location = f"{state_name}, India" if state_name else "India"
         
         # Resolve/Create College
         if c_key not in college_cache:
@@ -261,12 +263,14 @@ def main():
             # Check if college_id exists in db (mapped differently)
             existing_col = db.query(College).filter_by(id=c_id).first()
             if existing_col:
+                if state_name and (existing_col.location == "India" or not existing_col.location):
+                    existing_col.location = location
                 college_cache[c_key] = existing_col
             else:
                 new_col = College(
                     id=c_id,
                     name=college_name,
-                    location="India",
+                    location=location,
                     coordinator_name=None,
                     total_course_students=0
                 )
@@ -274,6 +278,10 @@ def main():
                 college_cache[c_key] = new_col
                 colleges_created += 1
                 db.flush()
+        else:
+            cached_col = college_cache[c_key]
+            if state_name and (cached_col.location == "India" or not cached_col.location):
+                cached_col.location = location
         
         college_id = college_cache[c_key].id
         
@@ -319,6 +327,9 @@ def main():
         
         # 1. Resolve/Upsert User
         user = user_cache.get(email)
+        state_name = row.get("state_name", "").strip()
+        location = f"{state_name}, India" if state_name else "India"
+        
         if not user:
             username_part = email.split("@")[0].lower()
             # Clean username part from non-alphanumeric chars
@@ -346,7 +357,7 @@ def main():
                 college_id=college_id,
                 bio=f"FDP Participant at {college_name}",
                 department_year="Faculty Member",
-                location="India",
+                location=location,
                 level=1,
                 xp_total=0,
                 xp_last_week=0
@@ -355,6 +366,9 @@ def main():
             user_cache[email] = user
             users_created += 1
             db.flush()
+        else:
+            if state_name and (user.location == "India" or not user.location):
+                user.location = location
             
         # Ensure college ID is attached if it wasn't
         if not user.college_id and college_id:

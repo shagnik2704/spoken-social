@@ -413,8 +413,11 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
         colleges.forEach(c => {
             if (c.location) {
                 const parts = c.location.split(',')
-                const state = parts[parts.length - 1].trim()
-                if (state) set.add(state)
+                let state = parts[parts.length - 1].trim()
+                if (state === 'India' && parts.length > 1) {
+                    state = parts[parts.length - 2].trim()
+                }
+                if (state && state !== 'India') set.add(state)
             }
         })
         return Array.from(set)
@@ -709,8 +712,11 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
         colleges.forEach(c => {
             if (c.location) {
                 const parts = c.location.split(',')
-                const state = parts[parts.length - 1].trim()
-                if (state) set.add(state)
+                let state = parts[parts.length - 1].trim()
+                if (state === 'India' && parts.length > 1) {
+                    state = parts[parts.length - 2].trim()
+                }
+                if (state && state !== 'India') set.add(state)
             }
         })
         return Array.from(set)
@@ -1079,8 +1085,11 @@ function AnalyticsTab({ colleges }: {
         colleges.forEach(c => {
             if (c.location) {
                 const parts = c.location.split(',')
-                const state = parts[parts.length - 1].trim()
-                if (state) set.add(state)
+                let state = parts[parts.length - 1].trim()
+                if (state === 'India' && parts.length > 1) {
+                    state = parts[parts.length - 2].trim()
+                }
+                if (state && state !== 'India') set.add(state)
             }
         })
         return Array.from(set)
