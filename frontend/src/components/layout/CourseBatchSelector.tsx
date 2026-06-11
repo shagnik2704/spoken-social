@@ -31,6 +31,7 @@ export function CourseBatchSelector() {
     }
 
 
+    
     return (
         <div className="flex items-center gap-2">
             <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
