@@ -81,10 +81,11 @@ async def get_platform_summary(
     if state:
         query = query.join(College, College.id == User.college_id).filter(
             User.role == "student",
+            User.is_test_account != True,
             College.location.ilike(f"%{state}%")
         )
     else:
-        query = query.filter(User.role == "student")
+        query = query.filter(User.role == "student", User.is_test_account != True)
 
     query = query.group_by(User.id)
     res_metrics = await db.execute(query)
@@ -97,6 +98,7 @@ async def get_platform_summary(
         .join(UserCourse, UserCourse.user_id == User.id)
         .filter(
             User.role == "student",
+            User.is_test_account != True,
             UserCourse.course_id == course_id
         )
     )
@@ -193,6 +195,7 @@ async def get_platform_summary(
         stats_query = stats_query.join(User, User.id == UserTutorial.user_id).join(College, College.id == User.college_id).filter(
             Tutorial.course_id == course_id,
             User.role == "student",
+            User.is_test_account != True,
             College.location.ilike(f"%{state}%")
         )
     else:
@@ -275,6 +278,7 @@ async def get_minitask_analysis(
         .outerjoin(College, College.id == User.college_id)
         .filter(
             User.role == "student",
+            User.is_test_account != True,
             UserTutorial.minitask_opted == True,
             Tutorial.course_id == course_id,
             UserCourse.course_id == course_id
@@ -429,6 +433,7 @@ async def export_minitask_students(
         .outerjoin(College, College.id == User.college_id)
         .filter(
             User.role == "student",
+            User.is_test_account != True,
             UserTutorial.minitask_opted == True,
             Tutorial.course_id == course_id,
         )
@@ -640,6 +645,7 @@ async def get_college_daily_xp(
             .join(UserCourse, UserCourse.user_id == User.id)
             .filter(
                 User.role == "student",
+                User.is_test_account != True,
                 UserCourse.course_id == course_id
             )
             .group_by(College.id, College.name)
@@ -678,6 +684,7 @@ async def get_college_daily_xp(
         .join(UserCourse, UserCourse.user_id == User.id)
         .filter(
             User.role == "student",
+            User.is_test_account != True,
             UserCourse.course_id == course_id,
             User.college_id.in_([c.id for c in colleges]),
             cast(XPEvent.created_at, Date) >= month_start,

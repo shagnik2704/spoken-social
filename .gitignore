@@ -12,3 +12,4 @@ docker-compose.yml
 *.sql
 backend/scripts/data/backups/
 
+backups/

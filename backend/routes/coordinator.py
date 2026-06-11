@@ -43,6 +43,7 @@ async def _build_college_summary(
             .join(UserCourse, UserCourse.user_id == User.id)
             .filter(
                 User.role == "student",
+                User.is_test_account != True,
                 UserCourse.course_id == course_id
             )
         )
@@ -61,7 +62,8 @@ async def _build_college_summary(
         # Filter by enrollment in this course/batch if specified
         stu_query = select(User.id).filter(
             User.college_id == college.id,
-            User.role == "student"
+            User.role == "student",
+            User.is_test_account != True
         )
         
         # Join with UserCourse to ensure they are enrolled in this course/batch
@@ -148,6 +150,7 @@ async def _build_college_summary(
             .join(Tutorial, (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id))
             .filter(
                 User.role == "student",
+                User.is_test_account != True,
                 User.college_id == college.id,
                 User.id.in_(student_ids)
             )
@@ -196,7 +199,8 @@ async def _get_student_rows(
     # ── Step 1: Build the student IDs query (filtered by college, course, batch) ──
     stu_id_query = select(User.id).filter(
         User.college_id == college_id,
-        User.role == "student"
+        User.role == "student",
+        User.is_test_account != True
     )
     stu_id_query = stu_id_query.join(UserCourse, UserCourse.user_id == User.id).filter(UserCourse.course_id == course_id)
     if batch_id:
@@ -551,7 +555,8 @@ async def get_college_analytics(
     # ── Step 1: Filter students by enrollment in course & batch ──
     stu_query = select(User.id).filter(
         User.college_id == college_id,
-        User.role == "student"
+        User.role == "student",
+        User.is_test_account != True
     )
     stu_query = stu_query.join(UserCourse, UserCourse.user_id == User.id).filter(UserCourse.course_id == course_id)
     if batch_id:

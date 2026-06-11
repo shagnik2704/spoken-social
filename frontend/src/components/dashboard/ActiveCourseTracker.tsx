@@ -345,7 +345,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                         value={tutorial.minitaskOpted}
                                         fieldId={`t${tutorial.id}-minitask`}
                                         onChange={(v) => onRadioChange(tutorial.id, 'minitaskOpted', v)}
-                                        disabled={!activeBatchIsActive}
+                                        disabled={true}
                                     />
                                     {tutorial.minitaskOpted === 'yes' && (
                                         <div className="flex items-center gap-2 pb-2 pl-1 animate-in fade-in slide-in-from-top-1 duration-300">
@@ -384,7 +384,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                             value={tutorial.forumAsked}
                                             fieldId={`t${tutorial.id}-forumAsked`}
                                             onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
-                                            disabled={!activeBatchIsActive}
+                                            disabled={true}
                                         />
                                     )}
 
@@ -467,7 +467,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                 value={tutorial.minitaskOpted}
                                 fieldId={`t${tutorial.id}-minitask`}
                                 onChange={(v) => onRadioChange(tutorial.id, 'minitaskOpted', v)}
-                                disabled={!activeBatchIsActive}
+                                disabled={true}
                             />
                             {tutorial.minitaskOpted === 'yes' && (
                                 <div className="flex items-center gap-2 pb-2 pl-1 animate-in fade-in slide-in-from-top-1 duration-300">
@@ -490,7 +490,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                 value={tutorial.forumAsked}
                                 fieldId={`t${tutorial.id}-forumAsked`}
                                 onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
-                                disabled={!activeBatchIsActive}
+                                disabled={true}
                             />
                             {tutorial.forumAsked === 'yes' && (
                                 <div className="pl-8 pb-3 pt-1">

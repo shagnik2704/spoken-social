@@ -26,32 +26,8 @@ SPOKEN_TUTORIAL_VERIFY_URL = os.environ.get(
     "https://spoken-tutorial.org/api/spoken-social/verify-user/"
 )
 
-# ── Demo student credentials (override via env vars) ──
-DEMO_STUDENT_EMAIL = os.getenv("DEMO_STUDENT_EMAIL", "demo@spoken-social.org")
-DEMO_STUDENT_PASSWORD = os.getenv("DEMO_STUDENT_PASSWORD", "demo123")
-
-
-# ── Mock student → course mapping (for dev bypass) ──
-# Maps student email → list of {course_id, batch_id}
-# Based on the CSV mock data from Spoken Tutorial
-MOCK_STUDENT_COURSES: dict[str, list[dict]] = {
-    "Student1@edupyramids.in":  [
-        {"course_id": "linux",      "batch_id": "linux-2026-batch1"},
-        {"course_id": "postgresql", "batch_id": "postgresql-2026-batch1"}
-    ],
-    "Student2@edupyramids.in":  [
-        {"course_id": "linux",      "batch_id": "linux-2026-batch1"},
-        {"course_id": "ai",         "batch_id": "ai-2026-batch1"}
-    ],
-    "Student3@edupyramids.in":  [
-        {"course_id": "linux",      "batch_id": "linux-2026-batch1"},
-        {"course_id": "phd",        "batch_id": "phd-2026-batch1"}
-    ],
-    "Student4@edupyramids.in":  [
-        {"course_id": "linux",      "batch_id": "linux-2026-batch2"}
-    ],
-    # Students without explicit mapping will fall back to college_courses
-}
+# ── Dev bypass toggle (set to "true" ONLY in local/dev environments) ──
+DEV_BYPASS_ENABLED = os.getenv("DEV_BYPASS_ENABLED", "false").lower() == "true"
 
 
 async def _create_dynamic_admin(db: AsyncSession, email: str) -> User:
@@ -103,20 +79,20 @@ async def verify_credentials(
     5. Return user info dict for JWT creation
     """
 
-    # ── Dev Bypass Suite ──
-    if email == "admin@tutorial.org" and password == "admin123":
+    # ── Dev Bypass Suite (disabled on production) ──
+    if DEV_BYPASS_ENABLED and email == "admin@tutorial.org" and password == "admin123":
         user_info = await _upsert_user(db, api_username="admin", api_email=email, api_role="admin", display_name="Admin User", college_name=None)
         res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
         user = res.scalars().first()
-    elif email == "coordinator@tutorial.org" and password == "coord123":
+    elif DEV_BYPASS_ENABLED and email == "coordinator@tutorial.org" and password == "coord123":
         user_info = await _upsert_user(db, api_username="coordinator", api_email=email, api_role="coordinator", display_name="College Coordinator", college_name="Ambalika Institute of Management and Technology")
         res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
         user = res.scalars().first()
-    elif email == "madhu0476@gmail.com" and password == "Testing*123":
+    elif DEV_BYPASS_ENABLED and email == "madhu0476@gmail.com" and password == "Testing*123":
         user_info = await _upsert_user(db, api_username="madhu0476", api_email=email, api_role="coordinator", display_name="Madhulika G", college_name="IIT Bombay")
         res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
         user = res.scalars().first()
-    elif password in ("password123", "Student@123", "Trainin@123", "Testing*123"):
+    elif DEV_BYPASS_ENABLED and password in ("password123", "Student@123", "Trainin@123", "Testing*123"):
         from sqlalchemy import func
         result = await db.execute(select(User).where(func.lower(User.email) == func.lower(email)))
         user = result.scalars().first()
