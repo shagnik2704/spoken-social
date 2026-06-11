@@ -17,7 +17,11 @@ router = APIRouter(prefix='/api', tags=['users'])
 
 
 @router.get('/me')
-async def get_current_user_profile(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_current_user_profile(
+    programme_id: Optional[str] = Query(None),
+    user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
     """Returns the logged-in user's full profile + courses + badges."""
     result = await db.execute(
         select(User)
@@ -41,17 +45,20 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
 
     if user_loaded.effective_role == "admin":
         # Fetch all courses with their batches
-        courses_res = await db.execute(
-            select(Course)
-            .options(selectinload(Course.batches))
-            .order_by(Course.title)
-        )
+        query = select(Course).options(selectinload(Course.batches))
+        if programme_id:
+            from models.programme import ProgrammeCourse
+            query = query.join(ProgrammeCourse, ProgrammeCourse.course_id == Course.id).filter(ProgrammeCourse.programme_id == programme_id)
+        query = query.order_by(Course.title)
+        
+        courses_res = await db.execute(query)
         all_courses = courses_res.scalars().all()
         courses = []
         for c in all_courses:
             c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
-            c_dict["batches"] = [b.to_api_dict() for b in c.batches]
-            active_b = next((b for b in c.batches if b.status == "active"), c.batches[0] if c.batches else None)
+            batches = [b for b in c.batches if b.programme_id == programme_id] if programme_id else c.batches
+            c_dict["batches"] = [b.to_api_dict() for b in batches]
+            active_b = next((b for b in batches if b.status == "active"), batches[0] if batches else None)
             if active_b:
                 c_dict["batchId"] = str(active_b.id)
                 c_dict["batchName"] = active_b.name
@@ -63,19 +70,23 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
             courses.append(c_dict)
     elif user_loaded.effective_role == "coordinator":
         # Fetch courses enabled for coordinator's college, with batches
-        courses_res = await db.execute(
+        query = (
             select(Course)
             .join(CollegeCourse, CollegeCourse.course_id == Course.id)
             .filter(CollegeCourse.college_id == user_loaded.college_id)
-            .options(selectinload(Course.batches))
-            .order_by(Course.title)
         )
+        if programme_id:
+            query = query.filter(CollegeCourse.programme_id == programme_id)
+        query = query.options(selectinload(Course.batches)).order_by(Course.title)
+        
+        courses_res = await db.execute(query)
         col_courses = courses_res.scalars().all()
         courses = []
         for c in col_courses:
             c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
-            c_dict["batches"] = [b.to_api_dict() for b in c.batches]
-            active_b = next((b for b in c.batches if b.status == "active"), c.batches[0] if c.batches else None)
+            batches = [b for b in c.batches if b.programme_id == programme_id] if programme_id else c.batches
+            c_dict["batches"] = [b.to_api_dict() for b in batches]
+            active_b = next((b for b in batches if b.status == "active"), batches[0] if batches else None)
             if active_b:
                 c_dict["batchId"] = str(active_b.id)
                 c_dict["batchName"] = active_b.name
@@ -86,7 +97,13 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
                 c_dict["batchStatus"] = "inactive"
             courses.append(c_dict)
     else:
-        courses = [uc.to_api_dict() for uc in user_loaded.courses]
+        if programme_id:
+            courses = [
+                uc.to_api_dict() for uc in user_loaded.courses 
+                if uc.batch and uc.batch.programme_id == programme_id
+            ]
+        else:
+            courses = [uc.to_api_dict() for uc in user_loaded.courses]
 
     badges = [ub.to_api_dict() for ub in user_loaded.badges]
 

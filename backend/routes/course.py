@@ -18,22 +18,26 @@ router = APIRouter(prefix="/api/courses", tags=["courses"])
 
 @router.get("/me")
 async def get_my_courses(
+    programme_id: Optional[str] = Query(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get courses relevant to the current user (enrolled for student, college-enabled for coordinator, all for admin)."""
     if user.effective_role == "admin":
-        result = await db.execute(
-            select(Course)
-            .options(selectinload(Course.batches))
-            .order_by(Course.title)
-        )
+        query = select(Course).options(selectinload(Course.batches))
+        if programme_id:
+            from models.programme import ProgrammeCourse
+            query = query.join(ProgrammeCourse, ProgrammeCourse.course_id == Course.id).filter(ProgrammeCourse.programme_id == programme_id)
+        query = query.order_by(Course.title)
+        
+        result = await db.execute(query)
         all_courses = result.scalars().all()
         data = []
         for c in all_courses:
             c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
-            c_dict["batches"] = [b.to_api_dict() for b in c.batches]
-            active_b = next((b for b in c.batches if b.status == "active"), c.batches[0] if c.batches else None)
+            batches = [b for b in c.batches if b.programme_id == programme_id] if programme_id else c.batches
+            c_dict["batches"] = [b.to_api_dict() for b in batches]
+            active_b = next((b for b in batches if b.status == "active"), batches[0] if batches else None)
             if active_b:
                 c_dict["batchId"] = str(active_b.id)
                 c_dict["batchName"] = active_b.name
@@ -46,19 +50,23 @@ async def get_my_courses(
         return data
 
     elif user.effective_role == "coordinator":
-        result = await db.execute(
+        query = (
             select(Course)
             .join(CollegeCourse, CollegeCourse.course_id == Course.id)
             .filter(CollegeCourse.college_id == user.college_id)
-            .options(selectinload(Course.batches))
-            .order_by(Course.title)
         )
+        if programme_id:
+            query = query.filter(CollegeCourse.programme_id == programme_id)
+        query = query.options(selectinload(Course.batches)).order_by(Course.title)
+        
+        result = await db.execute(query)
         col_courses = result.scalars().all()
         data = []
         for c in col_courses:
             c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
-            c_dict["batches"] = [b.to_api_dict() for b in c.batches]
-            active_b = next((b for b in c.batches if b.status == "active"), c.batches[0] if c.batches else None)
+            batches = [b for b in c.batches if b.programme_id == programme_id] if programme_id else c.batches
+            c_dict["batches"] = [b.to_api_dict() for b in batches]
+            active_b = next((b for b in batches if b.status == "active"), batches[0] if batches else None)
             if active_b:
                 c_dict["batchId"] = str(active_b.id)
                 c_dict["batchName"] = active_b.name
@@ -71,7 +79,7 @@ async def get_my_courses(
         return data
 
     else:
-        result = await db.execute(
+        query = (
             select(UserCourse)
             .options(
                 selectinload(UserCourse.course),
@@ -79,25 +87,32 @@ async def get_my_courses(
             )
             .filter(UserCourse.user_id == user.id)
         )
+        if programme_id:
+            query = query.join(Batch, UserCourse.batch_id == Batch.id).filter(Batch.programme_id == programme_id)
+        result = await db.execute(query)
         enrollments = result.scalars().all()
         return [uc.to_api_dict() for uc in enrollments]
 
 @router.get("/all-with-batches")
 async def list_courses_with_batches(
+    programme_id: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
     """List all courses with their associated batches for landing page selection."""
-    result = await db.execute(
-        select(Course)
-        .options(selectinload(Course.batches))
-        .order_by(Course.title)
-    )
+    query = select(Course).options(selectinload(Course.batches))
+    if programme_id:
+        from models.programme import ProgrammeCourse
+        query = query.join(ProgrammeCourse, ProgrammeCourse.course_id == Course.id).filter(ProgrammeCourse.programme_id == programme_id)
+    query = query.order_by(Course.title)
+    
+    result = await db.execute(query)
     courses = result.scalars().all()
     
     data = []
     for c in courses:
         c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
-        c_dict["batches"] = [b.to_api_dict() for b in c.batches]
+        batches = [b for b in c.batches if b.programme_id == programme_id] if programme_id else c.batches
+        c_dict["batches"] = [b.to_api_dict() for b in batches]
         data.append(c_dict)
     
     return data
@@ -105,6 +120,7 @@ async def list_courses_with_batches(
 
 @router.get("")
 async def list_courses(
+    programme_id: Optional[str] = Query(None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -114,16 +130,24 @@ async def list_courses(
     Coordinators/Students see courses enabled for their college.
     """
     if user.effective_role == "admin":
-        result = await db.execute(select(Course).order_by(Course.title))
+        query = select(Course)
+        if programme_id:
+            from models.programme import ProgrammeCourse
+            query = query.join(ProgrammeCourse, ProgrammeCourse.course_id == Course.id).filter(ProgrammeCourse.programme_id == programme_id)
+        query = query.order_by(Course.title)
+        result = await db.execute(query)
         courses = result.scalars().all()
     else:
         # Filter by college enrollment
-        result = await db.execute(
+        query = (
             select(Course)
             .join(CollegeCourse, CollegeCourse.course_id == Course.id)
             .filter(CollegeCourse.college_id == user.college_id)
-            .order_by(Course.title)
         )
+        if programme_id:
+            query = query.filter(CollegeCourse.programme_id == programme_id)
+        query = query.order_by(Course.title)
+        result = await db.execute(query)
         courses = result.scalars().all()
     
     return [c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description} for c in courses]

@@ -31,10 +31,13 @@ export function LandingPage() {
     const user = useUserStore(state => state.user)
     const setActiveCourse = useUserStore(state => state.setActiveCourse)
     const setActiveBatch = useUserStore(state => state.setActiveBatch)
+    const activeProgrammeId = useUserStore(state => state.activeProgrammeId)
+    const activeProgrammeName = useUserStore(state => state.activeProgrammeName)
+    const setActiveProgramme = useUserStore(state => state.setActiveProgramme)
     const navigate = useNavigate()
 
     useEffect(() => {
-        const endpoint = '/api/courses/me';
+        const endpoint = activeProgrammeId ? `/api/courses/me?programme_id=${activeProgrammeId}` : '/api/courses/me';
         console.log('DEBUG LANDING: user role =', user?.role, 'fetching endpoint =', endpoint);
         api.get(endpoint)
             .then(res => {
@@ -42,7 +45,7 @@ export function LandingPage() {
                 setCourses(res.data)
                 
                 // Default to Linux if present, otherwise select the first available course
-                const defaultCourse = res.data.find((c: any) => c.id === 'linux') || res.data[0]
+                const defaultCourse = res.data.find((c: any) => c.id === 'linux' || c.id === 'swayam_plus-linux') || res.data[0]
                 if (defaultCourse) {
                     console.log('DEBUG LANDING: setting defaultCourse =', defaultCourse.id);
                     setSelectedCourse(defaultCourse)
@@ -53,7 +56,7 @@ export function LandingPage() {
                 console.error('Failed to fetch courses', err)
                 setIsLoading(false)
             })
-    }, [user])
+    }, [user, activeProgrammeId])
 
     useEffect(() => {
         // Auto-select batch if there is exactly 1 batch available
@@ -94,10 +97,25 @@ export function LandingPage() {
                     <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider">
                         Welcome back, {user?.displayName || 'Learner'}
                     </Badge>
+                    <div className="flex items-center justify-center gap-2">
+                        <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 font-bold px-3 py-1 text-xs">
+                            {activeProgrammeName}
+                        </Badge>
+                        <Button 
+                            variant="link" 
+                            size="sm" 
+                            className="h-auto p-0 text-xs font-bold text-muted-foreground hover:text-foreground transition-all"
+                            onClick={() => {
+                                setActiveProgramme('', '')
+                                navigate('/programmes')
+                            }}
+                        >
+                            (Change Programme)
+                        </Button>
+                    </div>
                     <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
                         Choose Your Course & Batch
                     </h1>
-
                 </div>
 
                 <div className="grid lg:grid-cols-3 gap-8">

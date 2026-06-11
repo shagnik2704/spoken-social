@@ -13,6 +13,7 @@ class Batch(Base):
 
     id = Column(String(50), primary_key=True)                # e.g. "linux-2026-jan"
     course_id = Column(String(50), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    programme_id = Column(String(50), ForeignKey("programmes.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(100), nullable=False)                # e.g. "Jan-Apr 2026"
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)

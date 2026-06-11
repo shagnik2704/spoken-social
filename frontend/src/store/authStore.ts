@@ -1,5 +1,6 @@
 import {create} from 'zustand'
 import api from  '@/lib/axios'
+import { useUserStore } from './userStore'
 
 interface AuthState {
     token: string | null
@@ -31,6 +32,18 @@ export const useAuthStore = create<AuthState>((set) => ({
             const { data } = await api.post('/api/auth/login', payload)
             localStorage.setItem('token', data.access_token)
             localStorage.removeItem('isImpersonating')
+            localStorage.removeItem('activeProgrammeId')
+            localStorage.removeItem('activeProgrammeName')
+            
+            useUserStore.setState({
+                activeProgrammeId: '',
+                activeProgrammeName: '',
+                courses: [],
+                badges: [],
+                tutorials: [],
+                programmes: [],
+            })
+
             set({
                 token: data.access_token,
                 isLoading: false,
@@ -51,6 +64,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     logout: () => {
         localStorage.removeItem('token')
         localStorage.removeItem('isImpersonating')
+        localStorage.removeItem('activeProgrammeId')
+        localStorage.removeItem('activeProgrammeName')
+        
+        useUserStore.setState({
+            user: null,
+            isAuthenticated: false,
+            activeProgrammeId: '',
+            activeProgrammeName: '',
+            courses: [],
+            badges: [],
+            tutorials: [],
+            programmes: [],
+        })
+
         set({
             token: null,
             isLoading: false,
@@ -67,6 +94,18 @@ export const useAuthStore = create<AuthState>((set) => ({
             })
             localStorage.setItem('token', data.access_token)
             localStorage.setItem('isImpersonating', 'true')
+            localStorage.removeItem('activeProgrammeId')
+            localStorage.removeItem('activeProgrammeName')
+            
+            useUserStore.setState({
+                activeProgrammeId: '',
+                activeProgrammeName: '',
+                courses: [],
+                badges: [],
+                tutorials: [],
+                programmes: [],
+            })
+
             set({
                 token: data.access_token,
                 isImpersonating: true,
@@ -83,6 +122,18 @@ export const useAuthStore = create<AuthState>((set) => ({
             const { data } = await api.post('/api/auth/exit-impersonation')
             localStorage.setItem('token', data.access_token)
             localStorage.removeItem('isImpersonating')
+            localStorage.removeItem('activeProgrammeId')
+            localStorage.removeItem('activeProgrammeName')
+            
+            useUserStore.setState({
+                activeProgrammeId: '',
+                activeProgrammeName: '',
+                courses: [],
+                badges: [],
+                tutorials: [],
+                programmes: [],
+            })
+
             set({
                 token: data.access_token,
                 isImpersonating: false,

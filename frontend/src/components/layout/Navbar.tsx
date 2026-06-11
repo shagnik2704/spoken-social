@@ -19,6 +19,7 @@ import {
     Users,
     Shield,
     Calendar,
+    BookOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -64,6 +65,8 @@ export function TopBar() {
     // 🧠 ZUSTAND: Select only the slices you need.
     // This component only re-renders when these specific values change.
     const user = useUserStore(state => state.user)
+    const activeProgrammeName = useUserStore(state => state.activeProgrammeName)
+    const setActiveProgramme = useUserStore(state => state.setActiveProgramme)
 
     // Fetch leaderboard data on mount
     const { fetchLeaderboard } = useLeaderboardStore()
@@ -160,11 +163,17 @@ export function TopBar() {
                             <div className="px-3 py-2.5">
                                 <p className="text-sm font-semibold">{user?.displayName || 'Guest'}</p>
                                 <p className="text-xs text-muted-foreground">{user?.departmentYear || ''}</p>
-                                <div className="flex items-center gap-2 mt-1.5">
-                                    <Badge variant="secondary" className="bg-primary/20 text-primary text-[10px] px-1.5 py-0 h-5">
-                                        Level {user?.level || 1}
-                                    </Badge>
-
+                                <div className="flex flex-col gap-1.5 mt-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="bg-primary/20 text-primary text-[10px] px-1.5 py-0 h-5">
+                                            Level {user?.level || 1}
+                                        </Badge>
+                                    </div>
+                                    {activeProgrammeName && (
+                                        <Badge className="w-fit bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 text-[10px] px-1.5 py-0 h-5">
+                                            {activeProgrammeName}
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
                             <DropdownMenuSeparator />
@@ -174,6 +183,17 @@ export function TopBar() {
                             >
                                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                                 {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="cursor-pointer gap-2"
+                                onClick={() => {
+                                    setActiveProgramme('', '')
+                                    navigate('/programmes')
+                                }}
+                            >
+                                <BookOpen className="h-4 w-4" />
+                                Switch Programme
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer gap-2"
