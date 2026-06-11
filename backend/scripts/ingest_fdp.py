@@ -111,7 +111,7 @@ def main():
     if not existing_admin:
         db.add(User(
             id=uuid.uuid4(),
-            username="@admin",
+            username="@admin_default",
             display_name="Administrator",
             email=admin_email,
             role="admin",
