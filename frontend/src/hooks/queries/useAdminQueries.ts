@@ -139,3 +139,19 @@ export function useFeedbackSummary(
         enabled
     })
 }
+
+export function useComparisonMetrics(state?: string, useMock?: boolean) {
+    return useQuery({
+        queryKey: ['admin', 'comparison-metrics', state || 'all', useMock],
+        queryFn: async () => {
+            const params = new URLSearchParams()
+            if (state && state !== 'all') params.set('state', state)
+            if (useMock) params.set('use_mock', 'true')
+            const qs = params.toString()
+            const url = qs ? `/api/admin/comparison-metrics?${qs}` : '/api/admin/comparison-metrics'
+            const { data } = await api.get(url)
+            return data
+        }
+    })
+}
+
