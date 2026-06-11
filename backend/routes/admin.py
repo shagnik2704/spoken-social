@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 import openpyxl
 
 from database import get_db
-from models import User, College, UserTutorial, Tutorial, UserCourse
+from models import User, College, UserTutorial, Tutorial, UserCourse, Programme, Course, Batch
 from models.feedback import TutorialFeedback
 from models.xp_event import XPEvent
 from dependencies import require_admin
@@ -1055,3 +1055,621 @@ async def get_student_feedback(
         "entries": entries,
         "tutorialGroups": sorted_groups,
     }
+
+
+# ============================================================
+# Comparison Metrics Route
+# ============================================================
+
+def get_mock_comparison_data(state: Optional[str] = None):
+    state_key = state if state else "all"
+    
+    # Define state metrics
+    data = {
+        "all": {
+            "fdp": {
+                "colleges": 12, "students": 850, "progress": 72, "avgXP": 2450,
+                "courses": {
+                    "linux": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jan": {"name": "Jan-Apr 2026", "colleges": 6, "students": 450, "progress": 75, "avgXP": 2550},
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 6, "students": 400, "progress": 68, "avgXP": 2350}
+                        }
+                    },
+                    "python": {
+                        "name": "Python Programming",
+                        "batches": {
+                            "python-2026-feb": {"name": "Feb-May 2026", "colleges": 6, "students": 400, "progress": 68, "avgXP": 2350}
+                        }
+                    }
+                }
+            },
+            "swayam_plus": {
+                "colleges": 24, "students": 1850, "progress": 61, "avgXP": 1950,
+                "courses": {
+                    "webdev": {
+                        "name": "Web Development",
+                        "batches": {
+                            "webdev-2026-jan": {"name": "Jan-Apr 2026", "colleges": 10, "students": 800, "progress": 64, "avgXP": 2100}
+                        }
+                    },
+                    "ml": {
+                        "name": "Machine Learning",
+                        "batches": {
+                            "ml-2026-feb": {"name": "Feb-May 2026", "colleges": 8, "students": 600, "progress": 55, "avgXP": 1800}
+                        }
+                    },
+                    "cloud": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 6, "students": 450, "progress": 65, "avgXP": 1900}
+                        }
+                    }
+                }
+            },
+            "ilw": {
+                "colleges": 8, "students": 520, "progress": 85, "avgXP": 3200,
+                "courses": {
+                    "linux_adv": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 4, "students": 270, "progress": 88, "avgXP": 3350}
+                        }
+                    },
+                    "cloud_adv": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 4, "students": 250, "progress": 82, "avgXP": 3050}
+                        }
+                    }
+                }
+            }
+        },
+        "Maharashtra": {
+            "fdp": {
+                "colleges": 4, "students": 280, "progress": 75, "avgXP": 2600,
+                "courses": {
+                    "linux": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jan": {"name": "Jan-Apr 2026", "colleges": 2, "students": 150, "progress": 78, "avgXP": 2700},
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 2, "students": 130, "progress": 72, "avgXP": 2500}
+                        }
+                    },
+                    "python": {
+                        "name": "Python Programming",
+                        "batches": {
+                            "python-2026-feb": {"name": "Feb-May 2026", "colleges": 2, "students": 130, "progress": 72, "avgXP": 2500}
+                        }
+                    }
+                }
+            },
+            "swayam_plus": {
+                "colleges": 8, "students": 620, "progress": 65, "avgXP": 2100,
+                "courses": {
+                    "webdev": {
+                        "name": "Web Development",
+                        "batches": {
+                            "webdev-2026-jan": {"name": "Jan-Apr 2026", "colleges": 3, "students": 260, "progress": 68, "avgXP": 2250}
+                        }
+                    },
+                    "ml": {
+                        "name": "Machine Learning",
+                        "batches": {
+                            "ml-2026-feb": {"name": "Feb-May 2026", "colleges": 3, "students": 220, "progress": 59, "avgXP": 1950}
+                        }
+                    },
+                    "cloud": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 2, "students": 140, "progress": 69, "avgXP": 2050}
+                        }
+                    }
+                }
+            },
+            "ilw": {
+                "colleges": 3, "students": 180, "progress": 88, "avgXP": 3400,
+                "courses": {
+                    "linux_adv": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 1, "students": 90, "progress": 91, "avgXP": 3500}
+                        }
+                    },
+                    "cloud_adv": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 2, "students": 90, "progress": 85, "avgXP": 3250}
+                        }
+                    }
+                }
+            }
+        },
+        "Karnataka": {
+            "fdp": {
+                "colleges": 3, "students": 210, "progress": 68, "avgXP": 2300,
+                "courses": {
+                    "linux": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jan": {"name": "Jan-Apr 2026", "colleges": 2, "students": 110, "progress": 70, "avgXP": 2400},
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 1, "students": 100, "progress": 65, "avgXP": 2200}
+                        }
+                    },
+                    "python": {
+                        "name": "Python Programming",
+                        "batches": {
+                            "python-2026-feb": {"name": "Feb-May 2026", "colleges": 1, "students": 100, "progress": 65, "avgXP": 2200}
+                        }
+                    }
+                }
+            },
+            "swayam_plus": {
+                "colleges": 6, "students": 480, "progress": 58, "avgXP": 1800,
+                "courses": {
+                    "webdev": {
+                        "name": "Web Development",
+                        "batches": {
+                            "webdev-2026-jan": {"name": "Jan-Apr 2026", "colleges": 3, "students": 210, "progress": 60, "avgXP": 1950}
+                        }
+                    },
+                    "ml": {
+                        "name": "Machine Learning",
+                        "batches": {
+                            "ml-2026-feb": {"name": "Feb-May 2026", "colleges": 2, "students": 160, "progress": 52, "avgXP": 1650}
+                        }
+                    },
+                    "cloud": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 1, "students": 110, "progress": 61, "avgXP": 1750}
+                        }
+                    }
+                }
+            },
+            "ilw": {
+                "colleges": 2, "students": 130, "progress": 82, "avgXP": 3000,
+                "courses": {
+                    "linux_adv": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 1, "students": 70, "progress": 85, "avgXP": 3200}
+                        }
+                    },
+                    "cloud_adv": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 1, "students": 60, "progress": 78, "avgXP": 2800}
+                        }
+                    }
+                }
+            }
+        },
+        "Tamil Nadu": {
+            "fdp": {
+                "colleges": 3, "students": 240, "progress": 74, "avgXP": 2520,
+                "courses": {
+                    "linux": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jan": {"name": "Jan-Apr 2026", "colleges": 1, "students": 120, "progress": 77, "avgXP": 2650},
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 2, "students": 120, "progress": 71, "avgXP": 2400}
+                        }
+                    },
+                    "python": {
+                        "name": "Python Programming",
+                        "batches": {
+                            "python-2026-feb": {"name": "Feb-May 2026", "colleges": 2, "students": 120, "progress": 71, "avgXP": 2400}
+                        }
+                    }
+                }
+            },
+            "swayam_plus": {
+                "colleges": 6, "students": 450, "progress": 62, "avgXP": 2000,
+                "courses": {
+                    "webdev": {
+                        "name": "Web Development",
+                        "batches": {
+                            "webdev-2026-jan": {"name": "Jan-Apr 2026", "colleges": 2, "students": 190, "progress": 65, "avgXP": 2150}
+                        }
+                    },
+                    "ml": {
+                        "name": "Machine Learning",
+                        "batches": {
+                            "ml-2026-feb": {"name": "Feb-May 2026", "colleges": 2, "students": 140, "progress": 56, "avgXP": 1850}
+                        }
+                    },
+                    "cloud": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 2, "students": 120, "progress": 66, "avgXP": 1950}
+                        }
+                    }
+                }
+            },
+            "ilw": {
+                "colleges": 2, "students": 150, "progress": 86, "avgXP": 3300,
+                "courses": {
+                    "linux_adv": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 1, "students": 80, "progress": 90, "avgXP": 3450}
+                        }
+                    },
+                    "cloud_adv": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 1, "students": 70, "progress": 83, "avgXP": 3100}
+                        }
+                    }
+                }
+            }
+        },
+        "Delhi": {
+            "fdp": {
+                "colleges": 2, "students": 120, "progress": 70, "avgXP": 2380,
+                "courses": {
+                    "linux": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jan": {"name": "Jan-Apr 2026", "colleges": 1, "students": 70, "progress": 72, "avgXP": 2450},
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 1, "students": 50, "progress": 66, "avgXP": 2300}
+                        }
+                    },
+                    "python": {
+                        "name": "Python Programming",
+                        "batches": {
+                            "python-2026-feb": {"name": "Feb-May 2026", "colleges": 1, "students": 50, "progress": 66, "avgXP": 2300}
+                        }
+                    }
+                }
+            },
+            "swayam_plus": {
+                "colleges": 4, "students": 300, "progress": 60, "avgXP": 1900,
+                "courses": {
+                    "webdev": {
+                        "name": "Web Development",
+                        "batches": {
+                            "webdev-2026-jan": {"name": "Jan-Apr 2026", "colleges": 2, "students": 140, "progress": 63, "avgXP": 2050}
+                        }
+                    },
+                    "ml": {
+                        "name": "Machine Learning",
+                        "batches": {
+                            "ml-2026-feb": {"name": "Feb-May 2026", "colleges": 1, "students": 80, "progress": 53, "avgXP": 1750}
+                        }
+                    },
+                    "cloud": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 1, "students": 80, "progress": 63, "avgXP": 1850}
+                        }
+                    }
+                }
+            },
+            "ilw": {
+                "colleges": 1, "students": 60, "progress": 80, "avgXP": 2900,
+                "courses": {
+                    "linux_adv": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 1, "students": 30, "progress": 82, "avgXP": 3100}
+                        }
+                    },
+                    "cloud_adv": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 0, "students": 30, "progress": 78, "avgXP": 2700}
+                        }
+                    }
+                }
+            }
+        },
+        "Gujarat": {
+            "fdp": {
+                "colleges": 2, "students": 110, "progress": 71, "avgXP": 2400,
+                "courses": {
+                    "linux": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jan": {"name": "Jan-Apr 2026", "colleges": 1, "students": 60, "progress": 73, "avgXP": 2450},
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 1, "students": 50, "progress": 67, "avgXP": 2350}
+                        }
+                    },
+                    "python": {
+                        "name": "Python Programming",
+                        "batches": {
+                            "python-2026-feb": {"name": "Feb-May 2026", "colleges": 1, "students": 50, "progress": 67, "avgXP": 2350}
+                        }
+                    }
+                }
+            },
+            "swayam_plus": {
+                "colleges": 4, "students": 290, "progress": 62, "avgXP": 2000,
+                "courses": {
+                    "webdev": {
+                        "name": "Web Development",
+                        "batches": {
+                            "webdev-2026-jan": {"name": "Jan-Apr 2026", "colleges": 2, "students": 135, "progress": 65, "avgXP": 2100}
+                        }
+                    },
+                    "ml": {
+                        "name": "Machine Learning",
+                        "batches": {
+                            "ml-2026-feb": {"name": "Feb-May 2026", "colleges": 1, "students": 75, "progress": 55, "avgXP": 1850}
+                        }
+                    },
+                    "cloud": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 1, "students": 80, "progress": 65, "avgXP": 1950}
+                        }
+                    }
+                }
+            },
+            "ilw": {
+                "colleges": 1, "students": 60, "progress": 82, "avgXP": 3050,
+                "courses": {
+                    "linux_adv": {
+                        "name": "Linux Administration",
+                        "batches": {
+                            "linux-2026-jul": {"name": "Jul-Oct 2026", "colleges": 1, "students": 30, "progress": 84, "avgXP": 3200}
+                        }
+                    },
+                    "cloud_adv": {
+                        "name": "Cloud Computing",
+                        "batches": {
+                            "cloud-2026-mar": {"name": "Mar-Jun 2026", "colleges": 0, "students": 30, "progress": 80, "avgXP": 2900}
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    lookup_state = state_key if state_key in data else "all"
+    state_data = data[lookup_state]
+
+    if state_key not in data:
+        scaled_data = {}
+        for prog_id, prog_val in data["all"].items():
+            scaled_data[prog_id] = {
+                "colleges": max(1, round(prog_val["colleges"] * 0.15)),
+                "students": max(10, round(prog_val["students"] * 0.15)),
+                "progress": prog_val["progress"],
+                "avgXP": prog_val["avgXP"],
+                "courses": {}
+            }
+            for course_id, course_val in prog_val["courses"].items():
+                scaled_data[prog_id]["courses"][course_id] = {
+                    "name": course_val["name"],
+                    "batches": {}
+                }
+                for batch_id, batch_val in course_val["batches"].items():
+                    scaled_data[prog_id]["courses"][course_id]["batches"][batch_id] = {
+                        "name": batch_val["name"],
+                        "colleges": max(1, round(batch_val["colleges"] * 0.15)),
+                        "students": max(5, round(batch_val["students"] * 0.15)),
+                        "progress": batch_val["progress"],
+                        "avgXP": batch_val["avgXP"]
+                    }
+        state_data = scaled_data
+
+    programmes_list = []
+    colors = {
+        "fdp": "hsl(262, 83%, 58%)",
+        "swayam_plus": "hsl(221, 83%, 53%)",
+        "ilw": "hsl(142, 76%, 36%)"
+    }
+
+    for prog_id, prog_val in state_data.items():
+        courses_list = []
+        for course_id, course_val in prog_val["courses"].items():
+            batches_list = []
+            for batch_id, batch_val in course_val["batches"].items():
+                batches_list.append({
+                    "batchId": batch_id,
+                    "batchName": batch_val["name"],
+                    "metrics": {
+                        "colleges": batch_val["colleges"],
+                        "students": batch_val["students"],
+                        "progress": batch_val["progress"],
+                        "avgXP": batch_val["avgXP"]
+                    }
+                })
+            courses_list.append({
+                "courseId": course_id,
+                "courseName": course_val["name"],
+                "batches": batches_list
+            })
+
+        programmes_list.append({
+            "id": prog_id,
+            "name": prog_id.upper() if prog_id != "swayam_plus" else "Swayam Plus",
+            "color": colors.get(prog_id, "hsl(200, 80%, 50%)"),
+            "metrics": {
+                "colleges": prog_val["colleges"],
+                "students": prog_val["students"],
+                "progress": prog_val["progress"],
+                "avgXP": prog_val["avgXP"]
+            },
+            "courses": courses_list
+        })
+
+    return {"programmes": programmes_list}
+
+
+@router.get("/comparison-metrics")
+async def get_comparison_metrics(
+    state: Optional[str] = Query(None),
+    use_mock: Optional[bool] = Query(None),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Returns aggregated metrics for programmes, courses, and batches.
+    Filters by state if provided. Falls back or merges with mock data if database is empty.
+    """
+    tot_students_res = await db.execute(select(func.count(UserCourse.user_id)))
+    tot_students = tot_students_res.scalar() or 0
+
+    if use_mock or tot_students == 0:
+        return get_mock_comparison_data(state)
+
+    # 1. Fetch active programmes
+    prog_res = await db.execute(select(Programme).filter(Programme.is_active == True).order_by(Programme.display_order))
+    programmes = prog_res.scalars().all()
+
+    # 2. Fetch all courses
+    course_res = await db.execute(select(Course))
+    courses = course_res.scalars().all()
+    course_name_map = {c.id: c.title for c in courses}
+
+    # 3. Fetch all batches
+    batch_res = await db.execute(select(Batch))
+    batches = batch_res.scalars().all()
+
+    # Colors for programs
+    colors = {
+        "fdp": "hsl(262, 83%, 58%)",
+        "swayam_plus": "hsl(221, 83%, 53%)",
+        "ilw": "hsl(142, 76%, 36%)"
+    }
+
+    programmes_list = []
+    
+    for prog in programmes:
+        prog_batches = [b for b in batches if b.programme_id == prog.id]
+        
+        # Merge mock data if program has no batches/students in the DB
+        if not prog_batches:
+            mock_data = get_mock_comparison_data(state)
+            mock_prog = next((p for p in mock_data["programmes"] if p["id"] == prog.id), None)
+            if mock_prog:
+                programmes_list.append(mock_prog)
+            continue
+            
+        batches_by_course = {}
+        for b in prog_batches:
+            if b.course_id not in batches_by_course:
+                batches_by_course[b.course_id] = []
+            batches_by_course[b.course_id].append(b)
+            
+        courses_list = []
+        all_prog_student_ids = set()
+        all_prog_college_ids = set()
+        total_prog_xp = 0
+        total_prog_progress_sum = 0
+        prog_students_with_progress_count = 0
+        
+        for course_id, course_batches in batches_by_course.items():
+            batches_list = []
+            for batch in course_batches:
+                # Query students in batch
+                stmt = select(
+                    User.id,
+                    User.college_id,
+                    User.xp_total
+                ).join(
+                    UserCourse, UserCourse.user_id == User.id
+                ).filter(
+                    UserCourse.batch_id == batch.id,
+                    User.role == "student",
+                    User.is_test_account != True
+                )
+                if state:
+                    stmt = stmt.join(College, College.id == User.college_id).filter(
+                        College.location.ilike(f"%{state}%")
+                    )
+                res = await db.execute(stmt)
+                batch_students = res.all()
+                
+                if not batch_students:
+                    continue
+                
+                batch_student_ids = {s.id for s in batch_students}
+                batch_college_ids = {s.college_id for s in batch_students if s.college_id}
+                batch_xp_sum = sum(s.xp_total for s in batch_students)
+                batch_avg_xp = round(batch_xp_sum / len(batch_students)) if batch_students else 0
+                
+                # Query average progress
+                tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == batch.course_id))
+                total_tutorials = tot_tut_res.scalar() or 1
+                stmt_progress = select(
+                    User.id,
+                    func.count(case((UserTutorial.practiced == True, Tutorial.id), else_=None)).label("completed")
+                ).outerjoin(
+                    UserTutorial, UserTutorial.user_id == User.id
+                ).outerjoin(
+                    Tutorial, (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == batch.course_id)
+                ).join(
+                    UserCourse, UserCourse.user_id == User.id
+                ).filter(
+                    UserCourse.batch_id == batch.id,
+                    User.role == "student",
+                    User.is_test_account != True
+                )
+                if state:
+                    stmt_progress = stmt_progress.join(College, College.id == User.college_id).filter(
+                        College.location.ilike(f"%{state}%")
+                    )
+                stmt_progress = stmt_progress.group_by(User.id)
+                res_progress = await db.execute(stmt_progress)
+                student_completes = res_progress.all()
+                
+                batch_progress_sum = sum(round((s.completed / total_tutorials) * 100) for s in student_completes)
+                batch_avg_progress = round(batch_progress_sum / len(student_completes)) if student_completes else 0
+
+                
+                # Update Programme totals
+                all_prog_student_ids.update(batch_student_ids)
+                all_prog_college_ids.update(batch_college_ids)
+                total_prog_xp += batch_xp_sum
+                total_prog_progress_sum += batch_progress_sum
+                prog_students_with_progress_count += len(student_completes)
+                
+                batches_list.append({
+                    "batchId": batch.id,
+                    "batchName": batch.name,
+                    "metrics": {
+                        "colleges": len(batch_college_ids),
+                        "students": len(batch_student_ids),
+                        "progress": batch_avg_progress,
+                        "avgXP": batch_avg_xp
+                    }
+                })
+                
+            if batches_list:
+                courses_list.append({
+                    "courseId": course_id,
+                    "courseName": course_name_map.get(course_id, course_id.capitalize()),
+                    "batches": batches_list
+                })
+            
+        if not all_prog_student_ids:
+            # If no actual students in DB, pull mock data for this program
+            mock_data = get_mock_comparison_data(state)
+            mock_prog = next((p for p in mock_data["programmes"] if p["id"] == prog.id), None)
+            if mock_prog:
+                programmes_list.append(mock_prog)
+            continue
+            
+        prog_avg_xp = round(total_prog_xp / len(all_prog_student_ids))
+        prog_avg_progress = round(total_prog_progress_sum / prog_students_with_progress_count) if prog_students_with_progress_count else 0
+        
+        programmes_list.append({
+            "id": prog.id,
+            "name": prog.name,
+            "color": colors.get(prog.id, prog.color or "hsl(200, 80%, 50%)"),
+            "metrics": {
+                "colleges": len(all_prog_college_ids),
+                "students": len(all_prog_student_ids),
+                "progress": prog_avg_progress,
+                "avgXP": prog_avg_xp
+            },
+            "courses": courses_list
+        })
+        
+    return {"programmes": programmes_list}
+

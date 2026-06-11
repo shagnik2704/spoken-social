@@ -92,7 +92,7 @@ interface EnrichedStudent {
     collegeName: string
 }
 
-type Tab = 'overview' | 'colleges' | 'analytics' | 'feedback' | 'minitasks'
+type Tab = 'overview' | 'colleges' | 'analytics' | 'feedback' | 'minitasks' | 'comparison'
 type SortBy = 'name' | 'progress' | 'xp' | 'tasks'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
@@ -1322,6 +1322,7 @@ function AnalyticsTab({ colleges }: {
 
 // ===== MAIN COMPONENT =====
 import { MiniTaskAnalysis } from './MiniTaskAnalysis'
+import { ComparisonTab } from './ComparisonTab'
 
 export default function AdminDashboard() {
     const navigate = useNavigate()
@@ -1368,6 +1369,7 @@ export default function AdminDashboard() {
         { id: 'overview' as const, label: 'Overview', icon: BarChart3 },
         { id: 'colleges' as const, label: 'Colleges', icon: Building2 },
         { id: 'analytics' as const, label: 'Analytics', icon: Activity },
+        { id: 'comparison' as const, label: 'Comparison', icon: TrendingUp },
         { id: 'feedback' as const, label: 'Feedback', icon: MessageCircleQuestion },
         { id: 'minitasks' as const, label: 'MiniTasks', icon: ClipboardList },
     ]
@@ -1486,6 +1488,10 @@ export default function AdminDashboard() {
 
             {activeTab === 'analytics' && (
                 <AnalyticsTab colleges={colleges} />
+            )}
+
+            {activeTab === 'comparison' && (
+                <ComparisonTab colleges={colleges} />
             )}
 
             {activeTab === 'feedback' && (
