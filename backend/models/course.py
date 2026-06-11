@@ -19,6 +19,7 @@ class Course(Base):
     enrollments = relationship("UserCourse", back_populates="course")
     tutorials = relationship("Tutorial", back_populates="course")
     college_courses = relationship("CollegeCourse", back_populates="course", cascade="all, delete-orphan")
+    programme_courses = relationship("ProgrammeCourse", back_populates="course")
 
 
 class UserCourse(Base):

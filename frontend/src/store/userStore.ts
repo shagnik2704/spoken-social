@@ -16,6 +16,9 @@ interface UserState {
     activeBatchId: string | null
     activeBatchIsActive: boolean
     weeklyGoal: any
+    activeProgrammeId: string
+    activeProgrammeName: string
+    programmes: any[]
 
     fetchTutorials: (courseId: string) => Promise<void>
     fetchForumActivity: (courseId: string) => Promise<void>
@@ -27,6 +30,8 @@ interface UserState {
     addXP: (amount: number) => void
     setActiveCourse: (courseId: string) => void
     setActiveBatch: (batchId: string | null, isActive?: boolean) => void
+    setActiveProgramme: (id: string, name: string) => void
+    switchProgramme: (id: string, name: string) => Promise<any[]>
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -42,22 +47,31 @@ export const useUserStore = create<UserState>((set, get) => ({
     activeBatchId: null,
     activeBatchIsActive: true,
     weeklyGoal: null,
+    activeProgrammeId: localStorage.getItem('activeProgrammeId') || '',
+    activeProgrammeName: localStorage.getItem('activeProgrammeName') || '',
+    programmes: [],
 
 
     fetchUser: async () => {
         set({ isLoading: true, error: null })
         try {
-            const { data } = await api.get('/api/me')
+            const activeProgrammeId = get().activeProgrammeId
+            const endpoint = activeProgrammeId ? `/api/me?programme_id=${activeProgrammeId}` : '/api/me'
+            const [meRes, progRes] = await Promise.all([
+                api.get(endpoint),
+                api.get('/api/programmes/me')
+            ])
             set({
-                user: data.user,
+                user: meRes.data.user,
                 isLoading: false,
-                weeklyGoal: data.weeklyGoal,
-                courses: data.courses,
-                badges: data.badges,
+                weeklyGoal: meRes.data.weeklyGoal,
+                courses: meRes.data.courses,
+                badges: meRes.data.badges,
+                programmes: progRes.data,
                 isAuthenticated: true,
-                activeCourseId: data.courses?.[0]?.id || '',
-                activeBatchId: data.courses?.[0]?.batchId || null,
-                activeBatchIsActive: data.courses?.[0]?.batchStatus !== 'inactive',
+                activeCourseId: meRes.data.courses?.[0]?.id || '',
+                activeBatchId: meRes.data.courses?.[0]?.batchId || null,
+                activeBatchIsActive: meRes.data.courses?.[0]?.batchStatus !== 'inactive',
             })
         }
         catch (error) {
@@ -122,9 +136,13 @@ export const useUserStore = create<UserState>((set, get) => ({
     },
 
     logout: () => {
+        localStorage.removeItem('activeProgrammeId')
+        localStorage.removeItem('activeProgrammeName')
         set({
             user: null,
             isAuthenticated: false,
+            activeProgrammeId: '',
+            activeProgrammeName: '',
         })
     },
 
@@ -163,5 +181,32 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     setActiveBatch: (batchId, isActive = true) => {
         set({ activeBatchId: batchId, activeBatchIsActive: isActive })
+    },
+
+    setActiveProgramme: (id, name) => {
+        localStorage.setItem('activeProgrammeId', id)
+        localStorage.setItem('activeProgrammeName', name)
+        set({ activeProgrammeId: id, activeProgrammeName: name })
+    },
+
+    switchProgramme: async (id, name) => {
+        localStorage.setItem('activeProgrammeId', id)
+        localStorage.setItem('activeProgrammeName', name)
+        set({ activeProgrammeId: id, activeProgrammeName: name, isLoading: true })
+        try {
+            const { data } = await api.get(`/api/me?programme_id=${id}`)
+            set({
+                courses: data.courses,
+                activeCourseId: data.courses?.[0]?.id || '',
+                activeBatchId: data.courses?.[0]?.batchId || null,
+                activeBatchIsActive: data.courses?.[0]?.batchStatus !== 'inactive',
+                isLoading: false,
+            })
+            return data.courses
+        } catch (error) {
+            console.error('Failed to switch programme:', error)
+            set({ isLoading: false })
+            return []
+        }
     }
 }))

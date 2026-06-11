@@ -194,6 +194,7 @@ def main():
             batch = Batch(
                 id=batch_id,
                 course_id=course_id,
+                programme_id="fdp",
                 name=f"National Summer FDP on {meta['title']}",
                 start_date=start_d,
                 end_date=end_d,
@@ -218,7 +219,7 @@ def main():
     # Load existing colleges into cache to prevent redundant queries/inserts
     college_cache = {c.name.strip().lower(): c for c in db.query(College).all()}
     user_cache = {u.email.strip().lower(): u for u in db.query(User).all()}
-    college_courses = {(cc.college_id, cc.course_id) for cc in db.query(CollegeCourse).all()}
+    college_courses = {(cc.college_id, cc.course_id, cc.programme_id) for cc in db.query(CollegeCourse).all()}
     
     # Read rows from FDP.csv
     rows = []
@@ -273,9 +274,9 @@ def main():
         college_id = college_cache[c_key].id
         
         # Resolve/Create CollegeCourse association
-        if (college_id, course_id) not in college_courses:
-            db.add(CollegeCourse(college_id=college_id, course_id=course_id))
-            college_courses.add((college_id, course_id))
+        if (college_id, course_id, "fdp") not in college_courses:
+            db.add(CollegeCourse(college_id=college_id, course_id=course_id, programme_id="fdp"))
+            college_courses.add((college_id, course_id, "fdp"))
             college_mappings_created += 1
 
     db.flush()

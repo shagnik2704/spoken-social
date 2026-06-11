@@ -13,6 +13,7 @@ from routes.feedback import router as feedback_router
 from routes.admin import router as admin_router
 from routes.webhooks import router as webhooks_router
 from routes.course import router as course_router
+from routes.programme import router as programme_router
 
 
 
@@ -44,3 +45,4 @@ app.include_router(feedback_router)
 app.include_router(admin_router)
 app.include_router(webhooks_router)
 app.include_router(course_router)
+app.include_router(programme_router)

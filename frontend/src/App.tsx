@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { TopBar, DesktopSidebar, MobileBottomNav } from '@/components/layout/Navbar'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { ComposeModalProvider } from '@/hooks/useComposeModal'
@@ -20,6 +20,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
 import { ImpersonationBanner } from '@/components/layout/ImpersonationBanner'
 import { LandingPage } from './components/auth/LandingPage'
+import { ProgrammeSelector } from './components/auth/ProgrammeSelector'
 
 function App() {
 
@@ -27,6 +28,7 @@ function App() {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const user = useUserStore(state => state.user)
   const isUserLoading = useUserStore(state => state.isLoading)
+  const activeProgrammeId = useUserStore(state => state.activeProgrammeId)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -52,6 +54,20 @@ function App() {
                 <p className="text-sm text-muted-foreground">Loading your profile...</p>
               </div>
             </div>
+          ) : !activeProgrammeId ? (
+            <Suspense fallback={
+              <div className="h-screen flex items-center justify-center bg-background text-foreground">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  <p className="text-sm text-muted-foreground">Loading programmes...</p>
+                </div>
+              </div>
+            }>
+              <Routes>
+                <Route path="/programmes" element={<ProgrammeSelector />} />
+                <Route path="*" element={<Navigate to="/programmes" replace />} />
+              </Routes>
+            </Suspense>
           ) : (
             <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
               {/* Impersonation Banner */}
@@ -70,6 +86,7 @@ function App() {
                     <Routes>
                       <Route path="/" element={<LandingPage />} />
                       <Route path="/landing" element={<LandingPage />} />
+                      <Route path="/programmes" element={<Navigate to="/" replace />} />
                       {/* <Route path="/feed" element={<Feed />} /> */}
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/profile" element={<Profile />} />
