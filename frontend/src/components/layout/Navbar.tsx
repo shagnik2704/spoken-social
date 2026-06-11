@@ -18,6 +18,7 @@ import {
 
     Users,
     Shield,
+    Calendar,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useAuthStore } from '@/store/authStore'
 import { useLeaderboardStore } from '@/store/leaderboardStore'
+import { CourseBatchSelector } from './CourseBatchSelector'
 
 // Navigation items for the sidebar/bottom nav
 const navItems = [
@@ -45,8 +47,9 @@ const navItems = [
     { icon: PlusCircle, label: 'Post', path: '/post', roles: ['student'] },
     { icon: Trophy, label: 'Leaderboard', path: '/leaderboard', roles: ['student'] },
     { icon: User, label: 'Profile', path: '/profile', roles: ['student', 'coordinator', 'admin'] },
-    { icon: Users, label: 'My Students', path: '/coordinator', roles: ['coordinator'] },
+    { icon: Users, label: 'My Learners', path: '/coordinator', roles: ['coordinator'] },
     { icon: Shield, label: 'Admin Panel', path: '/admin', roles: ['admin'] },
+    { icon: Calendar, label: 'Switch Batch', path: '/landing', roles: ['student', 'coordinator', 'admin'] },
 ]
 
 
@@ -95,6 +98,11 @@ export function TopBar() {
                             className="w-full h-9 rounded-lg border border-input bg-muted/50 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring transition-all"
                         />
                     </div>
+                </div>
+
+                {/* Center-Right — Global Course Selector */}
+                <div className="hidden md:flex items-center">
+                    <CourseBatchSelector />
                 </div>
 
                 {/* Right — Actions */}

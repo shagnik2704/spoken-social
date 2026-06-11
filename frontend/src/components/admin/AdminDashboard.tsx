@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
     Users, TrendingUp, AlertTriangle,
     CheckCircle2, Eye,
     Search, Filter, Trophy, BarChart3,
     Zap, Activity, ChevronRight, ArrowLeft,
     Shield, Building2, MessageCircleQuestion,
-    X, ChevronDown, CalendarDays, Download, ClipboardList, MapPin
+    X, ChevronDown, CalendarDays, Download, ClipboardList, MapPin, Lock
 } from 'lucide-react'
 import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,7 +20,11 @@ import {
 
 import { FeedbackPanel } from '@/components/admin/FeedbackPanel'
 import { StudentFeedbackDrawer } from '@/components/admin/StudentFeedbackDrawer'
-import { useCollegeDetails, useColleges, useCollegesDailyXP, usePlatformSummary } from '@/hooks/queries/useAdminQueries'
+import { useColleges, usePlatformSummary, useFeedbackSummary, useCollegesDailyXP, useCollegeDetails } from '@/hooks/queries/useAdminQueries'
+import { useAuthStore } from '@/store/authStore'
+import { useUserStore } from '@/store/userStore'
+import { toast } from 'sonner'
+
 
 // ===== TYPES =====
 
@@ -87,7 +92,7 @@ interface EnrichedStudent {
     collegeName: string
 }
 
-type Tab = 'overview' | 'colleges' | 'analytics' | 'feedback'
+type Tab = 'overview' | 'colleges' | 'analytics' | 'feedback' | 'minitasks'
 type SortBy = 'name' | 'progress' | 'xp' | 'tasks'
 type StatusFilter = 'all' | 'active' | 'completed' | 'at_risk' | 'inactive'
 
@@ -219,7 +224,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                     icon={Building2}
                     label="Total Colleges"
                     value={m.totalColleges}
-                    subtext={`${m.totalStudents} students enrolled`}
+                    subtext={`${m.totalStudents} learners enrolled`}
                     color="bg-primary/10 text-primary"
                 />
                 <MetricCard
@@ -269,7 +274,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold truncate">{college.name} <span className="text-muted-foreground font-normal">({college.totalCourseStudents} enrolled)</span></p>
                                     <p className="text-[11px] text-muted-foreground">
-                                        {college.totalStudents} students · {college.coordinatorName}
+                                        {college.totalStudents} learners · {college.coordinatorName}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
@@ -334,7 +339,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                     <CardContent className="p-4">
                         <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                             <AlertTriangle className="h-4 w-4 text-warning" />
-                            At-Risk Students — All Colleges
+                            At-Risk Learners — All Colleges
                             {summary.atRiskStudents.length > 0 && (
                                 <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] px-1.5 py-0 h-4">
                                     {summary.atRiskStudents.length} need attention
@@ -344,7 +349,7 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                         {summary.atRiskStudents.length === 0 ? (
                             <div className="text-center py-6">
                                 <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
-                                <p className="text-sm font-medium">All students on track! 🎉</p>
+                                <p className="text-sm font-medium">All learners on track! 🎉</p>
                             </div>
                         ) : (
                             <div className="space-y-1.5">
@@ -389,6 +394,7 @@ interface ChartCollege {
 
 function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const now = new Date()
+    const activeCourseId = useUserStore(state => state.activeCourseId)
     const [selectedMonth, setSelectedMonth] = useState(
         `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     )
@@ -396,7 +402,7 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const [selectedCollegeIds, setSelectedCollegeIds] = useState<string[]>(
         colleges.map(c => c.id)
     )
-    const { data: chartData, isLoading } = useCollegesDailyXP(selectedMonth, selectedCollegeIds)
+    const { data: chartData, isLoading } = useCollegesDailyXP(selectedMonth, selectedCollegeIds, activeCourseId)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [collegeSearch, setCollegeSearch] = useState('')
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -407,8 +413,11 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
         colleges.forEach(c => {
             if (c.location) {
                 const parts = c.location.split(',')
-                const state = parts[parts.length - 1].trim()
-                if (state) set.add(state)
+                let state = parts[parts.length - 1].trim()
+                if (state === 'India' && parts.length > 1) {
+                    state = parts[parts.length - 2].trim()
+                }
+                if (state && state !== 'India') set.add(state)
             }
         })
         return Array.from(set)
@@ -680,9 +689,10 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
 // ===== COLLEGES TAB =====
 // College list uses summary data. Drill-down fetches paginated students on demand.
 
-function CollegesTab({ colleges, onStudentClick }: {
+function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
     colleges: CollegeSummary[]
     onStudentClick: (student: { id: string, name: string, initials: string }) => void
+    onImpersonate?: (collegeId: string) => void
 }) {
     const [selectedCollegeId, setSelectedCollegeId] = useState<string | null>(null)
     const [sortBy, setSortBy] = useState<SortBy>('progress')
@@ -692,7 +702,9 @@ function CollegesTab({ colleges, onStudentClick }: {
     const [collegeSearch, setCollegeSearch] = useState('')
     const [collegeSort, setCollegeSort] = useState<'progress' | 'name' | 'students' | 'completion' | 'xp'>('progress')
     const [selectedState, setSelectedState] = useState<string>('all')
-    const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, searchQuery)
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, searchQuery, activeCourseId, activeBatchId)
 
     // Extract unique states dynamically
     const states = useMemo(() => {
@@ -700,8 +712,11 @@ function CollegesTab({ colleges, onStudentClick }: {
         colleges.forEach(c => {
             if (c.location) {
                 const parts = c.location.split(',')
-                const state = parts[parts.length - 1].trim()
-                if (state) set.add(state)
+                let state = parts[parts.length - 1].trim()
+                if (state === 'India' && parts.length > 1) {
+                    state = parts[parts.length - 2].trim()
+                }
+                if (state && state !== 'India') set.add(state)
             }
         })
         return Array.from(set)
@@ -744,18 +759,27 @@ function CollegesTab({ colleges, onStudentClick }: {
                                         {college.location} · {college.coordinatorName} · {college.course}
                                     </p>
                                 </div>
-                                <div className="flex gap-4">
-                                    <div className="text-center">
-                                        <p className="text-xl font-bold">{college.totalStudents}</p>
-                                        <p className="text-[10px] text-muted-foreground">Students</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-xl font-bold text-primary">{college.avgProgress}%</p>
-                                        <p className="text-[10px] text-muted-foreground">Progress</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className={`text-xl font-bold ${college.completionRate >= 30 ? 'text-success' : 'text-warning'}`}>{college.completionRate}%</p>
-                                        <p className="text-[10px] text-muted-foreground">Completed</p>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => onImpersonate?.(college.id)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors rounded-md"
+                                    >
+                                        <Eye className="h-3.5 w-3.5" />
+                                        View as Coordinator
+                                    </button>
+                                    <div className="flex gap-4">
+                                        <div className="text-center">
+                                            <p className="text-xl font-bold">{college.totalStudents}</p>
+                                            <p className="text-[10px] text-muted-foreground">Learners</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-xl font-bold text-primary">{college.avgProgress}%</p>
+                                            <p className="text-[10px] text-muted-foreground">Progress</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className={`text-xl font-bold ${college.completionRate >= 30 ? 'text-success' : 'text-warning'}`}>{college.completionRate}%</p>
+                                            <p className="text-[10px] text-muted-foreground">Completed</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -769,7 +793,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                             <h2 className="text-sm font-bold flex items-center gap-2">
                                 <Users className="h-4 w-4 text-primary" />
-                                Students — {college?.name || selectedCollegeId}
+                                Learners — {college?.name || selectedCollegeId}
                             </h2>
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -831,7 +855,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                         <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                             <div className="w-6 shrink-0 text-center">#</div>
                             <div className="w-8 shrink-0" />
-                            <div className="flex-1">Student</div>
+                            <div className="flex-1">Learner</div>
                             <div className="hidden sm:block w-28 text-center">Progress</div>
                             <div className="hidden md:flex w-14 items-center gap-0.5 justify-center"><Eye className="h-3 w-3" /> Watched</div>
                             <div className="hidden md:flex w-14 items-center gap-0.5 justify-center"><CheckCircle2 className="h-3 w-3" /> Done</div>
@@ -842,7 +866,7 @@ function CollegesTab({ colleges, onStudentClick }: {
 
                         {/* Student Rows */}
                         {isLoadingDetails ? (
-                            <p className="text-center text-sm text-muted-foreground py-8">Loading students...</p>
+                            <p className="text-center text-sm text-muted-foreground py-8">Loading learners...</p>
                         ) : (
                             <div className="space-y-0.5">
                                 {students.map((student: Student, idx: number) => (
@@ -855,7 +879,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                                 ))}
                                 {students.length === 0 && (
                                     <p className="text-center text-sm text-muted-foreground py-8">
-                                        No students match your filters
+                                        No learners match your filters
                                     </p>
                                 )}
                             </div>
@@ -865,7 +889,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                         {pagination && pagination.totalPages > 1 && (
                             <div className="flex items-center justify-between pt-4 border-t border-border/30">
                                 <p className="text-xs text-muted-foreground">
-                                    Page {pagination.currentPage} of {pagination.totalPages} · {pagination.totalRecords} students
+                                    Page {pagination.currentPage} of {pagination.totalPages} · {pagination.totalRecords} learners
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -955,7 +979,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                                 {([
                                     { id: 'progress', label: 'Progress' },
                                     { id: 'completion', label: 'Completion' },
-                                    { id: 'students', label: 'Students' },
+                                    { id: 'students', label: 'Learners' },
                                     { id: 'xp', label: 'XP' },
                                     { id: 'name', label: 'Name' },
                                 ] as const).map(sort => (
@@ -976,7 +1000,7 @@ function CollegesTab({ colleges, onStudentClick }: {
                     <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                         <div className="w-8 shrink-0 text-center">Rank</div>
                         <div className="flex-1">College</div>
-                        <div className="w-16 text-center">Students</div>
+                        <div className="w-16 text-center">Learners</div>
                         <div className="w-24 text-center hidden sm:block">Progress</div>
                         <div className="w-20 text-center">Completion</div>
                         <div className="w-16 text-center hidden md:block">Avg XP</div>
@@ -1061,8 +1085,11 @@ function AnalyticsTab({ colleges }: {
         colleges.forEach(c => {
             if (c.location) {
                 const parts = c.location.split(',')
-                const state = parts[parts.length - 1].trim()
-                if (state) set.add(state)
+                let state = parts[parts.length - 1].trim()
+                if (state === 'India' && parts.length > 1) {
+                    state = parts[parts.length - 2].trim()
+                }
+                if (state && state !== 'India') set.add(state)
             }
         })
         return Array.from(set)
@@ -1086,7 +1113,7 @@ function AnalyticsTab({ colleges }: {
             return (
                 <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-md">
                     <p className="text-sm font-medium">{payload[0].name}</p>
-                    <p className="text-xs text-muted-foreground">{payload[0].value} students ({m.totalStudents > 0 ? Math.round((payload[0].value / m.totalStudents) * 100) : 0}%)</p>
+                    <p className="text-xs text-muted-foreground">{payload[0].value} learners ({m.totalStudents > 0 ? Math.round((payload[0].value / m.totalStudents) * 100) : 0}%)</p>
                 </div>
             )
         }
@@ -1094,7 +1121,7 @@ function AnalyticsTab({ colleges }: {
     }
 
     return (
-        <div className="space-y-5">
+        <div className="max-w-6xl mx-auto space-y-6">
             {/* Filter Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/10 p-3 rounded-lg border border-border/30">
                 <div>
@@ -1135,7 +1162,7 @@ function AnalyticsTab({ colleges }: {
                     <CardContent className="p-4 text-center">
                         <Zap className="h-5 w-5 text-xp-gold mx-auto mb-1" />
                         <p className="text-2xl font-bold">{m.avgXP}</p>
-                        <p className="text-[11px] text-muted-foreground">Avg XP / Student</p>
+                        <p className="text-[11px] text-muted-foreground">Avg XP / Learner</p>
                     </CardContent>
                 </Card>
                 <Card className="border-border/40">
@@ -1143,7 +1170,7 @@ function AnalyticsTab({ colleges }: {
                         <Building2 className="h-5 w-5 text-primary mx-auto mb-1" />
                         <p className="text-2xl font-bold">{m.totalColleges}</p>
                         <p className="text-[11px] text-muted-foreground">Colleges</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{m.totalStudents} students</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{m.totalStudents} learners</p>
                     </CardContent>
                 </Card>
             </div>
@@ -1169,7 +1196,7 @@ function AnalyticsTab({ colleges }: {
                                         <Tooltip content={<CustomTooltip />} />
                                     </PieChart>
                                 </ResponsiveContainer>
-                                <DonutCenterLabel value={String(m.totalStudents)} label="students" />
+                                <DonutCenterLabel value={String(m.totalStudents)} label="learners" />
                             </div>
                             <div className="flex-1 space-y-2">
                                 {statusData.map((item: any) => (
@@ -1294,15 +1321,46 @@ function AnalyticsTab({ colleges }: {
 
 
 // ===== MAIN COMPONENT =====
+import { MiniTaskAnalysis } from './MiniTaskAnalysis'
 
 export default function AdminDashboard() {
-
-    const { data: colleges = [], isLoading: collegesLoading } = useColleges()
-    const { data: summary, isLoading: summaryLoading } = usePlatformSummary()
-    const isLoading = collegesLoading || summaryLoading
-
-    const [activeTab, setActiveTab] = useState<Tab>('overview')
+    const navigate = useNavigate()
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
+    const [_selectedStudent, _setSelectedStudent] = useState<{ id: string, name: string, initials: string } | null>(null)
     const [selectedStudentForFeedback, setSelectedStudentForFeedback] = useState<{ id: string, name: string, initials: string } | null>(null)
+    const [platformStateFilter, _setPlatformStateFilter] = useState<string>('all')
+    const courses = useUserStore(state => state.courses)
+    const activeCourseTitle = courses.find(c => c.id === activeCourseId)?.title || 'Linux'
+    const impersonate = useAuthStore(state => state.impersonate)
+    const [activeTab, setActiveTab] = useState<Tab>('overview')
+
+    const handleImpersonateCoordinator = async (collegeId: string) => {
+        try {
+            await impersonate(collegeId, 'coordinator')
+            await useUserStore.getState().fetchUser()
+            toast.success('Viewing platform as a coordinator')
+            navigate('/coordinator')
+        } catch (e) {
+            console.error('Failed to impersonate coordinator', e)
+        }
+    }
+
+    const user = useUserStore(state => state.user)
+    const isAdmin = user?.role === 'admin'
+
+    const { data: colleges = [], isLoading: isLoadingColleges } = useColleges(activeCourseId, activeBatchId, isAdmin)
+    const { data: summary, isLoading: isLoadingSummary } = usePlatformSummary(platformStateFilter, activeCourseId, activeBatchId, isAdmin)
+
+    const feedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
+        useFeedbackSummary(filters, activeCourseId, activeBatchId, isAdmin)
+
+    const isLoading = isLoadingColleges || isLoadingSummary
+
+    if (!isAdmin) {
+        return null
+    }
 
     const totalStudents = colleges.reduce((a: number, c: CollegeSummary) => a + c.totalStudents, 0)
 
@@ -1311,6 +1369,7 @@ export default function AdminDashboard() {
         { id: 'colleges' as const, label: 'Colleges', icon: Building2 },
         { id: 'analytics' as const, label: 'Analytics', icon: Activity },
         { id: 'feedback' as const, label: 'Feedback', icon: MessageCircleQuestion },
+        { id: 'minitasks' as const, label: 'MiniTasks', icon: ClipboardList },
     ]
 
     if (isLoading || !summary) {
@@ -1322,7 +1381,13 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-5">
+        <div className="max-w-6xl mx-auto p-6 space-y-6">
+            {!activeBatchIsActive && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch</p>
+                </div>
+            )}
             {/* Header */}
             <div className="flex items-start sm:items-center justify-between flex-wrap gap-4">
                 <div>
@@ -1335,7 +1400,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
-                        <span>{colleges.length} colleges • {totalStudents} students • Linux Course</span>
+                        <span>{colleges.length} colleges • {totalStudents} students • {activeCourseTitle} Course</span>
                     </div>
                 </div>
 
@@ -1343,11 +1408,11 @@ export default function AdminDashboard() {
                     <button
                         onClick={async () => {
                             try {
-                                const response = await api.get(`/api/admin/minitask-students/export`, { responseType: 'blob' });
+                                const response = await api.get(`/api/admin/minitask-students/export?course_id=${activeCourseId}`, { responseType: 'blob' });
                                 const url = window.URL.createObjectURL(new Blob([response.data]));
                                 const link = document.createElement('a');
                                 link.href = url;
-                                link.setAttribute('download', 'MiniTask_OptIn_Report.xlsx');
+                                link.setAttribute('download', `MiniTask_OptIn_${activeCourseId}_Report.xlsx`);
                                 document.body.appendChild(link);
                                 link.click();
                             } catch (e) {
@@ -1357,12 +1422,14 @@ export default function AdminDashboard() {
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-primary text-primary hover:bg-primary/10 transition-colors rounded-md"
                     >
                         <ClipboardList className="h-3.5 w-3.5" />
-                        Export Mini-Tasks Report
+                        MiniTask EOI
                     </button>
                     <button
                         onClick={async () => {
                             try {
-                                const response = await api.get(`/api/admin/colleges/export`, { responseType: 'blob' });
+                                const params = new URLSearchParams({ course_id: activeCourseId });
+                                if (activeBatchId) params.set('batch_id', activeBatchId);
+                                const response = await api.get(`/api/admin/colleges/export?${params.toString()}`, { responseType: 'blob' });
                                 const url = window.URL.createObjectURL(new Blob([response.data]));
                                 const link = document.createElement('a');
                                 link.href = url;
@@ -1376,7 +1443,7 @@ export default function AdminDashboard() {
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
                     >
                         <Download className="h-3.5 w-3.5" />
-                        Download Report
+                        Download Progress Report
                     </button>
                 </div>
             </div>
@@ -1410,7 +1477,11 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'colleges' && (
-                <CollegesTab colleges={colleges} onStudentClick={setSelectedStudentForFeedback} />
+                <CollegesTab 
+                    colleges={colleges} 
+                    onStudentClick={setSelectedStudentForFeedback} 
+                    onImpersonate={handleImpersonateCoordinator}
+                />
             )}
 
             {activeTab === 'analytics' && (
@@ -1418,7 +1489,13 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'feedback' && (
-                <FeedbackPanel onStudentClick={setSelectedStudentForFeedback} />
+                <FeedbackPanel useFeedbackData={feedbackHook} onStudentClick={setSelectedStudentForFeedback} />
+            )}
+
+            {activeTab === 'minitasks' && (
+                <div className="bg-card/30 rounded-2xl p-6 lg:p-8 border border-border/50">
+                    <MiniTaskAnalysis />
+                </div>
             )}
 
             {selectedStudentForFeedback && (

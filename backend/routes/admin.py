@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 import openpyxl
 
 from database import get_db
-from models import User, College, UserTutorial, Tutorial
+from models import User, College, UserTutorial, Tutorial, UserCourse
 from models.feedback import TutorialFeedback
 from models.xp_event import XPEvent
 from dependencies import require_admin
@@ -29,21 +29,23 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 @router.get("/platform-summary")
 async def get_platform_summary(
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Returns a single, pre-computed payload for the admin Overview + Analytics tabs.
-    Everything is done in SQL — no Python loops over students.
+    Now course and batch aware.
     """
 
-    cache_key = f"admin:platform_summary:{state or 'all'}"
+    cache_key = f"admin:platform_summary:{course_id}:{batch_id or 'all'}:{state or 'all'}"
     cached = await get_cached(cache_key)
     if cached:
         return cached
 
-    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == "linux"))
+    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
     total_tutorials = tot_tut_res.scalar() or 20
 
     # ----- Per-student metrics (one query) -----
@@ -51,41 +53,61 @@ async def get_platform_summary(
         User.id,
         User.display_name,
         User.username,
-        User.xp_total,
+        func.coalesce(func.sum(UserTutorial.xp_earned), 0).label("xp_total"),
         User.college_id,
         func.count(
-            case((UserTutorial.watched == True, UserTutorial.tutorial_id), else_=None)
+            case((UserTutorial.watched == True, Tutorial.id), else_=None)
         ).label("watched"),
         func.count(
-            case((UserTutorial.practiced == True, UserTutorial.tutorial_id), else_=None)
+            case((UserTutorial.practiced == True, Tutorial.id), else_=None)
         ).label("completed"),
         func.count(
-            case((UserTutorial.minitask_opted == True, UserTutorial.tutorial_id), else_=None)
+            case((UserTutorial.minitask_opted == True, Tutorial.id), else_=None)
         ).label("minitasks_opted"),
     ).outerjoin(
         UserTutorial, UserTutorial.user_id == User.id
     ).outerjoin(
         Tutorial,
-        (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == "linux")
+        (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id)
+    ).join(
+        UserCourse, UserCourse.user_id == User.id
+    ).filter(
+        UserCourse.course_id == course_id
     )
+
+    if batch_id:
+        query = query.filter(UserCourse.batch_id == batch_id)
 
     if state:
         query = query.join(College, College.id == User.college_id).filter(
             User.role == "student",
+            User.is_test_account != True,
             College.location.ilike(f"%{state}%")
         )
     else:
-        query = query.filter(User.role == "student")
+        query = query.filter(User.role == "student", User.is_test_account != True)
 
     query = query.group_by(User.id)
     res_metrics = await db.execute(query)
     student_metrics = res_metrics.all()
 
     # ----- Build college name lookup -----
+    college_query = (
+        select(College.id, College.name)
+        .join(User, User.college_id == College.id)
+        .join(UserCourse, UserCourse.user_id == User.id)
+        .filter(
+            User.role == "student",
+            User.is_test_account != True,
+            UserCourse.course_id == course_id
+        )
+    )
+    if batch_id:
+        college_query = college_query.filter(UserCourse.batch_id == batch_id)
     if state:
-        colleges_res = await db.execute(select(College.id, College.name).filter(College.location.ilike(f"%{state}%")))
-    else:
-        colleges_res = await db.execute(select(College.id, College.name))
+        college_query = college_query.filter(College.location.ilike(f"%{state}%"))
+        
+    colleges_res = await db.execute(college_query.distinct())
     colleges_loaded = colleges_res.all()
     college_names = {c.id: c.name for c in colleges_loaded}
 
@@ -171,13 +193,14 @@ async def get_platform_summary(
 
     if state:
         stats_query = stats_query.join(User, User.id == UserTutorial.user_id).join(College, College.id == User.college_id).filter(
-            Tutorial.course_id == "linux",
+            Tutorial.course_id == course_id,
             User.role == "student",
+            User.is_test_account != True,
             College.location.ilike(f"%{state}%")
         )
     else:
         stats_query = stats_query.filter(
-            Tutorial.course_id == "linux"
+            Tutorial.course_id == course_id
         )
 
     stats_query = stats_query.group_by(
@@ -232,8 +255,61 @@ async def get_platform_summary(
     return result
 
 
+@router.get("/minitask-analysis")
+async def get_minitask_analysis(
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Returns aggregated minitask opt-in data by college and tutorial.
+    """
+    # Query all minitask opt-ins
+    query = (
+        select(
+            College.name.label("college_name"),
+            Tutorial.tutorial_number,
+            func.count(UserTutorial.user_id).label("count")
+        )
+        .join(User, User.id == UserTutorial.user_id)
+        .join(Tutorial, Tutorial.id == UserTutorial.tutorial_id)
+        .join(UserCourse, UserCourse.user_id == User.id)
+        .outerjoin(College, College.id == User.college_id)
+        .filter(
+            User.role == "student",
+            User.is_test_account != True,
+            UserTutorial.minitask_opted == True,
+            Tutorial.course_id == course_id,
+            UserCourse.course_id == course_id
+        )
+    )
+
+    if batch_id:
+        query = query.filter(UserCourse.batch_id == batch_id)
+    
+    query = query.group_by(College.name, Tutorial.tutorial_number).order_by(College.name, Tutorial.tutorial_number)
+    
+    res = await db.execute(query)
+    rows = res.all()
+
+    # Structure the data for frontend: {college_name: {tut_num: count}}
+    analysis = {}
+    for row in rows:
+        cname = row.college_name or "Unknown"
+        if cname not in analysis:
+            analysis[cname] = {}
+        analysis[cname][row.tutorial_number] = row.count
+
+    return analysis
+
+
+
+
 @router.get("/colleges/export")
 async def export_all_colleges(
+    course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -243,7 +319,7 @@ async def export_all_colleges(
     # Import the same logic used to calculate their summary
     from routes.coordinator import _build_college_summary
     
-    colleges_summary = await _build_college_summary(db)
+    colleges_summary = await _build_college_summary(db, course_id=course_id, batch_id=batch_id)
 
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
@@ -330,6 +406,7 @@ async def export_all_colleges(
 
 @router.get("/minitask-students/export")
 async def export_minitask_students(
+    course_id: str = Query("linux"),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -356,8 +433,9 @@ async def export_minitask_students(
         .outerjoin(College, College.id == User.college_id)
         .filter(
             User.role == "student",
+            User.is_test_account != True,
             UserTutorial.minitask_opted == True,
-            Tutorial.course_id == "linux",
+            Tutorial.course_id == course_id,
         )
         .order_by(Tutorial.tutorial_number, User.display_name)
     )
@@ -524,6 +602,7 @@ COLLEGE_COLORS = [
 
 @router.get("/college-daily-xp")
 async def get_college_daily_xp(
+    course_id: str = Query("linux"),
     month: Optional[str] = Query(None, description="Month in YYYY-MM format, defaults to current"),
     college_ids: Optional[str] = Query(None, description="Comma-separated college IDs"),
     user: User = Depends(require_admin),
@@ -554,11 +633,28 @@ async def get_college_daily_xp(
     if college_ids:
         college_filter_ids = [cid.strip() for cid in college_ids.split(",") if cid.strip()]
 
-    colleges_query = select(College.id, College.name)
     if college_filter_ids:
-        colleges_query = colleges_query.filter(College.id.in_(college_filter_ids))
-    res_colleges = await db.execute(colleges_query.order_by(College.name))
-    colleges = res_colleges.all()
+        colleges_query = select(College.id, College.name).filter(College.id.in_(college_filter_ids))
+        res_colleges = await db.execute(colleges_query.order_by(College.name))
+        colleges = res_colleges.all()
+    else:
+        # Limit default chart to top 10 active colleges by student enrollment count in this course
+        college_query = (
+            select(College.id, College.name)
+            .join(User, User.college_id == College.id)
+            .join(UserCourse, UserCourse.user_id == User.id)
+            .filter(
+                User.role == "student",
+                User.is_test_account != True,
+                UserCourse.course_id == course_id
+            )
+            .group_by(College.id, College.name)
+            .order_by(func.count(User.id).desc())
+            .limit(10)
+        )
+        res_colleges = await db.execute(college_query)
+        # Sort them alphabetically for a cleaner UI presentation
+        colleges = sorted(res_colleges.all(), key=lambda c: c.name)
 
     if not colleges:
         return {
@@ -585,8 +681,11 @@ async def get_college_daily_xp(
             func.sum(XPEvent.xp_delta).label("daily_xp"),
         )
         .join(User, XPEvent.user_id == User.id)
+        .join(UserCourse, UserCourse.user_id == User.id)
         .filter(
             User.role == "student",
+            User.is_test_account != True,
+            UserCourse.course_id == course_id,
             User.college_id.in_([c.id for c in colleges]),
             cast(XPEvent.created_at, Date) >= month_start,
             cast(XPEvent.created_at, Date) < month_end,
@@ -636,6 +735,7 @@ async def get_college_daily_xp(
 
 @router.get("/feedback-summary")
 async def get_feedback_summary(
+    course_id: str = Query("linux"),
     tutorial_id: Optional[str] = Query(None, description="Filter by tutorial UUID"),
     step_type: Optional[str] = Query(None, description="Filter by step type"),
     reason: Optional[str] = Query(None, description="Filter by reason key"),
@@ -655,7 +755,7 @@ async def get_feedback_summary(
     # ----- Step 1: Fetch ALL tutorials for the filter dropdown -----
     res_all_tuts = await db.execute(
         select(Tutorial.id, Tutorial.title, Tutorial.tutorial_number)
-        .filter(Tutorial.course_id == "linux")
+        .filter(Tutorial.course_id == course_id)
         .order_by(Tutorial.tutorial_number)
     )
     all_tutorials = [
@@ -668,6 +768,8 @@ async def get_feedback_summary(
         select(TutorialFeedback)
         .options(selectinload(TutorialFeedback.user))
         .join(User, TutorialFeedback.user_id == User.id)
+        .join(Tutorial, TutorialFeedback.tutorial_id == Tutorial.id)
+        .filter(Tutorial.course_id == course_id)
     )
 
     if tutorial_id:

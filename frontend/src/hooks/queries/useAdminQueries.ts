@@ -1,24 +1,58 @@
 import { useQuery } from "@tanstack/react-query"
 import api from '@/lib/axios'
 
-const fetchColleges = async () => {
-    const { data } = await api.get('/api/coordinator/colleges')
-    return data
-}
+const fetchColleges = async (courseId?: string, batchId?: string | null) => {
+    let url = '/api/coordinator/colleges'
+    const params = new URLSearchParams()
+    if (courseId) params.set('course_id', courseId)
+    if (batchId) params.set('batch_id', batchId)
+    const qs = params.toString()
+    if (qs) url += `?${qs}`
 
-const fetchPlatformSummary = async (state?: string) => {
-    const url = state && state !== 'all' ? `/api/admin/platform-summary?state=${encodeURIComponent(state)}` : '/api/admin/platform-summary'
     const { data } = await api.get(url)
     return data
 }
 
-const fetchCollegeDailyXP = async (month: string, collegesId: string[]) => {
-    const { data } = await api.get(`/api/admin/college-daily-xp?month=${month}&college_ids=${collegesId.join(',')}`)
+const fetchPlatformSummary = async (state?: string, courseId?: string, batchId?: string | null) => {
+    const params = new URLSearchParams()
+    if (state && state !== 'all') params.set('state', state)
+    if (courseId) params.set('course_id', courseId)
+    if (batchId) params.set('batch_id', batchId)
+    
+    const qs = params.toString()
+    const url = qs ? `/api/admin/platform-summary?${qs}` : '/api/admin/platform-summary'
+    const { data } = await api.get(url)
     return data
 }
 
-const fetchCollegesDetails = async (collegeId: string, page: number, sortBy: string, statusFilter: string, searchQuery: string) => {
-    const { data } = await api.get(`/api/coordinator/colleges/${collegeId}?page=${page}&limit=10&sort=${sortBy}&status=${statusFilter}&search=${searchQuery}`)
+const fetchCollegeDailyXP = async (month: string, collegesId: string[], courseId?: string) => {
+    let url = `/api/admin/college-daily-xp?month=${month}`
+    if (collegesId.length > 0) url += `&college_ids=${collegesId.join(',')}`
+    if (courseId) url += `&course_id=${courseId}`
+    const { data } = await api.get(url)
+    return data
+}
+
+const fetchCollegesDetails = async (
+    collegeId: string, 
+    page: number, 
+    sortBy: string, 
+    statusFilter: string, 
+    searchQuery: string,
+    courseId?: string,
+    batchId?: string | null
+) => {
+    const params = new URLSearchParams({
+        page: String(page),
+        limit: '10',
+        sort: sortBy,
+        status: statusFilter,
+        search: searchQuery
+    })
+    if (courseId) params.set('course_id', courseId)
+    if (batchId) params.set('batch_id', batchId)
+
+    const { data } = await api.get(`/api/coordinator/colleges/${collegeId}?${params.toString()}`)
     return data
 }
 
@@ -27,39 +61,44 @@ const fetchStudentFeedback = async (studentId: string) => {
     return data
 }
 
-const fetchFeedbackSummary = async (filters: { tutorialId: string; stepType: string; reason: string }) => {
+const fetchFeedbackSummary = async (
+    filters: { tutorialId: string; stepType: string; reason: string },
+    courseId?: string,
+    batchId?: string | null
+) => {
     const params = new URLSearchParams()
     if (filters.tutorialId) params.set('tutorial_id', filters.tutorialId)
     if (filters.stepType) params.set('step_type', filters.stepType)
     if (filters.reason) params.set('reason', filters.reason)
+    if (courseId) params.set('course_id', courseId)
+    if (batchId) params.set('batch_id', batchId)
+
     const qs = params.toString()
     const url = qs ? `/api/admin/feedback-summary?${qs}` : '/api/admin/feedback-summary'
     const { data } = await api.get(url)
     return data
 }
 
-
-
-
-
-export function useColleges() {
+export function useColleges(courseId?: string, batchId?: string | null, enabled: boolean = true) {
     return useQuery({
-        queryKey: ['colleges'],
-        queryFn: fetchColleges
+        queryKey: ['colleges', courseId, batchId],
+        queryFn: () => fetchColleges(courseId, batchId),
+        enabled
     })
 }
 
-export function usePlatformSummary(state?: string) {
+export function usePlatformSummary(state?: string, courseId?: string, batchId?: string | null, enabled: boolean = true) {
     return useQuery({
-        queryKey: ['admin', 'platform-summary', state || 'all'],
-        queryFn: () => fetchPlatformSummary(state)
+        queryKey: ['admin', 'platform-summary', state || 'all', courseId, batchId],
+        queryFn: () => fetchPlatformSummary(state, courseId, batchId),
+        enabled
     })
 }
 
-export function useCollegesDailyXP(month: string, collegesIds: string[]) {
+export function useCollegesDailyXP(month: string, collegesIds: string[], courseId?: string) {
     return useQuery({
-        queryKey: ['admin', 'college-daily-xp', month, collegesIds],
-        queryFn: () => fetchCollegeDailyXP(month, collegesIds),
+        queryKey: ['admin', 'college-daily-xp', month, collegesIds, courseId],
+        queryFn: () => fetchCollegeDailyXP(month, collegesIds, courseId),
         enabled: collegesIds.length > 0
     })
 }
@@ -70,11 +109,13 @@ export function useCollegeDetails(
     page: number,
     sortBy: string,
     statusFilter: string,
-    searchQuery: string
+    searchQuery: string,
+    courseId?: string,
+    batchId?: string | null
 ) {
     return useQuery({
-        queryKey: ['admin', 'college-details', collegeId, page, sortBy, statusFilter, searchQuery],
-        queryFn: () => fetchCollegesDetails(collegeId!, page, sortBy, statusFilter, searchQuery),
+        queryKey: ['admin', 'college-details', collegeId, page, sortBy, statusFilter, searchQuery, courseId, batchId],
+        queryFn: () => fetchCollegesDetails(collegeId!, page, sortBy, statusFilter, searchQuery, courseId, batchId),
         enabled: !!collegeId
     })
 }
@@ -86,9 +127,15 @@ export function useStudentFeedback(studentId: string) {
     })
 }
 
-export function useFeedbackSummary(filters: { tutorialId: string; stepType: string; reason: string }) {
+export function useFeedbackSummary(
+    filters: { tutorialId: string; stepType: string; reason: string },
+    courseId?: string,
+    batchId?: string | null,
+    enabled: boolean = true
+) {
     return useQuery({
-        queryKey: ['admin', 'feedback-summary', filters],
-        queryFn: () => fetchFeedbackSummary(filters),
+        queryKey: ['admin', 'feedback-summary', filters, courseId, batchId],
+        queryFn: () => fetchFeedbackSummary(filters, courseId, batchId),
+        enabled
     })
 }

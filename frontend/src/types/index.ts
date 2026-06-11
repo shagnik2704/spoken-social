@@ -29,6 +29,8 @@ export interface User {
     following: number
     postsCount: number
     role: UserRole
+    effectiveRole: UserRole
+    isImpersonating: boolean
     collegeId?: string | null
 }
 
@@ -43,6 +45,9 @@ export interface Course {
     progressPercent: number
     completedAt?: string | null
     forumCategory?: string | null
+    batchId?: string | null
+    batchName?: string | null
+    batchStatus?: string
 }
 
 // ----- Badges -----
@@ -108,6 +113,8 @@ export interface Activity {
     text: string
     time: string
 }
+
+
 
 // ----- Upcoming Events -----
 

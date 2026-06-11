@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +6,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from database import get_db
 from dependencies import get_current_user
-from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
+from models import User, UserCourse, UserTutorial, UserBadge, Tutorial, Course, CollegeCourse
 from models.xp_event import XPEvent
 from leaderboard_cache import update_user_xp
 from services.forum import get_forum_activity_for_tutorial
@@ -22,6 +22,7 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
     result = await db.execute(
         select(User)
         .options(selectinload(User.courses).selectinload(UserCourse.course),
+                 selectinload(User.courses).selectinload(UserCourse.batch),
                  selectinload(User.badges).selectinload(UserBadge.badge))
         .where(User.id == user.id)
     )
@@ -29,9 +30,67 @@ async def get_current_user_profile(user: User = Depends(get_current_user), db: A
     if not user_loaded:
         raise HTTPException(status_code=404, detail="User not found")
 
-    courses = [uc.to_api_dict() for uc in user_loaded.courses]
+    # Preserve impersonation context from get_current_user dependency
+    user_loaded.effective_role = getattr(user, "effective_role", user.role)
+    user_loaded.real_user_id = getattr(user, "real_user_id", user.id)
+    user_loaded.is_impersonating = getattr(user, "is_impersonating", False)
+    user_loaded.target_college_id = getattr(user, "target_college_id", None)
+    print(f"DEBUG /ME: user={user_loaded.email}, effective_role={user_loaded.effective_role}, target_college_id={user_loaded.target_college_id}")
+    if user_loaded.target_college_id:
+        user_loaded.college_id = user_loaded.target_college_id
+
+    if user_loaded.effective_role == "admin":
+        # Fetch all courses with their batches
+        courses_res = await db.execute(
+            select(Course)
+            .options(selectinload(Course.batches))
+            .order_by(Course.title)
+        )
+        all_courses = courses_res.scalars().all()
+        courses = []
+        for c in all_courses:
+            c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
+            c_dict["batches"] = [b.to_api_dict() for b in c.batches]
+            active_b = next((b for b in c.batches if b.status == "active"), c.batches[0] if c.batches else None)
+            if active_b:
+                c_dict["batchId"] = str(active_b.id)
+                c_dict["batchName"] = active_b.name
+                c_dict["batchStatus"] = active_b.computed_status
+            else:
+                c_dict["batchId"] = None
+                c_dict["batchName"] = None
+                c_dict["batchStatus"] = "inactive"
+            courses.append(c_dict)
+    elif user_loaded.effective_role == "coordinator":
+        # Fetch courses enabled for coordinator's college, with batches
+        courses_res = await db.execute(
+            select(Course)
+            .join(CollegeCourse, CollegeCourse.course_id == Course.id)
+            .filter(CollegeCourse.college_id == user_loaded.college_id)
+            .options(selectinload(Course.batches))
+            .order_by(Course.title)
+        )
+        col_courses = courses_res.scalars().all()
+        courses = []
+        for c in col_courses:
+            c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
+            c_dict["batches"] = [b.to_api_dict() for b in c.batches]
+            active_b = next((b for b in c.batches if b.status == "active"), c.batches[0] if c.batches else None)
+            if active_b:
+                c_dict["batchId"] = str(active_b.id)
+                c_dict["batchName"] = active_b.name
+                c_dict["batchStatus"] = active_b.computed_status
+            else:
+                c_dict["batchId"] = None
+                c_dict["batchName"] = None
+                c_dict["batchStatus"] = "inactive"
+            courses.append(c_dict)
+    else:
+        courses = [uc.to_api_dict() for uc in user_loaded.courses]
+
     badges = [ub.to_api_dict() for ub in user_loaded.badges]
 
+    print(f"DEBUG /ME: user_loaded={user_loaded.email}, final_role={user_loaded.effective_role}, college_id={user_loaded.college_id}")
     return {
         "user": await user_loaded.to_api_dict(db=db),
         "courses": courses,
@@ -88,6 +147,7 @@ async def get_user_by_id(user_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(User)
         .options(selectinload(User.courses).selectinload(UserCourse.course),
+                 selectinload(User.courses).selectinload(UserCourse.batch),
                  selectinload(User.badges).selectinload(UserBadge.badge))
         .filter_by(id=uid)
     )
@@ -115,19 +175,31 @@ class TutorialUpdate(BaseModel):
 class XPUpdate(BaseModel):
     amount: int
     source: str
+    batch_id: Optional[str] = None
 
 
 # ===== TUTORIAL ENDPOINTS (protected) =====
 
 @router.get('/me/courses/{course_id}/tutorials')
-async def get_my_tutorials(course_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_my_tutorials(
+    course_id: str, 
+    batch_id: Optional[str] = Query(None),
+    user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
     stmt = (
         select(UserTutorial)
         .options(selectinload(UserTutorial.tutorial))
         .join(Tutorial, UserTutorial.tutorial_id == Tutorial.id)
         .filter(UserTutorial.user_id == user.id, Tutorial.course_id == course_id)
-        .order_by(Tutorial.tutorial_number)
     )
+    
+    if batch_id:
+        # Filter tutorials associated with this specific batch enrollment
+        pass # In our simplified schema, UserTutorial isn't directly batch-linked yet, 
+             # but UserCourse is. For now, we return all for the course.
+    
+    stmt = stmt.order_by(Tutorial.tutorial_number)
     result = await db.execute(stmt)
     tutorials = result.scalars().all()
     
@@ -161,8 +233,18 @@ async def get_my_forum_activity(course_id: str, user: User = Depends(get_current
 
 
 @router.put('/me/courses/{course_id}/tutorials/{tutorial_id}')
-async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate,
-                    user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def update_tutorial(
+    course_id: str, 
+    tutorial_id: str, 
+    body: TutorialUpdate,
+    batch_id: Optional[str] = Query(None),
+    user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if batch is active
+    from dependencies import check_batch_active
+    await check_batch_active(batch_id, db)
+
     import uuid
     try:
         tut_uuid = uuid.UUID(tutorial_id)
@@ -254,7 +336,15 @@ async def update_tutorial(course_id: str, tutorial_id: str, body: TutorialUpdate
 # ===== XP ENDPOINT (protected) =====
 
 @router.post('/me/xp')
-async def add_xp(body: XPUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def add_xp(
+    body: XPUpdate, 
+    user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if batch is active
+    from dependencies import check_batch_active
+    await check_batch_active(body.batch_id, db)
+
     user.xp_total += body.amount
 
     # Log XP event

@@ -308,7 +308,7 @@ export default function Leaderboard() {
                     {/* Table Header */}
                     <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                         <div className="w-8 text-center">Rank</div>
-                        <div className="flex-1">Student</div>
+                        <div className="flex-1">Learner</div>
 
                         <div className="w-[60px] text-right">{timeFilter === 'weekly' ? 'Weekly' : 'Total'}</div>
                         <div className="w-10 text-center">Δ</div>

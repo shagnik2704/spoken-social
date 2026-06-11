@@ -1,11 +1,11 @@
-import { useState} from 'react'
+import { useState } from 'react'
 import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
     CheckCircle2, Terminal, Eye,
     Search, Filter, Trophy, BarChart3,
     MessageCircleQuestion, ClipboardList,
     // Star,
-    Clock, Zap, Activity, Download
+    Clock, Zap, Activity, Download, Lock
 } from 'lucide-react'
 import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,6 +32,10 @@ import {
     PaginationEllipsis,
 } from '@/components/ui/pagination'
 import { useUserStore } from '@/store/userStore'
+import { useAuthStore } from '@/store/authStore'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+
 
 // ===== TYPES =====
 
@@ -141,7 +145,11 @@ function MetricCard({ icon: Icon, label, value, subtext, color }: {
 
 // ===== STUDENT TABLE ROW =====
 
-function StudentRow({ student, index }: { student: Student; index?: number }) {
+function StudentRow({ student, index, onViewAsStudent }: { 
+    student: Student; 
+    index?: number;
+    onViewAsStudent?: (studentId: string) => void
+}) {
     const statusConfig = getStatusConfig(student.status)
 
     return (
@@ -193,13 +201,21 @@ function StudentRow({ student, index }: { student: Student; index?: number }) {
                     {statusConfig.label}
                 </Badge>
             </div>
+
+            <button
+                onClick={(e) => { e.stopPropagation(); onViewAsStudent?.(student.id) }}
+                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                title="View as Learner"
+            >
+                <Eye className="h-4 w-4" />
+            </button>
         </div>
     )
 }
 
 // ===== MY STUDENTS TAB =====
 
-function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setStatusFilter, searchQuery, setSearchQuery, page, setPage }: {
+function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setStatusFilter, searchQuery, setSearchQuery, page, setPage, onViewAsStudent }: {
     college: CollegeSummary
     details: CollegeDetails | null
     sortBy: SortBy
@@ -210,6 +226,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
     setSearchQuery: (s: string) => void
     page: number
     setPage: (p: number) => void
+    onViewAsStudent: (studentId: string) => void
 }) {
     const filteredStudents = (details?.students || [])
     return (
@@ -239,6 +256,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         icon={TrendingUp}
                         label="Avg Progress"
                         value={`${college.avgProgress}%`}
+                        subtext={`${college.avgXP} avg XP`}
                         color="bg-primary/10 text-primary"
                     />
                 </div>
@@ -269,7 +287,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                     <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                         <h2 className="text-sm font-bold flex items-center gap-2">
                             <Users className="h-4 w-4 text-primary" />
-                            Student Tracker — {college.name}
+                            Learner Tracker — {college.name}
                         </h2>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -337,7 +355,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                     <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                         <div className="w-6 shrink-0 text-center">#</div>
                         <div className="w-8 shrink-0" />
-                        <div className="flex-1">Student</div>
+                        <div className="flex-1">Learner</div>
                         <div className="hidden sm:block w-28 text-center">Progress</div>
                         <TooltipProvider>
                             <Tooltip>
@@ -385,11 +403,12 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                                 key={student.id} 
                                 student={student} 
                                 index={(page - 1) * (details?.pagination?.limit || 10) + idx + 1}
+                                onViewAsStudent={onViewAsStudent}
                             />
                         ))}
                         {filteredStudents.length === 0 && (
                             <p className="text-center text-sm text-muted-foreground py-8">
-                                No students match your filters
+                                No learners match your filters
                             </p>
                         )}
                     </div>
@@ -618,8 +637,8 @@ function DonutCenterLabel({ value, label }: { value: string; label: string }) {
     )
 }
 
-function AnalyticsTab({ collegeId }: { collegeId: string }) {
-    const {data,isLoading:loading}=useCoordinatorCollegeAnalytics(collegeId)
+function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, courseId?: string, batchId?: string | null }) {
+    const {data,isLoading:loading}=useCoordinatorCollegeAnalytics(collegeId, courseId, batchId)
 
     if (loading) return <div className="p-10 text-center text-muted-foreground animate-pulse">Computing college-wide analytics...</div>
     if (!data) return <div className="p-10 text-center text-red-500">Failed to load analytics.</div>
@@ -638,10 +657,10 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
         atRisk
     } = data
 
-    // Attach tutorial names from frontend constants
+    // Attach tutorial names from backend or frontend constants
     const tutorialCompletionWithNames = tutorialCompletion.map((t: any) => ({
         ...t,
-        name: TUTORIAL_NAMES[t.number - 1] || `Tutorial ${t.number}`
+        name: t.title || TUTORIAL_NAMES[t.number - 1] || `Tutorial ${t.number}`
     }))
 
     const watchRate = totalTutorials > 0 ? Math.round((avgWatched / totalTutorials) * 100) : 0
@@ -652,7 +671,7 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
             return (
                 <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-md">
                     <p className="text-sm font-medium">{payload[0].name}</p>
-                    <p className="text-xs text-muted-foreground">{payload[0].value} students ({total > 0 ? Math.round((payload[0].value / total) * 100) : 0}%)</p>
+                    <p className="text-xs text-muted-foreground">{payload[0].value} learners ({total > 0 ? Math.round((payload[0].value / total) * 100) : 0}%)</p>
                 </div>
             )
         }
@@ -668,14 +687,14 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
                         <Eye className="h-5 w-5 text-primary mx-auto mb-1" />
                         <p className="text-2xl font-bold">{watchRate}%</p>
                         <p className="text-[11px] text-muted-foreground">Watch Rate</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">avg {avgWatched.toFixed(1)} / {totalTutorials} per student</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">avg {avgWatched.toFixed(1)} / {totalTutorials} per learner</p>
                     </CardContent>
                 </Card>
                 <Card className="border-border/40">
                     <CardContent className="p-4 text-center">
                         <Zap className="h-5 w-5 text-xp-gold mx-auto mb-1" />
                         <p className="text-2xl font-bold">{avgXP}</p>
-                        <p className="text-[11px] text-muted-foreground">Avg XP / Student</p>
+                        <p className="text-[11px] text-muted-foreground">Avg XP / Learner</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{totalXP} total</p>
                     </CardContent>
                 </Card>
@@ -712,7 +731,7 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
                                         <RechartsTooltip content={<CustomTooltip />} />
                                     </PieChart>
                                 </ResponsiveContainer>
-                                <DonutCenterLabel value={String(total)} label="students" />
+                                <DonutCenterLabel value={String(total)} label="learners" />
                             </div>
                             <div className="flex-1 space-y-2">
                                 {statusData.filter((d: any) => d.value > 0).map((item: any) => (
@@ -781,7 +800,7 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
                     <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                         <CheckCircle2 className="h-4 w-4 text-success" />
                         Tutorial-wise Completion
-                        <span className="text-[10px] font-normal text-muted-foreground">— where are students dropping off?</span>
+                        <span className="text-[10px] font-normal text-muted-foreground">— where are learners dropping off?</span>
                     </h3>
                     <div className="space-y-1.5">
                         {tutorialCompletionWithNames.map((t: any) => (
@@ -857,7 +876,7 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
                     <CardContent className="p-4">
                         <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                             <AlertTriangle className="h-4 w-4 text-warning" />
-                            At-Risk Students
+                            At-Risk Learners
                             {atRisk.length > 0 && (
                                 <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] px-1.5 py-0 h-4">
                                     {atRisk.length} need attention
@@ -867,8 +886,8 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
                         {atRisk.length === 0 ? (
                             <div className="text-center py-6">
                                 <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
-                                <p className="text-sm font-medium">All students on track! 🎉</p>
-                                <p className="text-xs text-muted-foreground">No at-risk students right now</p>
+                                <p className="text-sm font-medium">All learners on track! 🎉</p>
+                                <p className="text-xs text-muted-foreground">No at-risk learners right now</p>
                             </div>
                         ) : (
                             <div className="space-y-1.5">
@@ -912,9 +931,9 @@ function AnalyticsTab({ collegeId }: { collegeId: string }) {
 
 // ===== COORDINATOR FEEDBACK TAB =====
 
-function CoordinatorFeedbackTab({ collegeId }: { collegeId: string }) {
+function CoordinatorFeedbackTab({ collegeId, courseId, batchId }: { collegeId: string, courseId?: string, batchId?: string | null }) {
     const feedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
-        useCoordinatorFeedbackSummary(collegeId, filters)
+        useCoordinatorFeedbackSummary(collegeId, filters, courseId, batchId)
 
     return <FeedbackPanel useFeedbackData={feedbackHook} />
 }
@@ -923,6 +942,12 @@ function CoordinatorFeedbackTab({ collegeId }: { collegeId: string }) {
 // ===== MAIN COMPONENT =====
 
 export default function CoordinatorDashboard() {
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const courses = useUserStore(state => state.courses)
+    const impersonate = useAuthStore(state => state.impersonate)
+    const navigate = useNavigate()
+
     const [activeTab, setActiveTab] = useState<Tab>('students')
     const [sortBy, setSortBy] = useState<SortBy>('progress')
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -931,22 +956,42 @@ export default function CoordinatorDashboard() {
     const user = useUserStore(state => state.user)
     const MY_COLLEGE_ID = user?.collegeId || 'iitb'
 
-    const {data:colleges=[],isLoading:isLoadingColleges}=useCoordinatorColleges()
+    const handleViewAsStudent = async (_studentId: string) => {
+        try {
+            await impersonate(MY_COLLEGE_ID, 'student')
+            await useUserStore.getState().fetchUser()
+            toast.success('Viewing platform as a learner')
+            navigate('/dashboard')
+        } catch (e) {
+            console.error('Failed to impersonate student', e)
+        }
+    }
+
+    const isCoordinator = user?.role === 'coordinator'
+
+    const {data:colleges=[],isLoading:isLoadingColleges}=useCoordinatorColleges(activeCourseId, activeBatchId, isCoordinator)
 
     const {data:myCollegeDetails,isLoading:isLoadingDetails}=useCoordinatorCollegeDetails(
         MY_COLLEGE_ID,
         page,
         sortBy,
         statusFilter,
-        searchQuery
+        searchQuery,
+        activeCourseId,
+        activeBatchId,
+        isCoordinator
     )
 
     const isLoading = isLoadingColleges||isLoadingDetails
 
+    if (!isCoordinator) {
+        return null
+    }
+
     const myCollege = colleges.find((c: CollegeSummary) => c.id === MY_COLLEGE_ID)
 
     const tabs = [
-        { id: 'students' as const, label: 'My Students', icon: Users },
+        { id: 'students' as const, label: 'My Learners', icon: Users },
         { id: 'analytics' as const, label: 'Analytics', icon: Activity },
         { id: 'feedback' as const, label: 'Feedback', icon: MessageCircleQuestion },
         // { id: 'compare' as const, label: 'Compare Colleges', icon: BarChart3 },
@@ -961,7 +1006,13 @@ export default function CoordinatorDashboard() {
     }
 
     return (
-        <div className="max-w-5xl mx-auto space-y-5">
+        <div className="max-w-6xl mx-auto p-6 space-y-6">
+            {!useUserStore.getState().activeBatchIsActive && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch</p>
+                </div>
+            )}
             {/* Header */}
             <div className="flex items-start sm:items-center justify-between flex-wrap gap-4">
                 <div>
@@ -971,29 +1022,48 @@ export default function CoordinatorDashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Terminal className="h-4 w-4" />
-                        <span>{myCollege?.name} • Linux Course • No. of students registered: {myCollege?.totalCourseStudents}</span>
+                        <span>{myCollege?.name} • {courses.find(c => c.id === activeCourseId)?.title || 'Course'} • No. of learners registered: {myCollege?.totalCourseStudents}</span>
                     </div>
                 </div>
 
-                <button
-                    onClick={async () => {
-                        try {
-                            const response = await api.get(`/api/coordinator/colleges/${MY_COLLEGE_ID}/export`, { responseType: 'blob' });
-                            const url = window.URL.createObjectURL(new Blob([response.data]));
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.setAttribute('download', `${(myCollege?.name || 'College').replace(/[^a-zA-Z0-9]/g, '_')}_Students_Report.xlsx`);
-                            document.body.appendChild(link);
-                            link.click();
-                        } catch (e) {
-                            console.error('Failed to export', e);
-                        }
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
-                >
-                    <Download className="h-3.5 w-3.5" />
-                    Download Report
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={async () => {
+                            try {
+                                await impersonate(MY_COLLEGE_ID, 'student')
+                                await useUserStore.getState().fetchUser()
+                                toast.success('Viewing platform as a learner')
+                                navigate('/dashboard')
+                            } catch (e) {
+                                console.error('Failed to switch to student view', e)
+                            }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 border border-border/40 transition-colors rounded-md shadow-sm"
+                    >
+                        <Eye className="h-3.5 w-3.5" />
+                        View as Learner
+                    </button>
+
+                    <button
+                        onClick={async () => {
+                            try {
+                                const response = await api.get(`/api/coordinator/colleges/${MY_COLLEGE_ID}/export`, { responseType: 'blob' });
+                                const url = window.URL.createObjectURL(new Blob([response.data]));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.setAttribute('download', `${(myCollege?.name || 'College').replace(/[^a-zA-Z0-9]/g, '_')}_Learners_Report.xlsx`);
+                                document.body.appendChild(link);
+                                link.click();
+                            } catch (e) {
+                                console.error('Failed to export', e);
+                            }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-md shadow-sm"
+                    >
+                        <Download className="h-3.5 w-3.5" />
+                        Download Report
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -1032,15 +1102,16 @@ export default function CoordinatorDashboard() {
                     setSearchQuery={(s) => { setSearchQuery(s); setPage(1) }}
                     page={page}
                     setPage={setPage}
+                    onViewAsStudent={handleViewAsStudent}
                 />
             )}
 
             {activeTab === 'analytics' && myCollege && (
-                <AnalyticsTab collegeId={myCollege.id} />
+                <AnalyticsTab collegeId={myCollege.id} courseId={activeCourseId} batchId={activeBatchId} />
             )}
 
             {activeTab === 'feedback' && myCollege && (
-                <CoordinatorFeedbackTab collegeId={myCollege.id} />
+                <CoordinatorFeedbackTab collegeId={myCollege.id} courseId={activeCourseId} batchId={activeBatchId} />
             )}
 
             {/* {activeTab === 'compare' && (

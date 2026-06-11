@@ -12,6 +12,7 @@ export function LoginPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+
     const login = useAuthStore(state => state.login)
     const error = useAuthStore(state => state.error)
     const navigate = useNavigate()
@@ -30,7 +31,7 @@ export function LoginPage() {
             navigate('/')
         }
         else {
-            toast.error('Login failed.Please check your credentials')
+            toast.error('Login failed. Please check your credentials')
         }
     }
 
@@ -103,6 +104,7 @@ export function LoginPage() {
                                     required
                                 />
                             </div>
+
 
                             {/* Submit button */}
                             <Button type="submit" className="w-full" disabled={isLoading}>

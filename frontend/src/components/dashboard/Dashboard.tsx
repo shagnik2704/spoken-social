@@ -2,7 +2,7 @@ import {
     Zap, ChevronRight, Trophy, Lock,
     BookOpen, Hand, Code, Terminal, BarChart3, FileText, Settings,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
-    CheckCircle2
+    CheckCircle2, Database, Brain, FlaskConical
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -11,13 +11,12 @@ import { ActiveCourseTracker } from './ActiveCourseTracker'
 
 
 import { useUserStore } from '@/store/userStore'
+import type { UpcomingEvent } from '@/types'
 
 // Will be replaced with API call later
-const UPCOMING = [
-    { id: '1', type: 'test' as const, title: 'Python Online Test', date: 'Feb 28', daysAway: 4, location: 'Lab 201, 10:00 AM' },
-    { id: '2', type: 'workshop' as const, title: 'Linux Training Workshop', date: 'Mar 5', daysAway: 9, location: 'Computer Lab, 2:00 PM' },
-    { id: '3', type: 'test' as const, title: 'Scilab Online Test', date: 'Mar 12', daysAway: 16, location: 'TBD' },
-]
+const UPCOMING: UpcomingEvent[] = []
+
+
 
 
 const courseIconMap: Record<string, React.ReactNode> = {
@@ -26,6 +25,9 @@ const courseIconMap: Record<string, React.ReactNode> = {
     'Scilab': <BarChart3 className="h-6 w-6 text-blue-500" />,
     'C/C++': <Settings className="h-6 w-6 text-orange-500" />,
     'LibreOffice': <FileText className="h-6 w-6 text-emerald-500" />,
+    'PostgreSQL': <Database className="h-6 w-6 text-sky-500" />,
+    'AI': <Brain className="h-6 w-6 text-purple-500" />,
+    'PHD': <FlaskConical className="h-6 w-6 text-amber-500" />,
 }
 
 
@@ -122,6 +124,34 @@ function XPLevelCard() {
 
 function MyCourses() {
     const courses = useUserStore(state => state.courses)
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const setActiveCourse = useUserStore(state => state.setActiveCourse)
+    const fetchTutorials = useUserStore(state => state.fetchTutorials)
+
+    const handleCourseClick = (courseId: string) => {
+        setActiveCourse(courseId)
+        fetchTutorials(courseId)
+    }
+
+    if (courses.length === 0) {
+        return (
+            <div>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-semibold flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        My Courses
+                    </h2>
+                </div>
+                <Card>
+                    <CardContent className="p-6 text-center">
+                        <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">No courses enrolled yet.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Courses will appear here after enrollment.</p>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
 
     return (
         <div>
@@ -130,36 +160,52 @@ function MyCourses() {
                     <BookOpen className="h-4 w-4 text-primary" />
                     My Courses
                 </h2>
-                <button className="text-xs text-primary hover:text-primary/80 flex items-center gap-0.5 transition-colors">
-                    See All <ChevronRight className="h-3 w-3" />
-                </button>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
-                {courses.map((course) => (
-                    <Card key={course.id} className="min-w-[150px] sm:min-w-[170px] snap-start shrink-0 hover:border-primary/30 transition-colors cursor-pointer">
-                        <CardContent className="p-4 sm:p-5">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50 mb-3">
-                                {courseIconMap[course.title] || <Code className="h-5 w-5 text-muted-foreground" />}
-                            </div>
-                            <h3 className="text-sm font-semibold truncate">{course.title}</h3>
-                            <div className="flex items-center gap-2 mt-3">
-                                <Progress
-                                    value={course.progressPercent}
-                                    className={`h-1.5 flex-1 ${course.status === 'completed' ? '[&>div]:bg-success' : ''}`}
-                                />
-                                <span className="text-[11px] font-mono text-muted-foreground">
-                                    {Math.round(course.progressPercent)}%
-                                </span>
-                            </div>
-                            {course.status === 'completed' && (
-                                <Badge variant="secondary" className="bg-success/15 text-success text-[10px] mt-3 px-1.5 py-0 h-5 gap-1">
-                                    <CheckCircle2 className="h-3 w-3" />
-                                    Completed
-                                </Badge>
-                            )}
-                        </CardContent>
-                    </Card>
-                ))}
+                {courses.map((course) => {
+                    const isActive = course.id === activeCourseId
+                    return (
+                        <Card 
+                            key={course.id} 
+                            className={`min-w-[150px] sm:min-w-[170px] snap-start shrink-0 transition-all cursor-pointer
+                                ${isActive 
+                                    ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' 
+                                    : 'hover:border-primary/30'
+                                }`}
+                            onClick={() => handleCourseClick(course.id)}
+                        >
+                            <CardContent className="p-4 sm:p-5">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50 mb-3">
+                                    {courseIconMap[course.title] || <Code className="h-5 w-5 text-muted-foreground" />}
+                                </div>
+                                <h3 className="text-sm font-semibold truncate">{course.title}</h3>
+                                {course.batchName && (
+                                    <p className="text-[10px] text-muted-foreground mt-0.5">{course.batchName}</p>
+                                )}
+                                <div className="flex items-center gap-2 mt-3">
+                                    <Progress
+                                        value={course.progressPercent}
+                                        className={`h-1.5 flex-1 ${course.status === 'completed' ? '[&>div]:bg-success' : ''}`}
+                                    />
+                                    <span className="text-[11px] font-mono text-muted-foreground">
+                                        {Math.round(course.progressPercent)}%
+                                    </span>
+                                </div>
+                                {course.status === 'completed' && (
+                                    <Badge variant="secondary" className="bg-success/15 text-success text-[10px] mt-3 px-1.5 py-0 h-5 gap-1">
+                                        <CheckCircle2 className="h-3 w-3" />
+                                        Completed
+                                    </Badge>
+                                )}
+                                {isActive && (
+                                    <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] mt-2 px-1.5 py-0 h-5">
+                                        Active
+                                    </Badge>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )
+                })}
             </div>
         </div>
     )
@@ -241,52 +287,64 @@ function UpcomingDeadlines() {
                     <CalendarClock className="h-4 w-4 text-primary" />
                     Upcoming
                 </h2>
-                <div className="space-y-3">
-                    {UPCOMING.map((event) => (
-                        <div
-                            key={event.id}
-                            className={`flex items-start gap-3 p-3 rounded-lg bg-muted/30 border-l-[3px] ${getUrgencyColor(event.daysAway)}`}
-                        >
-                            {getTypeIcon(event.type)}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{event.title}</p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">{event.location}</p>
+                {UPCOMING.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground/60">
+                        <CalendarClock className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                        <p className="text-sm">No upcoming events. You're all clear! 🎉</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {UPCOMING.map((event) => (
+                            <div
+                                key={event.id}
+                                className={`flex items-start gap-3 p-3 rounded-lg bg-muted/30 border-l-[3px] ${getUrgencyColor(event.daysAway)}`}
+                            >
+                                {getTypeIcon(event.type)}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{event.title}</p>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">{event.location}</p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <p className="text-xs font-semibold">{event.date}</p>
+                                    <p className={`text-[11px] mt-0.5 ${event.daysAway <= 3 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                                        {event.daysAway === 1 ? 'Tomorrow!' : `${event.daysAway} days`}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="text-right shrink-0">
-                                <p className="text-xs font-semibold">{event.date}</p>
-                                <p className={`text-[11px] mt-0.5 ${event.daysAway <= 3 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
-                                    {event.daysAway === 1 ? 'Tomorrow!' : `${event.daysAway} days`}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </CardContent>
         </Card>
     )
 }
 
+
 // ===== MAIN DASHBOARD PAGE =====
 
 export default function Dashboard() {
-    const isLoading = useUserStore(state=>state.isLoading) 
-    if(isLoading)
-    {
+    const { user, isLoading } = useUserStore()
+    const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
+
+    if (isLoading) {
         return (
             <div className="max-w-3xl mx-auto space-y-6">
-                {/* Skeleton cards */}
-                {[1, 2, 3].map(i => (
-                    <div key={i} className="p-4 rounded-xl border bg-muted/50 space-y-3 animate-pulse">
-                        <div className="h-4 w-1/3 bg-muted rounded" />
-                        <div className="h-4 w-full bg-muted rounded" />
-                        <div className="h-4 w-2/3 bg-muted rounded" />
-                    </div>
-                ))}
+                <div className="h-24 bg-muted/40 animate-pulse rounded-2xl" />
+                <div className="h-64 bg-muted/20 animate-pulse rounded-2xl" />
             </div>
         )
     }
+
+    if (!user || user.role !== 'student') return null
+
     return (
         <div className="max-w-3xl mx-auto space-y-6">
+            {!activeBatchIsActive && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch</p>
+                </div>
+            )}
             {/* Section 1 & 2: Greeting + XP side by side on desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <GreetingBanner />
@@ -300,7 +358,6 @@ export default function Dashboard() {
 
             {/* Section 5: My Courses */}
             <MyCourses />
-
             {/* Section 6 & 7: Achievements + Upcoming side by side on desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <AchievementsPreview />

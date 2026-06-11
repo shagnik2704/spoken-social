@@ -15,3 +15,6 @@ from models.leaderboard import LeaderboardWeekly
 from models.activity import Activity
 from models.feedback import TutorialFeedback
 from models.forum_activity import ForumActivity
+from models.batch import Batch
+from models.college_course import CollegeCourse
+from models.impersonation_log import ImpersonationLog

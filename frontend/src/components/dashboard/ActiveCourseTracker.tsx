@@ -283,6 +283,7 @@ interface TutorialCardProps {
 }
 
 function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumCategory }: TutorialCardProps) {
+    const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
     const [isOpen, setIsOpen] = useState(!tutorial.completed)
     const currentXP = calcXP(tutorial)
     const isWatched = tutorial.watched === 'yes'
@@ -333,6 +334,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                         value={tutorial.assignmentDone}
                                         fieldId={`t${tutorial.id}-assign`}
                                         onChange={(v) => onRadioChange(tutorial.id, 'assignmentDone', v)}
+                                        disabled={!activeBatchIsActive}
                                     />
                                 )}
 
@@ -343,6 +345,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                         value={tutorial.minitaskOpted}
                                         fieldId={`t${tutorial.id}-minitask`}
                                         onChange={(v) => onRadioChange(tutorial.id, 'minitaskOpted', v)}
+                                        disabled={true}
                                     />
                                     {tutorial.minitaskOpted === 'yes' && (
                                         <div className="flex items-center gap-2 pb-2 pl-1 animate-in fade-in slide-in-from-top-1 duration-300">
@@ -381,6 +384,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                             value={tutorial.forumAsked}
                                             fieldId={`t${tutorial.id}-forumAsked`}
                                             onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
+                                            disabled={true}
                                         />
                                     )}
 
@@ -432,6 +436,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                             value={tutorial.watched}
                             fieldId={`t${tutorial.id}-watched`}
                             onChange={(v) => onRadioChange(tutorial.id, 'watched', v)}
+                            disabled={!activeBatchIsActive}
                         />
 
                         {/* STEP 2: Practice — locked until watched */}
@@ -441,7 +446,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                             value={tutorial.practiced}
                             fieldId={`t${tutorial.id}-practiced`}
                             onChange={(v) => onRadioChange(tutorial.id, 'practiced', v)}
-                            disabled={!isWatched}
+                            disabled={!activeBatchIsActive || !isWatched}
                         />
 
                         {/* BONUS — assignment locked until practiced */}
@@ -452,7 +457,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                             value={tutorial.assignmentDone}
                             fieldId={`t${tutorial.id}-assign`}
                             onChange={(v) => onRadioChange(tutorial.id, 'assignmentDone', v)}
-                            disabled={!isPracticed}
+                            disabled={!activeBatchIsActive || !isPracticed}
                         />
 
                         {/* Mini-Task Opt-In Question */}
@@ -462,6 +467,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                 value={tutorial.minitaskOpted}
                                 fieldId={`t${tutorial.id}-minitask`}
                                 onChange={(v) => onRadioChange(tutorial.id, 'minitaskOpted', v)}
+                                disabled={true}
                             />
                             {tutorial.minitaskOpted === 'yes' && (
                                 <div className="flex items-center gap-2 pb-2 pl-1 animate-in fade-in slide-in-from-top-1 duration-300">
@@ -484,6 +490,7 @@ function TutorialCard({ tutorial, courseTitle, onRadioChange, forumPosts, forumC
                                 value={tutorial.forumAsked}
                                 fieldId={`t${tutorial.id}-forumAsked`}
                                 onChange={(v) => onRadioChange(tutorial.id, 'forumAsked', v)}
+                                disabled={true}
                             />
                             {tutorial.forumAsked === 'yes' && (
                                 <div className="pl-8 pb-3 pt-1">
@@ -522,7 +529,8 @@ export function ActiveCourseTracker() {
         forumActivity,
         updateTutorials,
         addXP,
-        courses
+        courses,
+        activeBatchIsActive
     } = useUserStore()
 
     const currentCourse = courses.find(c => c.id == activeCourseId)
@@ -534,7 +542,7 @@ export function ActiveCourseTracker() {
             fetchTutorials(activeCourseId)
             fetchForumActivity(activeCourseId)
         }
-    }, [])
+    }, [activeCourseId, fetchTutorials, fetchForumActivity])
 
 
     // Bonus feedback toast
@@ -557,10 +565,11 @@ export function ActiveCourseTracker() {
     } | null>(null)
 
     const completedCount = tutorials.filter(t => t.completed).length
-    const overallProgress = Math.round((completedCount / tutorials.length) * 100)
+    const overallProgress = tutorials.length > 0 ? Math.round((completedCount / tutorials.length) * 100) : 0
     const totalXP = tutorials.reduce((sum, t) => sum + t.xpEarned, 0)
 
     const handleRadioChange = useCallback((tutorialId: string, field: TutorialField, value: RadioValue) => {
+        if (!activeBatchIsActive) return
         const tutorial = tutorials.find(t => t.id === tutorialId)
         if (!tutorial) return
 
