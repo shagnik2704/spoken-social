@@ -213,7 +213,7 @@ function StudentRow({ student, index, onViewAsStudent }: {
     )
 }
 
-// ===== MY STUDENTS TAB =====
+// ===== MY LEARNERS TAB =====
 
 function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setStatusFilter, searchQuery, setSearchQuery, page, setPage, onViewAsStudent }: {
     college: CollegeSummary
@@ -280,7 +280,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                 </div>
             </div>
 
-            {/* Student Table */}
+            {/* Learner Table */}
             <Card className="border-border/40">
                 <CardContent className="p-4">
                     {/* Header */}
@@ -379,7 +379,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                                     <div className="hidden md:flex w-12 items-center gap-0.5 justify-center cursor-help"><ClipboardList className="h-3 w-3" /> Tasks</div>
                                 </TooltipTrigger>
                                 <TooltipContent side="top">
-                                    Number of tutorials where the student opted for a mini-task
+                                    Number of tutorials where the learner opted for a mini-task
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
@@ -396,7 +396,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         <div className="w-40 shrink-0 text-center">Status</div>
                     </div>
 
-                    {/* Student Rows */}
+                    {/* Learner Rows */}
                     <div className="space-y-0.5">
                         {filteredStudents.map((student, idx) => (
                             <StudentRow 
@@ -516,7 +516,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
 //                     <div className="flex items-center gap-3 px-4 py-2.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
 //                         <div className="w-8 shrink-0 text-center">Rank</div>
 //                         <div className="flex-1">College</div>
-//                         <div className="w-16 text-center">Students</div>
+//                         <div className="w-16 text-center">Learners</div>
 //                         <div className="w-24 text-center hidden sm:block">Progress</div>
 //                         <div className="w-20 text-center">Completion</div>
 //                         <div className="w-16 text-center hidden md:block">Avg XP</div>
@@ -594,7 +594,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
 
 //                     {/* Note */}
 //                     <p className="text-[10px] text-muted-foreground mt-4 text-center">
-//                         Only aggregate metrics are shown. Individual student data is visible only to their college coordinator.
+//                         Only aggregate metrics are shown. Individual learner data is visible only to their college coordinator.
 //                     </p>
 //                 </CardContent>
 //             </Card>
@@ -1035,7 +1035,7 @@ export default function CoordinatorDashboard() {
                                 toast.success('Viewing platform as a learner')
                                 navigate('/dashboard')
                             } catch (e) {
-                                console.error('Failed to switch to student view', e)
+                                console.error('Failed to switch to learner view', e)
                             }
                         }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 border border-border/40 transition-colors rounded-md shadow-sm"

@@ -944,7 +944,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                     <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 mb-5">
                         <h2 className="text-sm font-bold flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-primary shrink-0" />
-                            All Colleges — Click to view students
+                            All Colleges — Click to view learners
                         </h2>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full xl:w-auto">
                             <div className="relative w-full sm:w-auto">
@@ -1256,7 +1256,7 @@ function AnalyticsTab({ colleges }: {
                     <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                         <CheckCircle2 className="h-4 w-4 text-success" />
                         Tutorial-wise Completion — All Colleges
-                        <span className="text-[10px] font-normal text-muted-foreground">— where are students dropping off?</span>
+                        <span className="text-[10px] font-normal text-muted-foreground">— where are learners dropping off?</span>
                     </h3>
                     <div className="space-y-1.5">
                         {summary.tutorialCompletion.map((t: any) => (
@@ -1307,7 +1307,7 @@ function AnalyticsTab({ colleges }: {
                                             style={{ width: `${college.avgProgress}%` }}
                                         />
                                         <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono font-semibold">
-                                            {college.avgProgress}% avg · {college.completionRate}% done · {college.totalStudents} students
+                                            {college.avgProgress}% avg · {college.completionRate}% done · {college.totalStudents} learners
                                         </span>
                                     </div>
                                 </div>
@@ -1400,7 +1400,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
-                        <span>{colleges.length} colleges • {totalStudents} students • {activeCourseTitle} Course</span>
+                        <span>{colleges.length} colleges • {totalStudents} learners • {activeCourseTitle} Course</span>
                     </div>
                 </div>
 

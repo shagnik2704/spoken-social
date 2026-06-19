@@ -73,12 +73,12 @@ export function MiniTaskAnalysis() {
                                 <Info className="w-4 h-4 text-muted-foreground" />
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p className="max-w-xs text-xs">This table shows the number of students from each college who opted for MiniTasks across different tutorials.</p>
+                                <p className="max-w-xs text-xs">This table shows the number of learners from each college who opted for MiniTasks across different tutorials.</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 </div>
-                <CardDescription>Detailed breakdown of student interest in minitasks per college and tutorial.</CardDescription>
+                <CardDescription>Detailed breakdown of learner interest in minitasks per college and tutorial.</CardDescription>
             </CardHeader>
             <CardContent className="px-0">
                 <div className="relative overflow-x-auto rounded-xl border border-border bg-card">
