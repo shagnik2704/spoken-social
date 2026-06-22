@@ -675,12 +675,15 @@ async def get_college_analytics(
             "lastActive": "—"
         })
 
-    # Sort top performers
-    sorted_by_xp = sorted(all_students_mapped, key=lambda x: x["xp"], reverse=True)
+    # Sort top performers (only those with XP > 0)
+    top_performers_eligible = [s for s in all_students_mapped if s["xp"] > 0]
+    sorted_by_xp = sorted(top_performers_eligible, key=lambda x: x["xp"], reverse=True)
     top_performers = sorted_by_xp[:5]
     
     # Sort at risk
-    at_risk_list = [s for s in all_students_mapped if s["status"] in ["at_risk", "inactive", "not_started"]]
+    has_any_activity = any(s["xp"] > 0 or s["tutorialsWatched"] > 0 for s in all_students_mapped)
+    allowed_statuses = ["at_risk", "inactive", "not_started"] if has_any_activity else ["at_risk", "inactive"]
+    at_risk_list = [s for s in all_students_mapped if s["status"] in allowed_statuses]
     at_risk_list.sort(key=lambda x: x["progress"])
     
     # Tutorial wise completion

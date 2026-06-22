@@ -315,8 +315,11 @@ function InProgressCoursesSection() {
 /** Admin Details (shown for admins instead of student sections) */
 function AdminDetails() {
     const user = useUserStore(state => state.user)
-    const { data: summary, isLoading } = usePlatformSummary()
-    const { data: colleges } = useColleges()
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const isAdmin = user?.role === 'admin'
+    const { data: summary, isLoading } = usePlatformSummary(undefined, activeCourseId, activeBatchId, isAdmin)
+    const { data: colleges } = useColleges(activeCourseId, activeBatchId, isAdmin)
 
     if (!user || user.role !== 'admin') return null
 

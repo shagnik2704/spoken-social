@@ -6,7 +6,7 @@ import {
     Search, Filter, Trophy, BarChart3,
     Zap, Activity, ChevronRight, ArrowLeft,
     Shield, Building2, MessageCircleQuestion,
-    X, ChevronDown, CalendarDays, Download, ClipboardList, MapPin, Lock
+    X, ChevronDown, CalendarDays, Download, ClipboardList, MapPin, Lock, Clock
 } from 'lucide-react'
 import api from '@/lib/axios'
 import { Card, CardContent } from '@/components/ui/card'
@@ -305,31 +305,37 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                             Top Performers — All Colleges
                         </h3>
                         <div className="space-y-1">
-                            {summary.topPerformers.map((student, i) => (
-                                <button key={student.id} onClick={() => onStudentClick({ id: student.id, name: student.name, initials: student.initials })} className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
-                                    <span className={`text-xs font-bold w-6 text-right ${i === 0 ? 'text-xp-gold' :
-                                        i === 1 ? 'text-gray-400' :
-                                            i === 2 ? 'text-orange-500' :
-                                                'text-muted-foreground'
-                                        }`}>#{i + 1}</span>
-                                    <Avatar className="h-7 w-7">
-                                        <AvatarFallback className="text-[9px] font-semibold bg-primary/10 text-primary">
-                                            {student.initials}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium truncate">{student.name}</p>
-                                        <p className="text-[10px] text-muted-foreground">{student.collegeName}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <div className="flex items-center gap-1 w-14 justify-end">
-                                            <Zap className="h-3 w-3 text-xp-gold" />
-                                            <span className="text-xs font-bold tabular-nums">{student.xp}</span>
+                            {summary.topPerformers.length === 0 ? (
+                                <div className="text-center py-6 text-muted-foreground text-sm">
+                                    No active learners yet
+                                </div>
+                            ) : (
+                                summary.topPerformers.map((student, i) => (
+                                    <button key={student.id} onClick={() => onStudentClick({ id: student.id, name: student.name, initials: student.initials })} className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
+                                        <span className={`text-xs font-bold w-6 text-right ${i === 0 ? 'text-xp-gold' :
+                                            i === 1 ? 'text-gray-400' :
+                                                i === 2 ? 'text-orange-500' :
+                                                    'text-muted-foreground'
+                                            }`}>#{i + 1}</span>
+                                        <Avatar className="h-7 w-7">
+                                            <AvatarFallback className="text-[9px] font-semibold bg-primary/10 text-primary">
+                                                {student.initials}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">{student.name}</p>
+                                            <p className="text-[10px] text-muted-foreground">{student.collegeName}</p>
                                         </div>
-                                        <Progress value={student.progress} className="h-1.5 w-14" />
-                                    </div>
-                                </button>
-                            ))}
+                                        <div className="flex items-center gap-3 shrink-0">
+                                            <div className="flex items-center gap-1 w-14 justify-end">
+                                                <Zap className="h-3 w-3 text-xp-gold" />
+                                                <span className="text-xs font-bold tabular-nums">{student.xp}</span>
+                                            </div>
+                                            <Progress value={student.progress} className="h-1.5 w-14" />
+                                        </div>
+                                    </button>
+                                ))
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -347,10 +353,17 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                             )}
                         </h3>
                         {summary.atRiskStudents.length === 0 ? (
-                            <div className="text-center py-6">
-                                <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
-                                <p className="text-sm font-medium">All learners on track! 🎉</p>
-                            </div>
+                            summary.metrics.avgProgress === 0 && summary.metrics.avgXP === 0 ? (
+                                <div className="text-center py-6">
+                                    <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                    <p className="text-sm font-medium text-muted-foreground">No learning activity started yet</p>
+                                </div>
+                            ) : (
+                                <div className="text-center py-6">
+                                    <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
+                                    <p className="text-sm font-medium">All learners on track! 🎉</p>
+                                </div>
+                            )
                         ) : (
                             <div className="space-y-1.5">
                                 {summary.atRiskStudents.map(student => {
@@ -1076,8 +1089,13 @@ function DonutCenterLabel({ value, label }: { value: string; label: string }) {
 function AnalyticsTab({ colleges }: {
     colleges: CollegeSummary[]
 }) {
+    const activeCourseId = useUserStore(state => state.activeCourseId)
+    const activeBatchId = useUserStore(state => state.activeBatchId)
+    const user = useUserStore(state => state.user)
+    const isAdmin = user?.role === 'admin'
+
     const [selectedState, setSelectedState] = useState<string>('all')
-    const { data: summary, isLoading } = usePlatformSummary(selectedState)
+    const { data: summary, isLoading } = usePlatformSummary(selectedState, activeCourseId, activeBatchId, isAdmin)
 
     // Extract unique states dynamically
     const states = useMemo(() => {

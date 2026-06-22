@@ -170,12 +170,15 @@ async def get_platform_summary(
     avg_xp = round(sum(s["xp"] for s in students_enriched) / total_students) if total_students > 0 else 0
     completion_rate = round((status_counts["completed"] / total_students) * 100) if total_students > 0 else 0
 
-    # ----- Top 10 performers by XP -----
-    top_performers = sorted(students_enriched, key=lambda s: s["xp"], reverse=True)[:10]
+    # ----- Top 10 performers by XP (only those with XP > 0) -----
+    top_performers_eligible = [s for s in students_enriched if s["xp"] > 0]
+    top_performers = sorted(top_performers_eligible, key=lambda s: s["xp"], reverse=True)[:10]
 
     # ----- At-risk students (at_risk + inactive + not_started, sorted by lowest progress) -----
+    has_any_activity = any(s["xp"] > 0 or s["watched"] > 0 for s in students_enriched)
+    allowed_statuses = ("at_risk", "inactive", "not_started") if has_any_activity else ("at_risk", "inactive")
     at_risk = sorted(
-        [s for s in students_enriched if s["status"] in ("at_risk", "inactive", "not_started")],
+        [s for s in students_enriched if s["status"] in allowed_statuses],
         key=lambda s: s["progress"],
     )[:10]
 

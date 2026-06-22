@@ -842,31 +842,37 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
                             Top Performers
                         </h3>
                         <div className="space-y-1">
-                            {topPerformers.map((student: any, i: number) => (
-                                <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
-                                    <span className={`text-xs font-bold w-6 text-right ${i === 0 ? 'text-xp-gold' :
-                                        i === 1 ? 'text-gray-400' :
-                                            i === 2 ? 'text-orange-500' :
-                                                'text-muted-foreground'
-                                        }`}>#{i + 1}</span>
-                                    <Avatar className="h-7 w-7">
-                                        <AvatarFallback className="text-[9px] font-semibold bg-primary/10 text-primary">
-                                            {student.initials}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium truncate">{student.name}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <div className="flex items-center gap-1 w-14 justify-end">
-                                            <Zap className="h-3 w-3 text-xp-gold" />
-                                            <span className="text-xs font-bold tabular-nums">{student.xp}</span>
-                                        </div>
-                                        <Progress value={student.progress} className="h-1.5 w-14" />
-                                        <span className="text-[11px] font-mono text-muted-foreground w-9 text-right tabular-nums">{student.progress}%</span>
-                                    </div>
+                            {topPerformers.length === 0 ? (
+                                <div className="text-center py-6 text-muted-foreground text-sm">
+                                    No active learners yet
                                 </div>
-                            ))}
+                            ) : (
+                                topPerformers.map((student: any, i: number) => (
+                                    <div key={student.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
+                                        <span className={`text-xs font-bold w-6 text-right ${i === 0 ? 'text-xp-gold' :
+                                            i === 1 ? 'text-gray-400' :
+                                                i === 2 ? 'text-orange-500' :
+                                                    'text-muted-foreground'
+                                            }`}>#{i + 1}</span>
+                                        <Avatar className="h-7 w-7">
+                                            <AvatarFallback className="text-[9px] font-semibold bg-primary/10 text-primary">
+                                                {student.initials}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">{student.name}</p>
+                                        </div>
+                                        <div className="flex items-center gap-3 shrink-0">
+                                            <div className="flex items-center gap-1 w-14 justify-end">
+                                                <Zap className="h-3 w-3 text-xp-gold" />
+                                                <span className="text-xs font-bold tabular-nums">{student.xp}</span>
+                                            </div>
+                                            <Progress value={student.progress} className="h-1.5 w-14" />
+                                            <span className="text-[11px] font-mono text-muted-foreground w-9 text-right tabular-nums">{student.progress}%</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -884,11 +890,19 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
                             )}
                         </h3>
                         {atRisk.length === 0 ? (
-                            <div className="text-center py-6">
-                                <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
-                                <p className="text-sm font-medium">All learners on track! 🎉</p>
-                                <p className="text-xs text-muted-foreground">No at-risk learners right now</p>
-                            </div>
+                            avgProgress === 0 && avgXP === 0 ? (
+                                <div className="text-center py-6">
+                                    <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                    <p className="text-sm font-medium text-muted-foreground">No learning activity started yet</p>
+                                    <p className="text-xs text-muted-foreground">Waiting for learners to begin</p>
+                                </div>
+                            ) : (
+                                <div className="text-center py-6">
+                                    <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
+                                    <p className="text-sm font-medium">All learners on track! 🎉</p>
+                                    <p className="text-xs text-muted-foreground">No at-risk learners right now</p>
+                                </div>
+                            )
                         ) : (
                             <div className="space-y-1.5">
                                 {atRisk.map((student: any) => (
