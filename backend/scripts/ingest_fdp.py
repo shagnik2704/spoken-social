@@ -219,7 +219,11 @@ def main():
             db.add(batch)
             print(f"   ✅ Created batch: {batch_id}")
         else:
-            print(f"   ⏭️  Batch already exists: {batch_id}")
+            if batch.end_date != end_d:
+                batch.end_date = end_d
+                print(f"   🔄 Updated batch end date for {batch_id} to {end_d}")
+            else:
+                print(f"   ⏭️  Batch already exists: {batch_id}")
         fdp_batches[course_id] = batch_id
     db.flush()
 

@@ -103,7 +103,10 @@ async def verify_credentials(
                 return {"error": "Bypass login failed: User is not pre-registered on Spoken Social", "status_code": 403}
     else:
         # ── Step 1: Call Spoken Tutorial's external API ──
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
             try:
                 resp = await client.post(
                     SPOKEN_TUTORIAL_VERIFY_URL,
