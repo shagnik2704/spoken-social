@@ -159,14 +159,11 @@ def main():
         else:
             print(f"   ⏭️  Course already exists: {meta['title']} ({course_id})")
         
-        # 2. Update tutorials for python, latex, and scilab (replace with exact sequential FDP list)
+        # 2. Seed tutorials if they don't already exist (safe for production — never deletes existing tutorials/progress)
         tuts_list = csv_tutorials.get(evt_id, [])
-        if course_id in ["python", "latex", "scilab"]:
-            print(f"   📖 Updating tutorials for {course_id} (count: {len(tuts_list)})...")
-            # Delete old tutorials for Python/Scilab/LaTeX to rebuild sequentially
-            db.query(Tutorial).filter_by(course_id=course_id).delete()
-            db.flush()
-            
+        existing_count = db.query(Tutorial).filter_by(course_id=course_id).count()
+        if existing_count == 0:
+            print(f"   📖 Seeding tutorials for {course_id} (count: {len(tuts_list)})...")
             for idx, title in enumerate(tuts_list, start=1):
                 tid = uuid.uuid5(uuid.NAMESPACE_DNS, f"{course_id}-tut-{idx}")
                 db.add(Tutorial(
@@ -176,22 +173,8 @@ def main():
                     title=title,
                     xp_reward=35
                 ))
-        elif course_id == "linux":
-            # For Linux, only verify we have tutorials in DB. Do not overwrite if they exist.
-            existing_count = db.query(Tutorial).filter_by(course_id="linux").count()
-            if existing_count == 0:
-                print(f"   📖 Seeding default tutorials for linux...")
-                for idx, title in enumerate(tuts_list, start=1):
-                    tid = uuid.uuid5(uuid.NAMESPACE_DNS, f"linux-tut-{idx}")
-                    db.add(Tutorial(
-                        id=tid,
-                        course_id="linux",
-                        tutorial_number=idx,
-                        title=title,
-                        xp_reward=35
-                    ))
-            else:
-                print(f"   ⏭️  Linux tutorials already present (count: {existing_count})")
+        else:
+            print(f"   ⏭️  Tutorials already present for {course_id} (count: {existing_count})")
         db.flush()
 
     # ============================================================
