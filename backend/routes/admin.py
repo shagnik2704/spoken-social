@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 import openpyxl
 
 from database import get_db
-from models import User, College, UserTutorial, Tutorial, UserCourse, Programme, Course, Batch
+from models import User, College, UserTutorial, Tutorial, UserCourse, Programme, Course, Batch, ProgrammeCourse
 from models.feedback import TutorialFeedback
 from models.xp_event import XPEvent
 from dependencies import require_admin
@@ -1501,6 +1501,31 @@ def get_mock_comparison_data(state: Optional[str] = None):
         })
 
     return {"programmes": programmes_list}
+def generate_deterministic_mock_metrics(prog_id: str, course_id: str, batch_id: str, state: Optional[str] = None):
+    # Use ord values of strings to generate a deterministic stable hash/seed
+    val_seed = sum(ord(c) for c in (prog_id + course_id + batch_id))
+    if state:
+        val_seed += sum(ord(c) for c in state)
+    
+    # Deterministic generation
+    colleges = 3 + (val_seed % 10)  # 3 to 12
+    students = 70 + ((val_seed * 7) % 330)  # 70 to 400
+    progress = 55 + ((val_seed * 13) % 30)  # 55 to 85%
+    avg_xp = 1800 + ((val_seed * 19) % 1400)  # 1800 to 3200 XP
+    
+    # Scale down for state filters
+    if state:
+        colleges = max(1, round(colleges * 0.25))
+        students = max(5, round(students * 0.20))
+        progress = max(10, min(100, progress + (val_seed % 7) - 3))
+        avg_xp = max(100, avg_xp + (val_seed % 300) - 150)
+        
+    return {
+        "colleges": colleges,
+        "students": students,
+        "progress": progress,
+        "avgXP": avg_xp
+    }
 
 
 @router.get("/comparison-metrics")
@@ -1514,15 +1539,13 @@ async def get_comparison_metrics(
     Returns aggregated metrics for programmes, courses, and batches.
     Filters by state if provided. Falls back or merges with mock data if database is empty.
     """
-    tot_students_res = await db.execute(select(func.count(UserCourse.user_id)))
-    tot_students = tot_students_res.scalar() or 0
-
-    if use_mock or tot_students == 0:
-        return get_mock_comparison_data(state)
-
     # 1. Fetch active programmes
     prog_res = await db.execute(select(Programme).filter(Programme.is_active == True).order_by(Programme.display_order))
     programmes = prog_res.scalars().all()
+
+    if not programmes:
+        # Fallback to static mock data if DB has no programmes seeded
+        return get_mock_comparison_data(state)
 
     # 2. Fetch all courses
     course_res = await db.execute(select(Course))
@@ -1532,6 +1555,31 @@ async def get_comparison_metrics(
     # 3. Fetch all batches
     batch_res = await db.execute(select(Batch))
     batches = batch_res.scalars().all()
+
+    # 4. Get many-to-many links between programmes and courses
+    pc_res = await db.execute(select(ProgrammeCourse))
+    programme_courses = pc_res.scalars().all()
+    
+    # Group course IDs by programme ID
+    prog_course_ids = {}
+    for pc in programme_courses:
+        if pc.programme_id not in prog_course_ids:
+            prog_course_ids[pc.programme_id] = []
+        if pc.course_id not in prog_course_ids[pc.programme_id]:
+            prog_course_ids[pc.programme_id].append(pc.course_id)
+            
+    # Also add course IDs from existing batches just in case
+    for b in batches:
+        if b.programme_id:
+            if b.programme_id not in prog_course_ids:
+                prog_course_ids[b.programme_id] = []
+            if b.course_id not in prog_course_ids[b.programme_id]:
+                prog_course_ids[b.programme_id].append(b.course_id)
+
+    # Determine if we should run in demo/mock mode
+    tot_students_res = await db.execute(select(func.count(UserCourse.user_id)))
+    tot_students = tot_students_res.scalar() or 0
+    is_demo = bool(use_mock or tot_students == 0)
 
     # Colors for programs
     colors = {
@@ -1543,31 +1591,36 @@ async def get_comparison_metrics(
     programmes_list = []
     
     for prog in programmes:
-        prog_batches = [b for b in batches if b.programme_id == prog.id]
-        
-        # Merge mock data if program has no batches/students in the DB
-        if not prog_batches:
-            mock_data = get_mock_comparison_data(state)
-            mock_prog = next((p for p in mock_data["programmes"] if p["id"] == prog.id), None)
-            if mock_prog:
-                programmes_list.append(mock_prog)
-            continue
-            
-        batches_by_course = {}
-        for b in prog_batches:
-            if b.course_id not in batches_by_course:
-                batches_by_course[b.course_id] = []
-            batches_by_course[b.course_id].append(b)
-            
+        c_ids = prog_course_ids.get(prog.id, [])
         courses_list = []
-        all_prog_student_ids = set()
-        all_prog_college_ids = set()
-        total_prog_xp = 0
-        total_prog_progress_sum = 0
-        prog_students_with_progress_count = 0
         
-        for course_id, course_batches in batches_by_course.items():
+        # Keep track of aggregated metrics for this programme
+        prog_total_colleges = 0
+        prog_total_students = 0
+        prog_weighted_progress_sum = 0
+        prog_weighted_xp_sum = 0
+        prog_batch_count = 0
+        
+        for course_id in c_ids:
+            course_batches = [b for b in batches if b.course_id == course_id and b.programme_id == prog.id]
             batches_list = []
+            
+            # If a course is linked to a programme but has no batches, add a mock batch in Demo Mode
+            if not course_batches and is_demo:
+                mock_batch_id = f"{course_id}-mock-batch"
+                mock_metrics = generate_deterministic_mock_metrics(prog.id, course_id, mock_batch_id, state)
+                batches_list.append({
+                    "batchId": mock_batch_id,
+                    "batchName": "Batch 1 (Demo)",
+                    "metrics": mock_metrics
+                })
+                # Update programme aggregation values
+                prog_total_colleges += mock_metrics["colleges"]
+                prog_total_students += mock_metrics["students"]
+                prog_weighted_progress_sum += mock_metrics["progress"] * mock_metrics["students"]
+                prog_weighted_xp_sum += mock_metrics["avgXP"] * mock_metrics["students"]
+                prog_batch_count += 1
+                
             for batch in course_batches:
                 # Query students in batch
                 stmt = select(
@@ -1588,91 +1641,102 @@ async def get_comparison_metrics(
                 res = await db.execute(stmt)
                 batch_students = res.all()
                 
-                if not batch_students:
-                    continue
+                # Default metrics values
+                metrics = None
                 
-                batch_student_ids = {s.id for s in batch_students}
-                batch_college_ids = {s.college_id for s in batch_students if s.college_id}
-                batch_xp_sum = sum(s.xp_total for s in batch_students)
-                batch_avg_xp = round(batch_xp_sum / len(batch_students)) if batch_students else 0
-                
-                # Query average progress
-                tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == batch.course_id))
-                total_tutorials = tot_tut_res.scalar() or 1
-                stmt_progress = select(
-                    User.id,
-                    func.count(case((UserTutorial.practiced == True, Tutorial.id), else_=None)).label("completed")
-                ).outerjoin(
-                    UserTutorial, UserTutorial.user_id == User.id
-                ).outerjoin(
-                    Tutorial, (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == batch.course_id)
-                ).join(
-                    UserCourse, UserCourse.user_id == User.id
-                ).filter(
-                    UserCourse.batch_id == batch.id,
-                    User.role == "student",
-                    User.is_test_account != True
-                )
-                if state:
-                    stmt_progress = stmt_progress.join(College, College.id == User.college_id).filter(
-                        College.location.ilike(f"%{state}%")
+                if batch_students:
+                    # Calculate actual metrics
+                    batch_student_ids = {s.id for s in batch_students}
+                    batch_college_ids = {s.college_id for s in batch_students if s.college_id}
+                    batch_xp_sum = sum(s.xp_total for s in batch_students)
+                    batch_avg_xp = round(batch_xp_sum / len(batch_students))
+                    
+                    # Query average progress
+                    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == batch.course_id))
+                    total_tutorials = tot_tut_res.scalar() or 1
+                    
+                    stmt_progress = select(
+                        User.id,
+                        func.count(case((UserTutorial.practiced == True, Tutorial.id), else_=None)).label("completed")
+                    ).outerjoin(
+                        UserTutorial, UserTutorial.user_id == User.id
+                    ).outerjoin(
+                        Tutorial, (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == batch.course_id)
+                    ).join(
+                        UserCourse, UserCourse.user_id == User.id
+                    ).filter(
+                        UserCourse.batch_id == batch.id,
+                        User.role == "student",
+                        User.is_test_account != True
                     )
-                stmt_progress = stmt_progress.group_by(User.id)
-                res_progress = await db.execute(stmt_progress)
-                student_completes = res_progress.all()
-                
-                batch_progress_sum = sum(round((s.completed / total_tutorials) * 100) for s in student_completes)
-                batch_avg_progress = round(batch_progress_sum / len(student_completes)) if student_completes else 0
-
-                
-                # Update Programme totals
-                all_prog_student_ids.update(batch_student_ids)
-                all_prog_college_ids.update(batch_college_ids)
-                total_prog_xp += batch_xp_sum
-                total_prog_progress_sum += batch_progress_sum
-                prog_students_with_progress_count += len(student_completes)
-                
-                batches_list.append({
-                    "batchId": batch.id,
-                    "batchName": batch.name,
-                    "metrics": {
+                    if state:
+                        stmt_progress = stmt_progress.join(College, College.id == User.college_id).filter(
+                            College.location.ilike(f"%{state}%")
+                        )
+                    stmt_progress = stmt_progress.group_by(User.id)
+                    res_progress = await db.execute(stmt_progress)
+                    student_completes = res_progress.all()
+                    
+                    batch_progress_sum = sum(round((s.completed / total_tutorials) * 100) for s in student_completes)
+                    batch_avg_progress = round(batch_progress_sum / len(student_completes)) if student_completes else 0
+                    
+                    metrics = {
                         "colleges": len(batch_college_ids),
                         "students": len(batch_student_ids),
                         "progress": batch_avg_progress,
                         "avgXP": batch_avg_xp
                     }
-                })
+                else:
+                    # No actual students found: use mock values if in Demo Mode, else 0
+                    if is_demo:
+                        metrics = generate_deterministic_mock_metrics(prog.id, course_id, batch.id, state)
+                    else:
+                        metrics = {
+                            "colleges": 0,
+                            "students": 0,
+                            "progress": 0,
+                            "avgXP": 0
+                        }
                 
+                if metrics:
+                    batches_list.append({
+                        "batchId": batch.id,
+                        "batchName": batch.name,
+                        "metrics": metrics
+                    })
+                    # Update programme aggregation values
+                    prog_total_colleges += metrics["colleges"]
+                    prog_total_students += metrics["students"]
+                    prog_weighted_progress_sum += metrics["progress"] * metrics["students"]
+                    prog_weighted_xp_sum += metrics["avgXP"] * metrics["students"]
+                    prog_batch_count += 1
+
             if batches_list:
                 courses_list.append({
                     "courseId": course_id,
-                    "courseName": course_name_map.get(course_id, course_id.capitalize()),
+                    "courseName": course_name_map.get(course_id, course_id.replace("swayam_plus-", "").replace("ilw-", "").capitalize()),
                     "batches": batches_list
                 })
+                
+        # Aggregate programme metrics
+        if prog_total_students > 0:
+            prog_avg_progress = round(prog_weighted_progress_sum / prog_total_students)
+            prog_avg_xp = round(prog_weighted_xp_sum / prog_total_students)
+        else:
+            prog_avg_progress = 0
+            prog_avg_xp = 0
             
-        if not all_prog_student_ids:
-            # If no actual students in DB, pull mock data for this program
-            mock_data = get_mock_comparison_data(state)
-            mock_prog = next((p for p in mock_data["programmes"] if p["id"] == prog.id), None)
-            if mock_prog:
-                programmes_list.append(mock_prog)
-            continue
-            
-        prog_avg_xp = round(total_prog_xp / len(all_prog_student_ids))
-        prog_avg_progress = round(total_prog_progress_sum / prog_students_with_progress_count) if prog_students_with_progress_count else 0
-        
         programmes_list.append({
             "id": prog.id,
             "name": prog.name,
             "color": colors.get(prog.id, prog.color or "hsl(200, 80%, 50%)"),
             "metrics": {
-                "colleges": len(all_prog_college_ids),
-                "students": len(all_prog_student_ids),
+                "colleges": prog_total_colleges,
+                "students": prog_total_students,
                 "progress": prog_avg_progress,
                 "avgXP": prog_avg_xp
             },
             "courses": courses_list
         })
-        
     return {"programmes": programmes_list}
 

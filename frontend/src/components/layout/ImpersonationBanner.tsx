@@ -23,10 +23,10 @@ export function ImpersonationBanner() {
             await fetchUser()
             // Redirect based on restored role
             const restoredRole = useUserStore.getState().user?.role
-            if (restoredRole === 'coordinator') {
-                navigate('/coordinator')
-            } else if (restoredRole === 'admin') {
+            if (restoredRole === 'admin') {
                 navigate('/admin')
+            } else if (restoredRole === 'coordinator') {
+                navigate('/coordinator')
             } else {
                 navigate('/dashboard')
             }

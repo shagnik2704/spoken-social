@@ -34,10 +34,12 @@ export const useAuthStore = create<AuthState>((set) => ({
             localStorage.removeItem('isImpersonating')
             localStorage.removeItem('activeProgrammeId')
             localStorage.removeItem('activeProgrammeName')
+            localStorage.removeItem('activeCourseId')
             
             useUserStore.setState({
                 activeProgrammeId: '',
                 activeProgrammeName: '',
+                activeCourseId: '',
                 courses: [],
                 badges: [],
                 tutorials: [],
@@ -66,12 +68,14 @@ export const useAuthStore = create<AuthState>((set) => ({
         localStorage.removeItem('isImpersonating')
         localStorage.removeItem('activeProgrammeId')
         localStorage.removeItem('activeProgrammeName')
+        localStorage.removeItem('activeCourseId')
         
         useUserStore.setState({
             user: null,
             isAuthenticated: false,
             activeProgrammeId: '',
             activeProgrammeName: '',
+            activeCourseId: '',
             courses: [],
             badges: [],
             tutorials: [],
@@ -94,16 +98,14 @@ export const useAuthStore = create<AuthState>((set) => ({
             })
             localStorage.setItem('token', data.access_token)
             localStorage.setItem('isImpersonating', 'true')
-            localStorage.removeItem('activeProgrammeId')
-            localStorage.removeItem('activeProgrammeName')
+            // Don't clear activeProgrammeId/activeCourseId — the subsequent 
+            // fetchUser() call will load the impersonated user's data and 
+            // auto-select the first programme/course if the current ones aren't valid.
             
             useUserStore.setState({
-                activeProgrammeId: '',
-                activeProgrammeName: '',
                 courses: [],
                 badges: [],
                 tutorials: [],
-                programmes: [],
             })
 
             set({
@@ -124,10 +126,12 @@ export const useAuthStore = create<AuthState>((set) => ({
             localStorage.removeItem('isImpersonating')
             localStorage.removeItem('activeProgrammeId')
             localStorage.removeItem('activeProgrammeName')
+            localStorage.removeItem('activeCourseId')
             
             useUserStore.setState({
                 activeProgrammeId: '',
                 activeProgrammeName: '',
+                activeCourseId: '',
                 courses: [],
                 badges: [],
                 tutorials: [],
