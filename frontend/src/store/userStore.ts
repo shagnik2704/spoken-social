@@ -43,7 +43,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     badges: [],
     tutorials: [],
     forumActivity: {},
-    activeCourseId: '',
+    activeCourseId: localStorage.getItem('activeCourseId') || '',
     activeBatchId: null,
     activeBatchIsActive: true,
     weeklyGoal: null,
@@ -61,17 +61,46 @@ export const useUserStore = create<UserState>((set, get) => ({
                 api.get(endpoint),
                 api.get('/api/programmes/me')
             ])
+            // Validate activeProgrammeId against fetched programmes
+            const fetchedProgrammes = progRes.data || []
+            const savedProgrammeId = activeProgrammeId
+            const programmeIsValid = savedProgrammeId && fetchedProgrammes.some((p: any) => p.id === savedProgrammeId)
+            let effectiveProgrammeId = savedProgrammeId
+            let effectiveProgrammeName = get().activeProgrammeName
+
+            if (!programmeIsValid && fetchedProgrammes.length > 0) {
+                // Auto-select first programme and re-fetch courses for it
+                effectiveProgrammeId = fetchedProgrammes[0].id
+                effectiveProgrammeName = fetchedProgrammes[0].name
+                localStorage.setItem('activeProgrammeId', effectiveProgrammeId)
+                localStorage.setItem('activeProgrammeName', effectiveProgrammeName)
+            }
+
+            // Restore saved courseId if it's still valid, otherwise fall back to first course
+            const savedCourseId = get().activeCourseId || localStorage.getItem('activeCourseId') || ''
+            const fetchedCourses = meRes.data.courses || []
+            const restoredCourse = fetchedCourses.find((c: any) => c.id === savedCourseId)
+            const effectiveCourse = restoredCourse || fetchedCourses[0]
+            const effectiveCourseId = effectiveCourse?.id || ''
+
+            // Persist the effective courseId
+            if (effectiveCourseId) {
+                localStorage.setItem('activeCourseId', effectiveCourseId)
+            }
+
             set({
                 user: meRes.data.user,
                 isLoading: false,
                 weeklyGoal: meRes.data.weeklyGoal,
-                courses: meRes.data.courses,
+                courses: fetchedCourses,
                 badges: meRes.data.badges,
-                programmes: progRes.data,
+                programmes: fetchedProgrammes,
                 isAuthenticated: true,
-                activeCourseId: meRes.data.courses?.[0]?.id || '',
-                activeBatchId: meRes.data.courses?.[0]?.batchId || null,
-                activeBatchIsActive: meRes.data.courses?.[0]?.batchStatus !== 'inactive',
+                activeProgrammeId: effectiveProgrammeId,
+                activeProgrammeName: effectiveProgrammeName,
+                activeCourseId: effectiveCourseId,
+                activeBatchId: effectiveCourse?.batchId || null,
+                activeBatchIsActive: effectiveCourse?.batchStatus !== 'inactive',
             })
         }
         catch (error) {
@@ -138,11 +167,13 @@ export const useUserStore = create<UserState>((set, get) => ({
     logout: () => {
         localStorage.removeItem('activeProgrammeId')
         localStorage.removeItem('activeProgrammeName')
+        localStorage.removeItem('activeCourseId')
         set({
             user: null,
             isAuthenticated: false,
             activeProgrammeId: '',
             activeProgrammeName: '',
+            activeCourseId: '',
         })
     },
 
@@ -172,6 +203,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     setActiveCourse: (courseId) => {
         const courses = get().courses
         const course = courses.find(c => c.id === courseId)
+        localStorage.setItem('activeCourseId', courseId)
         set({
             activeCourseId: courseId,
             activeBatchId: course?.batchId || null,
@@ -195,14 +227,21 @@ export const useUserStore = create<UserState>((set, get) => ({
         set({ activeProgrammeId: id, activeProgrammeName: name, isLoading: true })
         try {
             const { data } = await api.get(`/api/me?programme_id=${id}`)
+            const newCourses = data.courses || []
+            const firstCourseId = newCourses[0]?.id || ''
+            if (firstCourseId) {
+                localStorage.setItem('activeCourseId', firstCourseId)
+            } else {
+                localStorage.removeItem('activeCourseId')
+            }
             set({
-                courses: data.courses,
-                activeCourseId: data.courses?.[0]?.id || '',
-                activeBatchId: data.courses?.[0]?.batchId || null,
-                activeBatchIsActive: data.courses?.[0]?.batchStatus !== 'inactive',
+                courses: newCourses,
+                activeCourseId: firstCourseId,
+                activeBatchId: newCourses[0]?.batchId || null,
+                activeBatchIsActive: newCourses[0]?.batchStatus !== 'inactive',
                 isLoading: false,
             })
-            return data.courses
+            return newCourses
         } catch (error) {
             console.error('Failed to switch programme:', error)
             set({ isLoading: false })

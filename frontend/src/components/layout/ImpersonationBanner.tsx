@@ -23,10 +23,10 @@ export function ImpersonationBanner() {
             await fetchUser()
             // Redirect based on restored role
             const restoredRole = useUserStore.getState().user?.role
-            if (restoredRole === 'coordinator') {
-                navigate('/coordinator')
-            } else if (restoredRole === 'admin') {
+            if (restoredRole === 'admin') {
                 navigate('/admin')
+            } else if (restoredRole === 'coordinator') {
+                navigate('/coordinator')
             } else {
                 navigate('/dashboard')
             }
@@ -47,7 +47,7 @@ export function ImpersonationBanner() {
                 className="h-6 text-[10px] font-bold px-3 border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:text-sky-300 transition-colors uppercase tracking-wider"
                 onClick={handleExit}
             >
-                Exit Learner View
+                Exit {roleDisplayName} View
             </Button>
         </div>
     )
