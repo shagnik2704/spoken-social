@@ -958,8 +958,19 @@ export default function CoordinatorDashboard() {
     const activeCourseId = useUserStore(state => state.activeCourseId)
     const activeBatchId = useUserStore(state => state.activeBatchId)
     const courses = useUserStore(state => state.courses)
+    const setActiveCourse = useUserStore(state => state.setActiveCourse)
     const impersonate = useAuthStore(state => state.impersonate)
     const navigate = useNavigate()
+
+    // The programme picker clears activeCourseId (''), which the student landing page relies on
+    // but leaves this dashboard with no course scope — the metric endpoints fall back to the
+    // backend default while the nav selector still shows the first course. Default to that first
+    // course so the displayed selection and the scoped data agree.
+    useEffect(() => {
+        if (!activeCourseId && courses.length > 0) {
+            setActiveCourse(courses[0].id)
+        }
+    }, [activeCourseId, courses, setActiveCourse])
 
     const [activeTab, setActiveTab] = useState<Tab>('students')
     const [sortBy, setSortBy] = useState<SortBy>('progress')
@@ -1040,7 +1051,7 @@ export default function CoordinatorDashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Terminal className="h-4 w-4" />
-                        <span>{myCollege?.name} • {courses.find(c => c.id === activeCourseId)?.title || 'Course'} • No. of learners registered: {myCollege?.totalCourseStudents}</span>
+                        <span>{myCollege?.name} • {courses.find(c => c.id === activeCourseId)?.title || courses[0]?.title || 'Course'} • No. of learners registered: {myCollege?.totalCourseStudents}</span>
                     </div>
                 </div>
 

@@ -1364,7 +1364,18 @@ export default function AdminDashboard() {
     const [selectedStudentForFeedback, setSelectedStudentForFeedback] = useState<{ id: string, name: string, initials: string } | null>(null)
     const [platformStateFilter, _setPlatformStateFilter] = useState<string>('all')
     const courses = useUserStore(state => state.courses)
-    const activeCourseTitle = courses.find(c => c.id === activeCourseId)?.title || 'Linux'
+    const setActiveCourse = useUserStore(state => state.setActiveCourse)
+    // The programme picker deliberately clears activeCourseId (''), which suits the student
+    // landing page but leaves the admin dashboard with no course scope — the metric endpoints
+    // then fall back to the backend's default course while the nav selector still *shows* the
+    // first course (a native <select> renders its first <option> when the value is ''). Default
+    // to that first course so the displayed selection and the scoped data always agree.
+    useEffect(() => {
+        if (!activeCourseId && courses.length > 0) {
+            setActiveCourse(courses[0].id)
+        }
+    }, [activeCourseId, courses, setActiveCourse])
+    const activeCourseTitle = courses.find(c => c.id === activeCourseId)?.title || courses[0]?.title || ''
     const impersonate = useAuthStore(state => state.impersonate)
     const [activeTab, setActiveTab] = useState<Tab>('overview')
 
