@@ -268,9 +268,11 @@ async def _award_forum_xp(
     xp_amount: int,
     forum_post_id: int,
 ):
-    """Award XP for a forum activity and update UserTutorial flags."""
+    """Award XP for a forum activity by setting the tutorial flag and recomputing
+    xp_earned from flags (single source of truth — see services/xp.py). Forum XP counts
+    once per tutorial per activity type; re-verifying the same activity is a no-op."""
+    from services.xp import recompute_tutorial_xp
 
-    # Update UserTutorial boolean flags
     ut_result = await db.execute(
         select(UserTutorial).filter_by(user_id=user.id, tutorial_id=tutorial_id)
     )
@@ -280,25 +282,25 @@ async def _award_forum_xp(
             ut.forum_asked = True
         elif activity_type == "answer":
             ut.forum_answered = True
-        ut.xp_earned += xp_amount
+        xp_gained = recompute_tutorial_xp(ut)
+    else:
+        # No progress row to attribute against — credit global XP with the passed amount
+        # so nothing is lost (course dashboards can't reflect it without a UserTutorial row).
+        xp_gained = xp_amount
 
-    # Update user total XP
-    user.xp_total += xp_amount
-
-    # Recalculate level
-    _recalc_level(user)
-
-    # Log XP event
-    db.add(XPEvent(
-        user_id=user.id,
-        source_type="forum_activity",
-        source_id=str(forum_post_id),
-        xp_delta=xp_amount,
-    ))
+    if xp_gained != 0:
+        user.xp_total += xp_gained
+        _recalc_level(user)
+        db.add(XPEvent(
+            user_id=user.id,
+            source_type="forum_activity",
+            source_id=str(forum_post_id),
+            xp_delta=xp_gained,
+        ))
 
     logger.info(
         "Awarded %d XP to user %s for forum %s (post %d)",
-        xp_amount, user.email, activity_type, forum_post_id,
+        xp_gained, user.email, activity_type, forum_post_id,
     )
 
 
@@ -330,33 +332,40 @@ async def _revoke_forum_xp(
     )
     has_other_posts = remaining.scalars().first() is not None
 
-    if not has_other_posts:
-        ut_result = await db.execute(
-            select(UserTutorial).filter_by(user_id=user_id, tutorial_id=tutorial_id)
-        )
-        ut = ut_result.scalars().first()
-        if ut:
+    from services.xp import recompute_tutorial_xp
+
+    ut_result = await db.execute(
+        select(UserTutorial).filter_by(user_id=user_id, tutorial_id=tutorial_id)
+    )
+    ut = ut_result.scalars().first()
+
+    xp_gained = 0
+    if ut:
+        # Only unset the flag (and lose the once-per-type XP) when NO other live post of
+        # this type remains — otherwise deleting one of several posts must not deduct XP.
+        if not has_other_posts:
             if activity_type == "question":
                 ut.forum_asked = False
             elif activity_type == "answer":
                 ut.forum_answered = False
-            ut.xp_earned = max(0, ut.xp_earned - xp_amount)
+        xp_gained = recompute_tutorial_xp(ut)  # negative if a flag was unset, else 0
+    elif not has_other_posts:
+        # No progress row — mirror the award fallback and decrement global XP.
+        xp_gained = -xp_amount
 
-    # Deduct user total XP
-    user.xp_total = max(0, user.xp_total - xp_amount)
-    _recalc_level(user)
-
-    # Log XP event (negative delta)
-    db.add(XPEvent(
-        user_id=user_id,
-        source_type="forum_activity_revoked",
-        source_id=str(forum_post_id),
-        xp_delta=-xp_amount,
-    ))
+    if xp_gained != 0:
+        user.xp_total = max(0, user.xp_total + xp_gained)
+        _recalc_level(user)
+        db.add(XPEvent(
+            user_id=user_id,
+            source_type="forum_activity_revoked",
+            source_id=str(forum_post_id),
+            xp_delta=xp_gained,
+        ))
 
     logger.info(
         "Revoked %d XP from user %s for deleted forum %s (post %d)",
-        xp_amount, user.email, activity_type, forum_post_id,
+        xp_gained, user.email, activity_type, forum_post_id,
     )
 
 
@@ -369,6 +378,21 @@ def _recalc_level(user: User):
     elif xp >= 1500:  user.level = 11
     elif xp >= 500:   user.level = 6
     else:             user.level = 1
+
+
+def activity_to_dict(a) -> dict:
+    """Serialize a ForumActivity row to the API shape. Shared by the per-tutorial
+    and course-wide (grouped) forum-activity endpoints."""
+    return {
+        "id": a.id,
+        "forumPostId": a.forum_post_id,
+        "activityType": a.activity_type,
+        "title": a.title,
+        "forumUrl": a.forum_url,
+        "postedAt": a.posted_at.isoformat() if a.posted_at else None,
+        "xpAwarded": a.xp_awarded,
+        "xpAmount": a.xp_amount,
+    }
 
 
 async def get_forum_activity_for_tutorial(
@@ -385,18 +409,4 @@ async def get_forum_activity_for_tutorial(
             ForumActivity.deleted_on_forum == False,
         ).order_by(ForumActivity.posted_at.desc())
     )
-    activities = result.scalars().all()
-
-    return [
-        {
-            "id": a.id,
-            "forumPostId": a.forum_post_id,
-            "activityType": a.activity_type,
-            "title": a.title,
-            "forumUrl": a.forum_url,
-            "postedAt": a.posted_at.isoformat() if a.posted_at else None,
-            "xpAwarded": a.xp_awarded,
-            "xpAmount": a.xp_amount,
-        }
-        for a in activities
-    ]
+    return [activity_to_dict(a) for a in result.scalars().all()]

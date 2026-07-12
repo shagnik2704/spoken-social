@@ -40,6 +40,7 @@ class User(Base):
 
     __table_args__ = (
         Index("idx_users_xp_total", xp_total.desc()),
+        Index("idx_users_college", "college_id"),
     )
 
     async def to_api_dict(self, db=None, active_course_id=None):
@@ -58,34 +59,29 @@ class User(Base):
             from sqlalchemy import func
             from models.xp_event import XPEvent
 
-            # count followers
-            followers_res = await db.execute(select(func.count()).where(Follow.following_id == self.id))
-            followers_count = followers_res.scalar() or 0
-            
-            # count following
-            following_res = await db.execute(select(func.count()).where(Follow.follower_id == self.id))
-            following_count = following_res.scalar() or 0
-            
-            # count posts
-            posts_res = await db.execute(select(func.count()).where(Post.user_id == self.id))
-            posts_count = posts_res.scalar() or 0
-
-            # xp today
-            xp_today_res = await db.execute(select(func.coalesce(func.sum(XPEvent.xp_delta), 0)).where(
+            # Single round-trip: 5 scalar subqueries in one SELECT (was 5 separate queries).
+            followers_sq = select(func.count()).where(Follow.following_id == self.id).scalar_subquery()
+            following_sq = select(func.count()).where(Follow.follower_id == self.id).scalar_subquery()
+            posts_sq = select(func.count()).where(Post.user_id == self.id).scalar_subquery()
+            xp_today_sq = select(func.coalesce(func.sum(XPEvent.xp_delta), 0)).where(
                 XPEvent.user_id == self.id,
-                XPEvent.created_at >= func.date_trunc('day', func.now())
-            ))
-            xp_today = xp_today_res.scalar() or 0
-
-            # xp this week
-            xp_week_res = await db.execute(select(func.coalesce(func.sum(XPEvent.xp_delta), 0)).where(
+                XPEvent.created_at >= func.date_trunc('day', func.now()),
+            ).scalar_subquery()
+            xp_week_sq = select(func.coalesce(func.sum(XPEvent.xp_delta), 0)).where(
                 XPEvent.user_id == self.id,
-                XPEvent.created_at >= func.date_trunc('week', func.now())
-            ))
-            xp_this_week = xp_week_res.scalar() or 0
+                XPEvent.created_at >= func.date_trunc('week', func.now()),
+            ).scalar_subquery()
 
-        # Compute xp_for_next_level using formula: 100 * (level+1)^2
-        xp_for_next_level = 100 * (self.level + 1) * (self.level + 1)
+            row = (await db.execute(
+                select(followers_sq, following_sq, posts_sq, xp_today_sq, xp_week_sq)
+            )).one()
+            followers_count, following_count, posts_count, xp_today, xp_this_week = row
+
+        # XP milestone for the next level up (see services/xp). The old 100*(level+1)^2
+        # formula didn't match the discrete level thresholds, so the profile progress bar
+        # could read >100% without the user actually leveling up.
+        from services.xp import xp_for_next_level as _next_level_xp
+        xp_for_next_level = _next_level_xp(self.xp_total)
 
         res = {
             "id": str(self.id),

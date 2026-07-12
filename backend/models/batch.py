@@ -27,6 +27,7 @@ class Batch(Base):
     __table_args__ = (
         Index("idx_batches_course", "course_id"),
         Index("idx_batches_status", "status"),
+        Index("idx_batches_programme", "programme_id"),
     )
 
     @property

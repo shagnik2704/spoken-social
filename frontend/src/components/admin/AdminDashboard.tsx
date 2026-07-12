@@ -21,6 +21,7 @@ import {
 import { FeedbackPanel } from '@/components/admin/FeedbackPanel'
 import { StudentFeedbackDrawer } from '@/components/admin/StudentFeedbackDrawer'
 import { useColleges, usePlatformSummary, useFeedbackSummary, useCollegesDailyXP, useCollegeDetails } from '@/hooks/queries/useAdminQueries'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import { toast } from 'sonner'
@@ -346,9 +347,9 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                         <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                             <AlertTriangle className="h-4 w-4 text-warning" />
                             At-Risk Learners — All Colleges
-                            {summary.atRiskStudents.length > 0 && (
+                            {(summary.metrics.totalAtRisk + summary.metrics.totalInactive) > 0 && (
                                 <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] px-1.5 py-0 h-4">
-                                    {summary.atRiskStudents.length} need attention
+                                    {summary.metrics.totalAtRisk + summary.metrics.totalInactive} need attention
                                 </Badge>
                             )}
                         </h3>
@@ -415,7 +416,9 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const [selectedCollegeIds, setSelectedCollegeIds] = useState<string[]>(
         colleges.map(c => c.id)
     )
-    const { data: chartData, isLoading } = useCollegesDailyXP(selectedMonth, selectedCollegeIds, activeCourseId)
+    // Fetch all colleges once; selectedCollegeIds only drives the client-side line filter
+    // below, so toggling checkboxes no longer triggers a refetch.
+    const { data: chartData, isLoading } = useCollegesDailyXP(selectedMonth, activeCourseId)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [collegeSearch, setCollegeSearch] = useState('')
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -439,7 +442,7 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     // Update selectedCollegeIds when state filter changes to auto-select that state's colleges
     useEffect(() => {
         const stateColleges = colleges.filter(c => 
-            selectedState === 'all' || (c.location && c.location.includes(selectedState))
+            selectedState === 'all' || (c.location && c.location.toLowerCase().includes(selectedState.toLowerCase()))
         )
         setSelectedCollegeIds(stateColleges.map(c => c.id))
     }, [selectedState, colleges])
@@ -473,7 +476,7 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
     const filteredColleges = colleges.filter(c => {
         const matchesSearch = c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
             c.id.toLowerCase().includes(collegeSearch.toLowerCase())
-        const matchesState = selectedState === 'all' || (c.location && c.location.includes(selectedState))
+        const matchesState = selectedState === 'all' || (c.location && c.location.toLowerCase().includes(selectedState.toLowerCase()))
         return matchesSearch && matchesState
     })
 
@@ -488,7 +491,8 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
                 <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                     <h3 className="text-sm font-bold flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-primary" />
-                        Daily Average XP by College
+                        Daily XP Activity by College
+                        <span className="text-[10px] font-normal text-muted-foreground">(all activity, not course-specific)</span>
                     </h3>
                     <div className="flex items-center gap-2">
                         {/* Month Dropdown */}
@@ -717,7 +721,12 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
     const [selectedState, setSelectedState] = useState<string>('all')
     const activeCourseId = useUserStore(state => state.activeCourseId)
     const activeBatchId = useUserStore(state => state.activeBatchId)
-    const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, searchQuery, activeCourseId, activeBatchId)
+    // Debounce the search so typing fires at most one request per pause (was one per keystroke).
+    const debouncedSearch = useDebouncedValue(searchQuery, 400)
+    const { data: collegeDetails, isLoading: isLoadingDetails } = useCollegeDetails(selectedCollegeId, page, sortBy, statusFilter, debouncedSearch, activeCourseId, activeBatchId)
+
+    // Reset to page 1 when the (settled) search term changes.
+    useEffect(() => { setPage(1) }, [debouncedSearch])
 
     // Extract unique states dynamically
     const states = useMemo(() => {
@@ -814,7 +823,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
                                     type="text"
                                     placeholder="Search name..."
                                     value={searchQuery}
-                                    onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     className="pl-8 pr-3 py-1.5 text-xs rounded-full border border-border bg-muted/30 w-48 focus:outline-none focus:ring-1 focus:ring-primary/30"
                                 />
                             </div>
@@ -937,7 +946,7 @@ function CollegesTab({ colleges, onStudentClick, onImpersonate }: {
         const matchesSearch = c.name.toLowerCase().includes(collegeSearch.toLowerCase()) || 
             c.location.toLowerCase().includes(collegeSearch.toLowerCase()) ||
             c.coordinatorName.toLowerCase().includes(collegeSearch.toLowerCase())
-        const matchesState = selectedState === 'all' || (c.location && c.location.includes(selectedState))
+        const matchesState = selectedState === 'all' || (c.location && c.location.toLowerCase().includes(selectedState.toLowerCase()))
         return matchesSearch && matchesState
     })
     
@@ -1314,7 +1323,7 @@ function AnalyticsTab({ colleges }: {
                     </h3>
                     <div className="space-y-2">
                         {[...colleges]
-                            .filter(c => selectedState === 'all' || (c.location && c.location.includes(selectedState)))
+                            .filter(c => selectedState === 'all' || (c.location && c.location.toLowerCase().includes(selectedState.toLowerCase())))
                             .sort((a, b) => b.avgProgress - a.avgProgress)
                             .map(college => (
                                 <div key={college.id} className="flex items-center gap-3">
@@ -1428,7 +1437,8 @@ export default function AdminDashboard() {
                     <button
                         onClick={async () => {
                             try {
-                                const response = await api.get(`/api/admin/minitask-students/export?course_id=${activeCourseId}`, { responseType: 'blob' });
+                                const batchParam = activeBatchId ? `&batch_id=${activeBatchId}` : '';
+                                const response = await api.get(`/api/admin/minitask-students/export?course_id=${activeCourseId}${batchParam}`, { responseType: 'blob' });
                                 const url = window.URL.createObjectURL(new Blob([response.data]));
                                 const link = document.createElement('a');
                                 link.href = url;

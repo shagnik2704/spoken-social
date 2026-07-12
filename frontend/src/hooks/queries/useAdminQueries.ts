@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, keepPreviousData } from "@tanstack/react-query"
 import api from '@/lib/axios'
 
 const fetchColleges = async (courseId?: string, batchId?: string | null) => {
@@ -95,11 +95,13 @@ export function usePlatformSummary(state?: string, courseId?: string, batchId?: 
     })
 }
 
-export function useCollegesDailyXP(month: string, collegesIds: string[], courseId?: string) {
+export function useCollegesDailyXP(month: string, courseId?: string) {
+    // Fetch the full (all-colleges) dataset once; the chart filters colleges client-side.
+    // College selection is NOT in the key, so toggling checkboxes triggers zero refetches.
     return useQuery({
-        queryKey: ['admin', 'college-daily-xp', month, collegesIds, courseId],
-        queryFn: () => fetchCollegeDailyXP(month, collegesIds, courseId),
-        enabled: collegesIds.length > 0
+        queryKey: ['admin', 'college-daily-xp', month, courseId],
+        queryFn: () => fetchCollegeDailyXP(month, [], courseId),
+        enabled: !!month
     })
 }
 
@@ -116,13 +118,30 @@ export function useCollegeDetails(
     return useQuery({
         queryKey: ['admin', 'college-details', collegeId, page, sortBy, statusFilter, searchQuery, courseId, batchId],
         queryFn: () => fetchCollegesDetails(collegeId!, page, sortBy, statusFilter, searchQuery, courseId, batchId),
-        enabled: !!collegeId
+        enabled: !!collegeId,
+        placeholderData: keepPreviousData, // keep the prior page/search visible instead of flashing empty
+    })
+}
+
+const fetchMinitaskAnalysis = async (courseId?: string, batchId?: string | null) => {
+    const params = new URLSearchParams()
+    if (courseId) params.set('course_id', courseId)
+    if (batchId) params.set('batch_id', batchId)
+    const qs = params.toString()
+    const { data } = await api.get(`/api/admin/minitask-analysis${qs ? `?${qs}` : ''}`)
+    return data
+}
+
+export function useMinitaskAnalysis(courseId?: string, batchId?: string | null) {
+    return useQuery<Record<string, Record<number, number>>>({
+        queryKey: ['admin', 'minitask-analysis', courseId, batchId],
+        queryFn: () => fetchMinitaskAnalysis(courseId, batchId),
     })
 }
 
 export function useStudentFeedback(studentId: string) {
     return useQuery({
-        queryKey: ['admin', 'student-feedback'],
+        queryKey: ['admin', 'student-feedback', studentId],
         queryFn: () => fetchStudentFeedback(studentId)
     })
 }

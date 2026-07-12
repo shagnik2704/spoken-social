@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import {
     Users, GraduationCap, TrendingUp, AlertTriangle,
     CheckCircle2, Terminal, Eye,
@@ -88,6 +89,13 @@ interface CollegeDetails {
         completionRate: number
     }
     students: Student[]
+    statusCounts?: {
+        all: number
+        active: number
+        completed: number
+        at_risk: number
+        inactive: number
+    }
     pagination?: {
         currentPage: number
         totalPages: number
@@ -238,7 +246,7 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                         icon={GraduationCap}
                         label="Registered for Course"
                         value={college.totalCourseStudents}
-                        subtext={`${college.activeStudents} active on platform`}
+                        subtext={`${college.activeStudents} active or completed`}
                         color="bg-secondary/10 text-secondary"
                     />
                 </div>
@@ -304,11 +312,11 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                     {/* Status Filter Chips */}
                     <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1">
                         {([
-                            { id: 'all', label: 'All', count: details?.students.length },
-                            { id: 'active', label: 'Active', count: details?.students.filter(s => s.status === 'active').length },
-                            { id: 'completed', label: 'Completed', count: details?.students.filter(s => s.status === 'completed').length },
-                            { id: 'at_risk', label: 'At Risk of Completion', count: details?.students.filter(s => s.status === 'at_risk').length },
-                            { id: 'inactive', label: 'Inactive', count: details?.students.filter(s => s.status === 'inactive' || s.status === 'not_started').length },
+                            { id: 'all', label: 'All', count: details?.statusCounts?.all },
+                            { id: 'active', label: 'Active', count: details?.statusCounts?.active },
+                            { id: 'completed', label: 'Completed', count: details?.statusCounts?.completed },
+                            { id: 'at_risk', label: 'At Risk of Completion', count: details?.statusCounts?.at_risk },
+                            { id: 'inactive', label: 'Inactive', count: details?.statusCounts?.inactive },
                         ] as { id: StatusFilter; label: string; count?: number }[]).map(filter => (
                             <button
                                 key={filter.id}
@@ -966,9 +974,14 @@ export default function CoordinatorDashboard() {
     const [sortBy, setSortBy] = useState<SortBy>('progress')
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
     const [searchQuery, setSearchQuery] = useState('')
+    // Debounce the search so typing fires at most one request per pause (was one per keystroke).
+    const debouncedSearch = useDebouncedValue(searchQuery, 400)
     const [page, setPage] = useState(1)
     const user = useUserStore(state => state.user)
     const MY_COLLEGE_ID = user?.collegeId || 'iitb'
+
+    // Reset to page 1 when the (settled) search term changes.
+    useEffect(() => { setPage(1) }, [debouncedSearch])
 
     const handleViewAsStudent = async (_studentId: string) => {
         try {
@@ -990,7 +1003,7 @@ export default function CoordinatorDashboard() {
         page,
         sortBy,
         statusFilter,
-        searchQuery,
+        debouncedSearch,
         activeCourseId,
         activeBatchId,
         isCoordinator
@@ -1113,7 +1126,7 @@ export default function CoordinatorDashboard() {
                     statusFilter={statusFilter}
                     setStatusFilter={(s) => { setStatusFilter(s); setPage(1) }}
                     searchQuery={searchQuery}
-                    setSearchQuery={(s) => { setSearchQuery(s); setPage(1) }}
+                    setSearchQuery={setSearchQuery}
                     page={page}
                     setPage={setPage}
                     onViewAsStudent={handleViewAsStudent}

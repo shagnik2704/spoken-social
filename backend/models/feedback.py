@@ -4,7 +4,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, Index
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ARRAY
 from sqlalchemy.orm import relationship
 from database import Base
@@ -24,6 +24,11 @@ class TutorialFeedback(Base):
     # Relationships
     user = relationship("User")
     tutorial = relationship("Tutorial")
+
+    __table_args__ = (
+        Index("idx_tutorial_feedback_user", "user_id"),
+        Index("idx_tutorial_feedback_tutorial", "tutorial_id"),
+    )
 
     def to_api_dict(self):
         return {

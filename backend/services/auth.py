@@ -227,6 +227,10 @@ async def _upsert_user(
     Used by both the Spoken Tutorial API path and the demo student bypass.
     """
 
+    # Normalize email on write so lookups (which use lower(email)) stay index-friendly
+    # and consistent. Backed by idx_users_email_lower.
+    api_email = api_email.lower()
+
     # ── Upsert College ──
     college_id = None
     if college_name:
@@ -322,50 +326,68 @@ async def _sync_enrollments(
         # No courses and no college — nothing to enroll
         return
 
+    # Normalize + dedupe the requested course_ids (first batch_id wins per course).
+    wanted: dict[str, str | None] = {}
     for course_data in courses_to_enroll:
-        course_id = course_data.get("course_id")
-        batch_id = course_data.get("batch_id")
+        cid = course_data.get("course_id")
+        if cid and cid not in wanted:
+            wanted[cid] = course_data.get("batch_id")
 
-        if not course_id:
-            continue
+    if not wanted:
+        await db.flush()
+        return
 
-        # Check if already enrolled in this course
-        existing = await db.execute(
-            select(UserCourse).filter_by(user_id=user.id, course_id=course_id)
+    # Bulk: which of the requested courses is the user already enrolled in? (1 query)
+    existing_courses = set((await db.execute(
+        select(UserCourse.course_id).filter(
+            UserCourse.user_id == user.id,
+            UserCourse.course_id.in_(wanted.keys()),
         )
-        if existing.scalars().first():
-            continue  # Already enrolled, skip
+    )).scalars())
 
-        # Create enrollment
+    new_course_ids = [cid for cid in wanted if cid not in existing_courses]
+    if not new_course_ids:
+        await db.flush()
+        return
+
+    for cid in new_course_ids:
         db.add(UserCourse(
             user_id=user.id,
-            course_id=course_id,
-            batch_id=batch_id,
+            course_id=cid,
+            batch_id=wanted[cid],
             status="not_started",
             progress_percent=0,
         ))
 
-        # Create tutorial progress rows for this course
-        tut_result = await db.execute(
-            select(Tutorial).filter_by(course_id=course_id).order_by(Tutorial.tutorial_number)
-        )
-        for tutorial in tut_result.scalars().all():
-            # Check if tutorial progress already exists
-            existing_ut = await db.execute(
-                select(UserTutorial).filter_by(user_id=user.id, tutorial_id=tutorial.id)
+    # Bulk-fetch tutorials for all newly enrolled courses (1 query)
+    tut_rows = (await db.execute(
+        select(Tutorial.id, Tutorial.course_id).filter(Tutorial.course_id.in_(new_course_ids))
+    )).all()
+    tut_ids = [t.id for t in tut_rows]
+
+    # Bulk-fetch which tutorial progress rows already exist (1 query)
+    existing_ut: set = set()
+    if tut_ids:
+        existing_ut = set((await db.execute(
+            select(UserTutorial.tutorial_id).filter(
+                UserTutorial.user_id == user.id,
+                UserTutorial.tutorial_id.in_(tut_ids),
             )
-            if not existing_ut.scalars().first():
-                db.add(UserTutorial(
-                    user_id=user.id,
-                    tutorial_id=tutorial.id,
-                    status="not_started",
-                    watched=False,
-                    practiced=False,
-                    assignment_done=False,
-                    forum_asked=False,
-                    forum_answered=False,
-                    xp_earned=0,
-                ))
+        )).scalars())
+
+    for t in tut_rows:
+        if t.id not in existing_ut:
+            db.add(UserTutorial(
+                user_id=user.id,
+                tutorial_id=t.id,
+                status="not_started",
+                watched=False,
+                practiced=False,
+                assignment_done=False,
+                forum_asked=False,
+                forum_answered=False,
+                xp_earned=0,
+            ))
 
     await db.flush()
 

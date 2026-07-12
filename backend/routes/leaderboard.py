@@ -67,18 +67,22 @@ async def get_xp_history(
     else:
         end_date = datetime(year, mon + 1, 1)
 
-    # Query: aggregate xp_delta by day
+    # Query: aggregate xp_delta by day, bucketing in IST (created_at is timestamptz; the
+    # audience is IST, so days must run midnight-to-midnight local, not UTC). Both the day
+    # extraction AND the month boundaries use the same IST wall-clock for consistency.
+    from config import APP_TIMEZONE
+    ist_ts = func.timezone(APP_TIMEZONE, XPEvent.created_at)  # IST wall-clock (naive ts)
     result = await db.execute(
         select(
-            func.extract('day', XPEvent.created_at).label('day'),
+            func.extract('day', ist_ts).label('day'),
             func.coalesce(func.sum(XPEvent.xp_delta), 0).label('xp'),
         )
         .filter(
             XPEvent.user_id == current_user.id,
-            XPEvent.created_at >= start_date,
-            XPEvent.created_at < end_date,
+            ist_ts >= start_date,
+            ist_ts < end_date,
         )
-        .group_by(func.extract('day', XPEvent.created_at))
+        .group_by(func.extract('day', ist_ts))
     )
     rows = result.all()
 

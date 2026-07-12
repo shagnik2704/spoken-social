@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
 import { useUserStore } from '@/store/userStore'
-import api from '@/lib/axios'
+import { useMinitaskAnalysis } from '@/hooks/queries/useAdminQueries'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Loader2, ClipboardList, Info } from 'lucide-react'
 import {
@@ -10,32 +9,10 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-interface AnalysisData {
-    [collegeName: string]: {
-        [tutorialNumber: number]: number
-    }
-}
-
 export function MiniTaskAnalysis() {
-    const [data, setData] = useState<AnalysisData>({})
-    const [isLoading, setIsLoading] = useState(true)
     const activeCourseId = useUserStore(state => state.activeCourseId)
     const activeBatchId = useUserStore(state => state.activeBatchId)
-
-    useEffect(() => {
-        setIsLoading(true)
-        api.get('/api/admin/minitask-analysis', {
-            params: { course_id: activeCourseId, batch_id: activeBatchId }
-        })
-        .then(res => {
-            setData(res.data)
-            setIsLoading(false)
-        })
-        .catch(err => {
-            console.error('Failed to fetch minitask analysis', err)
-            setIsLoading(false)
-        })
-    }, [activeCourseId, activeBatchId])
+    const { data = {}, isLoading } = useMinitaskAnalysis(activeCourseId, activeBatchId)
 
     if (isLoading) {
         return (
@@ -73,7 +50,7 @@ export function MiniTaskAnalysis() {
                                 <Info className="w-4 h-4 text-muted-foreground" />
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p className="max-w-xs text-xs">This table shows the number of learners from each college who opted for MiniTasks across different tutorials.</p>
+                                <p className="max-w-xs text-xs">Each cell is the number of learners from that college who opted into that tutorial's MiniTask. The "Total Opt-ins" column sums those across tutorials, so a learner who opts into several tutorials is counted once per tutorial.</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -89,7 +66,7 @@ export function MiniTaskAnalysis() {
                                 {tutorialNums.map(num => (
                                     <th key={num} className="px-4 py-4 font-bold text-center border-r last:border-r-0">Tut #{num}</th>
                                 ))}
-                                <th className="px-6 py-4 font-bold text-center bg-primary/5 text-primary">Total</th>
+                                <th className="px-6 py-4 font-bold text-center bg-primary/5 text-primary">Total Opt-ins</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y border-b">

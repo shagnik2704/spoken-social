@@ -53,7 +53,7 @@ async def get_platform_summary(
         User.id,
         User.display_name,
         User.username,
-        func.coalesce(func.sum(UserTutorial.xp_earned), 0).label("xp_total"),
+        func.coalesce(func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0).label("xp_total"),
         User.college_id,
         func.count(
             case((UserTutorial.watched == True, Tutorial.id), else_=None)
@@ -183,33 +183,43 @@ async def get_platform_summary(
     )[:10]
 
     # ----- Tutorial-wise completion rates -----
-    # For each tutorial number, count how many students have completed it
-    stats_query = select(
-        Tutorial.tutorial_number,
-        Tutorial.title,
-        func.count(
-            case((UserTutorial.practiced == True, UserTutorial.user_id), else_=None)
-        ).label("completed_count"),
-    ).outerjoin(
-        UserTutorial, UserTutorial.tutorial_id == Tutorial.id
-    )
-
-    if state:
-        stats_query = stats_query.join(User, User.id == UserTutorial.user_id).join(College, College.id == User.college_id).filter(
-            Tutorial.course_id == course_id,
+    # The numerator must count only students in the SAME population as total_students
+    # (course + batch + role + non-test + optional state). Previously the numerator
+    # ignored batch_id/role/test filters, so `rate` mixed a batch-filtered denominator
+    # with an unfiltered numerator. Build the population once and scope the count to it.
+    pop_query = (
+        select(User.id)
+        .join(UserCourse, UserCourse.user_id == User.id)
+        .filter(
             User.role == "student",
             User.is_test_account != True,
+            UserCourse.course_id == course_id,
+        )
+    )
+    if batch_id:
+        pop_query = pop_query.filter(UserCourse.batch_id == batch_id)
+    if state:
+        pop_query = pop_query.join(College, College.id == User.college_id).filter(
             College.location.ilike(f"%{state}%")
         )
-    else:
-        stats_query = stats_query.filter(
-            Tutorial.course_id == course_id
-        )
 
-    stats_query = stats_query.group_by(
-        Tutorial.tutorial_number, Tutorial.title
-    ).order_by(
-        Tutorial.tutorial_number
+    stats_query = (
+        select(
+            Tutorial.tutorial_number,
+            Tutorial.title,
+            func.count(
+                case((UserTutorial.practiced == True, UserTutorial.user_id), else_=None)
+            ).label("completed_count"),
+        )
+        .select_from(Tutorial)
+        .outerjoin(
+            UserTutorial,
+            (UserTutorial.tutorial_id == Tutorial.id)
+            & (UserTutorial.user_id.in_(pop_query.distinct())),
+        )
+        .filter(Tutorial.course_id == course_id)
+        .group_by(Tutorial.tutorial_number, Tutorial.title)
+        .order_by(Tutorial.tutorial_number)
     )
     res_stats = await db.execute(stats_query)
     tutorial_stats = res_stats.all()
@@ -268,6 +278,11 @@ async def get_minitask_analysis(
     """
     Returns aggregated minitask opt-in data by college and tutorial.
     """
+    cache_key = f"admin:minitask:{course_id}:{batch_id or 'all'}"
+    cached = await get_cached(cache_key)
+    if cached is not None:
+        return cached
+
     # Query all minitask opt-ins
     query = (
         select(
@@ -304,6 +319,7 @@ async def get_minitask_analysis(
             analysis[cname] = {}
         analysis[cname][row.tutorial_number] = row.count
 
+    await set_cached(cache_key, analysis, ttl=300)
     return analysis
 
 
@@ -335,7 +351,7 @@ async def export_all_colleges(
         ("S.No.", 10),
         ("College Name", 45),
         ("Total Students Enrolled", 28),
-        ("Active Students", 22),
+        ("Active + Completed", 24),
         ("Fully Completed Students", 28),
         ("Students Opted for Minitasks", 30),
         ("Average Progress Percentage", 32),
@@ -410,6 +426,7 @@ async def export_all_colleges(
 @router.get("/minitask-students/export")
 async def export_minitask_students(
     course_id: str = Query("linux"),
+    batch_id: Optional[str] = Query(None),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -418,11 +435,15 @@ async def export_minitask_students(
     One row per (student, tutorial) pair where minitask_opted = True.
     Columns: S.No., Student Name, Email, College, Tutorial #, Tutorial Title
     Sorted by tutorial number, then student name.
+
+    Population MUST match the on-screen MiniTask analysis (get_minitask_analysis):
+    enrolled students only (UserCourse join) and the same batch filter. Previously the
+    export skipped both, so it included unenrolled/other-batch rows the screen never showed.
     """
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
     # Query all minitask opt-ins with student + tutorial + college info
-    res = await db.execute(
+    query = (
         select(
             User.display_name,
             User.username,
@@ -433,15 +454,20 @@ async def export_minitask_students(
         )
         .join(UserTutorial, UserTutorial.user_id == User.id)
         .join(Tutorial, Tutorial.id == UserTutorial.tutorial_id)
+        .join(UserCourse, UserCourse.user_id == User.id)
         .outerjoin(College, College.id == User.college_id)
         .filter(
             User.role == "student",
             User.is_test_account != True,
             UserTutorial.minitask_opted == True,
             Tutorial.course_id == course_id,
+            UserCourse.course_id == course_id,
         )
-        .order_by(Tutorial.tutorial_number, User.display_name)
     )
+    if batch_id:
+        query = query.filter(UserCourse.batch_id == batch_id)
+
+    res = await db.execute(query.order_by(Tutorial.tutorial_number, User.display_name))
     rows = res.all()
 
     wb = openpyxl.Workbook()
@@ -631,6 +657,15 @@ async def get_college_daily_xp(
     else:
         month_end = date(year, mo + 1, 1)
 
+    # Cache only the default (all-colleges) chart — the per-selection variants are rare,
+    # and the frontend now filters colleges client-side against this default.
+    use_cache = not college_ids
+    cache_key = f"admin:dailyxp:{course_id}:{year:04d}-{mo:02d}"
+    if use_cache:
+        cached = await get_cached(cache_key)
+        if cached is not None:
+            return cached
+
     # Get colleges
     college_filter_ids = None
     if college_ids:
@@ -675,11 +710,14 @@ async def get_college_daily_xp(
             "color": COLLEGE_COLORS[i % len(COLLEGE_COLORS)],
         })
 
-    # Subquery: per-student daily XP sum
+    # Subquery: per-student daily XP sum. Bucket by IST calendar day (created_at is
+    # timestamptz; the audience is IST, so a "day" must be local, not UTC).
+    from config import APP_TIMEZONE
+    ist_date = cast(func.timezone(APP_TIMEZONE, XPEvent.created_at), Date)
     daily_student_xp = (
         select(
             User.college_id.label("college_id"),
-            cast(XPEvent.created_at, Date).label("xp_date"),
+            ist_date.label("xp_date"),
             XPEvent.user_id.label("user_id"),
             func.sum(XPEvent.xp_delta).label("daily_xp"),
         )
@@ -690,10 +728,10 @@ async def get_college_daily_xp(
             User.is_test_account != True,
             UserCourse.course_id == course_id,
             User.college_id.in_([c.id for c in colleges]),
-            cast(XPEvent.created_at, Date) >= month_start,
-            cast(XPEvent.created_at, Date) < month_end,
+            ist_date >= month_start,
+            ist_date < month_end,
         )
-        .group_by(User.college_id, cast(XPEvent.created_at, Date), XPEvent.user_id)
+        .group_by(User.college_id, ist_date, XPEvent.user_id)
         .subquery()
     )
 
@@ -724,12 +762,15 @@ async def get_college_daily_xp(
         if 1 <= day_num <= days_in_month:
             series[day_num - 1][college_id] = avg_xp
 
-    return {
+    result = {
         "month": f"{year:04d}-{mo:02d}",
         "daysInMonth": days_in_month,
         "colleges": college_list,
         "series": series,
     }
+    if use_cache:
+        await set_cached(cache_key, result, ttl=300)
+    return result
 
 
 # ============================================================
@@ -743,6 +784,7 @@ async def get_feedback_summary(
     step_type: Optional[str] = Query(None, description="Filter by step type"),
     reason: Optional[str] = Query(None, description="Filter by reason key"),
     college_id: Optional[str] = Query(None, description="Filter by college"),
+    batch_id: Optional[str] = Query(None, description="Filter by batch"),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -754,6 +796,14 @@ async def get_feedback_summary(
     3. Filtered entries grouped by tutorial, with student details
     """
     import uuid as uuid_mod
+
+    cache_key = (
+        f"fb:admin:{course_id}:{batch_id or '-'}:{college_id or '-'}:"
+        f"{tutorial_id or '-'}:{step_type or '-'}:{reason or '-'}"
+    )
+    cached = await get_cached(cache_key)
+    if cached is not None:
+        return cached
 
     # ----- Step 1: Fetch ALL tutorials for the filter dropdown -----
     res_all_tuts = await db.execute(
@@ -772,22 +822,36 @@ async def get_feedback_summary(
         .options(selectinload(TutorialFeedback.user))
         .join(User, TutorialFeedback.user_id == User.id)
         .join(Tutorial, TutorialFeedback.tutorial_id == Tutorial.id)
-        .filter(Tutorial.course_id == course_id)
+        .filter(
+            Tutorial.course_id == course_id,
+            # Exclude test/placeholder accounts and non-students, like every other aggregate.
+            User.role == "student",
+            User.is_test_account != True,
+        )
     )
 
+    if batch_id:
+        # Scope to a batch by joining the student's enrollment for THIS course. UserCourse
+        # PK is (user_id, course_id) so this matches at most one row per feedback — no
+        # fan-out. Previously this filter was silently dropped (param didn't exist), so the
+        # admin Feedback tab ignored the batch selector while every other tab honored it.
+        base_query = base_query.join(
+            UserCourse,
+            (UserCourse.user_id == TutorialFeedback.user_id) & (UserCourse.course_id == course_id),
+        ).filter(UserCourse.batch_id == batch_id)
     if tutorial_id:
         base_query = base_query.filter(TutorialFeedback.tutorial_id == uuid_mod.UUID(tutorial_id))
     if step_type:
         base_query = base_query.filter(TutorialFeedback.step_type == step_type)
     if college_id:
         base_query = base_query.filter(User.college_id == college_id)
+    if reason:
+        # Postgres array containment (reasons @> ARRAY[reason]) — was a Python post-filter
+        # over every loaded row.
+        base_query = base_query.filter(TutorialFeedback.reasons.contains([reason]))
 
     res_fb = await db.execute(base_query.order_by(TutorialFeedback.created_at.desc()))
     all_feedback = res_fb.scalars().all()
-
-    # If reason filter is active, narrow down to entries containing that reason
-    if reason:
-        all_feedback = [fb for fb in all_feedback if reason in (fb.reasons or [])]
 
     # ----- Step 3: Aggregate counts -----
     reason_counts: dict[str, int] = {}
@@ -820,16 +884,12 @@ async def get_feedback_summary(
     else:
         college_names = {}
 
-    # Tutorial info lookup
-    tutorial_ids = list({fb.tutorial_id for fb in all_feedback})
-    if tutorial_ids:
-        res_tuts = await db.execute(
-            select(Tutorial.id, Tutorial.title, Tutorial.tutorial_number)
-            .filter(Tutorial.id.in_(tutorial_ids))
-        )
-        tut_map = {t.id: {"title": t.title, "number": t.tutorial_number} for t in res_tuts.all()}
-    else:
-        tut_map = {}
+    # Tutorial info — reuse the course tutorials already fetched for the dropdown (Step 1);
+    # feedback is course-scoped, so every tutorial_id is present here (no re-fetch needed).
+    tut_map = {
+        uuid_mod.UUID(t["id"]): {"title": t["title"], "number": t["number"]}
+        for t in all_tutorials
+    }
 
     # ----- Step 5: Build entries grouped by tutorial -----
     tutorial_groups: dict[str, dict] = {}
@@ -882,8 +942,18 @@ async def get_feedback_summary(
     unique_students = len({str(fb.user_id) for fb in all_feedback})
 
     # ----- Step 7: All distinct reason keys for the filter dropdown -----
-    # Fetch from ALL feedback (unfiltered) so dropdown always shows full list
-    res_all_fb = await db.execute(select(TutorialFeedback.reasons))
+    # Scoped to the current COURSE (was an unfiltered whole-table scan of every feedback
+    # row). Independent of the other volatile filters so the dropdown stays stable.
+    res_all_fb = await db.execute(
+        select(TutorialFeedback.reasons)
+        .join(User, TutorialFeedback.user_id == User.id)
+        .join(Tutorial, TutorialFeedback.tutorial_id == Tutorial.id)
+        .filter(
+            Tutorial.course_id == course_id,
+            User.role == "student",
+            User.is_test_account != True,
+        )
+    )
     all_reason_lists = res_all_fb.scalars().all()
     all_reason_keys = set()
     for reasons_list in all_reason_lists:
@@ -891,7 +961,7 @@ async def get_feedback_summary(
             all_reason_keys.update(reasons_list)
     all_reason_keys_sorted = sorted(all_reason_keys)
 
-    return {
+    result = {
         "filterOptions": {
             "tutorials": all_tutorials,
             "stepTypes": ["watched", "practiced", "assignmentDone", "forumAsked", "forumAnswered"],
@@ -903,6 +973,8 @@ async def get_feedback_summary(
         "stepBreakdown": step_breakdown,
         "tutorialGroups": sorted_groups,
     }
+    await set_cached(cache_key, result, ttl=120)
+    return result
 
 
 @router.get("/students/{student_id}/feedback")
@@ -919,14 +991,18 @@ async def get_student_feedback(
     4. All entries chronologically with tutorial details
     """
     import uuid as uuid_mod
+    from fastapi import HTTPException
 
-    sid = uuid_mod.UUID(student_id)
+    # A malformed id is a client error (400), not an uncaught ValueError → 500.
+    try:
+        sid = uuid_mod.UUID(student_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid student ID format")
 
     # Get the student
     res_st = await db.execute(select(User).filter_by(id=sid))
     student = res_st.scalars().first()
     if not student:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Student not found")
 
     # Get college name
@@ -1537,8 +1613,16 @@ async def get_comparison_metrics(
 ):
     """
     Returns aggregated metrics for programmes, courses, and batches.
-    Filters by state if provided. Falls back or merges with mock data if database is empty.
+    Filters by state if provided. Falls back to deterministic mock data in Demo Mode
+    (explicit use_mock, or an empty database) so the comparison chart is never blank.
     """
+    # Cache the real computed result (skip caching when explicitly forcing mock data).
+    cache_key = f"admin:comparison:{state or 'all'}"
+    if not use_mock:
+        cached = await get_cached(cache_key)
+        if cached is not None:
+            return cached
+
     # 1. Fetch active programmes
     prog_res = await db.execute(select(Programme).filter(Programme.is_active == True).order_by(Programme.display_order))
     programmes = prog_res.scalars().all()
@@ -1559,20 +1643,16 @@ async def get_comparison_metrics(
     # 4. Get many-to-many links between programmes and courses
     pc_res = await db.execute(select(ProgrammeCourse))
     programme_courses = pc_res.scalars().all()
-    
-    # Group course IDs by programme ID
-    prog_course_ids = {}
+
+    # Group course IDs by programme ID (from the M2M table, plus any implied by batches)
+    prog_course_ids: dict = {}
     for pc in programme_courses:
-        if pc.programme_id not in prog_course_ids:
-            prog_course_ids[pc.programme_id] = []
+        prog_course_ids.setdefault(pc.programme_id, [])
         if pc.course_id not in prog_course_ids[pc.programme_id]:
             prog_course_ids[pc.programme_id].append(pc.course_id)
-            
-    # Also add course IDs from existing batches just in case
     for b in batches:
         if b.programme_id:
-            if b.programme_id not in prog_course_ids:
-                prog_course_ids[b.programme_id] = []
+            prog_course_ids.setdefault(b.programme_id, [])
             if b.course_id not in prog_course_ids[b.programme_id]:
                 prog_course_ids[b.programme_id].append(b.course_id)
 
@@ -1588,24 +1668,65 @@ async def get_comparison_metrics(
         "ilw": "hsl(142, 76%, 36%)"
     }
 
+    # Per-course tutorial counts in ONE query (was a COUNT per batch).
+    tut_counts = {
+        cid: cnt for cid, cnt in (await db.execute(
+            select(Tutorial.course_id, func.count(Tutorial.id)).group_by(Tutorial.course_id)
+        )).all()
+    }
+
+    # Every student across every active-programme batch in ONE grouped query, carrying the
+    # per-student COURSE-SCOPED xp (only this batch's course's tutorial XP, matching every other
+    # dashboard) and the completed count (was 2 queries PER batch).
+    active_prog_ids = {p.id for p in programmes}
+    relevant_batch_ids = [b.id for b in batches if b.programme_id in active_prog_ids]
+    rows_by_batch: dict = {}
+    if relevant_batch_ids:
+        merged_q = (
+            select(
+                UserCourse.batch_id.label("batch_id"),
+                User.id.label("uid"),
+                User.college_id.label("college_id"),
+                func.coalesce(func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0).label("xp"),
+                func.count(case((UserTutorial.practiced == True, Tutorial.id), else_=None)).label("completed"),
+            )
+            .select_from(User)
+            .join(UserCourse, UserCourse.user_id == User.id)
+            .join(Batch, Batch.id == UserCourse.batch_id)
+            .outerjoin(UserTutorial, UserTutorial.user_id == User.id)
+            .outerjoin(Tutorial, (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == Batch.course_id))
+            .filter(
+                UserCourse.batch_id.in_(relevant_batch_ids),
+                User.role == "student",
+                User.is_test_account != True,
+            )
+            .group_by(UserCourse.batch_id, User.id, User.college_id)
+        )
+        if state:
+            merged_q = merged_q.join(College, College.id == User.college_id).filter(
+                College.location.ilike(f"%{state}%")
+            )
+        for row in (await db.execute(merged_q)).all():
+            rows_by_batch.setdefault(row.batch_id, []).append(row)
+
     programmes_list = []
-    
+
     for prog in programmes:
         c_ids = prog_course_ids.get(prog.id, [])
         courses_list = []
-        
-        # Keep track of aggregated metrics for this programme
+
+        # Aggregated metrics for this programme (weighted so real + demo batches combine).
         prog_total_colleges = 0
         prog_total_students = 0
         prog_weighted_progress_sum = 0
         prog_weighted_xp_sum = 0
         prog_batch_count = 0
-        
+
         for course_id in c_ids:
             course_batches = [b for b in batches if b.course_id == course_id and b.programme_id == prog.id]
             batches_list = []
-            
-            # If a course is linked to a programme but has no batches, add a mock batch in Demo Mode
+
+            # A course linked to a programme but with no batches gets a demo batch in Demo Mode.
             if not course_batches and is_demo:
                 mock_batch_id = f"{course_id}-mock-batch"
                 mock_metrics = generate_deterministic_mock_metrics(prog.id, course_id, mock_batch_id, state)
@@ -1614,72 +1735,25 @@ async def get_comparison_metrics(
                     "batchName": "Batch 1 (Demo)",
                     "metrics": mock_metrics
                 })
-                # Update programme aggregation values
                 prog_total_colleges += mock_metrics["colleges"]
                 prog_total_students += mock_metrics["students"]
                 prog_weighted_progress_sum += mock_metrics["progress"] * mock_metrics["students"]
                 prog_weighted_xp_sum += mock_metrics["avgXP"] * mock_metrics["students"]
                 prog_batch_count += 1
-                
+
             for batch in course_batches:
-                # Query students in batch
-                stmt = select(
-                    User.id,
-                    User.college_id,
-                    User.xp_total
-                ).join(
-                    UserCourse, UserCourse.user_id == User.id
-                ).filter(
-                    UserCourse.batch_id == batch.id,
-                    User.role == "student",
-                    User.is_test_account != True
-                )
-                if state:
-                    stmt = stmt.join(College, College.id == User.college_id).filter(
-                        College.location.ilike(f"%{state}%")
-                    )
-                res = await db.execute(stmt)
-                batch_students = res.all()
-                
-                # Default metrics values
+                # Look up this batch's pre-fetched student rows (was 2 queries per batch).
+                batch_rows = rows_by_batch.get(batch.id, [])
                 metrics = None
-                
-                if batch_students:
-                    # Calculate actual metrics
-                    batch_student_ids = {s.id for s in batch_students}
-                    batch_college_ids = {s.college_id for s in batch_students if s.college_id}
-                    batch_xp_sum = sum(s.xp_total for s in batch_students)
-                    batch_avg_xp = round(batch_xp_sum / len(batch_students))
-                    
-                    # Query average progress
-                    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == batch.course_id))
-                    total_tutorials = tot_tut_res.scalar() or 1
-                    
-                    stmt_progress = select(
-                        User.id,
-                        func.count(case((UserTutorial.practiced == True, Tutorial.id), else_=None)).label("completed")
-                    ).outerjoin(
-                        UserTutorial, UserTutorial.user_id == User.id
-                    ).outerjoin(
-                        Tutorial, (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == batch.course_id)
-                    ).join(
-                        UserCourse, UserCourse.user_id == User.id
-                    ).filter(
-                        UserCourse.batch_id == batch.id,
-                        User.role == "student",
-                        User.is_test_account != True
-                    )
-                    if state:
-                        stmt_progress = stmt_progress.join(College, College.id == User.college_id).filter(
-                            College.location.ilike(f"%{state}%")
-                        )
-                    stmt_progress = stmt_progress.group_by(User.id)
-                    res_progress = await db.execute(stmt_progress)
-                    student_completes = res_progress.all()
-                    
-                    batch_progress_sum = sum(round((s.completed / total_tutorials) * 100) for s in student_completes)
-                    batch_avg_progress = round(batch_progress_sum / len(student_completes)) if student_completes else 0
-                    
+
+                if batch_rows:
+                    total_tutorials = tut_counts.get(batch.course_id, 0) or 1
+                    batch_student_ids = {r.uid for r in batch_rows}
+                    batch_college_ids = {r.college_id for r in batch_rows if r.college_id}
+                    batch_xp_sum = sum(r.xp for r in batch_rows)
+                    batch_avg_xp = round(batch_xp_sum / len(batch_rows))
+                    batch_progress_sum = sum(round((r.completed / total_tutorials) * 100) for r in batch_rows)
+                    batch_avg_progress = round(batch_progress_sum / len(batch_rows))
                     metrics = {
                         "colleges": len(batch_college_ids),
                         "students": len(batch_student_ids),
@@ -1687,24 +1761,18 @@ async def get_comparison_metrics(
                         "avgXP": batch_avg_xp
                     }
                 else:
-                    # No actual students found: use mock values if in Demo Mode, else 0
+                    # No real students in this batch: demo values in Demo Mode, else honest zeros.
                     if is_demo:
                         metrics = generate_deterministic_mock_metrics(prog.id, course_id, batch.id, state)
                     else:
-                        metrics = {
-                            "colleges": 0,
-                            "students": 0,
-                            "progress": 0,
-                            "avgXP": 0
-                        }
-                
+                        metrics = {"colleges": 0, "students": 0, "progress": 0, "avgXP": 0}
+
                 if metrics:
                     batches_list.append({
                         "batchId": batch.id,
                         "batchName": batch.name,
                         "metrics": metrics
                     })
-                    # Update programme aggregation values
                     prog_total_colleges += metrics["colleges"]
                     prog_total_students += metrics["students"]
                     prog_weighted_progress_sum += metrics["progress"] * metrics["students"]
@@ -1717,15 +1785,15 @@ async def get_comparison_metrics(
                     "courseName": course_name_map.get(course_id, course_id.replace("swayam_plus-", "").replace("ilw-", "").capitalize()),
                     "batches": batches_list
                 })
-                
-        # Aggregate programme metrics
+
+        # Aggregate programme metrics (weighted by students so demo + real combine sensibly)
         if prog_total_students > 0:
             prog_avg_progress = round(prog_weighted_progress_sum / prog_total_students)
             prog_avg_xp = round(prog_weighted_xp_sum / prog_total_students)
         else:
             prog_avg_progress = 0
             prog_avg_xp = 0
-            
+
         programmes_list.append({
             "id": prog.id,
             "name": prog.name,
@@ -1738,5 +1806,9 @@ async def get_comparison_metrics(
             },
             "courses": courses_list
         })
-    return {"programmes": programmes_list}
+
+    result = {"programmes": programmes_list}
+    if not use_mock:
+        await set_cached(cache_key, result, ttl=300)
+    return result
 

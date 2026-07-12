@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useUserStore } from '@/store/userStore'
 import { useTheme } from '@/hooks/useTheme'
@@ -38,7 +38,6 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useAuthStore } from '@/store/authStore'
-import { useLeaderboardStore } from '@/store/leaderboardStore'
 import { CourseBatchSelector } from './CourseBatchSelector'
 
 // Navigation items for the sidebar/bottom nav
@@ -67,12 +66,6 @@ export function TopBar() {
     const user = useUserStore(state => state.user)
     const activeProgrammeName = useUserStore(state => state.activeProgrammeName)
     const setActiveProgramme = useUserStore(state => state.setActiveProgramme)
-
-    // Fetch leaderboard data on mount
-    const { fetchLeaderboard } = useLeaderboardStore()
-    useEffect(() => {
-        fetchLeaderboard()
-    }, [])
 
 
     return (

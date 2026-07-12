@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer,
 } from 'recharts'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChevronDown, TrendingUp, Zap } from 'lucide-react'
-import { useLeaderboardStore } from '@/store/leaderboardStore'
+import { useXPHistory } from '@/hooks/queries/useLeaderboardQueries'
 import { useTheme } from '@/hooks/useTheme'
 
 const MONTH_NAMES = [
@@ -49,7 +49,6 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export default function XPGrowthGraph() {
-    const { xpHistory, fetchXPHistory } = useLeaderboardStore()
     const { theme } = useTheme()
     const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
     const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -57,9 +56,8 @@ export default function XPGrowthGraph() {
     const axisColor = theme === 'dark' ? '#ffffff' : '#000000'
     const availableMonths = useMemo(() => getAvailableMonths(), [])
 
-    useEffect(() => {
-        fetchXPHistory(selectedMonth)
-    }, [selectedMonth, fetchXPHistory])
+    const { data: xpHistoryData } = useXPHistory(selectedMonth)
+    const xpHistory = xpHistoryData?.days ?? []
 
     const totalXP = xpHistory.reduce((sum, d) => sum + d.xp, 0)
     const peakDay = xpHistory.reduce((max, d) => (d.xp > max.xp ? d : max), { day: 0, xp: 0 })
@@ -115,7 +113,7 @@ export default function XPGrowthGraph() {
                     </div>
                     <div className="text-center p-2 rounded-lg bg-muted/20">
                         <p className="text-lg font-bold font-mono text-yellow-500">{peakDay.xp}</p>
-                        <p className="text-[10px] text-muted-foreground">Peak (Day {peakDay.day})</p>
+                        <p className="text-[10px] text-muted-foreground">{peakDay.day > 0 ? `Peak (Day ${peakDay.day})` : 'No activity yet'}</p>
                     </div>
                     <div className="text-center p-2 rounded-lg bg-muted/20">
                         <p className="text-lg font-bold font-mono text-emerald-500">{activeDays}</p>

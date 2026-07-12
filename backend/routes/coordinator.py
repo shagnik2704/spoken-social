@@ -16,6 +16,7 @@ from fastapi.responses import StreamingResponse
 import openpyxl
 
 from database import get_db
+from cache import get_cached, set_cached
 from models import User, College, UserCourse, UserTutorial, Tutorial
 from models.feedback import TutorialFeedback
 from dependencies import get_current_user, require_coordinator, require_admin
@@ -23,16 +24,122 @@ from dependencies import get_current_user, require_coordinator, require_admin
 router = APIRouter(prefix="/api/coordinator", tags=["coordinator"])
 
 
+async def _fetch_summary_stats(
+    db: AsyncSession,
+    course_id: str = "linux",
+    batch_id: str | None = None,
+    college_id: str | None = None,
+    total_tutorials: int | None = None,
+) -> dict[str, dict]:
+    """
+    Per-college aggregate stats for a course/batch in ONE SQL statement for ALL colleges
+    (was 3 queries PER college). Returns {college_id: stats_dict} of pure JSON-able data,
+    so the result is cache-friendly (see Phase 4).
+
+    Status-bucket precedence + thresholds mirror the legacy per-student Python logic
+    exactly (completed > active > at_risk > inactive). XP is course-scoped (matching the
+    legacy avg-XP query), which is why the previously-redundant XP re-query is dropped.
+
+    `total_tutorials` may be passed in by a caller that already computed it, to avoid a
+    duplicate COUNT; otherwise it is fetched here.
+    """
+    if total_tutorials is None:
+        tot_tut_res = await db.execute(
+            select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id)
+        )
+        total_tutorials = tot_tut_res.scalar() or 20
+    T = total_tutorials
+    # int(T*0.3) == the Python float threshold `watched > T*0.3` for integer watched counts.
+    watched_thresh = int(T * 0.3)
+
+    # ── Inner: one row per in-scope student, with course-scoped aggregates. ──
+    per_student = (
+        select(
+            User.id.label("uid"),
+            User.college_id.label("college_id"),
+            # Course-scoped XP: only sum xp from THIS course's tutorials (Tutorial.id
+            # is non-NULL only when the outer-joined tutorial matched course_id).
+            func.coalesce(
+                func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0
+            ).label("xp"),
+            func.count(case((UserTutorial.watched == True, Tutorial.id), else_=None)).label("watched"),
+            func.count(case((UserTutorial.practiced == True, Tutorial.id), else_=None)).label("completed"),
+            func.count(case((UserTutorial.minitask_opted == True, Tutorial.id), else_=None)).label("minitasks"),
+        )
+        .select_from(User)
+        .join(UserCourse, UserCourse.user_id == User.id)
+        .outerjoin(UserTutorial, UserTutorial.user_id == User.id)
+        .outerjoin(Tutorial, (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id))
+        .filter(
+            User.role == "student",
+            User.is_test_account != True,
+            UserCourse.course_id == course_id,
+            User.college_id.isnot(None),
+        )
+        .group_by(User.id, User.college_id)
+    )
+    if batch_id:
+        per_student = per_student.filter(UserCourse.batch_id == batch_id)
+    if college_id:
+        per_student = per_student.filter(User.college_id == college_id)
+    sub = per_student.subquery("per_student")
+
+    # ── Outer: per-college bucket counts (mutually exclusive, precedence-preserving). ──
+    is_completed = sub.c.completed >= T
+    is_active = (sub.c.completed < T) & (sub.c.watched > watched_thresh)
+    is_at_risk = (sub.c.completed < T) & (sub.c.watched <= watched_thresh) & (sub.c.watched > 0)
+    is_inactive = (sub.c.completed < T) & (sub.c.watched == 0)
+
+    stats_q = (
+        select(
+            sub.c.college_id.label("college_id"),
+            func.count().label("total"),
+            func.sum(case((is_completed, 1), else_=0)).label("num_completed"),
+            func.sum(case((is_active, 1), else_=0)).label("num_active"),
+            func.sum(case((is_at_risk, 1), else_=0)).label("num_at_risk"),
+            func.sum(case((is_inactive, 1), else_=0)).label("num_inactive"),
+            func.sum(case((sub.c.minitasks > 0, 1), else_=0)).label("with_minitasks"),
+            func.sum(sub.c.xp).label("total_xp"),
+            func.sum(func.round(sub.c.completed * 100.0 / literal(T))).label("progress_sum"),
+        )
+        .group_by(sub.c.college_id)
+    )
+    rows = (await db.execute(stats_q)).all()
+
+    stats: dict[str, dict] = {}
+    for r in rows:
+        total = r.total or 0
+        if total == 0:
+            continue
+        num_completed = r.num_completed or 0
+        num_active = r.num_active or 0
+        stats[str(r.college_id)] = {
+            "totalStudents": total,
+            "activeStudents": num_active + num_completed,
+            "inactiveStudents": r.num_inactive or 0,
+            "atRiskStudents": r.num_at_risk or 0,
+            "completedStudents": num_completed,
+            "avgProgress": round(float(r.progress_sum or 0) / total),
+            "avgXP": round(float(r.total_xp or 0) / total),
+            "completionRate": round((num_completed / total) * 100),
+            "studentsWithMinitasks": r.with_minitasks or 0,
+        }
+    return stats
+
+
 async def _build_college_summary(
-    db: AsyncSession, 
+    db: AsyncSession,
     college_id: str | None = None,
     course_id: str = "linux",
-    batch_id: str | None = None
+    batch_id: str | None = None,
+    total_tutorials: int | None = None,
 ) -> list[dict]:
     """
-    Builds college summaries using individual SQL queries per college.
-    Now course and batch aware.
+    Builds college summaries. College metadata (name/location/order) comes from one query;
+    all per-college stats come from a single aggregate (see _fetch_summary_stats).
+    Total: 3 queries regardless of college count (was 2 + 3N).
     """
+    # College metadata + ordering — same set/order as before.
     if college_id:
         result = await db.execute(select(College).filter(College.id == college_id))
         colleges = result.scalars().all()
@@ -44,40 +151,27 @@ async def _build_college_summary(
             .filter(
                 User.role == "student",
                 User.is_test_account != True,
-                UserCourse.course_id == course_id
+                UserCourse.course_id == course_id,
             )
         )
         if batch_id:
             college_query = college_query.filter(UserCourse.batch_id == batch_id)
         college_query = college_query.distinct().order_by(College.name)
-        result = await db.execute(college_query)
-        colleges = result.scalars().all()
+        colleges = (await db.execute(college_query)).scalars().all()
 
-    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
-    total_tutorials = tot_tut_res.scalar() or 20
+    stats = await _fetch_summary_stats(
+        db, course_id=course_id, batch_id=batch_id, college_id=college_id,
+        total_tutorials=total_tutorials,
+    )
 
     summaries = []
     for college in colleges:
-        # Get all student IDs for this college
-        # Filter by enrollment in this course/batch if specified
-        stu_query = select(User.id).filter(
-            User.college_id == college.id,
-            User.role == "student",
-            User.is_test_account != True
-        )
-        
-        # Join with UserCourse to ensure they are enrolled in this course/batch
-        stu_query = stu_query.join(UserCourse, UserCourse.user_id == User.id).filter(UserCourse.course_id == course_id)
-        if batch_id:
-            stu_query = stu_query.filter(UserCourse.batch_id == batch_id)
-
-        stu_ids_res = await db.execute(stu_query)
-        student_ids = stu_ids_res.scalars().all()
-        total = len(student_ids)
-
-        if total == 0:
+        cid = str(college.id)
+        s = stats.get(cid)
+        if not s:
+            # Matches the legacy zero-branch shape (no studentsWithMinitasks key).
             summaries.append({
-                "id": str(college.id),
+                "id": cid,
                 "name": college.name,
                 "location": college.location or "",
                 "coordinatorName": college.coordinator_name or "",
@@ -93,108 +187,48 @@ async def _build_college_summary(
                 "completionRate": 0,
             })
             continue
-
-        # Per-student metrics via SQL
-        student_metrics_query = select(
-            User.id,
-            func.coalesce(func.sum(UserTutorial.xp_earned), 0).label("xp_total"),
-            func.count(
-                case((UserTutorial.watched == True, Tutorial.id), else_=None)
-            ).label("watched"),
-            func.count(
-                case((UserTutorial.practiced == True, Tutorial.id), else_=None)
-            ).label("completed"),
-            func.count(
-                case((UserTutorial.minitask_opted == True, Tutorial.id), else_=None)
-            ).label("minitasks_opted"),
-        ).outerjoin(
-            UserTutorial, UserTutorial.user_id == User.id
-        ).outerjoin(
-            Tutorial,
-            (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id)
-        ).filter(
-            User.id.in_(student_ids) # Only students for this college/course/batch
-        ).group_by(User.id)
-        
-        student_metrics_res = await db.execute(student_metrics_query)
-        student_metrics = student_metrics_res.all()
-
-        num_completed = 0
-        num_active = 0
-        num_at_risk = 0
-        num_inactive = 0
-        total_progress = 0
-        students_with_minitasks = 0
-
-        for row in student_metrics:
-            uid, xp, watched_count, completed_count, minitasks_count = row
-            progress = round((completed_count / total_tutorials) * 100) if total_tutorials > 0 else 0
-            total_progress += progress
-
-            if minitasks_count > 0:
-                students_with_minitasks += 1
-
-            if completed_count >= total_tutorials:
-                num_completed += 1
-            elif watched_count > total_tutorials * 0.3:
-                num_active += 1
-            elif watched_count > 0:
-                num_at_risk += 1
-            else:
-                num_inactive += 1
-
-        # Average XP (sum of UserTutorial.xp_earned for that course, averaged across students)
-        avg_xp_res = await db.execute(
-            select(func.coalesce(func.sum(UserTutorial.xp_earned), 0))
-            .join(User, User.id == UserTutorial.user_id)
-            .join(Tutorial, (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id))
-            .filter(
-                User.role == "student",
-                User.is_test_account != True,
-                User.college_id == college.id,
-                User.id.in_(student_ids)
-            )
-        )
-        total_xp_sum = avg_xp_res.scalar() or 0
-        avg_xp = round(total_xp_sum / len(student_ids)) if len(student_ids) > 0 else 0
-
         summaries.append({
-            "id": str(college.id),
+            "id": cid,
             "name": college.name,
             "location": college.location or "",
             "coordinatorName": college.coordinator_name or "",
             "course": course_id,
-            "totalCourseStudents": total,
-            "totalStudents": total,
-            "activeStudents": num_active + num_completed,
-            "inactiveStudents": num_inactive,
-            "atRiskStudents": num_at_risk,
-            "completedStudents": num_completed,
-            "avgProgress": round(total_progress / total) if total > 0 else 0,
-            "avgXP": avg_xp,
-            "completionRate": round((num_completed / total) * 100) if total > 0 else 0,
-            "studentsWithMinitasks": students_with_minitasks,
+            "totalCourseStudents": s["totalStudents"],
+            "totalStudents": s["totalStudents"],
+            "activeStudents": s["activeStudents"],
+            "inactiveStudents": s["inactiveStudents"],
+            "atRiskStudents": s["atRiskStudents"],
+            "completedStudents": s["completedStudents"],
+            "avgProgress": s["avgProgress"],
+            "avgXP": s["avgXP"],
+            "completionRate": s["completionRate"],
+            "studentsWithMinitasks": s["studentsWithMinitasks"],
         })
 
     return summaries
 
 
 async def _get_student_rows(
-    db: AsyncSession, 
-    college_id: str, 
+    db: AsyncSession,
+    college_id: str,
     course_id: str = "linux",
     batch_id: str | None = None,
-    page: int = 1, 
+    page: int = 1,
     limit: int = 50,
-    sort: str = "progress", 
+    sort: str = "progress",
     status_filter: str = "all",
-    search: str = ""
+    search: str = "",
+    total_tutorials: int | None = None,
 ):
     """
     Returns paginated student rows for a specific college and course/batch.
+
+    `total_tutorials` may be passed in by a caller that already computed it, to avoid a
+    duplicate COUNT; otherwise it is fetched here.
     """
-    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
-    total_tutorials = tot_tut_res.scalar() or 20
+    if total_tutorials is None:
+        tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
+        total_tutorials = tot_tut_res.scalar() or 20
 
     # ── Step 1: Build the student IDs query (filtered by college, course, batch) ──
     stu_id_query = select(User.id).filter(
@@ -242,7 +276,7 @@ async def _get_student_rows(
         (func.count(
             case((UserTutorial.watched == True, Tutorial.id), else_=None)
          ) > literal(0), literal("at_risk")),
-        (func.coalesce(func.sum(UserTutorial.xp_earned), 0) > 0, literal("inactive")),
+        (func.coalesce(func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0) > 0, literal("inactive")),
         else_=literal("not_started"),
     ).label("status")
 
@@ -250,7 +284,7 @@ async def _get_student_rows(
         User.id,
         User.display_name,
         User.username,
-        func.coalesce(func.sum(UserTutorial.xp_earned), 0).label("xp_total"),
+        func.coalesce(func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0).label("xp_total"),
         watched_col,
         completed_col,
         minitask_col,
@@ -290,17 +324,19 @@ async def _get_student_rows(
     total_count = (await db.execute(count_q)).scalar() or 0
     total_pages = max(1, (total_count + limit - 1) // limit)
 
-    # ── Step 4: Sort in SQL ──
-    if sort == "progress":
-        outer = outer.order_by(sub.c.progress.desc())
-    elif sort == "xp":
-        outer = outer.order_by(sub.c.xp_total.desc())
+    # ── Step 4: Sort in SQL — always with a unique tiebreaker (sub.c.id) so pagination is
+    # stable. Without it, ties on a non-unique column (e.g. the many students at 0%
+    # progress) have no defined order, and a student could repeat on two pages or be
+    # skipped between requests. ──
+    if sort == "xp":
+        primary = sub.c.xp_total.desc()
     elif sort == "name":
-        outer = outer.order_by(func.coalesce(sub.c.display_name, sub.c.username))
+        primary = func.coalesce(sub.c.display_name, sub.c.username)
     elif sort == "tasks":
-        outer = outer.order_by(sub.c.minitasks_opted.desc())
-    else:
-        outer = outer.order_by(sub.c.progress.desc())
+        primary = sub.c.minitasks_opted.desc()
+    else:  # progress (default)
+        primary = sub.c.progress.desc()
+    outer = outer.order_by(primary, sub.c.id)
 
     # ── Step 5: REAL pagination — PostgreSQL only processes these rows ──
     offset = (page - 1) * limit
@@ -369,7 +405,14 @@ async def get_all_colleges(
     if user.effective_role == "coordinator":
         college_id = user.college_id
 
-    return await _build_college_summary(db, college_id=college_id, course_id=course_id, batch_id=batch_id)
+    cache_key = f"coord:colleges:{college_id or 'all'}:{course_id}:{batch_id or 'all'}"
+    cached = await get_cached(cache_key)
+    if cached is not None:
+        return cached
+
+    result = await _build_college_summary(db, college_id=college_id, course_id=course_id, batch_id=batch_id)
+    await set_cached(cache_key, result, ttl=120)
+    return result
 
 
 @router.get("/colleges/{college_id}")
@@ -395,36 +438,60 @@ async def get_college_details(
             detail="You can only view your own college's students",
         )
 
-    res = await db.execute(select(College).filter(College.id == college_id))
-    college = res.scalars().first()
-    if not college:
-        raise HTTPException(status_code=404, detail="College not found")
+    # Compute the tutorial count once and share it across the summary aggregate and the
+    # student-rows query (avoids two duplicate COUNTs). The summary's own College fetch
+    # doubles as the existence check, so the separate College query is gone.
+    total_tutorials = (await db.execute(
+        select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id)
+    )).scalar() or 20
 
-    summary = await _build_college_summary(db, college_id=college_id, course_id=course_id, batch_id=batch_id)
-    if not summary:
-        raise HTTPException(status_code=404, detail="College not found")
+    # The summary block is invariant to page/sort/search/status — cache it so paging and
+    # searching a college don't re-run the aggregate. Student rows are NOT cached.
+    summary_key = f"coord:summary:{college_id}:{course_id}:{batch_id or 'all'}"
+    summary = await get_cached(summary_key)
+    if summary is None:
+        summary = await _build_college_summary(
+            db, college_id=college_id, course_id=course_id, batch_id=batch_id,
+            total_tutorials=total_tutorials,
+        )
+        if not summary:
+            raise HTTPException(status_code=404, detail="College not found")
+        await set_cached(summary_key, summary, ttl=120)
 
     student_data = await _get_student_rows(
         db, college_id, course_id=course_id, batch_id=batch_id,
         page=page, limit=limit, sort=sort,
         status_filter=status, search=search,
+        total_tutorials=total_tutorials,
     )
 
+    s = summary[0]
     return {
         "college": {
-            "id": str(college.id),
-            "name": college.name,
-            "location": college.location or "",
-            "coordinatorName": college.coordinator_name or "",
+            "id": s["id"],
+            "name": s["name"],
+            "location": s["location"],
+            "coordinatorName": s["coordinatorName"],
             "course": course_id,
         },
         "metrics": {
-            "totalStudents": summary[0]["totalStudents"],
-            "activeStudents": summary[0]["activeStudents"],
-            "completedStudents": summary[0]["completedStudents"],
-            "avgProgress": summary[0]["avgProgress"],
-            "avgXP": summary[0]["avgXP"],
-            "completionRate": summary[0]["completionRate"],
+            "totalStudents": s["totalStudents"],
+            "activeStudents": s["activeStudents"],
+            "completedStudents": s["completedStudents"],
+            "avgProgress": s["avgProgress"],
+            "avgXP": s["avgXP"],
+            "completionRate": s["completionRate"],
+        },
+        # Per-status counts for the WHOLE cohort (not the current page). The UI's status
+        # chips must show these; counting the paginated `students` array gave wrong totals
+        # like "All (10)" for a 200-learner college. Note: summary.activeStudents already
+        # includes completed, so the strict "active" bucket subtracts completed back out.
+        "statusCounts": {
+            "all": s["totalStudents"],
+            "active": s["activeStudents"] - s["completedStudents"],
+            "completed": s["completedStudents"],
+            "at_risk": s["atRiskStudents"],
+            "inactive": s["inactiveStudents"],
         },
         "students": student_data["students"],
         "pagination": student_data["pagination"],
@@ -552,6 +619,11 @@ async def get_college_analytics(
             detail="You can only view your own college's analytics",
         )
 
+    cache_key = f"coord:analytics:{college_id}:{course_id}:{batch_id or 'all'}"
+    cached = await get_cached(cache_key)
+    if cached is not None:
+        return cached
+
     # ── Step 1: Filter students by enrollment in course & batch ──
     stu_query = select(User.id).filter(
         User.college_id == college_id,
@@ -594,15 +666,23 @@ async def get_college_analytics(
             "atRisk": []
         }
 
-    tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
-    total_tutorials = tot_tut_res.scalar() or 20
+    # Fetch the tutorial list once (titles + count); total_tutorials is derived from its
+    # length, removing the separate COUNT query that used to run here.
+    tuts_res = await db.execute(
+        select(Tutorial.tutorial_number, Tutorial.title)
+        .filter(Tutorial.course_id == course_id)
+        .order_by(Tutorial.tutorial_number)
+    )
+    tuts_data = tuts_res.all()
+    tuts_map = {row.tutorial_number: row.title for row in tuts_data}
+    total_tutorials = len(tuts_data) or 20
 
     student_metrics_res = await db.execute(
         select(
             User.id,
             User.display_name,
             User.username,
-            func.coalesce(func.sum(UserTutorial.xp_earned), 0).label("xp_total"),
+            func.coalesce(func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0).label("xp_total"),
             func.count(
                 case((UserTutorial.watched == True, Tutorial.id), else_=None)
             ).label("watched"),
@@ -700,15 +780,7 @@ async def get_college_analytics(
     )
     tut_completion_data = tut_completion_res.all()
     tut_counts = {row.tutorial_number: row.count for row in tut_completion_data}
-    
-    # Fetch all tutorials for this course to get dynamic titles
-    tuts_res = await db.execute(
-        select(Tutorial.tutorial_number, Tutorial.title)
-        .filter(Tutorial.course_id == course_id)
-        .order_by(Tutorial.tutorial_number)
-    )
-    tuts_data = tuts_res.all()
-    tuts_map = {row.tutorial_number: row.title for row in tuts_data}
+    # tuts_map (tutorial titles) was already fetched above alongside total_tutorials.
 
     tutorial_completion = []
     for i in range(1, total_tutorials + 1):
@@ -721,7 +793,7 @@ async def get_college_analytics(
             "rate": rate
         })
 
-    return {
+    result = {
         "totalStudents": total,
         "avgProgress": round(total_progress / total) if total > 0 else 0,
         "avgWatched": round(total_watched / total, 1) if total > 0 else 0,
@@ -746,6 +818,8 @@ async def get_college_analytics(
         "topPerformers": top_performers,
         "atRisk": at_risk_list
     }
+    await set_cached(cache_key, result, ttl=300)
+    return result
 
 
 # ============================================================
@@ -777,6 +851,14 @@ async def get_coordinator_feedback_summary(
             detail="You can only view your own college's feedback",
         )
 
+    cache_key = (
+        f"fb:{college_id}:{course_id}:{batch_id or '-'}:"
+        f"{tutorial_id or '-'}:{step_type or '-'}:{reason or '-'}"
+    )
+    cached = await get_cached(cache_key)
+    if cached is not None:
+        return cached
+
     # ----- Step 1: Fetch ALL tutorials for the filter dropdown -----
     res_all_tuts = await db.execute(
         select(Tutorial.id, Tutorial.title, Tutorial.tutorial_number)
@@ -796,6 +878,8 @@ async def get_coordinator_feedback_summary(
         .join(Tutorial, TutorialFeedback.tutorial_id == Tutorial.id)
         .filter(User.college_id == college_id)
         .filter(Tutorial.course_id == course_id)
+        # Exclude test/placeholder accounts and non-students, like every other aggregate.
+        .filter(User.role == "student", User.is_test_account != True)
     )
 
     if batch_id:
@@ -808,13 +892,12 @@ async def get_coordinator_feedback_summary(
         base_query = base_query.filter(TutorialFeedback.tutorial_id == uuid_mod.UUID(tutorial_id))
     if step_type:
         base_query = base_query.filter(TutorialFeedback.step_type == step_type)
+    if reason:
+        # Postgres array containment (reasons @> ARRAY[reason]) — was a Python post-filter.
+        base_query = base_query.filter(TutorialFeedback.reasons.contains([reason]))
 
     res_fb = await db.execute(base_query.order_by(TutorialFeedback.created_at.desc()))
     all_feedback = res_fb.scalars().all()
-
-    # If reason filter is active, narrow down
-    if reason:
-        all_feedback = [fb for fb in all_feedback if reason in (fb.reasons or [])]
 
     # ----- Step 3: Aggregate counts -----
     reason_counts: dict[str, int] = {}
@@ -844,16 +927,12 @@ async def get_coordinator_feedback_summary(
     college_row = res_col.first()
     college_name = college_row.name if college_row else "Unknown"
 
-    # ----- Step 5: Tutorial info lookup -----
-    tutorial_ids = list({fb.tutorial_id for fb in all_feedback})
-    if tutorial_ids:
-        res_tuts = await db.execute(
-            select(Tutorial.id, Tutorial.title, Tutorial.tutorial_number)
-            .filter(Tutorial.id.in_(tutorial_ids))
-        )
-        tut_map = {t.id: {"title": t.title, "number": t.tutorial_number} for t in res_tuts.all()}
-    else:
-        tut_map = {}
+    # ----- Step 5: Tutorial info — reuse the course tutorials already fetched in Step 1
+    # (feedback is course-scoped, so every tutorial_id is present). Was a re-fetch. -----
+    tut_map = {
+        uuid_mod.UUID(t["id"]): {"title": t["title"], "number": t["number"]}
+        for t in all_tutorials
+    }
 
     # ----- Step 6: Build entries grouped by tutorial -----
     tutorial_groups: dict[str, dict] = {}
@@ -911,6 +990,7 @@ async def get_coordinator_feedback_summary(
         .join(Tutorial, TutorialFeedback.tutorial_id == Tutorial.id)
         .filter(User.college_id == college_id)
         .filter(Tutorial.course_id == course_id)
+        .filter(User.role == "student", User.is_test_account != True)
     )
     if batch_id:
         distinct_keys_query = distinct_keys_query.join(
@@ -926,7 +1006,7 @@ async def get_coordinator_feedback_summary(
             all_reason_keys.update(reasons_list)
     all_reason_keys_sorted = sorted(all_reason_keys)
 
-    return {
+    result = {
         "filterOptions": {
             "tutorials": all_tutorials,
             "stepTypes": ["watched", "practiced", "assignmentDone", "forumAsked", "forumAnswered"],
@@ -938,4 +1018,6 @@ async def get_coordinator_feedback_summary(
         "stepBreakdown": step_breakdown,
         "tutorialGroups": sorted_groups,
     }
+    await set_cached(cache_key, result, ttl=120)
+    return result
 

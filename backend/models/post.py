@@ -29,19 +29,17 @@ class Post(Base):
         Index("idx_posts_user", "user_id"),
     )
 
-    def to_api_dict(self, current_user_id=None):
+    def to_api_dict(self, current_user_id=None, likes_count=0, comments_count=0, shares_count=0):
         from datetime import datetime, timezone
         import math
 
-        # Derive counts from relationships
-        likes_count = len(self.likes) if self.likes else 0
-        comments_count = len(self.comments) if self.comments else 0
-        shares_count = len(self.shares) if self.shares else 0
+        # Counts are passed in from SQL COUNT subqueries (see routes/feed.py) rather
+        # than loading every interaction row just to len() it. Do NOT access
+        # self.likes/comments/shares here — they are no longer eager-loaded and
+        # would trigger a lazy load (MissingGreenlet under AsyncSession).
 
-        # Check if current user liked/bookmarked
+        # isLiked is a dead feature server-side (no like endpoints exist); kept False.
         is_liked = False
-        if current_user_id and self.likes:
-            is_liked = any(l.user_id == current_user_id for l in self.likes)
 
         # Collect hashtags
         hashtags = []

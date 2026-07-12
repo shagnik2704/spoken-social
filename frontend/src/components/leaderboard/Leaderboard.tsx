@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import type { LeaderboardUser } from '@/types'
-import { useState, useEffect } from 'react'
-import { useLeaderboardStore } from '@/store/leaderboardStore'
+import { useState } from 'react'
+import { useLeaderboard } from '@/hooks/queries/useLeaderboardQueries'
 import XPGrowthGraph from './XPGrowthGraph'
 
 const courses = [
@@ -202,15 +202,10 @@ function YourPosition({ user, data }: { user: LeaderboardUser; data: Leaderboard
 type TimeFilter = 'overall' | 'weekly'
 
 export default function Leaderboard() {
-    const { leaderboardData, fetchLeaderboard } = useLeaderboardStore()
+    const { data: leaderboardData = [] } = useLeaderboard()
     const [timeFilter, setTimeFilter] = useState<TimeFilter>('overall')
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
-
-
-    useEffect(() => {
-        fetchLeaderboard()
-    }, [])
 
     const currentUser = leaderboardData.find(u => u.isCurrentUser)
 
@@ -234,11 +229,11 @@ export default function Leaderboard() {
 
             {/* Filters Row */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
-                {/* Time Filter Tabs */}
+                {/* Time Filter Tabs — "This Week" is hidden until a weekly-XP rollup job
+                    exists to feed it (xp_last_week is currently never recomputed). */}
                 <div className="flex items-center gap-1 bg-muted/30 rounded-full p-1">
                     {[
                         { id: 'overall' as TimeFilter, label: 'All Time' },
-                        { id: 'weekly' as TimeFilter, label: 'This Week' },
                     ].map(filter => (
                         <button
                             key={filter.id}

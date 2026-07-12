@@ -21,6 +21,10 @@ class Course(Base):
     college_courses = relationship("CollegeCourse", back_populates="course", cascade="all, delete-orphan")
     programme_courses = relationship("ProgrammeCourse", back_populates="course")
 
+    __table_args__ = (
+        Index("idx_courses_forum_category", "forum_category"),
+    )
+
 
 class UserCourse(Base):
     __tablename__ = "user_courses"

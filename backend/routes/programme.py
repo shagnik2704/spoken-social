@@ -16,6 +16,31 @@ from dependencies import get_current_user
 router = APIRouter(prefix="/api/programmes", tags=["programmes"])
 
 
+async def _course_counts(db: AsyncSession) -> dict:
+    """One grouped query: programme_id -> number of courses (was 1 query per programme)."""
+    rows = (await db.execute(
+        select(ProgrammeCourse.programme_id, func.count())
+        .group_by(ProgrammeCourse.programme_id)
+    )).all()
+    return {pid: cnt for pid, cnt in rows}
+
+
+def _serialize_programmes(programmes, counts: dict) -> list[dict]:
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "icon": p.icon,
+            "color": p.color,
+            "isActive": p.is_active,
+            "displayOrder": p.display_order,
+            "courseCount": counts.get(p.id, 0),
+        }
+        for p in programmes
+    ]
+
+
 @router.get("")
 async def list_programmes(db: AsyncSession = Depends(get_db)):
     """List all active programmes (public, for the selector)."""
@@ -25,26 +50,7 @@ async def list_programmes(db: AsyncSession = Depends(get_db)):
         .order_by(Programme.display_order)
     )
     programmes = result.scalars().all()
-
-    data = []
-    for p in programmes:
-        # Count courses in this programme
-        course_count_res = await db.execute(
-            select(func.count()).select_from(ProgrammeCourse).filter(ProgrammeCourse.programme_id == p.id)
-        )
-        course_count = course_count_res.scalar() or 0
-
-        data.append({
-            "id": p.id,
-            "name": p.name,
-            "description": p.description,
-            "icon": p.icon,
-            "color": p.color,
-            "isActive": p.is_active,
-            "displayOrder": p.display_order,
-            "courseCount": course_count,
-        })
-    return data
+    return _serialize_programmes(programmes, await _course_counts(db))
 
 
 @router.get("/me")
@@ -103,22 +109,4 @@ async def get_my_programmes(
         )
         programmes = result.scalars().all()
 
-    data = []
-    for p in programmes:
-        # Count courses in this programme
-        course_count_res = await db.execute(
-            select(func.count()).select_from(ProgrammeCourse).filter(ProgrammeCourse.programme_id == p.id)
-        )
-        course_count = course_count_res.scalar() or 0
-
-        data.append({
-            "id": p.id,
-            "name": p.name,
-            "description": p.description,
-            "icon": p.icon,
-            "color": p.color,
-            "isActive": p.is_active,
-            "displayOrder": p.display_order,
-            "courseCount": course_count,
-        })
-    return data
+    return _serialize_programmes(programmes, await _course_counts(db))

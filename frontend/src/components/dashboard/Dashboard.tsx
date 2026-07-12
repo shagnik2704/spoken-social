@@ -126,11 +126,11 @@ function MyCourses() {
     const courses = useUserStore(state => state.courses)
     const activeCourseId = useUserStore(state => state.activeCourseId)
     const setActiveCourse = useUserStore(state => state.setActiveCourse)
-    const fetchTutorials = useUserStore(state => state.fetchTutorials)
 
     const handleCourseClick = (courseId: string) => {
+        // Just set the active course; ActiveCourseTracker's effect owns fetching tutorials
+        // + forum activity for it (removing this avoids a duplicate fetch per course switch).
         setActiveCourse(courseId)
-        fetchTutorials(courseId)
     }
 
     if (courses.length === 0) {

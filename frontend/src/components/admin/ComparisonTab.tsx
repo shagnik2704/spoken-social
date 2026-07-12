@@ -539,8 +539,9 @@ export function ComparisonTab({ colleges }: { colleges: CollegeSummary[] }) {
                                     </div>
 
                                     <div className="space-y-1 max-h-[190px] overflow-y-auto pr-1">
-                                        {metricsData.programmes.find(p => p.id === selectedSameProg)?.courses.flatMap((c, cIdx) => 
+                                        {(() => { let runningIdx = 0; return metricsData.programmes.find(p => p.id === selectedSameProg)?.courses.flatMap((c) =>
                                             c.batches.map(b => {
+                                                const colorIdx = runningIdx++  // matches the bars' per-batch color index
                                                 const key = `${c.courseId}_${b.batchId}`
                                                 const isChecked = selectedSameCourses.includes(key)
                                                 return (
@@ -562,11 +563,11 @@ export function ComparisonTab({ colleges }: { colleges: CollegeSummary[] }) {
                                                             <p className="truncate font-semibold text-[11px]">{c.courseName}</p>
                                                             <p className="text-[9px] text-muted-foreground font-mono">{b.batchName}</p>
                                                         </div>
-                                                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: getColorForCourse(selectedSameProg, cIdx) }} />
+                                                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: getColorForCourse(selectedSameProg, colorIdx) }} />
                                                     </button>
                                                 )
                                             })
-                                        )}
+                                        )})()}
                                         {metricsData.programmes.find(p => p.id === selectedSameProg)?.courses.length === 0 && (
                                             <p className="text-[11px] text-muted-foreground text-center py-4">No courses available for this program</p>
                                         )}
@@ -597,9 +598,9 @@ export function ComparisonTab({ colleges }: { colleges: CollegeSummary[] }) {
                                 </div>
 
                                 <div className="space-y-1 max-h-[260px] overflow-y-auto pr-1">
-                                    {metricsData.programmes.flatMap(p => 
-                                        p.courses.flatMap((c, cIdx) => 
+                                    {metricsData.programmes.flatMap(p => { let runningIdx = 0; return p.courses.flatMap((c) =>
                                             c.batches.map(b => {
+                                                const colorIdx = runningIdx++  // matches the bars' per-batch color index (reset per programme)
                                                 const key = `${p.id}_${c.courseId}_${b.batchId}`
                                                 const isChecked = selectedDiffCourses.includes(key)
                                                 return (
@@ -625,12 +626,12 @@ export function ComparisonTab({ colleges }: { colleges: CollegeSummary[] }) {
                                                                 <span>{b.batchName}</span>
                                                             </p>
                                                         </div>
-                                                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: getColorForCourse(p.id, cIdx) }} />
+                                                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: getColorForCourse(p.id, colorIdx) }} />
                                                     </button>
                                                 )
                                             })
                                         )
-                                    )}
+                                    })}
                                 </div>
                             </div>
                         )}

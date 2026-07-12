@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '@/store/userStore'
 import api from '@/lib/axios'
@@ -23,27 +23,16 @@ const iconMap: Record<string, any> = {
 }
 
 export function ProgrammeSelector() {
-    const [programmes, setProgrammes] = useState<Programme[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
     const user = useUserStore(state => state.user)
     const setActiveProgramme = useUserStore(state => state.setActiveProgramme)
     const logout = useUserStore(state => state.logout)
     const navigate = useNavigate()
 
-    useEffect(() => {
-        setIsLoading(true)
-        api.get('/api/programmes/me')
-            .then(res => {
-                setProgrammes(res.data)
-                setIsLoading(false)
-            })
-            .catch(err => {
-                console.error('Failed to fetch programmes', err)
-                setError('Could not fetch accessible programmes. Please try again.')
-                setIsLoading(false)
-            })
-    }, [])
+    const { data: programmes = [], isLoading, isError } = useQuery<Programme[]>({
+        queryKey: ['programmes', 'me'],
+        queryFn: async () => (await api.get('/api/programmes/me')).data,
+    })
+    const error = isError ? 'Could not fetch accessible programmes. Please try again.' : null
 
     const handleSelect = (p: Programme) => {
         setActiveProgramme(p.id, p.name)

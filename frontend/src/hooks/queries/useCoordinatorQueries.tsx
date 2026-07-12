@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import api from '@/lib/axios'
 
 const fetchColleges = async (courseId?: string, batchId?: string | null) => {
@@ -70,7 +70,8 @@ export function useCoordinatorCollegeDetails(
     return useQuery({
         queryKey: ['coordinator', 'college-details', collegeId, page, sortBy, statusFilter, searchQuery, courseId, batchId],
         queryFn: () => fetchCollegeDetails(collegeId!, page, sortBy, statusFilter, searchQuery, courseId, batchId),
-        enabled: enabled && !!collegeId
+        enabled: enabled && !!collegeId,
+        placeholderData: keepPreviousData, // keep the prior page/search visible instead of flashing empty
     })
 }
 

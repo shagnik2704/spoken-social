@@ -5,11 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from database import get_db
-from dependencies import get_current_user
+from dependencies import get_current_user, require_admin
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial, Course, CollegeCourse
 from models.xp_event import XPEvent
 from leaderboard_cache import update_user_xp
-from services.forum import get_forum_activity_for_tutorial
 
 
 
@@ -231,20 +230,25 @@ async def get_my_forum_activity(course_id: str, user: User = Depends(get_current
     Returns verified forum activity grouped by tutorial_id.
     Used by the ActiveCourseTracker to show verified forum posts.
     """
-    # Get all tutorials for this course
+    from models.forum_activity import ForumActivity
+    from services.forum import activity_to_dict
+
+    # Single query joined on the course (was one query per tutorial), grouped in Python.
     stmt = (
-        select(Tutorial)
-        .filter(Tutorial.course_id == course_id)
-        .order_by(Tutorial.tutorial_number)
+        select(ForumActivity)
+        .join(Tutorial, ForumActivity.tutorial_id == Tutorial.id)
+        .filter(
+            ForumActivity.user_id == user.id,
+            Tutorial.course_id == course_id,
+            ForumActivity.deleted_on_forum == False,
+        )
+        .order_by(ForumActivity.posted_at.desc())
     )
     result = await db.execute(stmt)
-    tutorials = result.scalars().all()
 
-    activity_by_tutorial = {}
-    for tutorial in tutorials:
-        activities = await get_forum_activity_for_tutorial(db, user.id, tutorial.id)
-        if activities:
-            activity_by_tutorial[str(tutorial.id)] = activities
+    activity_by_tutorial: dict[str, list] = {}
+    for a in result.scalars().all():
+        activity_by_tutorial.setdefault(str(a.tutorial_id), []).append(activity_to_dict(a))
 
     return activity_by_tutorial
 
@@ -297,22 +301,11 @@ async def update_tutorial(
     if body.field == "practiced" and body.value is True:
         ut.status = "completed"
 
-    # Recalculate XP
-    XP_MAP = {
-        "watched": 10, 
-        "practiced": 10, 
-        "assignment_done": 5,
-        "forum_asked": 5,
-        "forum_answered": 10
-    }
-    old_xp = ut.xp_earned
-    ut.xp_earned = sum(
-        XP_MAP[col] for col in XP_MAP
-        if getattr(ut, col) is True
-    )
+    # Recompute xp_earned from the flags (single source of truth — see services/xp.py).
+    from services.xp import recompute_tutorial_xp, recalc_level
+    xp_gained = recompute_tutorial_xp(ut)
 
     # Update user's total XP with the difference and log XP event
-    xp_gained = ut.xp_earned - old_xp
     if xp_gained != 0:
         user.xp_total += xp_gained
 
@@ -325,14 +318,7 @@ async def update_tutorial(
         )
         db.add(xp_event)
 
-        # Level up/down check
-        xp = user.xp_total
-        if xp >= 12000:   user.level = 26
-        elif xp >= 7000:  user.level = 21
-        elif xp >= 3500:  user.level = 16
-        elif xp >= 1500:  user.level = 11
-        elif xp >= 500:   user.level = 6
-        else:             user.level = 1
+        recalc_level(user)
 
     await db.commit()
 
@@ -354,10 +340,20 @@ async def update_tutorial(
 
 @router.post('/me/xp')
 async def add_xp(
-    body: XPUpdate, 
-    user: User = Depends(get_current_user), 
+    body: XPUpdate,
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
+    # SECURITY: this endpoint credits a caller-chosen amount of XP straight onto the
+    # account, logs an XPEvent, and pushes to the public leaderboard. The app does NOT
+    # use it (students earn XP only via update_tutorial and the forum worker), so it was
+    # pure attack surface: any student could POST {"amount": 999999} and top the board.
+    # It is now admin-only and bounded. (Removing it entirely is also reasonable.)
+    if not body.source or len(body.source) > 50:
+        raise HTTPException(status_code=400, detail="source must be 1–50 characters")
+    if abs(body.amount) > 1000:
+        raise HTTPException(status_code=400, detail="amount must be within -1000..1000")
+
     # Check if batch is active
     from dependencies import check_batch_active
     await check_batch_active(body.batch_id, db)

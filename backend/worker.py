@@ -26,16 +26,20 @@ async def check_pending_xp(ctx):
             )
         )
         activities = result.scalars().all()
-        
+
+        # Batch-load the users referenced by pending activities (was 1 query per activity).
+        from models.user import User
+        user_ids = {a.user_id for a in activities}
+        users_by_id = {}
+        if user_ids:
+            u_res = await db.execute(select(User).filter(User.id.in_(user_ids)))
+            users_by_id = {u.id: u for u in u_res.scalars().all()}
+
         count = 0
         for activity in activities:
-            # Grant the XP! 
-            # (Note: we use the related user fetched via joins or directly inside the func)
-            # You might need to adjust _award_forum_xp to fetch the User if not passed!
-            from models.user import User
-            user_result = await db.execute(select(User).filter_by(id=activity.user_id))
-            user = user_result.scalars().first()
-            
+            # Grant the XP!
+            user = users_by_id.get(activity.user_id)
+
             if user:
                 await _award_forum_xp(
                     db, 
