@@ -727,6 +727,9 @@ async def get_college_daily_xp(
             User.role == "student",
             User.is_test_account != True,
             UserCourse.course_id == course_id,
+            # Course-scope the POINTS too (not just the students): only sum XP earned in
+            # this course. Events pre-dating course tagging are NULL and excluded.
+            XPEvent.course_id == course_id,
             User.college_id.in_([c.id for c in colleges]),
             ist_date >= month_start,
             ist_date < month_end,

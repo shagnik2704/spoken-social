@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from database import get_db
-from dependencies import get_current_user, require_admin
+from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial, Course, CollegeCourse
 from models.xp_event import XPEvent
 from leaderboard_cache import update_user_xp
@@ -188,12 +188,6 @@ class TutorialUpdate(BaseModel):
     field: str
     value: Optional[bool] = None
 
-class XPUpdate(BaseModel):
-    amount: int
-    source: str
-    batch_id: Optional[str] = None
-
-
 # ===== TUTORIAL ENDPOINTS (protected) =====
 
 @router.get('/me/courses/{course_id}/tutorials')
@@ -309,12 +303,13 @@ async def update_tutorial(
     if xp_gained != 0:
         user.xp_total += xp_gained
 
-        # Log XP event
+        # Log XP event (tagged with the course so the daily-XP chart can be course-scoped)
         xp_event = XPEvent(
             user_id=user.id,
             source_type="tutorial_completion" if xp_gained > 0 else "tutorial_reversion",
             source_id=str(tut_uuid),
             xp_delta=xp_gained,
+            course_id=course_id,
         )
         db.add(xp_event)
 
@@ -322,73 +317,19 @@ async def update_tutorial(
 
     await db.commit()
 
-    if xp_gained!=0:
-        await update_user_xp(str(user.id),user.xp_total,{
+    # Only real students belong on the public leaderboard — don't push admins/coordinators
+    # or test/placeholder accounts (e.g. a test student driven while impersonating).
+    if xp_gained != 0 and user.role == "student" and not user.is_test_account:
+        await update_user_xp(str(user.id), user.xp_total, {
             "name": user.display_name or "",
             "username": user.username or "",
             "level": user.level,
             "levelTitle": user._level_title(),
-            "xpLastWeek": user.xp_last_week,
         })
-
-
 
     return ut.to_api_dict()
 
 
-# ===== XP ENDPOINT (protected) =====
-
-@router.post('/me/xp')
-async def add_xp(
-    body: XPUpdate,
-    user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
-):
-    # SECURITY: this endpoint credits a caller-chosen amount of XP straight onto the
-    # account, logs an XPEvent, and pushes to the public leaderboard. The app does NOT
-    # use it (students earn XP only via update_tutorial and the forum worker), so it was
-    # pure attack surface: any student could POST {"amount": 999999} and top the board.
-    # It is now admin-only and bounded. (Removing it entirely is also reasonable.)
-    if not body.source or len(body.source) > 50:
-        raise HTTPException(status_code=400, detail="source must be 1–50 characters")
-    if abs(body.amount) > 1000:
-        raise HTTPException(status_code=400, detail="amount must be within -1000..1000")
-
-    # Check if batch is active
-    from dependencies import check_batch_active
-    await check_batch_active(body.batch_id, db)
-
-    user.xp_total += body.amount
-
-    # Log XP event
-    xp_event = XPEvent(
-        user_id=user.id,
-        source_type=body.source,
-        source_id="",
-        xp_delta=body.amount,
-    )
-    db.add(xp_event)
-
-    # Level up logic
-    xp = user.xp_total
-    if xp >= 12000:   user.level = 26
-    elif xp >= 7000:  user.level = 21
-    elif xp >= 3500:  user.level = 16
-    elif xp >= 1500:  user.level = 11
-    elif xp >= 500:   user.level = 6
-    else:             user.level = 1
-
-    await db.commit()
-    
-    await update_user_xp(str(user.id), user.xp_total, {
-        "name": user.display_name or "",
-        "username": user.username or "",
-        "level": user.level,
-        "levelTitle": user._level_title(),
-        "xpLastWeek": user.xp_last_week,
-    })
-
-
-
-
-    return {"xpTotal": user.xp_total, "level": user.level, "levelTitle": user._level_title()}
+# NOTE: POST /me/xp was removed. It credited a caller-chosen amount of XP directly and
+# was unused by the app (students earn XP via update_tutorial and the forum worker), so it
+# was pure attack surface. XP is only ever granted through those verified paths now.

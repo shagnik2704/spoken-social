@@ -1,5 +1,5 @@
 import {
-    Trophy, Zap, TrendingUp, TrendingDown, Minus,
+    Trophy, Zap,
     Crown, Medal, Award, ChevronDown, Star,
     Code, Terminal, BarChart3, FileText, BookOpen, GraduationCap
 } from 'lucide-react'
@@ -22,24 +22,6 @@ const courses = [
 ]
 
 // ===== HELPER FUNCTIONS =====
-
-function getTrendIcon(trend: 'up' | 'down' | 'same', delta: number) {
-    if (trend === 'up') return (
-        <span className="flex items-center gap-0.5 text-success text-[11px] font-medium">
-            <TrendingUp className="h-3 w-3" />↑{delta}
-        </span>
-    )
-    if (trend === 'down') return (
-        <span className="flex items-center gap-0.5 text-danger text-[11px] font-medium">
-            <TrendingDown className="h-3 w-3" />↓{delta}
-        </span>
-    )
-    return (
-        <span className="flex items-center gap-0.5 text-muted-foreground text-[11px]">
-            <Minus className="h-3 w-3" />
-        </span>
-    )
-}
 
 function getRankDisplay(rank: number) {
     if (rank === 1) return { color: 'text-yellow-500', bg: 'bg-yellow-500/10', icon: Crown, label: '1st' }
@@ -115,7 +97,7 @@ function Podium({ users }: { users: LeaderboardUser[] }) {
 }
 
 /** Leaderboard Table Row */
-function LeaderboardRow({ user, showWeeklyXP }: { user: LeaderboardUser; showWeeklyXP?: boolean }) {
+function LeaderboardRow({ user }: { user: LeaderboardUser }) {
     const rankInfo = getRankDisplay(user.rank)
 
     return (
@@ -158,15 +140,8 @@ function LeaderboardRow({ user, showWeeklyXP }: { user: LeaderboardUser; showWee
 
             {/* XP */}
             <div className="text-right shrink-0 min-w-[60px]">
-                <p className="text-sm font-bold font-mono">
-                    {showWeeklyXP ? `+${user.xpLastWeek}` : user.xp.toLocaleString()}
-                </p>
-                <p className="text-[10px] text-muted-foreground">{showWeeklyXP ? 'this week' : 'XP'}</p>
-            </div>
-
-            {/* Trend */}
-            <div className="w-10 text-center shrink-0">
-                {getTrendIcon(user.trend, user.trendDelta)}
+                <p className="text-sm font-bold font-mono">{user.xp.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground">XP</p>
             </div>
         </div>
     )
@@ -188,10 +163,6 @@ function YourPosition({ user, data }: { user: LeaderboardUser; data: Leaderboard
                         </p>
                     </div>
                 </div>
-                <div className="text-right">
-                    {getTrendIcon(user.trend, user.trendDelta)}
-                    <p className="text-[10px] text-muted-foreground mt-0.5">vs last week</p>
-                </div>
             </CardContent>
         </Card>
     )
@@ -199,20 +170,13 @@ function YourPosition({ user, data }: { user: LeaderboardUser; data: Leaderboard
 
 // ===== MAIN LEADERBOARD PAGE =====
 
-type TimeFilter = 'overall' | 'weekly'
-
 export default function Leaderboard() {
     const { data: leaderboardData = [] } = useLeaderboard()
-    const [timeFilter, setTimeFilter] = useState<TimeFilter>('overall')
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
 
     const currentUser = leaderboardData.find(u => u.isCurrentUser)
-
-    // Sort by weekly XP for the weekly tab
-    const displayData = timeFilter === 'weekly'
-        ? [...leaderboardData].sort((a, b) => b.xpLastWeek - a.xpLastWeek).map((u, i) => ({ ...u, rank: i + 1 }))
-        : leaderboardData
+    const displayData = leaderboardData
 
     const selectedCourseInfo = courses.find(c => c.id === selectedCourse)
     const CourseIcon = selectedCourseInfo?.icon || BookOpen
@@ -228,27 +192,7 @@ export default function Leaderboard() {
             </div>
 
             {/* Filters Row */}
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-                {/* Time Filter Tabs — "This Week" is hidden until a weekly-XP rollup job
-                    exists to feed it (xp_last_week is currently never recomputed). */}
-                <div className="flex items-center gap-1 bg-muted/30 rounded-full p-1">
-                    {[
-                        { id: 'overall' as TimeFilter, label: 'All Time' },
-                    ].map(filter => (
-                        <button
-                            key={filter.id}
-                            onClick={() => setTimeFilter(filter.id)}
-                            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200
-                                        ${timeFilter === filter.id
-                                    ? 'bg-primary text-white shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                }`}
-                        >
-                            {filter.label}
-                        </button>
-                    ))}
-                </div>
-
+            <div className="flex items-center justify-end gap-3 flex-wrap">
                 {/* Course Filter */}
                 <div className="relative">
                     <Button
@@ -304,19 +248,13 @@ export default function Leaderboard() {
                     <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border/30 mb-1">
                         <div className="w-8 text-center">Rank</div>
                         <div className="flex-1">Learner</div>
-
-                        <div className="w-[60px] text-right">{timeFilter === 'weekly' ? 'Weekly' : 'Total'}</div>
-                        <div className="w-10 text-center">Δ</div>
+                        <div className="w-[60px] text-right">Total</div>
                     </div>
 
                     {/* Rows */}
                     <div className="space-y-0.5">
                         {displayData.map(user => (
-                            <LeaderboardRow
-                                key={user.id}
-                                user={user}
-                                showWeeklyXP={timeFilter === 'weekly'}
-                            />
+                            <LeaderboardRow key={user.id} user={user} />
                         ))}
                     </div>
                 </CardContent>

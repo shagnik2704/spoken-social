@@ -473,7 +473,12 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
         )
     }
 
+    // Only offer colleges that are actually present in the chart data. The endpoint returns
+    // the top-N colleges, so listing every college let you tick one with no line (looked like
+    // "zero activity"). Restricting the checklist to charted colleges avoids that.
+    const chartCollegeIds = new Set((chartData?.colleges || []).map((c: ChartCollege) => c.id))
     const filteredColleges = colleges.filter(c => {
+        if (!chartCollegeIds.has(c.id)) return false
         const matchesSearch = c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
             c.id.toLowerCase().includes(collegeSearch.toLowerCase())
         const matchesState = selectedState === 'all' || (c.location && c.location.toLowerCase().includes(selectedState.toLowerCase()))
@@ -491,8 +496,7 @@ function CollegeXPChart({ colleges }: { colleges: CollegeSummary[] }) {
                 <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                     <h3 className="text-sm font-bold flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-primary" />
-                        Daily XP Activity by College
-                        <span className="text-[10px] font-normal text-muted-foreground">(all activity, not course-specific)</span>
+                        Daily Average XP by College
                     </h3>
                     <div className="flex items-center gap-2">
                         {/* Month Dropdown */}

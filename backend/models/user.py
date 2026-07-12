@@ -98,7 +98,6 @@ class User(Base):
             "xpForNextLevel": xp_for_next_level,
             "xpToday": xp_today,
             "xpThisWeek": xp_this_week,
-            "xpLastWeek": self.xp_last_week,
             "followers": followers_count,
             "following": following_count,
             "postsCount": posts_count,

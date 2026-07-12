@@ -24,7 +24,6 @@ export interface User {
     xpForNextLevel: number
     xpToday: number
     xpThisWeek: number
-    xpLastWeek: number
     followers: number
     following: number
     postsCount: number
@@ -97,9 +96,6 @@ export interface LeaderboardUser {
     level: number
     levelTitle: string
     xp: number
-    xpLastWeek: number
-    trend: 'up' | 'down' | 'same'
-    trendDelta: number
     isCurrentUser: boolean
 }
 

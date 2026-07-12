@@ -291,11 +291,15 @@ async def _award_forum_xp(
     if xp_gained != 0:
         user.xp_total += xp_gained
         _recalc_level(user)
+        course_id = (await db.execute(
+            select(Tutorial.course_id).filter(Tutorial.id == tutorial_id)
+        )).scalar()
         db.add(XPEvent(
             user_id=user.id,
             source_type="forum_activity",
             source_id=str(forum_post_id),
             xp_delta=xp_gained,
+            course_id=course_id,
         ))
 
     logger.info(
@@ -356,11 +360,15 @@ async def _revoke_forum_xp(
     if xp_gained != 0:
         user.xp_total = max(0, user.xp_total + xp_gained)
         _recalc_level(user)
+        course_id = (await db.execute(
+            select(Tutorial.course_id).filter(Tutorial.id == tutorial_id)
+        )).scalar()
         db.add(XPEvent(
             user_id=user_id,
             source_type="forum_activity_revoked",
             source_id=str(forum_post_id),
             xp_delta=xp_gained,
+            course_id=course_id,
         ))
 
     logger.info(

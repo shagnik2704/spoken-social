@@ -542,3 +542,58 @@ Genuinely deferred, needing a schema change or a scheduled job (not a quick patc
   distinction exists in the data) — two cards show the same number; resolving it is a
   data-model decision, not a display fix.
 
+---
+
+# Round 4 — acting on the product decisions
+
+After a plain-language review, we resolved the remaining items.
+
+## Deleted the unused `/me/xp` endpoint + guarded the leaderboard
+
+The locked-down `/me/xp` endpoint had no caller, so it's **removed** entirely — no reason to
+keep dead attack surface. And the leaderboard now only accepts **real students**: the
+"push to leaderboard" step skips admins/coordinators and test/placeholder accounts (e.g. a
+test student driven while an admin is impersonating). Combined with the earlier seed fix,
+the public board is students-only.
+
+## Removed the weekly leaderboard
+
+The "This Week" tab, the trend arrows, and the "vs last week" text are **gone** from the UI,
+and the backend no longer returns or populates the weekly/trend fields. The feature never
+worked (nothing computed weekly XP) and it's cleaner to remove than to fake.
+
+> **Note left for you:** the underlying `xp_last_week` database column is now unused but
+> still present. Fully dropping it would mean editing ~10 seed/setup scripts and a leftover
+> weekly-calculation SQL file — a lot of churn to delete a harmless empty field — so I left
+> it as dead-but-safe. Say the word if you want it swept out.
+
+## Removed the duplicate count card
+
+The coordinator view no longer shows two cards ("Registered for Course" / "Registered on
+Spoken Social") that always held the identical number. It's now a single, honest
+"Registered Learners".
+
+## The daily-XP chart is now genuinely course-specific
+
+This is the "label the points with their course" work. Every points-diary entry
+(`XPEvent`) now records **which course** it was earned in, set at each write path (tutorial
+completion, forum award/revoke). The daily chart filters on that, so a course's chart shows
+**only that course's points** — matching every other metric.
+
+> **Beginner note.** We couldn't retro-fill old points: past diary entries never recorded a
+> course, and their leftover ids don't reliably map back to one. So the chart is course-true
+> from now on; historical points simply don't appear under a specific course (rather than
+> being mis-attributed). New activity is correct from day one.
+
+Also fixed the **top-N cutoff**: the chart only loads the top colleges, but the checkbox list
+used to offer *every* college — so ticking one with no data drew a blank line that looked
+like "zero activity". The checklist now lists only colleges actually on the chart.
+
+## What's genuinely finished vs. left
+
+Per your calls: leaderboard cleanup job → **not needed** (admins/coordinators don't earn
+points; guard added for the edge case). Weekly leaderboard → **removed**. Duplicate label →
+**removed**. Feedback rewrite → **parked** until there's data. Daily chart → **course-scoped**.
+
+The only thing still on the table is the optional `xp_last_week` column drop (noted above).
+

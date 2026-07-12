@@ -44,9 +44,6 @@ async def get_top(limit: int = 100)->list[dict]:
                 "username": meta.get("username", ""),
                 "level": int(meta.get("level", 1)),
                 "levelTitle": meta.get("levelTitle", "Beginner"),
-                "xpLastWeek": int(meta.get("xpLastWeek", 0)),
-                "trend": "same",
-                "trendDelta": 0,
             })
 
         return results
@@ -78,7 +75,6 @@ async def seed_from_db(db):
                 "username": user.username or "",
                 "level": user.level,
                 "levelTitle": user._level_title(),
-                "xpLastWeek": user.xp_last_week,
             })
         await pipe.execute()
         logger.warning(f"Seeded leaderboard with {len(users)} students")

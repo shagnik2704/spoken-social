@@ -244,19 +244,10 @@ function MyStudentsTab({ college, details, sortBy, setSortBy, statusFilter, setS
                 <div className="min-w-[200px] flex-shrink-0 snap-start">
                     <MetricCard
                         icon={GraduationCap}
-                        label="Registered for Course"
-                        value={college.totalCourseStudents}
+                        label="Registered Learners"
+                        value={college.totalStudents}
                         subtext={`${college.activeStudents} active or completed`}
                         color="bg-secondary/10 text-secondary"
-                    />
-                </div>
-                <div className="min-w-[200px] flex-shrink-0 snap-start">
-                    <MetricCard
-                        icon={Users}
-                        label="Registered on Spoken Social"
-                        value={college.totalStudents}
-                        subtext={`${college.totalCourseStudents > 0 ? Math.round((college.totalStudents / college.totalCourseStudents) * 100) : 0}% of ${college.totalCourseStudents} course registrations`}
-                        color="bg-primary/10 text-primary"
                     />
                 </div>
                 <div className="min-w-[200px] flex-shrink-0 snap-start">
