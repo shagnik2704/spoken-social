@@ -20,7 +20,7 @@ scrape_configs:
   - job_name: spoken-social-backend
     metrics_path: /metrics
     static_configs:
-      - targets: ["host.docker.internal:8002"]
+      - targets: ["backend:8000"]
 
   # 3. Host-level metrics: CPU, RAM, disk, network of the machine itself.
   - job_name: node-exporter
