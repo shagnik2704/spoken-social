@@ -52,4 +52,8 @@ async def loki_get(path: str, params: dict | None = None) -> dict | list:
     if payload.get("status") != "success":
         raise ValueError(f"Loki error: {payload}")
 
-    return payload["data"]
+    # Loki OMITS "data" entirely when a query matches nothing in the requested
+    # window — it returns a bare {"status":"success"}. Indexing payload["data"]
+    # would raise a bare KeyError('data'), which tells the caller nothing.
+    # Default to an empty list so callers hit their own "no results" handling.
+    return payload.get("data", [])
