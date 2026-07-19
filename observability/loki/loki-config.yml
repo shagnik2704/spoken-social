@@ -1,0 +1,37 @@
+# Minimal single-binary Loki config: everything on local disk, no auth, no clustering.
+# Fine for local learning and a single VPS. (A multi-node setup would swap the
+# filesystem storage for object storage like S3, but nothing else here changes.)
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # Allow querying logs older than the default window while learning.
+  reject_old_samples: false
+  allow_structured_metadata: true

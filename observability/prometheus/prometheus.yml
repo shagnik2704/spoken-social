@@ -1,0 +1,33 @@
+# Prometheus scrape configuration.
+#
+# Prometheus is PULL-based: every `scrape_interval` it fetches /metrics from each
+# target below and stores the results as time series. Nothing pushes to it.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # 1. Prometheus scrapes itself — useful for confirming it's alive.
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # 2. Your FastAPI app (the prometheus-fastapi-instrumentator endpoint).
+  #    LOCAL DEV: the backend runs natively on the Mac, so from inside this
+  #    container we reach it via host.docker.internal.
+  #    ON THE VPS (Phase 5): this becomes "backend:8000" — a Docker service name.
+  - job_name: spoken-social-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:8002"]
+
+  # 3. Host-level metrics: CPU, RAM, disk, network of the machine itself.
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  # 4. Per-container metrics: CPU/memory/network for each running container.
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]

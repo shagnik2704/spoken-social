@@ -1,0 +1,82 @@
+# Observability stack, deliberately kept SEPARATE from the app's docker-compose.yml.
+#
+# Why separate: your app's compose binds Postgres to :5432, which would collide with
+# the native Postgres your MCP server already reads from. Running only these services
+# lets you learn Prometheus without disturbing anything that currently works.
+#
+# Bring up:   docker compose -f observability/docker-compose.observability.yml up -d
+# Tear down:  docker compose -f observability/docker-compose.observability.yml down
+
+name: spoken-social-observability
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ss-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    # Lets the container resolve the host machine (for scraping your native backend).
+    # Native on Docker Desktop/Mac; this line makes it work on Linux/VPS too.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Host metrics: CPU / memory / disk / network of the machine.
+  # NOTE on macOS: Docker runs inside a Linux VM, so these describe that VM, not your
+  # Mac. Fine for learning PromQL — on the Hetzner VPS these become genuinely useful.
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: ss-node-exporter
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+
+  # Per-container metrics (CPU/mem/net per running container).
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: ss-cadvisor
+    ports:
+      - "8085:8080"   # 8085 on the host to avoid clashing with anything on 8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    privileged: true
+    restart: unless-stopped
+
+  # Log aggregation. Indexes LABELS only; log text is stored compressed and grepped.
+  loki:
+    image: grafana/loki:latest
+    container_name: ss-loki
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+
+  # The shipper: tails log files and pushes them to Loki.
+  # LOCAL: reads ./logs, where the natively-run backend writes its output.
+  # ON THE VPS (Phase 5): this reads Docker container logs instead, via Alloy.
+  promtail:
+    image: grafana/promtail:latest
+    container_name: ss-promtail
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - ./logs:/logs:ro
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  loki_data:
