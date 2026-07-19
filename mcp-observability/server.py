@@ -12,7 +12,7 @@ your docstring for the tool's description, and handles all the JSON-RPC + transp
 plumbing. What you write below is *all* the server logic there is.
 """
 from mcp.server.fastmcp import FastMCP
-
+import os
 from db import fetch
 from prom import prom_get
 from loki import loki_get
@@ -20,8 +20,13 @@ import time
 
 # This name is what the client sees during the `initialize` handshake, and how the
 # server shows up in Claude Desktop's tool list. Keep it stable + descriptive.
-mcp = FastMCP("spoken-social-observability")
 
+MCP_TRANSPORT=os.getenv("MCP_TRANSPORT","stdio")
+MCP_HOST=os.getenv("MCP_HOST","127.0.0.1")
+MCP_PORT=os.getenv("MCP_PORT",8080)
+MCP_PORT=int(MCP_PORT)
+
+mcp = FastMCP("spoken-social-observability",host=MCP_HOST,port=MCP_PORT)
 
 @mcp.tool()
 def ping() -> str:
@@ -260,4 +265,10 @@ if __name__ == "__main__":
     # Default transport is stdio: the client (the MCP Inspector, or Claude Desktop)
     # launches this file as a subprocess and exchanges JSON-RPC messages over
     # stdin/stdout. In Phase 5 we'll switch this one line to Streamable HTTP.
-    mcp.run()
+
+    if MCP_TRANSPORT=="stdio":
+        mcp.run()
+    else:
+        mcp.run(transport="streamable-http")
+        
+    
