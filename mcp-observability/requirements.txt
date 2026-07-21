@@ -1,0 +1,7 @@
+# Official Model Context Protocol Python SDK, plus the CLI extras that ship the
+# `mcp` command (used for the MCP Inspector).
+mcp[cli]
+
+# Postgres driver (async) + .env loading for the read-only DB connection.
+asyncpg
+python-dotenv
