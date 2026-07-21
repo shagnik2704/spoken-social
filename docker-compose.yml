@@ -55,8 +55,8 @@ services:
   frontend:
     build: ./frontend
     ports:
+      # TLS terminates at host nginx; the container's nginx listens on :80 only.
       - "127.0.0.1:${FRONTEND_HOST_PORT:-3000}:80"
-      - "127.0.0.1:${FRONTEND_TLS_PORT:-3443}:443"
     depends_on:
       - backend
     restart: unless-stopped
