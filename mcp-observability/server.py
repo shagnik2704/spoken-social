@@ -190,11 +190,13 @@ async def query_logs(logql: str, minutes: int = 60, limit: int = 100) -> list[di
     Search logs with a LogQL query over the last N minutes, newest first.
 
     A LogQL query MUST start with a stream selector in braces, optionally followed
-    by filters:
-      {job="spoken-social-backend"}                    all backend logs
-      {job="spoken-social-backend"} |= "404"           lines containing "404"
-      {job="spoken-social-backend"} |= "ERROR" != "healthcheck"
-      {job="spoken-social-backend"} |~ "5[0-9]{2}"     regex: 5xx status codes
+    by filters. Logs are collected by Grafana Alloy, which labels each stream with
+    its compose service as `job` (backend, worker, postgres, redis, frontend, ...):
+      {job="backend"}                    all backend logs
+      {job="backend"} |= "404"           lines containing "404"
+      {job="backend"} |= "ERROR" != "healthcheck"
+      {job="backend"} |~ "5[0-9]{2}"     regex: 5xx status codes
+      {job=~"backend|worker"}            both app services at once
 
     Use list_log_labels() first to discover which streams exist.
     """
@@ -254,8 +256,10 @@ async def list_log_labels(label:str="")->list[str]:
 
 @mcp.tool()
 async def recent_errors(minutes:int=60,limit:int=100)->list[dict]:
-    """Recent errors, tracebacks and 5xx responses from the backend, newest first."""
-    logql='{job="spoken-social-backend"} |~ "(?i)(error|traceback|exception| 5[0-9][0-9] )"'
+    """Recent errors, tracebacks and 5xx responses from the app services (backend + worker), newest first."""
+    # job=~"backend|worker" covers both app code paths. Alloy labels each stream
+    # with its compose service name as `job` (see observability/alloy/config.alloy).
+    logql='{job=~"backend|worker"} |~ "(?i)(error|traceback|exception| 5[0-9][0-9] )"'
     data = await query_logs(logql,minutes,limit)
     return data
     

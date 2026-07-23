@@ -1,0 +1,58 @@
+// Grafana Alloy — log collection for Spoken Social. Replaces promtail.
+//
+// WHY ALLOY, AND WHY THIS FIXES THE EMPTY-LOKI PROBLEM:
+// promtail tailed files at /logs/*.log, but the containers log to STDOUT, which
+// Docker captures with its json-file driver — so that directory was always empty.
+// Alloy's loki.source.docker reads logs through the Docker API instead, so it
+// collects every container's stdout/stderr no matter where (or whether) they
+// write files. One socket mount replaces the whole file-tailing dance.
+//
+// River config: components are wired by referencing each other's exports
+// (discovery.docker.X.targets, discovery.relabel.X.rules, loki.write.X.receiver).
+
+// 1. Discover every container on this host via the Docker socket.
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// 2. Turn Docker metadata into LOW-CARDINALITY Loki stream labels.
+//    Keep these few — never put request/user IDs in labels (that's log CONTENT).
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  // Compose service name -> job. So backend logs become {job="backend"},
+  // worker {job="worker"}, postgres {job="postgres"}, etc.
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "job"
+  }
+
+  // Full container name (strip Docker's leading slash) -> container.
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  // Compose project -> project. Namespaces our stack apart from the other
+  // Docker apps sharing this VPS.
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "project"
+  }
+}
+
+// 3. Tail the discovered containers' logs and forward them to Loki.
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.containers.targets
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.write.default.receiver]
+}
+
+// 4. Ship to Loki — same push endpoint promtail used.
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

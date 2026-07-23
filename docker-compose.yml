@@ -106,15 +106,27 @@ services:
       - "127.0.0.1:${LOKI_HOST_PORT:-3100}:3100"
     restart: unless-stopped
 
-  promtail:
-    image: grafana/promtail:latest
-    container_name: ss-promtail
-    command: 
-      - config.file=/etc/promtail/promtail-config.yml 
-      - --storage.tsdb.retention.time=15d
+  # Log collection: reads every container's stdout/stderr via the Docker API and
+  # ships it to Loki. Replaces promtail (deprecated). See observability/alloy/config.alloy.
+  alloy:
+    image: grafana/alloy:v1.5.1   # PINNED — verify the current v1.x stable on Docker Hub before deploy
+    container_name: ss-alloy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
     volumes:
-      - ./observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
-      - ./observability/logs:/logs:ro
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # Read-only Docker socket: how Alloy discovers containers and reads their logs.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy_data:/var/lib/alloy/data
+    # If Alloy logs "permission denied" on the socket, uncomment (its user must be
+    # able to read /var/run/docker.sock, which is root:docker on the host).
+    # user: root
+    # Alloy's debug UI (component graph, live target health) is on :12345. Not
+    # published by default to avoid a prod port collision — expose to loopback if
+    # you want it: ports: ["127.0.0.1:${ALLOY_HOST_PORT:-12345}:12345"]
     depends_on:
       - loki
     restart: unless-stopped
@@ -142,3 +154,4 @@ volumes:
   postgres_data:
   prometheus_data:
   loki_data:
+  alloy_data:
