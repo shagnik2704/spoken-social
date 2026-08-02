@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Text, Index, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, DateTime, Text, Index, ForeignKey, Boolean, false
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from database import Base
@@ -22,7 +22,9 @@ class User(Base):
     xp_last_week = Column(Integer, nullable=False, default=0)
     role = Column(String(20), nullable=False, default="student")  # student | coordinator | admin
     college_id = Column(String(50), ForeignKey("colleges.id", ondelete="SET NULL"), nullable=True)  # which college they belong to
-    is_test_account = Column(Boolean, default=False)  # Marks auto-generated test students
+    # NOT NULL: every `is_test_account != True` filter in the codebase silently drops
+    # NULL rows, so a nullable column here hides real students (see migration a1b2c3d4e5f6).
+    is_test_account = Column(Boolean, nullable=False, server_default=false(), default=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
