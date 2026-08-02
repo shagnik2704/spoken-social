@@ -61,5 +61,7 @@ def clear_redis():
         print(f"❌  Error clearing redis: {e}")
 
 if __name__ == "__main__":
+    from _guard import require_local_db
+    require_local_db("clear_db.py")
     clear_all()
     clear_redis()

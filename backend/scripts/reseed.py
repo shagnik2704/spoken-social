@@ -770,4 +770,6 @@ def reseed():
 
 
 if __name__ == "__main__":
+    from _guard import require_local_db
+    require_local_db("reseed.py")
     reseed()
