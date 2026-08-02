@@ -17,6 +17,118 @@ from db import fetch
 from prom import prom_get
 from loki import loki_get
 import time
+import functools
+import inspect
+import json
+import logging
+import sys
+
+
+# ── Audit logging ────────────────────────────────────────────────────────────
+# Every tool call emits one structured JSON line. Two reasons this exists:
+#
+#   1. AUDIT TRAIL. run_query executes caller-supplied SQL against the production
+#      database. Without a log there is no record of what anyone asked for — you
+#      could not answer "was this endpoint abused?" even in principle.
+#   2. SELF-OBSERVABILITY. Alloy ships this container's stdout/stderr to Loki as
+#      {job="mcp-server"}, so these lines become searchable through this server's
+#      OWN query_logs tool.
+#
+# ⚠️ STDERR, NEVER STDOUT. Under the stdio transport, stdout carries the JSON-RPC
+# stream — one stray line there corrupts the protocol and the client dies with a
+# JSON parse error. (That was the very first bug in this project.) Under HTTP it
+# would not matter, but stderr is correct for both, so there is no reason to risk it.
+log = logging.getLogger("mcp.audit")
+if not log.handlers:
+    _handler = logging.StreamHandler(sys.stderr)
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+    log.addHandler(_handler)
+    log.setLevel(logging.INFO)
+    # Don't propagate to the root logger: uvicorn configures its own handlers and
+    # we'd print every line twice.
+    log.propagate = False
+
+
+def _summarize(value, max_len: int = 300):
+    """
+    Render an argument for the log line, truncated so one call can't flood Loki.
+
+    Numbers/bools/None pass through as native JSON types so LogQL can filter on
+    them numerically (`| json | limit > 500`); a stringified "100" could not be.
+    """
+    if isinstance(value, (int, float, bool)) or value is None:
+        return value
+    text = value if isinstance(value, str) else repr(value)
+    if len(text) <= max_len:
+        return text
+    return f"{text[:max_len]}...(+{len(text) - max_len} more chars)"
+
+
+def audited(fn):
+    """
+    Log one structured line per tool call: which tool, what arguments, how long,
+    how much came back, and whether it failed.
+
+    Logs ARGUMENTS but never RESULTS. The arguments (the SQL, PromQL, LogQL) are
+    exactly what an audit trail needs; the results are rows of user data, and these
+    lines land in Loki where query_logs would happily serve them back. Only the row
+    COUNT is recorded.
+
+    Applied UNDER @mcp.tool() so FastMCP still sees the original signature — the
+    schema is generated from type hints, and functools.wraps preserves them.
+    """
+    sig = inspect.signature(fn)
+
+    def _args_of(args, kwargs) -> dict:
+        try:
+            bound = sig.bind(*args, **kwargs)
+            bound.apply_defaults()
+            return {k: _summarize(v) for k, v in bound.arguments.items()}
+        except TypeError:
+            # Never let logging break a tool call.
+            return {"<could not bind arguments>": True}
+
+    def _emit(started: float, args_summary: dict, outcome: str, detail: dict) -> None:
+        log.info(json.dumps({
+            "event": "tool_call",
+            "tool": fn.__name__,
+            "args": args_summary,
+            "outcome": outcome,
+            "duration_ms": round((time.perf_counter() - started) * 1000, 1),
+            **detail,
+        }, default=str))
+
+    def _size_of(result) -> dict:
+        return {"rows": len(result)} if isinstance(result, (list, dict)) else {}
+
+    if inspect.iscoroutinefunction(fn):
+        @functools.wraps(fn)
+        async def async_wrapper(*args, **kwargs):
+            started = time.perf_counter()
+            arg_summary = _args_of(args, kwargs)
+            try:
+                result = await fn(*args, **kwargs)
+            except Exception as exc:
+                _emit(started, arg_summary, "error",
+                      {"error_type": type(exc).__name__, "error": _summarize(str(exc))})
+                raise
+            _emit(started, arg_summary, "ok", _size_of(result))
+            return result
+        return async_wrapper
+
+    @functools.wraps(fn)
+    def sync_wrapper(*args, **kwargs):
+        started = time.perf_counter()
+        arg_summary = _args_of(args, kwargs)
+        try:
+            result = fn(*args, **kwargs)
+        except Exception as exc:
+            _emit(started, arg_summary, "error",
+                  {"error_type": type(exc).__name__, "error": _summarize(str(exc))})
+            raise
+        _emit(started, arg_summary, "ok", _size_of(result))
+        return result
+    return sync_wrapper
 
 # This name is what the client sees during the `initialize` handshake, and how the
 # server shows up in Claude Desktop's tool list. Keep it stable + descriptive.
@@ -29,12 +141,14 @@ MCP_PORT=int(MCP_PORT)
 mcp = FastMCP("spoken-social-observability",host=MCP_HOST,port=MCP_PORT)
 
 @mcp.tool()
+@audited
 def ping() -> str:
     """Health check — returns 'pong' so you can confirm the MCP server is reachable."""
     return "pong"
 
 
 @mcp.tool()
+@audited
 def echo(message: str) -> str:
     """
     Echo back a message. Exists purely to demonstrate how an input parameter works:
@@ -45,6 +159,7 @@ def echo(message: str) -> str:
     return f"You said: {message}"
 
 @mcp.tool()
+@audited
 def add(a:int,b:int)->int:
     """
     Takes two integers a and b and returns their sum
@@ -58,6 +173,7 @@ def add(a:int,b:int)->int:
 
 
 @mcp.tool()
+@audited
 async def list_tables() -> list[str]:
     """List every table in the spoken_social database."""
     rows = await fetch(
@@ -72,6 +188,7 @@ async def list_tables() -> list[str]:
     return [r["table_name"] for r in rows]
 
 @mcp.tool()
+@audited
 async def describe_table(table_name:str)->list[dict]:
     """List all the columns in the table given by the user"""
     rows=await fetch(
@@ -87,6 +204,7 @@ async def describe_table(table_name:str)->list[dict]:
     return rows
 
 @mcp.tool()
+@audited
 async def run_query(sql:str,limit:int=100)->list[dict]:
     """This tool allows user to run read-only SQL queries on the database,limits no.of rows to maximum 1000 to reduce context bloat."""
     sql=sql.strip()
@@ -114,6 +232,7 @@ async def run_query(sql:str,limit:int=100)->list[dict]:
 
 
 @mcp.tool()
+@audited
 async def prom_query(promql: str) -> list[dict]:
     """
     Run an instant PromQL query — the value of a metric right now.
@@ -141,6 +260,7 @@ async def prom_query(promql: str) -> list[dict]:
 
 
 @mcp.tool()
+@audited
 async def list_metrics(contains:str="")->list[str]:
     """
     List all the metrics in Prometheus, optionally filtered by substring.If user defined string is empty returns all the strings
@@ -162,6 +282,7 @@ async def list_metrics(contains:str="")->list[str]:
 
 
 @mcp.tool()
+@audited
 async def prom_query_range(promql:str,minutes:int=60,step:str="1m")->list[dict]:
     """Query prometheus to find metric data over a given time period"""
     end=time.time()
@@ -185,6 +306,7 @@ async def prom_query_range(promql:str,minutes:int=60,step:str="1m")->list[dict]:
 
 
 @mcp.tool()
+@audited
 async def query_logs(logql: str, minutes: int = 60, limit: int = 100) -> list[dict]:
     """
     Search logs with a LogQL query over the last N minutes, newest first.
@@ -238,6 +360,7 @@ async def query_logs(logql: str, minutes: int = 60, limit: int = 100) -> list[di
 
 
 @mcp.tool()
+@audited
 async def list_log_labels(label:str="")->list[str]:
     """ 
     Returns the list of names of all labels if called without an argument 
@@ -255,6 +378,7 @@ async def list_log_labels(label:str="")->list[str]:
     return sorted(data)
 
 @mcp.tool()
+@audited
 async def recent_errors(minutes:int=60,limit:int=100)->list[dict]:
     """Recent errors, tracebacks and 5xx responses from the app services (backend + worker), newest first."""
     # job=~"backend|worker" covers both app code paths. Alloy labels each stream
