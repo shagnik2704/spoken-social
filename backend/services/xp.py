@@ -3,9 +3,9 @@ Single source of truth for per-tutorial XP and level thresholds.
 
 `UserTutorial.xp_earned` is ALWAYS the sum of XP_MAP over the tutorial's true boolean flags
 — computed, never incremented. Both writers (routes/user.py update_tutorial and the forum
-worker's _award_forum_xp) call recompute_tutorial_xp, so they can't clobber each other or
-double-count. A consequence: forum XP counts once per tutorial per activity type (asked /
-answered), not per post.
+service's _award_forum_xp, called from the webhook path and the reconciliation worker) call
+recompute_tutorial_xp, so they can't clobber each other or double-count. A consequence:
+forum XP counts once per tutorial per activity type (asked / answered), not per post.
 """
 
 # XP awarded per completed step of a tutorial.

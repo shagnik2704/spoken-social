@@ -2,13 +2,17 @@
 # Forum Sync Service — shared logic for processing forum events
 # ============================================================
 # This module is called by:
-#   1. Webhook receiver (routes/webhooks.py) — real-time events
-#   2. On-login sync (routes/user.py) — on-demand freshness
-#   3. Background worker (future ARQ job) — periodic reconciliation
+#   1. Webhook receiver (routes/webhooks.py) — real-time events,
+#      which award XP immediately when the post maps to a tutorial
+#   2. Background worker (worker.py) — reconciliation sweep that
+#      pays any activity the webhook path left unawarded
 #
 # The core function `process_forum_event` is idempotent:
 # call it 100 times with the same forum_post_id and it will
-# only award XP once.
+# only award XP once. Awarding goes through recompute_tutorial_xp
+# (services/xp.py), so the dashboard flag and the XP always move
+# together — they can never disagree the way the old radios-only
+# sync allowed.
 # ============================================================
 
 import logging
@@ -29,34 +33,6 @@ logger = logging.getLogger("spoken_social.forum_sync")
 # XP values for forum activities
 XP_FORUM_ASK = 5
 XP_FORUM_ANS = 10
-
-
-async def _sync_user_tutorial_forum_radios(
-    db: AsyncSession,
-    *,
-    user_id,
-    tutorial_id,
-    activity_type: str,
-) -> None:
-    """
-    Set forum_asked / forum_answered on UserTutorial when forum activity exists.
-
-    XP is still awarded later by the worker; this only updates the dashboard Yes/No radios
-    so they match detected forum posts immediately.
-    """
-    if tutorial_id is None:
-        return
-    ut_result = await db.execute(
-        select(UserTutorial).filter_by(user_id=user_id, tutorial_id=tutorial_id)
-    )
-    ut = ut_result.scalars().first()
-    if not ut:
-        return
-    if activity_type == "question":
-        ut.forum_asked = True
-    elif activity_type == "answer":
-        ut.forum_answered = True
-    await db.flush()
 
 
 async def find_user_by_forum_uid(db: AsyncSession, forum_user_id: int) -> User | None:
@@ -165,17 +141,23 @@ async def process_forum_event(
     if existing and existing.deleted_on_forum:
         existing.deleted_on_forum = False
         existing.synced_at = datetime.now(timezone.utc)
-        existing.posted_at = datetime.now(timezone.utc) # Reset 24-hour clock
+        existing.posted_at = datetime.now(timezone.utc)
         existing.xp_awarded = False
         existing.xp_amount = 0
         await db.flush()
-        await _sync_user_tutorial_forum_radios(
-            db,
-            user_id=user.id,
-            tutorial_id=existing.tutorial_id,
-            activity_type=activity_type,
-        )
-        return {"status": "restored", "forum_post_id": forum_post_id}
+        xp_delta = 0
+        if existing.tutorial_id is not None:
+            xp_delta = await _award_forum_xp(
+                db, user, existing.tutorial_id, activity_type, xp_amount, forum_post_id
+            )
+            existing.xp_awarded = True
+            existing.xp_amount = xp_amount
+        return {
+            "status": "restored",
+            "forum_post_id": forum_post_id,
+            "xp_delta": xp_delta,
+            "user_id": str(user.id),
+        }
 
     # 6. Insert new ForumActivity row
     forum_url = f"https://forums.spoken-tutorial.org/question/{forum_post_id}/"
@@ -197,23 +179,27 @@ async def process_forum_event(
     db.add(activity)
     await db.flush()
 
-    # 7. Note: We DO NOT award XP here anymore! It stays 0 and False.
-    # The 24-hour ARQ background worker will pick it up and award it.
-    #
-    # Sync dashboard radios (forumAsked / forumAnswered) so the UI shows "Yes" immediately.
-    await _sync_user_tutorial_forum_radios(
-        db,
-        user_id=user.id,
-        tutorial_id=tutorial_id,
-        activity_type=activity_type,
-    )
+    # 7. Award XP immediately when the post maps to a tutorial. Flag and XP move
+    # together through recompute_tutorial_xp, so the dashboard radio can never say
+    # "Yes" while the XP is missing (the split that silently underpaid the legacy
+    # cohort ~49k XP — see _award_forum_xp). Deleted posts are handled by
+    # process_forum_delete, which revokes through the same recompute.
+    xp_delta = 0
+    if tutorial_id is not None:
+        xp_delta = await _award_forum_xp(
+            db, user, tutorial_id, activity_type, xp_amount, forum_post_id
+        )
+        activity.xp_awarded = True
+        activity.xp_amount = xp_amount
 
     await db.flush()
     return {
-        "status": "pending_verification",
+        "status": "awarded" if tutorial_id is not None else "pending_mapping",
         "forum_post_id": forum_post_id,
-        "xp_awarded": False,
-        "xp_amount": 0,
+        "xp_awarded": activity.xp_awarded,
+        "xp_amount": activity.xp_amount,
+        "xp_delta": xp_delta,
+        "user_id": str(user.id),
     }
 
 
@@ -245,8 +231,9 @@ async def process_forum_delete(
     activity.deleted_on_forum = True
 
     # Revoke XP if it was awarded
+    xp_delta = 0
     if activity.xp_awarded and activity.tutorial_id:
-        await _revoke_forum_xp(
+        xp_delta = await _revoke_forum_xp(
             db,
             user_id=activity.user_id,
             tutorial_id=activity.tutorial_id,
@@ -257,7 +244,12 @@ async def process_forum_delete(
         activity.xp_awarded = False
 
     await db.flush()
-    return {"status": "deleted", "xp_revoked": activity.xp_amount}
+    return {
+        "status": "deleted",
+        "xp_revoked": activity.xp_amount,
+        "xp_delta": xp_delta,
+        "user_id": str(activity.user_id),
+    }
 
 
 async def _award_forum_xp(
@@ -306,6 +298,7 @@ async def _award_forum_xp(
         "Awarded %d XP to user %s for forum %s (post %d)",
         xp_gained, user.email, activity_type, forum_post_id,
     )
+    return xp_gained
 
 
 async def _revoke_forum_xp(
@@ -322,7 +315,7 @@ async def _revoke_forum_xp(
     user_result = await db.execute(select(User).filter_by(id=user_id))
     user = user_result.scalars().first()
     if not user:
-        return
+        return 0
 
     # Update UserTutorial — only unset the flag if no other posts of this type exist
     remaining = await db.execute(
@@ -375,6 +368,7 @@ async def _revoke_forum_xp(
         "Revoked %d XP from user %s for deleted forum %s (post %d)",
         xp_gained, user.email, activity_type, forum_post_id,
     )
+    return xp_gained
 
 
 def _recalc_level(user: User):

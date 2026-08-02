@@ -8,7 +8,7 @@ from database import get_db
 from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial, Course, CollegeCourse
 from models.xp_event import XPEvent
-from leaderboard_cache import update_user_xp
+from leaderboard_cache import sync_user
 
 
 
@@ -317,15 +317,10 @@ async def update_tutorial(
 
     await db.commit()
 
-    # Only real students belong on the public leaderboard — don't push admins/coordinators
-    # or test/placeholder accounts (e.g. a test student driven while impersonating).
-    if xp_gained != 0 and user.role == "student" and not user.is_test_account:
-        await update_user_xp(str(user.id), user.xp_total, {
-            "name": user.display_name or "",
-            "username": user.username or "",
-            "level": user.level,
-            "levelTitle": user._level_title(),
-        })
+    # Mirror the new total onto the Redis leaderboard. sync_user owns the eligibility
+    # rule (real students only), shared with the forum webhook and the XP worker.
+    if xp_gained != 0:
+        await sync_user(user)
 
     return ut.to_api_dict()
 

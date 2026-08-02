@@ -20,6 +20,21 @@ async def update_user_xp(user_id:str,xp_total:int,meta:dict):
         logger.warning(f"Leaderboard update failed {e}")
 
 
+async def sync_user(user) -> None:
+    """Push one user's xp_total + meta to the leaderboard cache, if they belong on
+    the public board. Single definition of write-path eligibility — every code path
+    that changes xp_total (tutorial route, forum webhook, XP worker) calls this after
+    commit, so the cache can never get ahead of the database."""
+    if user.role != "student" or user.is_test_account:
+        return
+    await update_user_xp(str(user.id), user.xp_total, {
+        "name": user.display_name or "",
+        "username": user.username or "",
+        "level": user.level,
+        "levelTitle": user._level_title(),
+    })
+
+
 async def get_top(limit: int = 100)->list[dict]:
     try:
         r = redis.Redis(connection_pool=pool)
