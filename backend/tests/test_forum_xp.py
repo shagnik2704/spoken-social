@@ -224,6 +224,71 @@ async def test_unmapped_post_is_recorded_but_never_scored(db):
     assert ut.xp_earned == 10
 
 
+# ── category matching ────────────────────────────────────────────────────────
+# The forum has sent this course's category as both "Linux" and "Linux-New",
+# and the codebase wrote it as "Linux New". Comparing raw strings meant only one
+# spelling resolved and the rest fell through to a title-only match, which is
+# safe only while titles stay unique across courses.
+
+@pytest.mark.parametrize("sent", ["Linux-New", "Linux New", "linux-new", "  LINUX   NEW  "])
+async def test_category_spellings_all_resolve(db, sent):
+    from services.forum import find_course_by_forum_category
+
+    db.add(Course(id="linux", title="Linux", forum_category="Linux-New"))
+    await db.commit()
+
+    course = await find_course_by_forum_category(db, sent)
+
+    assert course is not None and course.id == "linux"
+
+
+async def test_a_different_category_does_not_resolve(db):
+    """Normalising must not blur distinct categories together."""
+    from services.forum import find_course_by_forum_category
+
+    db.add_all([
+        Course(id="linux", title="Linux", forum_category="Linux-New"),
+        Course(id="python", title="Python", forum_category="Python"),
+    ])
+    await db.commit()
+
+    assert await find_course_by_forum_category(db, "Scilab") is None
+    assert (await find_course_by_forum_category(db, "Python")).id == "python"
+
+
+@pytest.mark.parametrize("configured", ["", "   ", "-"])
+async def test_empty_category_matches_nothing(db, configured):
+    """Production has received events with an empty category. Normalising both
+    sides makes empty equal empty, so without an explicit guard such an event
+    would bind to any course left with a blank category."""
+    from services.forum import find_course_by_forum_category
+
+    db.add(Course(id="linux", title="Linux", forum_category=configured))
+    await db.commit()
+
+    assert await find_course_by_forum_category(db, "") is None
+    assert await find_course_by_forum_category(db, None) is None
+
+
+async def test_post_resolves_to_the_right_course_via_category(db):
+    """A title that exists in two courses must land in the one the category
+    names — the case the title-only fallback would get wrong."""
+    user, tutorial = await setup(db)
+    db.add(Course(id="python", title="Python", forum_category="Python"))
+    await db.flush()
+    decoy = Tutorial(
+        id=uuid.uuid4(), course_id="python", tutorial_number=1,
+        title="Basic Commands in Linux",
+    )
+    db.add(decoy)
+    await db.commit()
+
+    await post(db)
+    activity = (await db.execute(select(ForumActivity))).scalars().first()
+
+    assert activity.tutorial_id == tutorial.id
+
+
 async def test_unknown_email_is_ignored(db):
     await setup(db)
 

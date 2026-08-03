@@ -95,6 +95,33 @@ async def find_user_by_email(db: AsyncSession, email: str) -> User | None:
     return result.scalars().first()
 
 
+def normalize_forum_category(category: str | None) -> str:
+    """Fold a forum category to a comparable form.
+
+    The forum has sent this course's category as both "Linux" and "Linux-New",
+    and the codebase has written it as "Linux New". Comparing raw strings meant
+    only one spelling ever matched and the rest fell through to a title-only
+    match. Hyphens, spacing and case are all treated as noise.
+    """
+    return " ".join((category or "").replace("-", " ").split()).lower()
+
+
+async def find_course_by_forum_category(db: AsyncSession, category: str) -> Course | None:
+    """The course a forum category belongs to, ignoring spelling differences."""
+    wanted = normalize_forum_category(category)
+    if not wanted:
+        return None
+
+    courses = (await db.execute(
+        select(Course).filter(Course.forum_category.isnot(None))
+    )).scalars().all()
+
+    for course in courses:
+        if normalize_forum_category(course.forum_category) == wanted:
+            return course
+    return None
+
+
 async def find_tutorial_by_name(
     db: AsyncSession, category: str, tutorial_name: str
 ) -> Tutorial | None:
@@ -107,20 +134,22 @@ async def find_tutorial_by_name(
     # Normalize: replace hyphens with spaces for comparison
     normalized_name = tutorial_name.replace("-", " ")
 
-    # Find the course by forum_category
-    course_result = await db.execute(
-        select(Course).filter_by(forum_category=category)
-    )
-    course = course_result.scalars().first()
+    course = await find_course_by_forum_category(db, category)
 
     if not course:
-        # Fallback: try matching tutorial title directly across all courses
+        # Last resort: match the title across every course. Only safe while
+        # titles are unique platform-wide — the moment two courses share one,
+        # this silently attributes XP to whichever it finds first, so it is a
+        # fallback rather than a strategy.
+        logger.warning(
+            "No course for forum category %r — falling back to a platform-wide "
+            "title match for %r", category, tutorial_name,
+        )
         tut_result = await db.execute(
             select(Tutorial).filter(Tutorial.title.ilike(normalized_name))
         )
         return tut_result.scalars().first()
 
-    # Find tutorial in that course
     tut_result = await db.execute(
         select(Tutorial).filter(
             Tutorial.course_id == course.id,
