@@ -27,22 +27,37 @@ Semantics:
   global XP over would let a student top a course they have barely touched on
   the strength of work done elsewhere.
 
-  Course scores are summed from user_tutorials, not from xp_events. The event
-  history is incomplete for the cohort imported in early 2026, while the
-  tutorial rows were reconciled against their flags and are exact.
+  All-time course scores are summed from user_tutorials, not from xp_events.
+  The event history is incomplete for the cohort imported in early 2026, while
+  the tutorial rows were reconciled against their flags and are exact.
+
+  A window restricts the score to XP earned since the start of the current
+  calendar week (Monday) or month, computed in APP_TIMEZONE because the
+  audience is Indian and a "week" should reset at midnight IST, not UTC.
+  Window scores sum xp_events over the period — the journal is complete for
+  anything recent — and exclude reconciliation events: those carry the
+  timestamp of the 2026-08 back-pay run, not of the months-old work they
+  settle, so a naive weekly board would rank 210 students by 51k XP they did
+  not earn that week. Course windows additionally filter events by course_id,
+  which every event written since the course_id column landed carries.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config import APP_TIMEZONE
 from models.tutorial import Tutorial, UserTutorial
 from models.user import User
+from models.xp_event import XPEvent
 
 MAX_LIMIT = 100
 DEFAULT_LIMIT = 100
+
+WINDOW_EXCLUDED_SOURCES = ("reconciliation",)
 
 
 class Scope(str, Enum):
@@ -53,6 +68,8 @@ class Scope(str, Enum):
 
 class Window(str, Enum):
     ALL = "all"
+    MONTHLY = "monthly"
+    WEEKLY = "weekly"
 
 
 SCOPES_REQUIRING_ID = {Scope.COLLEGE, Scope.COURSE}
@@ -62,8 +79,19 @@ class UnknownScopeTarget(Exception):
     """The scope is valid but names something that doesn't exist."""
 
 
+def window_start(window: Window, now: datetime | None = None) -> datetime | None:
+    """Start of the current calendar window in APP_TIMEZONE, or None for all time."""
+    if window is Window.ALL:
+        return None
+    local = (now or datetime.now(timezone.utc)).astimezone(ZoneInfo(APP_TIMEZONE))
+    midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
+    if window is Window.MONTHLY:
+        return midnight.replace(day=1)
+    return midnight - timedelta(days=local.weekday())
+
+
 def _course_xp(course_id: str):
-    """Per-student XP earned within one course."""
+    """Per-student all-time XP earned within one course."""
     return (
         select(
             UserTutorial.user_id.label("user_id"),
@@ -76,9 +104,38 @@ def _course_xp(course_id: str):
     )
 
 
-def _board(scope: Scope, scope_id: str | None):
+def _window_xp(start: datetime, course_id: str | None):
+    """Per-student XP earned since `start`, from the event journal."""
+    stmt = (
+        select(
+            XPEvent.user_id.label("user_id"),
+            func.coalesce(func.sum(XPEvent.xp_delta), 0).label("xp"),
+        )
+        .filter(
+            XPEvent.created_at >= start,
+            # NULL-safe: `source_type NOT IN (...)` is NULL for NULL source_type
+            # and would silently drop the row — the `!= True` trap again.
+            or_(
+                XPEvent.source_type.is_(None),
+                XPEvent.source_type.notin_(WINDOW_EXCLUDED_SOURCES),
+            ),
+        )
+        .group_by(XPEvent.user_id)
+    )
+    if course_id is not None:
+        stmt = stmt.filter(XPEvent.course_id == course_id)
+    return stmt.subquery()
+
+
+def _board(scope: Scope, scope_id: str | None, start: datetime | None):
     """The score column, the table it comes from, and the population filters."""
     filters = [User.role == "student", User.is_test_account.isnot(True)]
+
+    if start is not None:
+        source = _window_xp(start, scope_id if scope is Scope.COURSE else None)
+        if scope is Scope.COLLEGE:
+            filters.append(User.college_id == scope_id)
+        return source.c.xp, source, [*filters, source.c.xp > 0]
 
     if scope is Scope.COURSE:
         source = _course_xp(scope_id)
@@ -147,7 +204,8 @@ async def get_leaderboard(
     limit = max(1, min(limit, MAX_LIMIT))
     offset = max(0, offset)
     label = await _scope_label(db, scope, scope_id)
-    score, source, filters = _board(scope, scope_id)
+    start = window_start(window)
+    score, source, filters = _board(scope, scope_id, start)
 
     # RANK() is evaluated over the whole filtered set before LIMIT slices it, so
     # ranks stay absolute and ties stay shared across pages.
@@ -182,6 +240,7 @@ async def get_leaderboard(
     return {
         "scope": {"type": scope.value, "id": scope_id, "name": label},
         "window": window.value,
+        "windowStart": start.isoformat() if start else None,
         "entries": [_entry(u, r, s, viewer_id) for u, s, r in rows],
         "total": total,
         "limit": limit,

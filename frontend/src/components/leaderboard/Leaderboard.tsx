@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import type { LeaderboardUser } from '@/types'
 import { useState } from 'react'
-import { useLeaderboard, useMyCourses } from '@/hooks/queries/useLeaderboardQueries'
+import { useLeaderboard, useMyCourses, type LeaderboardWindow } from '@/hooks/queries/useLeaderboardQueries'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import XPGrowthGraph from './XPGrowthGraph'
@@ -184,8 +184,8 @@ function YourPosition({ user, total, nextUp }: { user: LeaderboardUser; total: n
     )
 }
 
-/** Shown to students who haven't earned XP yet — they have no rank to display. */
-function NotRankedYet() {
+/** Shown to signed-in students with no score on the current board. */
+function NotRankedYet({ window }: { window: LeaderboardWindow }) {
     return (
         <Card className="border-border/60 bg-muted/30">
             <CardContent className="p-4 flex items-center gap-3">
@@ -193,9 +193,13 @@ function NotRankedYet() {
                     <Star className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                    <p className="text-sm font-semibold">You're not ranked yet</p>
+                    <p className="text-sm font-semibold">
+                        {window === 'all' ? "You're not ranked yet" : 'No XP in this period yet'}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                        Complete a tutorial to earn your first XP and join the leaderboard.
+                        {window === 'all'
+                            ? 'Complete a tutorial to earn your first XP and join the leaderboard.'
+                            : `Earn XP this ${window === 'weekly' ? 'week' : 'month'} to appear here.`}
                     </p>
                 </div>
             </CardContent>
@@ -209,6 +213,7 @@ export default function Leaderboard() {
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
     const [audience, setAudience] = useState<'global' | 'college'>('global')
+    const [window, setWindow] = useState<LeaderboardWindow>('all')
 
     const isAuthenticated = useAuthStore(state => state.isAuthenticated)
     const collegeId = useUserStore(state => state.user?.collegeId)
@@ -219,7 +224,7 @@ export default function Leaderboard() {
     const scope = selectedCourse === 'all' ? audience : 'course'
     const scopeId = selectedCourse === 'all' ? collegeId : selectedCourse
 
-    const { data } = useLeaderboard({ scope, scopeId })
+    const { data } = useLeaderboard({ scope, scopeId, window })
 
     const displayData = data?.entries ?? []
     // yourEntry is authoritative and present even when you're off the page.
@@ -252,6 +257,22 @@ export default function Leaderboard() {
 
             {/* Filters Row */}
             <div className="flex items-center justify-end gap-3 flex-wrap">
+                <div className="flex items-center rounded-full border border-border p-0.5">
+                    {([['all', 'All time'], ['monthly', 'Month'], ['weekly', 'Week']] as const).map(([value, label]) => (
+                        <button
+                            key={value}
+                            onClick={() => setWindow(value)}
+                            className={`rounded-full px-3 py-1 text-xs font-medium transition duration-200 ease-in-out
+                                        ${window === value
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+
                 {collegeId && selectedCourse === 'all' && (
                     <div className="flex items-center rounded-full border border-border p-0.5">
                         {(['global', 'college'] as const).map(option => (
@@ -319,7 +340,7 @@ export default function Leaderboard() {
             {yourEntry && (
                 <YourPosition user={yourEntry} total={data?.total ?? 0} nextUp={nextUp} />
             )}
-            {showNotRanked && <NotRankedYet />}
+            {showNotRanked && <NotRankedYet window={window} />}
 
             {/* Full Leaderboard Table */}
             <Card className="border-border/40">

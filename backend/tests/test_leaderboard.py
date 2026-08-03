@@ -9,6 +9,7 @@ assertion was false in production for months and nothing noticed.
 """
 
 import uuid
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -16,6 +17,7 @@ from models.college import College
 from models.course import Course
 from models.tutorial import Tutorial, UserTutorial
 from models.user import User
+from models.xp_event import XPEvent
 from services.leaderboard import (
     MAX_LIMIT,
     Scope,
@@ -302,9 +304,10 @@ async def test_envelope_shape(db):
     board = await get_leaderboard(db)
 
     assert set(board) == {
-        "scope", "window", "entries", "total",
+        "scope", "window", "windowStart", "entries", "total",
         "limit", "offset", "yourRank", "yourEntry", "generatedAt",
     }
+    assert board["windowStart"] is None
     assert board["scope"] == {"type": "global", "id": None, "name": None}
     assert board["window"] == Window.ALL.value
     assert set(board["entries"][0]) == {
@@ -536,10 +539,177 @@ async def test_course_scope_requires_an_id(db):
 
 
 async def test_unsupported_scope_raises(db):
-    """Phase 4 adds batch scope; until then an unknown scope must fail loudly
-    rather than silently returning the global board."""
+    """An unknown scope must fail loudly rather than silently returning the
+    global board."""
     with pytest.raises(ValueError):
         await get_leaderboard(db, scope="batch")
+
+
+# ── windows ──────────────────────────────────────────────────────────────────
+
+def event(user, xp, *, days_ago=0, source="tutorial_completion", course=None):
+    return XPEvent(
+        user_id=user.id,
+        source_type=source,
+        source_id="t",
+        xp_delta=xp,
+        course_id=course,
+        created_at=datetime.now(timezone.utc) - timedelta(days=days_ago),
+    )
+
+
+async def test_weekly_board_only_counts_this_weeks_events(db):
+    """8 days ago is always before this week's Monday, whatever today is."""
+    veteran = make_user(2000, name="Veteran")
+    active = make_user(100, name="Active")
+    await seed(db, [veteran, active])
+    db.add_all([event(veteran, 2000, days_ago=8), event(active, 40), event(active, 25)])
+    await db.commit()
+
+    board = await get_leaderboard(db, window=Window.WEEKLY)
+
+    assert [(e["name"], e["xp"]) for e in board["entries"]] == [("Active", 65)]
+    assert board["windowStart"] is not None
+
+
+async def test_reconciliation_events_do_not_pollute_windows(db):
+    """The trap this phase was designed around: the 2026-08 back-pay events
+    carry the run's timestamp, not the timestamp of the months-old work they
+    settle. A naive weekly board would rank 210 students by 51k XP they did
+    not earn that week."""
+    backpaid = make_user(800, name="Backpaid")
+    active = make_user(50, name="Active")
+    await seed(db, [backpaid, active])
+    db.add_all([event(backpaid, 725, source="reconciliation"), event(active, 25)])
+    await db.commit()
+
+    board = await get_leaderboard(db, window=Window.WEEKLY)
+
+    assert [e["name"] for e in board["entries"]] == ["Active"]
+
+
+async def test_null_source_type_events_still_count(db):
+    """`source_type NOT IN (...)` is NULL for NULL source_type and would drop
+    the row — the `!= True` three-valued-logic trap in a new costume."""
+    student = make_user(100, name="Student")
+    await seed(db, [student])
+    db.add(event(student, 30, source=None))
+    await db.commit()
+
+    board = await get_leaderboard(db, window=Window.WEEKLY)
+
+    assert [(e["name"], e["xp"]) for e in board["entries"]] == [("Student", 30)]
+
+
+async def test_monthly_board_excludes_last_month(db):
+    """35 days ago is always in a previous month."""
+    student = make_user(500, name="Student")
+    await seed(db, [student])
+    db.add_all([event(student, 400, days_ago=35), event(student, 60)])
+    await db.commit()
+
+    board = await get_leaderboard(db, window=Window.MONTHLY)
+
+    assert board["entries"][0]["xp"] == 60
+
+
+async def test_course_window_composes(db):
+    """A weekly course board counts only this week's events in that course."""
+    await seed_courses(db, "linux", "python")
+    student = make_user(999, name="Student")
+    await seed(db, [student])
+    db.add_all([
+        event(student, 40, course="linux"),
+        event(student, 35, course="python"),
+        event(student, 40, course="linux", days_ago=8),
+    ])
+    await db.commit()
+
+    board = await get_leaderboard(db, scope=Scope.COURSE, scope_id="linux", window=Window.WEEKLY)
+
+    assert board["entries"][0]["xp"] == 40
+
+
+async def test_window_viewer_rank_uses_window_score(db):
+    lifetime_leader = make_user(9000, name="LifetimeLeader")
+    me = make_user(10, name="Me")
+    await seed(db, [lifetime_leader, me])
+    db.add_all([event(lifetime_leader, 5), event(me, 40)])
+    await db.commit()
+
+    board = await get_leaderboard(db, window=Window.WEEKLY, viewer_id=str(me.id))
+
+    assert board["yourRank"] == 1
+    assert board["yourEntry"]["xp"] == 40
+
+
+async def test_only_old_xp_means_unranked_this_week(db):
+    veteran = make_user(2000, name="Veteran")
+    rival = make_user(10, name="Rival")
+    await seed(db, [veteran, rival])
+    db.add_all([event(veteran, 2000, days_ago=8), event(rival, 5)])
+    await db.commit()
+
+    board = await get_leaderboard(db, window=Window.WEEKLY, viewer_id=str(veteran.id))
+
+    assert board["yourRank"] is None
+    assert board["yourEntry"] is None
+
+
+async def test_net_negative_window_is_unranked(db):
+    """A student whose only activity this week is a reversion sums negative and
+    must not appear."""
+    student = make_user(100, name="Student")
+    await seed(db, [student])
+    db.add(event(student, -10, source="tutorial_reversion"))
+    await db.commit()
+
+    board = await get_leaderboard(db, window=Window.WEEKLY)
+
+    assert board["entries"] == []
+
+
+def test_window_boundaries_are_ist_calendar():
+    """Pinned to a known date: 2026-08-13 is a Thursday. Weekly starts that
+    Monday at midnight IST; monthly starts the 1st. All-time has no start."""
+    from services.leaderboard import window_start
+
+    thursday = datetime(2026, 8, 13, 10, 30, tzinfo=timezone.utc)
+
+    weekly = window_start(Window.WEEKLY, thursday)
+    monthly = window_start(Window.MONTHLY, thursday)
+
+    assert (weekly.year, weekly.month, weekly.day) == (2026, 8, 10)
+    assert (weekly.hour, weekly.minute) == (0, 0)
+    assert str(weekly.tzinfo) == "Asia/Kolkata"
+    assert (monthly.year, monthly.month, monthly.day) == (2026, 8, 1)
+    assert window_start(Window.ALL, thursday) is None
+
+
+def test_week_start_respects_ist_not_utc():
+    """Sunday 20:00 UTC is already Monday 01:30 IST — the week has turned in
+    India even though UTC still says Sunday."""
+    from services.leaderboard import window_start
+
+    sunday_utc = datetime(2026, 8, 9, 20, 0, tzinfo=timezone.utc)
+
+    weekly = window_start(Window.WEEKLY, sunday_utc)
+
+    assert (weekly.year, weekly.month, weekly.day) == (2026, 8, 10)
+
+
+async def test_window_over_http(db, client):
+    student = make_user(100, name="Student")
+    await seed(db, [student])
+    db.add(event(student, 25))
+    await db.commit()
+
+    ok = await client.get("/api/leaderboard?window=weekly")
+    assert ok.status_code == 200
+    assert ok.json()["window"] == "weekly"
+    assert ok.json()["windowStart"] is not None
+
+    assert (await client.get("/api/leaderboard?window=daily")).status_code == 422
 
 
 # ── route level ──────────────────────────────────────────────────────────────

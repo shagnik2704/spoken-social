@@ -109,6 +109,7 @@ export interface LeaderboardUser {
 export interface LeaderboardResponse {
     scope: { type: string; id: string | null; name: string | null }
     window: string
+    windowStart: string | null
     entries: LeaderboardUser[]
     total: number
     limit: number

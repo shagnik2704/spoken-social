@@ -23,4 +23,5 @@ class XPEvent(Base):
     __table_args__ = (
         Index("idx_xp_events_user_created", "user_id", created_at.desc()),
         Index("idx_xp_events_course", "course_id"),
+        Index("idx_xp_events_created", "created_at"),
     )
