@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, cast, Date
 from database import get_db
@@ -9,6 +9,7 @@ from services.leaderboard import (
     DEFAULT_LIMIT,
     MAX_LIMIT,
     Scope,
+    UnknownScopeTarget,
     Window,
     get_leaderboard as build_leaderboard,
 )
@@ -21,18 +22,11 @@ router = APIRouter(prefix='/api', tags=['leaderboard'])
 
 
 def _viewer_id(request: Request) -> str | None:
-    """Identify the caller from an optional bearer token. The leaderboard is
-    public, so an absent, malformed or expired token is not an error — it just
-    means no 'you are here' marker and no yourRank.
+    """The caller's id, or None. The board is public, so a missing or bad token
+    is not an error.
 
-    decode_token returns the whole JWT payload, not an id. The previous code
-    assigned that dict straight to the id and compared it against entry["id"],
-    so isCurrentUser was *always* false — which, together with the top-100
-    cutoff, is why the "Your Position" card never appeared for anyone.
-
-    'eff' over 'sub' matches dependencies.get_current_user: while an admin is
-    impersonating a student, the board should highlight the student being
-    viewed, not the admin.
+    'eff' before 'sub' matches dependencies.get_current_user, so an admin
+    impersonating a student sees the student highlighted.
     """
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
@@ -40,9 +34,8 @@ def _viewer_id(request: Request) -> str | None:
     payload = decode_token(auth_header[7:])
     if not payload:
         return None
-    viewer_id = payload.get("eff") or payload.get("sub")
     try:
-        return str(uuid.UUID(str(viewer_id)))
+        return str(uuid.UUID(str(payload.get("eff") or payload.get("sub"))))
     except (ValueError, TypeError, AttributeError):
         return None
 
@@ -51,28 +44,27 @@ def _viewer_id(request: Request) -> str | None:
 async def get_leaderboard(
     request: Request,
     scope: Scope = Query(Scope.GLOBAL, description="Which board to return"),
-    scope_id: str | None = Query(None, description="Target of the scope (e.g. a college id)"),
+    scope_id: str | None = Query(None, description="Target of the scope, e.g. a college id"),
     window: Window = Query(Window.ALL, description="Time window the scores cover"),
     limit: int = Query(DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
-    """One page of a leaderboard, plus the caller's own standing.
-
-    Returns an envelope rather than a bare array: callers need the total, the
-    page window, and — critically — `yourRank`, which is present even when the
-    caller falls outside the page. The top-100 cutoff sits at 800 XP, so 97% of
-    students never appear on the page itself.
-    """
-    return await build_leaderboard(
-        db,
-        scope=scope,
-        scope_id=scope_id,
-        window=window,
-        limit=limit,
-        offset=offset,
-        viewer_id=_viewer_id(request),
-    )
+    """One page of a leaderboard, plus the caller's own standing."""
+    try:
+        return await build_leaderboard(
+            db,
+            scope=scope,
+            scope_id=scope_id,
+            window=window,
+            limit=limit,
+            offset=offset,
+            viewer_id=_viewer_id(request),
+        )
+    except UnknownScopeTarget as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.get('/xp-history')

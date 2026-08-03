@@ -11,6 +11,7 @@ import type { LeaderboardUser } from '@/types'
 import { useState } from 'react'
 import { useLeaderboard } from '@/hooks/queries/useLeaderboardQueries'
 import { useAuthStore } from '@/store/authStore'
+import { useUserStore } from '@/store/userStore'
 import XPGrowthGraph from './XPGrowthGraph'
 
 const courses = [
@@ -206,11 +207,14 @@ function NotRankedYet() {
 // ===== MAIN LEADERBOARD PAGE =====
 
 export default function Leaderboard() {
-    const { data } = useLeaderboard()
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
+    const [scope, setScope] = useState<'global' | 'college'>('global')
 
     const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+    const collegeId = useUserStore(state => state.user?.collegeId)
+
+    const { data } = useLeaderboard({ scope, scopeId: collegeId })
 
     const displayData = data?.entries ?? []
     // yourEntry is authoritative and present even when you're off the page.
@@ -229,12 +233,37 @@ export default function Leaderboard() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Trophy className="h-6 w-6 text-xp-gold" />
-                    <h1 className="text-xl sm:text-2xl font-bold">Leaderboard</h1>
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-bold">Leaderboard</h1>
+                        {data && (
+                            <p className="text-xs text-muted-foreground">
+                                {data.scope.name ?? 'All learners'} • {data.total.toLocaleString()} ranked
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* Filters Row */}
             <div className="flex items-center justify-end gap-3 flex-wrap">
+                {collegeId && (
+                    <div className="flex items-center rounded-full border border-border p-0.5">
+                        {(['global', 'college'] as const).map(option => (
+                            <button
+                                key={option}
+                                onClick={() => setScope(option)}
+                                className={`rounded-full px-3 py-1 text-xs font-medium transition duration-200 ease-in-out
+                                            ${scope === option
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                {option === 'global' ? 'Everyone' : 'My College'}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* Course Filter */}
                 <div className="relative">
                     <Button

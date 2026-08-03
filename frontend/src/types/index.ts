@@ -107,7 +107,7 @@ export interface LeaderboardUser {
  * `yourRank` is null for students with no XP: they aren't ranked yet.
  */
 export interface LeaderboardResponse {
-    scope: { type: string; id: string | null }
+    scope: { type: string; id: string | null; name: string | null }
     window: string
     entries: LeaderboardUser[]
     total: number

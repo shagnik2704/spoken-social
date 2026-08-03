@@ -12,13 +12,20 @@ import uuid
 
 import pytest
 
+from models.college import College
 from models.user import User
-from services.leaderboard import MAX_LIMIT, Scope, Window, get_leaderboard
+from services.leaderboard import (
+    MAX_LIMIT,
+    Scope,
+    UnknownScopeTarget,
+    Window,
+    get_leaderboard,
+)
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
-def make_user(xp, *, name="Student", role="student", test_account=False, level=1):
+def make_user(xp, *, name="Student", role="student", test_account=False, level=1, college=None):
     return User(
         id=uuid.uuid4(),
         username=f"@{uuid.uuid4().hex[:10]}",
@@ -28,6 +35,7 @@ def make_user(xp, *, name="Student", role="student", test_account=False, level=1
         is_test_account=test_account,
         level=level,
         xp_total=xp,
+        college_id=college,
     )
 
 
@@ -35,6 +43,11 @@ async def seed(db, users):
     db.add_all(users)
     await db.commit()
     return users
+
+
+async def seed_colleges(db, *ids):
+    db.add_all([College(id=i, name=f"{i.title()} College") for i in ids])
+    await db.commit()
 
 
 # ── ranking semantics ────────────────────────────────────────────────────────
@@ -270,18 +283,117 @@ async def test_envelope_shape(db):
         "scope", "window", "entries", "total",
         "limit", "offset", "yourRank", "yourEntry", "generatedAt",
     }
-    assert board["scope"] == {"type": "global", "id": None}
+    assert board["scope"] == {"type": "global", "id": None, "name": None}
     assert board["window"] == Window.ALL.value
     assert set(board["entries"][0]) == {
         "id", "rank", "xp", "name", "username", "level", "levelTitle", "isCurrentUser",
     }
 
 
-async def test_unsupported_scope_raises(db):
-    """Phases 2-4 add scopes; until then an unknown scope must fail loudly
-    rather than silently returning the global board."""
+# ── college scope ────────────────────────────────────────────────────────────
+
+async def test_college_scope_only_includes_that_college(db):
+    await seed_colleges(db, "alpha", "beta")
+    await seed(db, [
+        make_user(900, name="AlphaTop", college="alpha"),
+        make_user(400, name="AlphaLow", college="alpha"),
+        make_user(800, name="BetaOnly", college="beta"),
+        make_user(700, name="NoCollege"),
+    ])
+
+    board = await get_leaderboard(db, scope=Scope.COLLEGE, scope_id="alpha")
+
+    assert [e["name"] for e in board["entries"]] == ["AlphaTop", "AlphaLow"]
+    assert board["total"] == 2
+
+
+async def test_college_ranks_restart_at_one(db):
+    """A student ranked low globally can still lead their own college."""
+    await seed_colleges(db, "alpha", "beta")
+    await seed(db, [
+        make_user(5000, name="GlobalLeader", college="beta"),
+        make_user(400, name="AlphaBest", college="alpha"),
+        make_user(300, name="AlphaSecond", college="alpha"),
+    ])
+
+    board = await get_leaderboard(db, scope=Scope.COLLEGE, scope_id="alpha")
+
+    assert [(e["name"], e["rank"]) for e in board["entries"]] == [
+        ("AlphaBest", 1), ("AlphaSecond", 2),
+    ]
+
+
+async def test_college_scope_reports_the_college_name(db):
+    await seed_colleges(db, "alpha")
+    await seed(db, [make_user(100, college="alpha")])
+
+    board = await get_leaderboard(db, scope=Scope.COLLEGE, scope_id="alpha")
+
+    assert board["scope"] == {"type": "college", "id": "alpha", "name": "Alpha College"}
+
+
+async def test_viewer_rank_is_relative_to_the_college(db):
+    await seed_colleges(db, "alpha", "beta")
+    me = make_user(400, name="Me", college="alpha")
+    await seed(db, [
+        make_user(9000, name="Outsider1", college="beta"),
+        make_user(9000, name="Outsider2", college="beta"),
+        make_user(500, name="Classmate", college="alpha"),
+        me,
+    ])
+
+    globally = await get_leaderboard(db, viewer_id=str(me.id))
+    locally = await get_leaderboard(
+        db, scope=Scope.COLLEGE, scope_id="alpha", viewer_id=str(me.id)
+    )
+
+    assert globally["yourRank"] == 4
+    assert locally["yourRank"] == 2
+
+
+async def test_viewer_from_another_college_is_unranked(db):
+    await seed_colleges(db, "alpha", "beta")
+    outsider = make_user(900, name="Outsider", college="beta")
+    await seed(db, [make_user(100, college="alpha"), outsider])
+
+    board = await get_leaderboard(
+        db, scope=Scope.COLLEGE, scope_id="alpha", viewer_id=str(outsider.id)
+    )
+
+    assert board["yourRank"] is None
+    assert board["yourEntry"] is None
+
+
+async def test_college_with_no_scoring_students_is_empty_not_an_error(db):
+    """Only 39 of 309 production colleges have any XP at all, so the empty
+    board is the common case rather than an edge case."""
+    await seed_colleges(db, "quiet")
+    await seed(db, [make_user(0, college="quiet")])
+
+    board = await get_leaderboard(db, scope=Scope.COLLEGE, scope_id="quiet")
+
+    assert board["entries"] == []
+    assert board["total"] == 0
+    assert board["scope"]["name"] == "Quiet College"
+
+
+async def test_unknown_college_is_rejected(db):
+    with pytest.raises(UnknownScopeTarget):
+        await get_leaderboard(db, scope=Scope.COLLEGE, scope_id="does-not-exist")
+
+
+async def test_college_scope_requires_an_id(db):
+    """Missing scope_id must fail rather than silently returning the global
+    board, which would leak every college's students into a college view."""
     with pytest.raises(ValueError):
-        await get_leaderboard(db, scope="college")
+        await get_leaderboard(db, scope=Scope.COLLEGE)
+
+
+async def test_unsupported_scope_raises(db):
+    """Phases 3-4 add course and batch scopes; until then an unknown scope must
+    fail loudly rather than silently returning the global board."""
+    with pytest.raises(ValueError):
+        await get_leaderboard(db, scope="course")
 
 
 # ── route level ──────────────────────────────────────────────────────────────
@@ -342,9 +454,20 @@ async def test_malformed_token_degrades_to_anonymous(db, client):
 
 
 async def test_invalid_query_params_are_rejected_at_the_edge(db, client):
-    """FastAPI validation should reject these as 422 rather than letting them
-    reach the service and surface as a 500."""
+    """Bad input should surface as 4xx, never as a 500 from deeper in."""
     assert (await client.get("/api/leaderboard?limit=0")).status_code == 422
     assert (await client.get("/api/leaderboard?limit=99999")).status_code == 422
     assert (await client.get("/api/leaderboard?offset=-1")).status_code == 422
-    assert (await client.get("/api/leaderboard?scope=college")).status_code == 422
+    assert (await client.get("/api/leaderboard?scope=course")).status_code == 422
+
+
+async def test_college_scope_errors_over_http(db, client):
+    await seed_colleges(db, "alpha")
+    await seed(db, [make_user(100, college="alpha")])
+
+    assert (await client.get("/api/leaderboard?scope=college")).status_code == 400
+    assert (await client.get("/api/leaderboard?scope=college&scope_id=nope")).status_code == 404
+
+    ok = await client.get("/api/leaderboard?scope=college&scope_id=alpha")
+    assert ok.status_code == 200
+    assert ok.json()["scope"]["name"] == "Alpha College"

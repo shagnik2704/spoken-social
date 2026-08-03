@@ -83,7 +83,7 @@ async def db(engine):
     each test sees a genuinely empty table and rank numbers are predictable."""
     Session = async_sessionmaker(bind=engine, expire_on_commit=False)
     async with Session() as session:
-        await session.execute(text("TRUNCATE users CASCADE"))
+        await session.execute(text("TRUNCATE users, colleges CASCADE"))
         await session.commit()
         yield session
 

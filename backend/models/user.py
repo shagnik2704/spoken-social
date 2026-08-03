@@ -43,6 +43,7 @@ class User(Base):
     __table_args__ = (
         Index("idx_users_xp_total", xp_total.desc()),
         Index("idx_users_college", "college_id"),
+        Index("idx_users_college_xp", "college_id", xp_total.desc()),
     )
 
     async def to_api_dict(self, db=None, active_course_id=None):

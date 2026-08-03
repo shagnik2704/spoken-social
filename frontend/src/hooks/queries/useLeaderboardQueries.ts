@@ -8,10 +8,19 @@ import type { LeaderboardResponse } from '@/types'
  * two concurrent identical requests), and inherits the global 5-min staleTime so
  * navigating back doesn't refetch.
  */
-export function useLeaderboard() {
+export interface LeaderboardScope {
+    scope?: 'global' | 'college'
+    scopeId?: string | null
+}
+
+export function useLeaderboard({ scope = 'global', scopeId }: LeaderboardScope = {}) {
     return useQuery<LeaderboardResponse>({
-        queryKey: ['leaderboard'],
-        queryFn: async () => (await api.get('/api/leaderboard')).data,
+        queryKey: ['leaderboard', scope, scopeId ?? null],
+        queryFn: async () =>
+            (await api.get('/api/leaderboard', {
+                params: scope === 'global' ? undefined : { scope, scope_id: scopeId },
+            })).data,
+        enabled: scope === 'global' || Boolean(scopeId),
     })
 }
 
