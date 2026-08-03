@@ -29,6 +29,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 Instrumentator().instrument(app).expose(app)
+
+from prometheus_client import REGISTRY
+from integrity_metrics import IntegrityCollector
+
+REGISTRY.register(IntegrityCollector())
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],

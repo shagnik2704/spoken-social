@@ -1,4 +1,5 @@
 import asyncio
+import json
 from arq.connections import RedisSettings
 import logging
 from datetime import datetime,timedelta,timezone
@@ -58,11 +59,47 @@ async def check_pending_xp(ctx):
         else:
             logger.info("No pending XP found.")
 
+async def check_xp_invariants(ctx):
+    """Daily XP integrity sweep.
+
+    The 2026-08 audit found ~49k XP of unpaid work that had been wrong for four
+    months because nothing was checking. This runs the same assertions every
+    night: a healthy system logs all-zero counts, and any non-zero value names
+    the worst-affected students so the next step is obvious.
+
+    The result is also published to Redis for the backend to expose as
+    Prometheus gauges — see integrity_metrics.py. Worker and backend are
+    separate processes and prometheus_client gauges are per-process, so the
+    value has to travel through something shared.
+    """
+    from services.integrity import check_xp_integrity, find_drifted_users
+    from integrity_metrics import publish
+
+    async with SessionLocal() as db:
+        result = await check_xp_integrity(db)
+
+        if result["healthy"]:
+            logger.info("XP integrity OK %s", json.dumps(result))
+        else:
+            worst = await find_drifted_users(db, limit=10)
+            logger.error("XP INTEGRITY VIOLATED %s", json.dumps(result))
+            for u in worst:
+                logger.error(
+                    "  drifted: %s has %d, records imply %d (%+d)",
+                    u["name"], u["xp_total"], u["implied"], u["drift"],
+                )
+
+    await publish(result)
+    return result
+
+
 class WorkerSettings:
     # Use the official ARQ object to point to the Redis container
     redis_settings = RedisSettings(host="redis", port=6379)
-    
+
     cron_jobs = [
-        cron(check_pending_xp,minute={0,15,30,45})
+        cron(check_pending_xp, minute={0, 15, 30, 45}),
+        # 02:00 IST — after the day's activity, before anyone looks in the morning.
+        cron(check_xp_invariants, hour={2}, minute={0}),
     ]
 
