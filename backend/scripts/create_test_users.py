@@ -17,7 +17,6 @@ def create_users():
             bio="Just started my journey!",
             level=1,
             xp_total=0,
-            xp_last_week=0
         )
         
         # 2. Another Coordinator

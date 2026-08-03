@@ -182,7 +182,6 @@ def seed_users(dry_run: bool = False):
                         role="student",
                         college_id=college_id,
                         xp_total=0,
-                        xp_last_week=0,
                         level=1,
                     ))
 

@@ -19,7 +19,6 @@ class User(Base):
     website = Column(String(255))
     level = Column(Integer, nullable=False, default=1)
     xp_total = Column(Integer, nullable=False, default=0)
-    xp_last_week = Column(Integer, nullable=False, default=0)
     role = Column(String(20), nullable=False, default="student")  # student | coordinator | admin
     college_id = Column(String(50), ForeignKey("colleges.id", ondelete="SET NULL"), nullable=True)  # which college they belong to
     # NOT NULL: every `is_test_account != True` filter in the codebase silently drops

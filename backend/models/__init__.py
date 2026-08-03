@@ -11,7 +11,6 @@ from models.interaction import PostLike, PostComment, PostShare
 from models.follow import Follow
 from models.hashtag import Tag, PostTag, Hashtag, PostHashtag, HashtagCount
 from models.xp_event import XPEvent
-from models.leaderboard import LeaderboardWeekly
 from models.activity import Activity
 from models.feedback import TutorialFeedback
 from models.forum_activity import ForumActivity

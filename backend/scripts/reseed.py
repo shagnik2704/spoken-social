@@ -381,7 +381,6 @@ def reseed():
         location=ADMIN["location"],
         role="admin",
         xp_total=0,
-        xp_last_week=0,
         level=1,
         college_id=None,
     )
@@ -400,7 +399,6 @@ def reseed():
             location=coord["location"],
             role="coordinator",
             xp_total=0,
-            xp_last_week=0,
             level=1,
             college_id=coord["college_id"],
         ))
@@ -534,7 +532,6 @@ def reseed():
                 location=next(c["location"] for c in COLLEGES if c["id"] == college_id),
                 role="student",
                 xp_total=total_xp,
-                xp_last_week=random.randint(0, max(0, min(total_xp, 300))),
                 level=_level_from_xp(total_xp),
                 college_id=college_id,
             )

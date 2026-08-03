@@ -34,7 +34,6 @@ from models.interaction import PostLike, PostComment, PostShare
 from models.follow import Follow
 from models.hashtag import Tag, PostTag, Hashtag, PostHashtag, HashtagCount
 from models.xp_event import XPEvent
-from models.leaderboard import LeaderboardWeekly
 from models.activity import Activity
 
 target_metadata = Base.metadata

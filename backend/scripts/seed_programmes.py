@@ -301,7 +301,6 @@ def seed_programmes():
                 location="Mumbai, Maharashtra",
                 level=1,
                 xp_total=0,
-                xp_last_week=0
             )
             db.add(coord_user)
             print(f"   Created Swayam Plus coordinator: {sp_coord_email}")
@@ -335,7 +334,6 @@ def seed_programmes():
                     location="India",
                     level=1,
                     xp_total=0,
-                    xp_last_week=0
                 )
                 db.add(user)
                 db.flush()
@@ -412,7 +410,6 @@ def seed_programmes():
 
             # Update User Level and XP
             user.xp_total = total_xp
-            user.xp_last_week = int(total_xp * 0.4)
             user.level = max(1, int(total_xp // 150) + 1)
         db.flush()
 
@@ -528,7 +525,6 @@ def seed_programmes():
                 location="Bangalore, Karnataka",
                 level=1,
                 xp_total=0,
-                xp_last_week=0
             )
             db.add(coord_user_ilw)
             print(f"   Created ILW coordinator: {ilw_coord_email}")
@@ -561,7 +557,6 @@ def seed_programmes():
                     location="India",
                     level=1,
                     xp_total=0,
-                    xp_last_week=0
                 )
                 db.add(user)
                 db.flush()
@@ -636,7 +631,6 @@ def seed_programmes():
 
             # Update User Level and XP
             user.xp_total = total_xp
-            user.xp_last_week = int(total_xp * 0.4)
             user.level = max(1, int(total_xp // 150) + 1)
         db.flush()
 
@@ -734,7 +728,6 @@ def seed_programmes():
                         location="India",
                         level=1,
                         xp_total=0,
-                        xp_last_week=0
                     )
                     db.add(user)
                     db.flush()
@@ -795,7 +788,6 @@ def seed_programmes():
                         
                     if total_xp > 0:
                         user.xp_total += total_xp
-                        user.xp_last_week += int(total_xp * 0.4)
                         user.level = max(1, int(user.xp_total // 150) + 1)
                 
                 if idx % 500 == 0:

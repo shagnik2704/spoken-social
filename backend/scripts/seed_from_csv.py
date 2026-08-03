@@ -512,7 +512,6 @@ def main():
             location=COLLEGE_LOCATIONS.get(a["college_name"], "India"),
             role="admin",
             xp_total=0,
-            xp_last_week=0,
             level=1,
             college_id=c_id
         )
@@ -540,7 +539,6 @@ def main():
             location=COLLEGE_LOCATIONS.get(coord["college_name"], "India"),
             role="coordinator",
             xp_total=0,
-            xp_last_week=0,
             level=1,
             college_id=c_id
         )
@@ -645,7 +643,6 @@ def main():
             location=COLLEGE_LOCATIONS.get(s["college_name"], "India"),
             role="student",
             xp_total=total_xp,
-            xp_last_week=random.randint(0, max(0, min(total_xp, 250))),
             level=level_from_xp(total_xp),
             college_id=c_id
         )

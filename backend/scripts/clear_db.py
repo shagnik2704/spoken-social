@@ -9,7 +9,7 @@ from models import (
     College, User, Course, Tutorial, Badge, Follow, UserCourse,
     Post, Hashtag, PostHashtag, PostLike, PostComment, PostShare,
     HashtagCount, TutorialFeedback, Activity, XPEvent, UserBadge,
-    UserTutorial, Tag, PostTag, LeaderboardWeekly
+    UserTutorial, Tag, PostTag
 )
 
 def clear_all():
@@ -18,7 +18,6 @@ def clear_all():
     try:
         # Delete in reverse-dependency order
         db.query(TutorialFeedback).delete()
-        db.query(LeaderboardWeekly).delete()
         db.query(PostHashtag).delete()
         db.query(HashtagCount).delete()
         db.query(PostTag).delete()

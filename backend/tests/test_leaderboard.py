@@ -156,9 +156,9 @@ async def test_null_test_account_flag_is_impossible(db):
     with pytest.raises(IntegrityError):
         await db.execute(text(
             "INSERT INTO users (id, username, email, display_name, role, level,"
-            " xp_total, xp_last_week, is_test_account, created_at)"
+            " xp_total, is_test_account, created_at)"
             " VALUES (gen_random_uuid(), '@nulltest', 'nulltest@example.org',"
-            " 'Null Test', 'student', 1, 100, 0, NULL, NOW())"
+            " 'Null Test', 'student', 1, 100, NULL, NOW())"
         ))
     await db.rollback()
 

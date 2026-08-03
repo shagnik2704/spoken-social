@@ -119,7 +119,6 @@ def main():
             location="India",
             level=1,
             xp_total=0,
-            xp_last_week=0
         ))
     db.flush()
 
@@ -348,7 +347,6 @@ def main():
                 location=location,
                 level=1,
                 xp_total=0,
-                xp_last_week=0
             )
             db.add(user)
             user_cache[email] = user

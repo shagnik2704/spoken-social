@@ -57,7 +57,6 @@ async def _create_dynamic_admin(db: AsyncSession, email: str) -> User:
         location="India",
         level=1,
         xp_total=0,
-        xp_last_week=0
     )
     db.add(user)
     await db.flush()
@@ -260,7 +259,6 @@ async def _upsert_user(
             role=api_role,
             college_id=college_id,
             xp_total=0,
-            xp_last_week=0,
             level=1,
         )
         db.add(user)
@@ -407,7 +405,6 @@ async def get_or_create_test_student(db: AsyncSession, college_id: str) -> User:
             college_id=college_id,
             is_test_account=True,
             xp_total=0,
-            xp_last_week=0,
             level=1,
         )
         db.add(user)
