@@ -49,7 +49,11 @@ class UserTutorial(Base):
 
     __table_args__ = (
         Index("idx_user_tutorials_user", "user_id"),
-        Index("idx_user_tutorials_tutorial", "tutorial_id"),
+        Index(
+            "idx_user_tutorials_tutorial_cover",
+            "tutorial_id",
+            postgresql_include=["user_id", "xp_earned"],
+        ),
     )
 
     def to_api_dict(self):

@@ -13,6 +13,8 @@ import uuid
 import pytest
 
 from models.college import College
+from models.course import Course
+from models.tutorial import Tutorial, UserTutorial
 from models.user import User
 from services.leaderboard import (
     MAX_LIMIT,
@@ -47,6 +49,26 @@ async def seed(db, users):
 
 async def seed_colleges(db, *ids):
     db.add_all([College(id=i, name=f"{i.title()} College") for i in ids])
+    await db.commit()
+
+
+async def seed_courses(db, *ids):
+    db.add_all([Course(id=i, title=f"{i.title()} Course") for i in ids])
+    await db.commit()
+
+
+async def seed_tutorials(db, course_id, count):
+    tutorials = [
+        Tutorial(id=uuid.uuid4(), course_id=course_id, tutorial_number=n, title=f"{course_id} {n}")
+        for n in range(1, count + 1)
+    ]
+    db.add_all(tutorials)
+    await db.commit()
+    return tutorials
+
+
+async def award(db, user, tutorial, xp):
+    db.add(UserTutorial(user_id=user.id, tutorial_id=tutorial.id, xp_earned=xp))
     await db.commit()
 
 
@@ -389,11 +411,135 @@ async def test_college_scope_requires_an_id(db):
         await get_leaderboard(db, scope=Scope.COLLEGE)
 
 
-async def test_unsupported_scope_raises(db):
-    """Phases 3-4 add course and batch scopes; until then an unknown scope must
-    fail loudly rather than silently returning the global board."""
+# ── course scope ─────────────────────────────────────────────────────────────
+
+async def test_course_board_ranks_by_course_xp_not_global_xp(db):
+    """The reason course scope exists. A student with a huge global total but
+    little work in this course must not top its board."""
+    await seed_courses(db, "linux", "python")
+    linux, python = await seed_tutorials(db, "linux", 2), await seed_tutorials(db, "python", 2)
+
+    allrounder = make_user(5000, name="PythonStar")
+    specialist = make_user(300, name="LinuxSpecialist")
+    await seed(db, [allrounder, specialist])
+
+    await award(db, allrounder, python[0], 40)
+    await award(db, allrounder, linux[0], 10)
+    await award(db, specialist, linux[0], 40)
+    await award(db, specialist, linux[1], 40)
+
+    board = await get_leaderboard(db, scope=Scope.COURSE, scope_id="linux")
+
+    assert [(e["name"], e["xp"], e["rank"]) for e in board["entries"]] == [
+        ("LinuxSpecialist", 80, 1),
+        ("PythonStar", 10, 2),
+    ]
+
+
+async def test_course_board_excludes_students_with_no_work_in_it(db):
+    await seed_courses(db, "linux", "python")
+    linux = await seed_tutorials(db, "linux", 1)
+    python = await seed_tutorials(db, "python", 1)
+
+    linux_learner = make_user(100, name="LinuxLearner")
+    python_learner = make_user(100, name="PythonLearner")
+    await seed(db, [linux_learner, python_learner])
+    await award(db, linux_learner, linux[0], 25)
+    await award(db, python_learner, python[0], 25)
+
+    board = await get_leaderboard(db, scope=Scope.COURSE, scope_id="linux")
+
+    assert [e["name"] for e in board["entries"]] == ["LinuxLearner"]
+    assert board["total"] == 1
+
+
+async def test_course_xp_sums_across_that_courses_tutorials_only(db):
+    await seed_courses(db, "linux", "python")
+    linux = await seed_tutorials(db, "linux", 3)
+    python = await seed_tutorials(db, "python", 1)
+
+    student = make_user(999, name="Student")
+    await seed(db, [student])
+    for tut, xp in zip(linux, (10, 25, 40)):
+        await award(db, student, tut, xp)
+    await award(db, student, python[0], 40)
+
+    board = await get_leaderboard(db, scope=Scope.COURSE, scope_id="linux")
+
+    assert board["entries"][0]["xp"] == 75
+
+
+async def test_course_viewer_rank_uses_course_xp(db):
+    await seed_courses(db, "linux")
+    linux = await seed_tutorials(db, "linux", 1)
+
+    me = make_user(10_000, name="Me")
+    rival = make_user(50, name="Rival")
+    await seed(db, [me, rival])
+    await award(db, me, linux[0], 10)
+    await award(db, rival, linux[0], 40)
+
+    globally = await get_leaderboard(db, viewer_id=str(me.id))
+    in_course = await get_leaderboard(
+        db, scope=Scope.COURSE, scope_id="linux", viewer_id=str(me.id)
+    )
+
+    assert globally["yourRank"] == 1
+    assert in_course["yourRank"] == 2
+    assert in_course["yourEntry"]["xp"] == 10
+
+
+async def test_course_board_reports_the_course_title(db):
+    await seed_courses(db, "linux")
+    linux = await seed_tutorials(db, "linux", 1)
+    student = make_user(100)
+    await seed(db, [student])
+    await award(db, student, linux[0], 25)
+
+    board = await get_leaderboard(db, scope=Scope.COURSE, scope_id="linux")
+
+    assert board["scope"] == {"type": "course", "id": "linux", "name": "Linux Course"}
+
+
+async def test_course_with_no_progress_is_empty(db):
+    await seed_courses(db, "linux")
+    await seed_tutorials(db, "linux", 2)
+    await seed(db, [make_user(500)])
+
+    board = await get_leaderboard(db, scope=Scope.COURSE, scope_id="linux")
+
+    assert board["entries"] == []
+    assert board["total"] == 0
+
+
+async def test_course_ties_share_a_rank(db):
+    await seed_courses(db, "linux")
+    linux = await seed_tutorials(db, "linux", 1)
+    students = [make_user(100 * i, name=f"S{i}") for i in range(1, 4)]
+    await seed(db, students)
+    for s in students:
+        await award(db, s, linux[0], 25)
+
+    board = await get_leaderboard(db, scope=Scope.COURSE, scope_id="linux")
+
+    assert [e["rank"] for e in board["entries"]] == [1, 1, 1]
+
+
+async def test_unknown_course_is_rejected(db):
+    with pytest.raises(UnknownScopeTarget):
+        await get_leaderboard(db, scope=Scope.COURSE, scope_id="nope")
+
+
+async def test_course_scope_requires_an_id(db):
     with pytest.raises(ValueError):
-        await get_leaderboard(db, scope="course")
+        await get_leaderboard(db, scope=Scope.COURSE)
+
+
+async def test_unsupported_scope_raises(db):
+    """Phase 4 adds batch scope; until then an unknown scope must fail loudly
+    rather than silently returning the global board."""
+    with pytest.raises(ValueError):
+        await get_leaderboard(db, scope="batch")
 
 
 # ── route level ──────────────────────────────────────────────────────────────
@@ -458,7 +604,7 @@ async def test_invalid_query_params_are_rejected_at_the_edge(db, client):
     assert (await client.get("/api/leaderboard?limit=0")).status_code == 422
     assert (await client.get("/api/leaderboard?limit=99999")).status_code == 422
     assert (await client.get("/api/leaderboard?offset=-1")).status_code == 422
-    assert (await client.get("/api/leaderboard?scope=course")).status_code == 422
+    assert (await client.get("/api/leaderboard?scope=batch")).status_code == 422
 
 
 async def test_college_scope_errors_over_http(db, client):

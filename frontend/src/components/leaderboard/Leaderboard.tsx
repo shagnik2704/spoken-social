@@ -9,19 +9,18 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import type { LeaderboardUser } from '@/types'
 import { useState } from 'react'
-import { useLeaderboard } from '@/hooks/queries/useLeaderboardQueries'
+import { useLeaderboard, useMyCourses } from '@/hooks/queries/useLeaderboardQueries'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
 import XPGrowthGraph from './XPGrowthGraph'
 
-const courses = [
-    { id: 'all', name: 'All Courses', icon: BookOpen },
-    { id: 'python', name: 'Python', icon: Code },
-    { id: 'linux', name: 'Linux', icon: Terminal },
-    { id: 'scilab', name: 'Scilab', icon: BarChart3 },
-    { id: 'cpp', name: 'C/C++', icon: GraduationCap },
-    { id: 'libreoffice', name: 'LibreOffice', icon: FileText },
-]
+const COURSE_ICONS: Record<string, typeof BookOpen> = {
+    python: Code,
+    linux: Terminal,
+    scilab: BarChart3,
+    latex: FileText,
+    cpp: GraduationCap,
+}
 
 // ===== HELPER FUNCTIONS =====
 
@@ -209,12 +208,18 @@ function NotRankedYet() {
 export default function Leaderboard() {
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
-    const [scope, setScope] = useState<'global' | 'college'>('global')
+    const [audience, setAudience] = useState<'global' | 'college'>('global')
 
     const isAuthenticated = useAuthStore(state => state.isAuthenticated)
     const collegeId = useUserStore(state => state.user?.collegeId)
+    const { data: myCourses = [] } = useMyCourses()
 
-    const { data } = useLeaderboard({ scope, scopeId: collegeId })
+    // A course board ranks by XP earned in that course, so it replaces the
+    // audience filter rather than combining with it.
+    const scope = selectedCourse === 'all' ? audience : 'course'
+    const scopeId = selectedCourse === 'all' ? collegeId : selectedCourse
+
+    const { data } = useLeaderboard({ scope, scopeId })
 
     const displayData = data?.entries ?? []
     // yourEntry is authoritative and present even when you're off the page.
@@ -224,8 +229,9 @@ export default function Leaderboard() {
     const nextUp = yourEntry ? displayData.find(u => u.rank === yourEntry.rank - 1) : undefined
     const showNotRanked = isAuthenticated && data !== undefined && yourEntry === null
 
-    const selectedCourseInfo = courses.find(c => c.id === selectedCourse)
-    const CourseIcon = selectedCourseInfo?.icon || BookOpen
+    const courseOptions = [{ id: 'all', title: 'All Courses' }, ...myCourses]
+    const selectedCourseInfo = courseOptions.find(c => c.id === selectedCourse)
+    const CourseIcon = COURSE_ICONS[selectedCourse] ?? BookOpen
 
     return (
         <div className="max-w-3xl mx-auto space-y-5">
@@ -246,14 +252,14 @@ export default function Leaderboard() {
 
             {/* Filters Row */}
             <div className="flex items-center justify-end gap-3 flex-wrap">
-                {collegeId && (
+                {collegeId && selectedCourse === 'all' && (
                     <div className="flex items-center rounded-full border border-border p-0.5">
                         {(['global', 'college'] as const).map(option => (
                             <button
                                 key={option}
-                                onClick={() => setScope(option)}
+                                onClick={() => setAudience(option)}
                                 className={`rounded-full px-3 py-1 text-xs font-medium transition duration-200 ease-in-out
-                                            ${scope === option
+                                            ${audience === option
                                         ? 'bg-primary text-primary-foreground'
                                         : 'text-muted-foreground hover:text-foreground'
                                     }`}
@@ -273,13 +279,13 @@ export default function Leaderboard() {
                         onClick={() => setCourseDropdownOpen(!courseDropdownOpen)}
                     >
                         <CourseIcon className="h-3.5 w-3.5" />
-                        {selectedCourseInfo?.name || 'All Courses'}
+                        {selectedCourseInfo?.title || 'All Courses'}
                         <ChevronDown className={`h-3 w-3 transition-transform ${courseDropdownOpen ? 'rotate-180' : ''}`} />
                     </Button>
                     {courseDropdownOpen && (
                         <div className="absolute right-0 top-full mt-1 w-48 bg-card border border-border rounded-lg shadow-lg z-10 py-1">
-                            {courses.map(course => {
-                                const Icon = course.icon
+                            {courseOptions.map(course => {
+                                const Icon = COURSE_ICONS[course.id] ?? BookOpen
                                 return (
                                     <button
                                         key={course.id}
@@ -294,7 +300,7 @@ export default function Leaderboard() {
                                             }`}
                                     >
                                         <Icon className="h-4 w-4" />
-                                        {course.name}
+                                        {course.title}
                                     </button>
                                 )
                             })}

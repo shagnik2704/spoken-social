@@ -9,7 +9,7 @@ import type { LeaderboardResponse } from '@/types'
  * navigating back doesn't refetch.
  */
 export interface LeaderboardScope {
-    scope?: 'global' | 'college'
+    scope?: 'global' | 'college' | 'course'
     scopeId?: string | null
 }
 
@@ -21,6 +21,19 @@ export function useLeaderboard({ scope = 'global', scopeId }: LeaderboardScope =
                 params: scope === 'global' ? undefined : { scope, scope_id: scopeId },
             })).data,
         enabled: scope === 'global' || Boolean(scopeId),
+    })
+}
+
+interface EnrolledCourse {
+    id: string
+    title: string
+}
+
+/** The signed-in student's own courses, for scoping the leaderboard. */
+export function useMyCourses() {
+    return useQuery<EnrolledCourse[]>({
+        queryKey: ['my-courses'],
+        queryFn: async () => (await api.get('/api/courses/me')).data,
     })
 }
 

@@ -20,9 +20,16 @@ Semantics:
   The viewer's rank is returned whether or not they appear on the requested
   page, since the visible page is a small fraction of the ranked population.
 
-  A scope narrows the population; it does not change what counts as score.
-  Course and batch scopes (phase 3) will change both, because ranking a student
-  on a Linux board by XP they earned in Python would be wrong.
+  A scope changes who is on the board, and may also change what counts as
+  score. Global and college boards rank on total XP: a college narrows the
+  population but a student's score is the same one they see everywhere. A
+  course board instead ranks on XP earned in that course, because carrying
+  global XP over would let a student top a course they have barely touched on
+  the strength of work done elsewhere.
+
+  Course scores are summed from user_tutorials, not from xp_events. The event
+  history is incomplete for the cohort imported in early 2026, while the
+  tutorial rows were reconciled against their flags and are exact.
 """
 
 from datetime import datetime, timezone
@@ -31,6 +38,7 @@ from enum import Enum
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from models.tutorial import Tutorial, UserTutorial
 from models.user import User
 
 MAX_LIMIT = 100
@@ -40,37 +48,56 @@ DEFAULT_LIMIT = 100
 class Scope(str, Enum):
     GLOBAL = "global"
     COLLEGE = "college"
+    COURSE = "course"
 
 
 class Window(str, Enum):
     ALL = "all"
 
 
-SCOPES_REQUIRING_ID = {Scope.COLLEGE}
+SCOPES_REQUIRING_ID = {Scope.COLLEGE, Scope.COURSE}
 
 
 class UnknownScopeTarget(Exception):
     """The scope is valid but names something that doesn't exist."""
 
 
-def _population(scope: Scope, scope_id: str | None):
-    filters = [
-        User.role == "student",
-        # isnot(True), not != True: `NULL != true` is NULL in SQL, which
-        # silently drops the row.
-        User.is_test_account.isnot(True),
-        User.xp_total > 0,
-    ]
+def _course_xp(course_id: str):
+    """Per-student XP earned within one course."""
+    return (
+        select(
+            UserTutorial.user_id.label("user_id"),
+            func.coalesce(func.sum(UserTutorial.xp_earned), 0).label("xp"),
+        )
+        .join(Tutorial, Tutorial.id == UserTutorial.tutorial_id)
+        .filter(Tutorial.course_id == course_id)
+        .group_by(UserTutorial.user_id)
+        .subquery()
+    )
+
+
+def _board(scope: Scope, scope_id: str | None):
+    """The score column, the table it comes from, and the population filters."""
+    filters = [User.role == "student", User.is_test_account.isnot(True)]
+
+    if scope is Scope.COURSE:
+        source = _course_xp(scope_id)
+        return source.c.xp, source, [*filters, source.c.xp > 0]
+
     if scope is Scope.COLLEGE:
         filters.append(User.college_id == scope_id)
-    return filters
+    return User.xp_total, None, [*filters, User.xp_total > 0]
 
 
-def _entry(user: User, rank: int, viewer_id: str | None) -> dict:
+def _join(stmt, source):
+    return stmt if source is None else stmt.join(source, source.c.user_id == User.id)
+
+
+def _entry(user: User, rank: int, score: int, viewer_id: str | None) -> dict:
     return {
         "id": str(user.id),
         "rank": rank,
-        "xp": user.xp_total,
+        "xp": score,
         "name": user.display_name or "",
         "username": user.username or "",
         "level": user.level,
@@ -80,14 +107,23 @@ def _entry(user: User, rank: int, viewer_id: str | None) -> dict:
 
 
 async def _scope_label(db: AsyncSession, scope: Scope, scope_id: str | None) -> str | None:
-    if scope is not Scope.COLLEGE:
-        return None
-    from models.college import College
+    if scope is Scope.COLLEGE:
+        from models.college import College
 
-    name = await db.scalar(select(College.name).filter(College.id == scope_id))
-    if name is None:
-        raise UnknownScopeTarget(f"no college with id {scope_id!r}")
-    return name
+        name = await db.scalar(select(College.name).filter(College.id == scope_id))
+        if name is None:
+            raise UnknownScopeTarget(f"no college with id {scope_id!r}")
+        return name
+
+    if scope is Scope.COURSE:
+        from models.course import Course
+
+        title = await db.scalar(select(Course.title).filter(Course.id == scope_id))
+        if title is None:
+            raise UnknownScopeTarget(f"no course with id {scope_id!r}")
+        return title
+
+    return None
 
 
 async def get_leaderboard(
@@ -110,40 +146,43 @@ async def get_leaderboard(
 
     limit = max(1, min(limit, MAX_LIMIT))
     offset = max(0, offset)
-    filters = _population(scope, scope_id)
     label = await _scope_label(db, scope, scope_id)
+    score, source, filters = _board(scope, scope_id)
 
     # RANK() is evaluated over the whole filtered set before LIMIT slices it, so
-    # ranks stay absolute and ties stay shared across pages. The trailing id in
-    # ORDER BY makes the order total, which pagination needs.
-    rank_col = func.rank().over(order_by=User.xp_total.desc()).label("rank")
+    # ranks stay absolute and ties stay shared across pages.
+    rank_col = func.rank().over(order_by=score.desc()).label("rank")
     rows = (await db.execute(
-        select(User, rank_col)
+        _join(select(User, score.label("score"), rank_col), source)
         .filter(*filters)
-        .order_by(User.xp_total.desc(), User.id)
+        .order_by(score.desc(), User.id)
         .limit(limit)
         .offset(offset)
     )).all()
 
-    total = await db.scalar(select(func.count()).select_from(User).filter(*filters)) or 0
+    total = await db.scalar(
+        _join(select(func.count()).select_from(User), source).filter(*filters)
+    ) or 0
 
     your_rank, your_entry = None, None
     if viewer_id:
         viewer = (await db.execute(
-            select(User).filter(User.id == viewer_id, *filters)
-        )).scalars().first()
+            _join(select(User, score.label("score")), source)
+            .filter(User.id == viewer_id, *filters)
+        )).first()
         if viewer is not None:
+            user, viewer_score = viewer
             ahead = await db.scalar(
-                select(func.count()).select_from(User)
-                .filter(*filters, User.xp_total > viewer.xp_total)
+                _join(select(func.count()).select_from(User), source)
+                .filter(*filters, score > viewer_score)
             ) or 0
             your_rank = ahead + 1
-            your_entry = _entry(viewer, your_rank, viewer_id)
+            your_entry = _entry(user, your_rank, viewer_score, viewer_id)
 
     return {
         "scope": {"type": scope.value, "id": scope_id, "name": label},
         "window": window.value,
-        "entries": [_entry(u, r, viewer_id) for u, r in rows],
+        "entries": [_entry(u, r, s, viewer_id) for u, s, r in rows],
         "total": total,
         "limit": limit,
         "offset": offset,
