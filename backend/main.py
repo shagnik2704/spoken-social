@@ -20,10 +20,9 @@ from routes.programme import router as programme_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from leaderboard_cache import seed_from_db
-    from database import SessionLocal
-    async with SessionLocal() as db:
-        await seed_from_db(db)
+    # The leaderboard is served straight from Postgres (services/leaderboard.py),
+    # so there is no cache to seed at startup any more — and no "restart the
+    # backend to fix the leaderboard" failure mode.
     yield
 
 

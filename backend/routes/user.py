@@ -8,7 +8,6 @@ from database import get_db
 from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial, Course, CollegeCourse
 from models.xp_event import XPEvent
-from leaderboard_cache import sync_user
 
 
 
@@ -316,11 +315,6 @@ async def update_tutorial(
         recalc_level(user)
 
     await db.commit()
-
-    # Mirror the new total onto the Redis leaderboard. sync_user owns the eligibility
-    # rule (real students only), shared with the forum webhook and the XP worker.
-    if xp_gained != 0:
-        await sync_user(user)
 
     return ut.to_api_dict()
 

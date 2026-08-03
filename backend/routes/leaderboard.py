@@ -5,37 +5,74 @@ from database import get_db
 from models import User
 from models.xp_event import XPEvent
 from services.jwt import decode_token
+from services.leaderboard import (
+    DEFAULT_LIMIT,
+    MAX_LIMIT,
+    Scope,
+    Window,
+    get_leaderboard as build_leaderboard,
+)
 from dependencies import get_current_user
 import uuid
 import calendar
 from datetime import date, datetime
-from leaderboard_cache import get_top
 
 router = APIRouter(prefix='/api', tags=['leaderboard'])
 
 
-@router.get('/leaderboard')
-async def get_leaderboard(request: Request):
-    """Returns all-time leaderboard — top users by xp_total."""
+def _viewer_id(request: Request) -> str | None:
+    """Identify the caller from an optional bearer token. The leaderboard is
+    public, so an absent, malformed or expired token is not an error — it just
+    means no 'you are here' marker and no yourRank.
 
-    # Try to identify the current user from the Authorization header (optional)
-    current_user_id = None
+    decode_token returns the whole JWT payload, not an id. The previous code
+    assigned that dict straight to the id and compared it against entry["id"],
+    so isCurrentUser was *always* false — which, together with the top-100
+    cutoff, is why the "Your Position" card never appeared for anyone.
+
+    'eff' over 'sub' matches dependencies.get_current_user: while an admin is
+    impersonating a student, the board should highlight the student being
+    viewed, not the admin.
+    """
     auth_header = request.headers.get("Authorization", "")
-    if auth_header.startswith("Bearer "):
-        token = auth_header[7:]
-        user_id_str = decode_token(token)
-        if user_id_str:
-            try:
-                current_user_id = user_id_str
-            except ValueError:
-                pass
-    
-    leaderboard=await get_top(100)
+    if not auth_header.startswith("Bearer "):
+        return None
+    payload = decode_token(auth_header[7:])
+    if not payload:
+        return None
+    viewer_id = payload.get("eff") or payload.get("sub")
+    try:
+        return str(uuid.UUID(str(viewer_id)))
+    except (ValueError, TypeError, AttributeError):
+        return None
 
-    for entry in leaderboard:
-        entry["isCurrentUser"]=current_user_id is not None and entry["id"]==current_user_id
-    
-    return leaderboard
+
+@router.get('/leaderboard')
+async def get_leaderboard(
+    request: Request,
+    scope: Scope = Query(Scope.GLOBAL, description="Which board to return"),
+    scope_id: str | None = Query(None, description="Target of the scope (e.g. a college id)"),
+    window: Window = Query(Window.ALL, description="Time window the scores cover"),
+    limit: int = Query(DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """One page of a leaderboard, plus the caller's own standing.
+
+    Returns an envelope rather than a bare array: callers need the total, the
+    page window, and — critically — `yourRank`, which is present even when the
+    caller falls outside the page. The top-100 cutoff sits at 800 XP, so 97% of
+    students never appear on the page itself.
+    """
+    return await build_leaderboard(
+        db,
+        scope=scope,
+        scope_id=scope_id,
+        window=window,
+        limit=limit,
+        offset=offset,
+        viewer_id=_viewer_id(request),
+    )
 
 
 @router.get('/xp-history')

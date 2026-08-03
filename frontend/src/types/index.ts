@@ -99,6 +99,25 @@ export interface LeaderboardUser {
     isCurrentUser: boolean
 }
 
+/**
+ * The leaderboard endpoint returns an envelope rather than a bare array, so a
+ * caller can page through the board and — crucially — see their own standing
+ * even when they fall outside the page. The top-100 cutoff sits well above most
+ * students' XP, so `yourEntry` is the only way the majority ever see a rank.
+ * `yourRank` is null for students with no XP: they aren't ranked yet.
+ */
+export interface LeaderboardResponse {
+    scope: { type: string; id: string | null }
+    window: string
+    entries: LeaderboardUser[]
+    total: number
+    limit: number
+    offset: number
+    yourRank: number | null
+    yourEntry: LeaderboardUser | null
+    generatedAt: string
+}
+
 // ----- Activity -----
 
 export type ActivityType = 'achievement' | 'post' | 'badge' | 'course' | 'answer' | 'earned_badge' | 'completed_tutorial' | 'posted'

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/axios'
-import type { LeaderboardUser } from '@/types'
+import type { LeaderboardResponse } from '@/types'
 
 /**
  * Leaderboard + XP-history data via React Query, replacing the old Zustand store.
@@ -9,7 +9,7 @@ import type { LeaderboardUser } from '@/types'
  * navigating back doesn't refetch.
  */
 export function useLeaderboard() {
-    return useQuery<LeaderboardUser[]>({
+    return useQuery<LeaderboardResponse>({
         queryKey: ['leaderboard'],
         queryFn: async () => (await api.get('/api/leaderboard')).data,
     })

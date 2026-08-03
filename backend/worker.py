@@ -36,7 +36,6 @@ async def check_pending_xp(ctx):
             users_by_id = {u.id: u for u in u_res.scalars().all()}
 
         count = 0
-        touched_users = {}
         for activity in activities:
             # Grant the XP!
             user = users_by_id.get(activity.user_id)
@@ -51,17 +50,10 @@ async def check_pending_xp(ctx):
                     activity.forum_post_id
                 )
                 activity.xp_awarded = True
-                touched_users[user.id] = user
                 count += 1
 
         if count > 0:
             await db.commit()
-            # Mirror the new totals onto the Redis leaderboard (post-commit, so the
-            # cache never gets ahead of the DB). Without this, worker-awarded XP was
-            # invisible on the board until the next backend restart reseeded it.
-            from leaderboard_cache import sync_user
-            for user in touched_users.values():
-                await sync_user(user)
             logger.info("Successfully awarded XP for %d verified posts!", count)
         else:
             logger.info("No pending XP found.")

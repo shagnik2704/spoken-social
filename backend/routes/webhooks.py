@@ -4,7 +4,6 @@
 # ============================================================
 
 import os
-import uuid
 import logging
 from datetime import datetime, timezone
 
@@ -13,21 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 from database import get_db
 from services.forum import process_forum_event, process_forum_delete, find_user_by_email
-from leaderboard_cache import sync_user
-from models.user import User
 
 logger = logging.getLogger("spoken_social.webhooks")
-
-
-async def _push_leaderboard(db: AsyncSession, result: dict) -> None:
-    """After commit, mirror an XP change onto the Redis leaderboard so forum XP
-    shows up without waiting for a backend restart. Post-commit on purpose: the
-    cache must never get ahead of the database."""
-    if not result.get("xp_delta"):
-        return
-    user = await db.get(User, uuid.UUID(result["user_id"]))
-    if user:
-        await sync_user(user)
 
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
@@ -105,7 +91,6 @@ async def forum_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         )
 
         await db.commit()
-        await _push_leaderboard(db, result)
         if result.get("status") in ("ignored", "skipped"):
             logger.warning("Webhook %s: %s (reason: %s)", event, result.get("status"), result.get("reason"))
         else:
@@ -123,7 +108,6 @@ async def forum_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         )
 
         await db.commit()
-        await _push_leaderboard(db, result)
         logger.info("Webhook processed: %s → %s", event, result.get("status"))
         return result
 

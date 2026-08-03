@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import type { LeaderboardUser } from '@/types'
 import { useState } from 'react'
 import { useLeaderboard } from '@/hooks/queries/useLeaderboardQueries'
+import { useAuthStore } from '@/store/authStore'
 import XPGrowthGraph from './XPGrowthGraph'
 
 const courses = [
@@ -147,8 +148,23 @@ function LeaderboardRow({ user }: { user: LeaderboardUser }) {
     )
 }
 
-/** Your Position Highlight Card */
-function YourPosition({ user, data }: { user: LeaderboardUser; data: LeaderboardUser[] }) {
+/**
+ * Your Position Highlight Card.
+ *
+ * Driven by the envelope's `yourEntry`, not by finding yourself in the page —
+ * the page is only the top 100, so the old lookup rendered nothing at all for
+ * the overwhelming majority of students.
+ *
+ * `nextUp` is the entry one rank above, and only exists when you're on the page;
+ * off-page we show total board size instead of an unknowable XP gap.
+ */
+function YourPosition({ user, total, nextUp }: { user: LeaderboardUser; total: number; nextUp?: LeaderboardUser }) {
+    const subtitle = user.rank <= 3
+        ? "You're in the top 3!"
+        : nextUp
+            ? `${(nextUp.xp - user.xp).toLocaleString()} XP to rank up`
+            : `of ${total.toLocaleString()} ranked learners`
+
     return (
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
             <CardContent className="p-4 flex items-center justify-between">
@@ -159,9 +175,28 @@ function YourPosition({ user, data }: { user: LeaderboardUser; data: Leaderboard
                     <div>
                         <p className="text-sm font-semibold">Your Position: <span className="text-primary">#{user.rank}</span></p>
                         <p className="text-xs text-muted-foreground">
-                            {user.xp.toLocaleString()} XP • {user.rank <= 3 ? 'You\'re in the top 3!' : `${user.xp > 0 ? ((data[user.rank - 2]?.xp || 0) - user.xp).toLocaleString() : 0} XP to rank up`}
+                            {user.xp.toLocaleString()} XP • {subtitle}
                         </p>
                     </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
+/** Shown to students who haven't earned XP yet — they have no rank to display. */
+function NotRankedYet() {
+    return (
+        <Card className="border-border/60 bg-muted/30">
+            <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                    <Star className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                    <p className="text-sm font-semibold">You're not ranked yet</p>
+                    <p className="text-xs text-muted-foreground">
+                        Complete a tutorial to earn your first XP and join the leaderboard.
+                    </p>
                 </div>
             </CardContent>
         </Card>
@@ -171,12 +206,19 @@ function YourPosition({ user, data }: { user: LeaderboardUser; data: Leaderboard
 // ===== MAIN LEADERBOARD PAGE =====
 
 export default function Leaderboard() {
-    const { data: leaderboardData = [] } = useLeaderboard()
+    const { data } = useLeaderboard()
     const [selectedCourse, setSelectedCourse] = useState('all')
     const [courseDropdownOpen, setCourseDropdownOpen] = useState(false)
 
-    const currentUser = leaderboardData.find(u => u.isCurrentUser)
-    const displayData = leaderboardData
+    const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+
+    const displayData = data?.entries ?? []
+    // yourEntry is authoritative and present even when you're off the page.
+    // It's null both for signed-out visitors and for students with no XP yet,
+    // so isAuthenticated is what separates "nothing to show" from "not ranked".
+    const yourEntry = data?.yourEntry ?? null
+    const nextUp = yourEntry ? displayData.find(u => u.rank === yourEntry.rank - 1) : undefined
+    const showNotRanked = isAuthenticated && data !== undefined && yourEntry === null
 
     const selectedCourseInfo = courses.find(c => c.id === selectedCourse)
     const CourseIcon = selectedCourseInfo?.icon || BookOpen
@@ -239,7 +281,10 @@ export default function Leaderboard() {
             <XPGrowthGraph />
 
             {/* Your Position */}
-            {currentUser && <YourPosition user={currentUser} data={displayData} />}
+            {yourEntry && (
+                <YourPosition user={yourEntry} total={data?.total ?? 0} nextUp={nextUp} />
+            )}
+            {showNotRanked && <NotRankedYet />}
 
             {/* Full Leaderboard Table */}
             <Card className="border-border/40">
