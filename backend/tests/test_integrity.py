@@ -7,6 +7,7 @@ reports zeros on clean data would be worthless.
 """
 
 import uuid
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -194,6 +195,114 @@ async def test_find_drifted_users_is_empty_when_clean(db):
     await progress(db, user, tutorials[0], xp_earned=10, watched=True)
 
     assert await find_drifted_users(db) == []
+
+
+# ── the forum verification window ────────────────────────────────────────────
+# Forum XP is held until a post survives VERIFICATION_HOURS, so the radio is set
+# while xp_earned still excludes it. The checker must treat that as fine while
+# the post is inside its window, and as a violation once it isn't.
+
+async def pending_post(db, user, tutorial, *, hours_ago, activity_type="question", awarded=False, deleted=False):
+    from models.forum_activity import ForumActivity
+
+    db.add(ForumActivity(
+        user_id=user.id, tutorial_id=tutorial.id, forum_post_id=uuid.uuid4().int % 10**8,
+        activity_type=activity_type,
+        posted_at=datetime.now(timezone.utc) - timedelta(hours=hours_ago),
+        synced_at=datetime.now(timezone.utc),
+        xp_awarded=awarded, xp_amount=0,
+    ))
+    await db.commit()
+
+
+async def test_post_inside_its_window_is_not_a_violation(db):
+    """The radio is on, the XP is not yet paid — correct, not drift."""
+    tutorials = await setup_course(db)
+    user = make_user(10)
+    db.add(user)
+    await db.commit()
+    await progress(db, user, tutorials[0], xp_earned=10, watched=True, forum_asked=True)
+    await pending_post(db, user, tutorials[0], hours_ago=1)
+
+    result = await check_xp_integrity(db)
+
+    assert result["healthy"] is True
+    assert result["xp_drift"] == 0
+
+
+async def test_post_past_its_window_is_a_violation(db):
+    """Same row, older post: the worker should have paid it by now, so a stalled
+    sweep surfaces here instead of staying invisible."""
+    tutorials = await setup_course(db)
+    user = make_user(10)
+    db.add(user)
+    await db.commit()
+    await progress(db, user, tutorials[0], xp_earned=10, watched=True, forum_asked=True)
+    await pending_post(db, user, tutorials[0], hours_ago=30)
+
+    result = await check_xp_integrity(db)
+
+    assert result["healthy"] is False
+    assert result["tutorial_rows_off"] == 1
+    assert result["xp_drift"] == 5
+
+
+async def test_deleted_pending_post_does_not_excuse_the_gap(db):
+    """A deleted post must not keep exempting a radio that is still set —
+    process_forum_delete clears the radio, so this state means something went
+    wrong."""
+    tutorials = await setup_course(db)
+    user = make_user(10)
+    db.add(user)
+    await db.commit()
+    await progress(db, user, tutorials[0], xp_earned=10, watched=True, forum_asked=True)
+    await pending_post(db, user, tutorials[0], hours_ago=1, deleted=True)
+    from sqlalchemy import text
+    await db.execute(text("UPDATE forum_activities SET deleted_on_forum = true"))
+    await db.commit()
+
+    result = await check_xp_integrity(db)
+
+    assert result["healthy"] is False
+
+
+async def test_awarded_post_no_longer_exempts(db):
+    """Once paid, the row must match exactly — the exemption cannot linger."""
+    tutorials = await setup_course(db)
+    user = make_user(15)
+    db.add(user)
+    await db.commit()
+    await progress(db, user, tutorials[0], xp_earned=15, watched=True, forum_asked=True)
+    await pending_post(db, user, tutorials[0], hours_ago=1, awarded=True)
+
+    result = await check_xp_integrity(db)
+
+    assert result["healthy"] is True
+
+
+async def test_exemption_is_typed_not_blanket(db):
+    """A pending question excuses 5 XP, not the 10 owed for an answer."""
+    tutorials = await setup_course(db)
+    user = make_user(10)
+    db.add(user)
+    await db.commit()
+    await progress(db, user, tutorials[0], xp_earned=10, watched=True,
+                   forum_asked=True, forum_answered=True)
+    await pending_post(db, user, tutorials[0], hours_ago=1, activity_type="question")
+
+    result = await check_xp_integrity(db)
+
+    assert result["healthy"] is False
+    assert result["xp_drift"] == 10
+
+
+async def test_window_matches_the_workers_sweep(db):
+    """The exemption window and the sweep threshold come from one constant, so
+    they cannot drift into a gap where XP is neither paid nor flagged."""
+    from services.forum import VERIFICATION_HOURS
+    from services.integrity import PENDING_FORUM_XP
+
+    assert f"{VERIFICATION_HOURS} hours" in PENDING_FORUM_XP
 
 
 async def test_expressions_track_the_real_xp_rules(db):

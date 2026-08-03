@@ -2,17 +2,22 @@
 # Forum Sync Service — shared logic for processing forum events
 # ============================================================
 # This module is called by:
-#   1. Webhook receiver (routes/webhooks.py) — real-time events,
-#      which award XP immediately when the post maps to a tutorial
-#   2. Background worker (worker.py) — reconciliation sweep that
-#      pays any activity the webhook path left unawarded
+#   1. Webhook receiver (routes/webhooks.py) — records the post and
+#      flips the dashboard radio, but does NOT award XP
+#   2. Background worker (worker.py) — awards XP once a post has
+#      survived the verification window
 #
-# The core function `process_forum_event` is idempotent:
-# call it 100 times with the same forum_post_id and it will
-# only award XP once. Awarding goes through recompute_tutorial_xp
-# (services/xp.py), so the dashboard flag and the XP always move
-# together — they can never disagree the way the old radios-only
-# sync allowed.
+# XP is deliberately held back: a post that is created and then
+# deleted within the window never earns anything, so points cannot
+# be farmed by posting and removing. Holding also fails safe — it
+# needs the absence of a delete event rather than the successful
+# delivery of one.
+#
+# `process_forum_event` is idempotent: call it 100 times with the
+# same forum_post_id and only one activity is recorded. Awarding and
+# revoking both go through recompute_tutorial_xp (services/xp.py),
+# so XP is always the sum of the flags rather than an accumulated
+# counter.
 # ============================================================
 
 import logging
@@ -33,6 +38,41 @@ logger = logging.getLogger("spoken_social.forum_sync")
 # XP values for forum activities
 XP_FORUM_ASK = 5
 XP_FORUM_ANS = 10
+
+# How long a post must survive before its XP is awarded. Defined here and
+# imported by the worker that enforces it and the integrity check that exempts
+# it, so the two can never drift apart.
+VERIFICATION_HOURS = 24
+
+
+async def _sync_user_tutorial_forum_radios(
+    db: AsyncSession,
+    *,
+    user_id,
+    tutorial_id,
+    activity_type: str,
+) -> None:
+    """Flip the dashboard forum radio as soon as a post is detected.
+
+    XP deliberately does not follow yet — see process_forum_event. The flag and
+    xp_earned therefore disagree for the length of the verification window, which
+    services.integrity accounts for by subtracting still-pending forum XP before
+    comparing. Once an activity ages past the window without being awarded, that
+    exemption lapses and the invariant fires, so a stalled worker is visible.
+    """
+    if tutorial_id is None:
+        return
+    ut_result = await db.execute(
+        select(UserTutorial).filter_by(user_id=user_id, tutorial_id=tutorial_id)
+    )
+    ut = ut_result.scalars().first()
+    if not ut:
+        return
+    if activity_type == "question":
+        ut.forum_asked = True
+    elif activity_type == "answer":
+        ut.forum_answered = True
+    await db.flush()
 
 
 async def find_user_by_forum_uid(db: AsyncSession, forum_user_id: int) -> User | None:
@@ -145,19 +185,13 @@ async def process_forum_event(
         existing.xp_awarded = False
         existing.xp_amount = 0
         await db.flush()
-        xp_delta = 0
-        if existing.tutorial_id is not None:
-            xp_delta = await _award_forum_xp(
-                db, user, existing.tutorial_id, activity_type, xp_amount, forum_post_id
-            )
-            existing.xp_awarded = True
-            existing.xp_amount = xp_amount
-        return {
-            "status": "restored",
-            "forum_post_id": forum_post_id,
-            "xp_delta": xp_delta,
-            "user_id": str(user.id),
-        }
+        await _sync_user_tutorial_forum_radios(
+            db,
+            user_id=user.id,
+            tutorial_id=existing.tutorial_id,
+            activity_type=activity_type,
+        )
+        return {"status": "restored", "forum_post_id": forum_post_id}
 
     # 6. Insert new ForumActivity row
     forum_url = f"https://forums.spoken-tutorial.org/question/{forum_post_id}/"
@@ -179,27 +213,20 @@ async def process_forum_event(
     db.add(activity)
     await db.flush()
 
-    # 7. Award XP immediately when the post maps to a tutorial. Flag and XP move
-    # together through recompute_tutorial_xp, so the dashboard radio can never say
-    # "Yes" while the XP is missing (the split that silently underpaid the legacy
-    # cohort ~49k XP — see _award_forum_xp). Deleted posts are handled by
-    # process_forum_delete, which revokes through the same recompute.
-    xp_delta = 0
-    if tutorial_id is not None:
-        xp_delta = await _award_forum_xp(
-            db, user, tutorial_id, activity_type, xp_amount, forum_post_id
-        )
-        activity.xp_awarded = True
-        activity.xp_amount = xp_amount
+    # 7. No XP yet — the worker awards it once the post has survived the
+    # verification window, so a post-and-delete cannot farm points. Only the
+    # dashboard radio moves now, so the student sees their post reflected
+    # immediately.
+    await _sync_user_tutorial_forum_radios(
+        db, user_id=user.id, tutorial_id=tutorial_id, activity_type=activity_type
+    )
 
     await db.flush()
     return {
-        "status": "awarded" if tutorial_id is not None else "pending_mapping",
+        "status": "pending_verification",
         "forum_post_id": forum_post_id,
-        "xp_awarded": activity.xp_awarded,
-        "xp_amount": activity.xp_amount,
-        "xp_delta": xp_delta,
-        "user_id": str(user.id),
+        "xp_awarded": False,
+        "xp_amount": 0,
     }
 
 
@@ -230,9 +257,12 @@ async def process_forum_delete(
 
     activity.deleted_on_forum = True
 
-    # Revoke XP if it was awarded
+    # Called whether or not XP was awarded. If the post was still inside its
+    # verification window the radio is set but unpaid, so this only clears the
+    # radio and recompute returns 0; if XP had been awarded, the same call takes
+    # it back. Either way the row cannot be left claiming a deleted post.
     xp_delta = 0
-    if activity.xp_awarded and activity.tutorial_id:
+    if activity.tutorial_id:
         xp_delta = await _revoke_forum_xp(
             db,
             user_id=activity.user_id,
@@ -241,12 +271,12 @@ async def process_forum_delete(
             xp_amount=activity.xp_amount,
             forum_post_id=forum_post_id,
         )
-        activity.xp_awarded = False
+    was_awarded, activity.xp_awarded = activity.xp_awarded, False
 
     await db.flush()
     return {
         "status": "deleted",
-        "xp_revoked": activity.xp_amount,
+        "xp_revoked": activity.xp_amount if was_awarded else 0,
         "xp_delta": xp_delta,
         "user_id": str(activity.user_id),
     }

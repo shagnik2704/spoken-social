@@ -5,7 +5,7 @@ import logging
 from datetime import datetime,timedelta,timezone
 from arq import cron
 from database import SessionLocal
-from services.forum import _award_forum_xp
+from services.forum import VERIFICATION_HOURS, _award_forum_xp
 from models.forum_activity import ForumActivity
 from sqlalchemy import select
 
@@ -13,8 +13,8 @@ logger=logging.getLogger("spoken-social.worker")
 logging.basicConfig(level=logging.INFO)
 
 async def check_pending_xp(ctx):
-    logger.info("Running 24 hour XP Sweep")
-    threshold_time=datetime.now(timezone.utc)-timedelta(hours=24)
+    logger.info("Running forum XP verification sweep (%dh window)", VERIFICATION_HOURS)
+    threshold_time=datetime.now(timezone.utc)-timedelta(hours=VERIFICATION_HOURS)
 
     async with SessionLocal() as db:
         # Find all un-awarded, un-deleted activities older than 24 hours
