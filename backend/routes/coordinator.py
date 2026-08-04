@@ -404,6 +404,13 @@ async def get_all_colleges(
     college_id = None
     if user.effective_role == "coordinator":
         college_id = user.college_id
+        # A coordinator with no assigned college would otherwise fall through with
+        # college_id=None, which _build_college_summary reads as "every college".
+        if not college_id:
+            raise HTTPException(
+                status_code=403,
+                detail="No college is assigned to your account",
+            )
 
     cache_key = f"coord:colleges:{college_id or 'all'}:{course_id}:{batch_id or 'all'}"
     cached = await get_cached(cache_key)

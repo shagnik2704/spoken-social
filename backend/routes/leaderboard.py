@@ -11,6 +11,7 @@ from services.leaderboard import (
     Scope,
     UnknownScopeTarget,
     Window,
+    WINDOW_EXCLUDED_SOURCES,
     get_leaderboard as build_leaderboard,
 )
 from dependencies import get_current_user
@@ -110,6 +111,10 @@ async def get_xp_history(
             XPEvent.user_id == current_user.id,
             ist_ts >= start_date,
             ist_ts < end_date,
+            # Same exclusion the windowed leaderboard applies: reconciliation rows carry the
+            # back-pay run's timestamp, not the date of the work, so they would land as one
+            # artificial spike on the day the script ran.
+            XPEvent.source_type.notin_(WINDOW_EXCLUDED_SOURCES),
         )
         .group_by(func.extract('day', ist_ts))
     )

@@ -322,7 +322,7 @@ async def _award_forum_xp(
     """Award XP for a forum activity by setting the tutorial flag and recomputing
     xp_earned from flags (single source of truth — see services/xp.py). Forum XP counts
     once per tutorial per activity type; re-verifying the same activity is a no-op."""
-    from services.xp import recompute_tutorial_xp
+    from services.xp import recompute_tutorial_xp, recalc_level
 
     ut_result = await db.execute(
         select(UserTutorial).filter_by(user_id=user.id, tutorial_id=tutorial_id)
@@ -341,7 +341,7 @@ async def _award_forum_xp(
 
     if xp_gained != 0:
         user.xp_total += xp_gained
-        _recalc_level(user)
+        recalc_level(user)
         course_id = (await db.execute(
             select(Tutorial.course_id).filter(Tutorial.id == tutorial_id)
         )).scalar()
@@ -388,7 +388,7 @@ async def _revoke_forum_xp(
     )
     has_other_posts = remaining.scalars().first() is not None
 
-    from services.xp import recompute_tutorial_xp
+    from services.xp import recompute_tutorial_xp, recalc_level
 
     ut_result = await db.execute(
         select(UserTutorial).filter_by(user_id=user_id, tutorial_id=tutorial_id)
@@ -411,7 +411,7 @@ async def _revoke_forum_xp(
 
     if xp_gained != 0:
         user.xp_total = max(0, user.xp_total + xp_gained)
-        _recalc_level(user)
+        recalc_level(user)
         course_id = (await db.execute(
             select(Tutorial.course_id).filter(Tutorial.id == tutorial_id)
         )).scalar()
@@ -428,17 +428,6 @@ async def _revoke_forum_xp(
         xp_gained, user.email, activity_type, forum_post_id,
     )
     return xp_gained
-
-
-def _recalc_level(user: User):
-    """Recalculate user level from total XP."""
-    xp = user.xp_total
-    if xp >= 12000:   user.level = 26
-    elif xp >= 7000:  user.level = 21
-    elif xp >= 3500:  user.level = 16
-    elif xp >= 1500:  user.level = 11
-    elif xp >= 500:   user.level = 6
-    else:             user.level = 1
 
 
 def activity_to_dict(a) -> dict:

@@ -149,36 +149,10 @@ async def update_current_user_profile(body: ProfileUpdate, user: User = Depends(
     return {"user": await user.to_api_dict(db=db)}
 
 
-# ===== PUBLIC: no auth needed =====
-
-@router.get('/users/{user_id}')
-async def get_user_by_id(user_id: str, db: AsyncSession = Depends(get_db)):
-    import uuid
-    try:
-        uid = uuid.UUID(user_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID format")
-
-    result = await db.execute(
-        select(User)
-        .options(selectinload(User.courses).selectinload(UserCourse.course),
-                 selectinload(User.courses).selectinload(UserCourse.batch),
-                 selectinload(User.badges).selectinload(UserBadge.badge))
-        .filter_by(id=uid)
-    )
-    user = result.scalars().first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    courses = [uc.to_api_dict() for uc in user.courses]
-    badges = [ub.to_api_dict() for ub in user.badges]
-
-    return {
-        "user": await user.to_api_dict(db=db),
-        "courses": courses,
-        "badges": badges,
-    }
+# NOTE: GET /users/{user_id} was removed. It was unauthenticated and returned
+# to_api_dict(), which includes the user's email — so any caller holding a UUID could
+# read PII. Nothing in the frontend, tests, scripts or mcp_server called it. Use /me for
+# the caller's own profile; anything cross-user belongs behind an admin dependency.
 
 
 # ===== REQUEST MODELS =====
@@ -273,6 +247,11 @@ async def update_tutorial(
     ut = result.scalars().first()
     if not ut:
         raise HTTPException(status_code=404, detail="Tutorial not found")
+
+    # The path's course_id is what the XPEvent below is tagged with, and course-scoped
+    # leaderboards filter on that tag — so a mismatched pair would silently misattribute XP.
+    if ut.tutorial.course_id != course_id:
+        raise HTTPException(status_code=400, detail="Tutorial does not belong to this course")
 
     # Map frontend field names → database column names
     field_map = {
