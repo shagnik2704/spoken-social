@@ -80,12 +80,32 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: ss-node-exporter
+    command:
+      # Defaults enable ~40 collectors and produced 2,730 series. This keeps the
+      # four that answer "is the host healthy" and drops per-CPU, per-IRQ,
+      # netlink and hardware families that nothing here queries.
+      - --collector.disable-defaults
+      - --collector.cpu
+      - --collector.meminfo
+      - --collector.filesystem
+      - --collector.loadavg
+      - --collector.netdev
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+)($$|/)
     restart: unless-stopped
 
   # Per-container metrics (CPU/mem/net per running container).
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: ss-cadvisor
+    command:
+      # cadvisor was 9,184 of ~13,800 series and two thirds of all samples
+      # ingested — more than everything else combined, for a box idling at
+      # under 1% CPU. These flags keep per-container CPU/memory/network and
+      # drop the families nobody here reads.
+      - --docker_only=true                       # skip system cgroups
+      - --store_container_labels=false           # labels became series dimensions
+      - --disable_metrics=percpu,sched,process,hugetlb,referenced_memory,cpu_topology,resctrl,tcp,udp,advtcp,memory_numa
+      - --housekeeping_interval=30s              # was 1s; scraped every 60s anyway
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro

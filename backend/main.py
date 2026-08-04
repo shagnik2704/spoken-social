@@ -28,7 +28,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-Instrumentator().instrument(app).expose(app)
+
+# Excluding /metrics keeps http_request_* a measure of user traffic. Prometheus
+# scrapes every 15s, so without this the endpoint contributes 240 requests/hour
+# forever and drowns out real usage — it was 629 of 631 recorded requests. Scrape
+# health is already covered by Prometheus's own up / scrape_duration_seconds.
+Instrumentator(excluded_handlers=["/metrics"]).instrument(app).expose(app)
 
 from prometheus_client import REGISTRY
 from integrity_metrics import IntegrityCollector

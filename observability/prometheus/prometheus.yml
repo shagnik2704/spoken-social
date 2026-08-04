@@ -7,9 +7,14 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+# Interval is set per job rather than globally. The application is cheap to
+# scrape (80 samples) and is what we actually watch, so it stays at 15s.
+# Infrastructure exporters were 99% of an ingest rate of 73M samples/day, and
+# host CPU on a box idling under 1% does not need 4-second resolution.
 scrape_configs:
   # 1. Prometheus scrapes itself — useful for confirming it's alive.
   - job_name: prometheus
+    scrape_interval: 60s
     static_configs:
       - targets: ["localhost:9090"]
 
@@ -24,10 +29,12 @@ scrape_configs:
 
   # 3. Host-level metrics: CPU, RAM, disk, network of the machine itself.
   - job_name: node-exporter
+    scrape_interval: 60s
     static_configs:
       - targets: ["node-exporter:9100"]
 
   # 4. Per-container metrics: CPU/memory/network for each running container.
   - job_name: cadvisor
+    scrape_interval: 60s
     static_configs:
       - targets: ["cadvisor:8080"]
