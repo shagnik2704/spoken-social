@@ -10,7 +10,6 @@ from cache import get_cached,set_cached
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func, case, cast, Date
 from datetime import datetime, date
 import calendar
@@ -29,6 +28,7 @@ from dashboard_common import (
 )
 from database import get_db
 from demo_data import get_mock_comparison_data, generate_deterministic_mock_metrics
+from services.feedback_summary import build_feedback_summary
 from models import User, College, UserTutorial, Tutorial, UserCourse, Programme, Course, Batch, ProgrammeCourse
 from models.feedback import TutorialFeedback
 from models.xp_event import XPEvent
@@ -786,8 +786,6 @@ async def get_feedback_summary(
     2. Aggregated counts based on current filters
     3. Filtered entries grouped by tutorial, with student details
     """
-    import uuid as uuid_mod
-
     cache_key = (
         f"fb:admin:{course_id}:{batch_id or '-'}:{college_id or '-'}:"
         f"{tutorial_id or '-'}:{step_type or '-'}:{reason or '-'}"
@@ -796,173 +794,15 @@ async def get_feedback_summary(
     if cached is not None:
         return cached
 
-    # ----- Step 1: Fetch ALL tutorials for the filter dropdown -----
-    res_all_tuts = await db.execute(
-        select(Tutorial.id, Tutorial.title, Tutorial.tutorial_number)
-        .filter(Tutorial.course_id == course_id)
-        .order_by(Tutorial.tutorial_number)
+    result = await build_feedback_summary(
+        db,
+        course_id=course_id,
+        college_id=college_id,
+        batch_id=batch_id,
+        tutorial_id=tutorial_id,
+        step_type=step_type,
+        reason=reason,
     )
-    all_tutorials = [
-        {"id": str(t.id), "number": t.tutorial_number, "title": t.title}
-        for t in res_all_tuts.all()
-    ]
-
-    # ----- Step 2: Build filtered query -----
-    base_query = (
-        select(TutorialFeedback)
-        .options(selectinload(TutorialFeedback.user))
-        .join(User, TutorialFeedback.user_id == User.id)
-        .join(Tutorial, TutorialFeedback.tutorial_id == Tutorial.id)
-        .filter(
-            Tutorial.course_id == course_id,
-            # Exclude test/placeholder accounts and non-students, like every other aggregate.
-            User.role == "student",
-            User.is_test_account != True,
-        )
-    )
-
-    if batch_id:
-        # Scope to a batch by joining the student's enrollment for THIS course. UserCourse
-        # PK is (user_id, course_id) so this matches at most one row per feedback — no
-        # fan-out. Previously this filter was silently dropped (param didn't exist), so the
-        # admin Feedback tab ignored the batch selector while every other tab honored it.
-        base_query = base_query.join(
-            UserCourse,
-            (UserCourse.user_id == TutorialFeedback.user_id) & (UserCourse.course_id == course_id),
-        ).filter(UserCourse.batch_id == batch_id)
-    if tutorial_id:
-        base_query = base_query.filter(TutorialFeedback.tutorial_id == uuid_mod.UUID(tutorial_id))
-    if step_type:
-        base_query = base_query.filter(TutorialFeedback.step_type == step_type)
-    if college_id:
-        base_query = base_query.filter(User.college_id == college_id)
-    if reason:
-        # Postgres array containment (reasons @> ARRAY[reason]) — was a Python post-filter
-        # over every loaded row.
-        base_query = base_query.filter(TutorialFeedback.reasons.contains([reason]))
-
-    res_fb = await db.execute(base_query.order_by(TutorialFeedback.created_at.desc()))
-    all_feedback = res_fb.scalars().all()
-
-    # ----- Step 3: Aggregate counts -----
-    reason_counts: dict[str, int] = {}
-    step_type_counts: dict[str, int] = {}
-    total_entries = len(all_feedback)
-
-    for fb in all_feedback:
-        step_type_counts[fb.step_type] = step_type_counts.get(fb.step_type, 0) + 1
-        for r in (fb.reasons or []):
-            reason_counts[r] = reason_counts.get(r, 0) + 1
-
-    top_reasons = sorted(
-        [{"key": k, "count": v, "percentage": round((v / total_entries) * 100) if total_entries > 0 else 0}
-         for k, v in reason_counts.items()],
-        key=lambda x: x["count"],
-        reverse=True,
-    )
-
-    step_breakdown = sorted(
-        [{"stepType": k, "count": v} for k, v in step_type_counts.items()],
-        key=lambda x: x["count"],
-        reverse=True,
-    )
-
-    # ----- Step 4: Build college name lookup -----
-    college_ids = list({fb.user.college_id for fb in all_feedback if fb.user.college_id})
-    if college_ids:
-        res_cols = await db.execute(select(College.id, College.name).filter(College.id.in_(college_ids)))
-        college_names = {c.id: c.name for c in res_cols.all()}
-    else:
-        college_names = {}
-
-    # Tutorial info — reuse the course tutorials already fetched for the dropdown (Step 1);
-    # feedback is course-scoped, so every tutorial_id is present here (no re-fetch needed).
-    tut_map = {
-        uuid_mod.UUID(t["id"]): {"title": t["title"], "number": t["number"]}
-        for t in all_tutorials
-    }
-
-    # ----- Step 5: Build entries grouped by tutorial -----
-    tutorial_groups: dict[str, dict] = {}
-
-    for fb in all_feedback:
-        tm = tut_map.get(fb.tutorial_id, {"title": "Unknown", "number": 0})
-        tid = str(fb.tutorial_id)
-
-        if tid not in tutorial_groups:
-            tutorial_groups[tid] = {
-                "tutorialId": tid,
-                "tutorialNumber": tm["number"],
-                "tutorialTitle": tm["title"],
-                "studentCount": 0,
-                "entries": [],
-                "_student_ids": set(),
-            }
-
-        student_user = fb.user
-        cid = student_user.college_id
-        initials = build_initials(student_user.display_name, student_user.username)
-
-        tutorial_groups[tid]["entries"].append({
-            "id": str(fb.id),
-            "studentId": str(fb.user_id),
-            "studentName": student_user.display_name or student_user.username,
-            "studentInitials": initials,
-            "collegeName": college_names.get(cid, "Unknown") if cid else "Unknown",
-            "stepType": fb.step_type,
-            "reasons": fb.reasons or [],
-            "otherText": fb.other_text,
-            "createdAt": fb.created_at.isoformat() if fb.created_at else None,
-        })
-
-        tutorial_groups[tid]["_student_ids"].add(str(fb.user_id))
-
-    # Finalize: compute unique student counts & remove internal sets
-    for tg in tutorial_groups.values():
-        tg["studentCount"] = len(tg["_student_ids"])
-        del tg["_student_ids"]
-
-    sorted_groups = sorted(
-        tutorial_groups.values(),
-        key=lambda g: len(g["entries"]),
-        reverse=True,
-    )
-
-    # ----- Step 6: Unique affected students count -----
-    unique_students = len({str(fb.user_id) for fb in all_feedback})
-
-    # ----- Step 7: All distinct reason keys for the filter dropdown -----
-    # Scoped to the current COURSE (was an unfiltered whole-table scan of every feedback
-    # row). Independent of the other volatile filters so the dropdown stays stable.
-    res_all_fb = await db.execute(
-        select(TutorialFeedback.reasons)
-        .join(User, TutorialFeedback.user_id == User.id)
-        .join(Tutorial, TutorialFeedback.tutorial_id == Tutorial.id)
-        .filter(
-            Tutorial.course_id == course_id,
-            User.role == "student",
-            User.is_test_account != True,
-        )
-    )
-    all_reason_lists = res_all_fb.scalars().all()
-    all_reason_keys = set()
-    for reasons_list in all_reason_lists:
-        if reasons_list:
-            all_reason_keys.update(reasons_list)
-    all_reason_keys_sorted = sorted(all_reason_keys)
-
-    result = {
-        "filterOptions": {
-            "tutorials": all_tutorials,
-            "stepTypes": ["watched", "practiced", "assignmentDone", "forumAsked", "forumAnswered"],
-            "reasons": all_reason_keys_sorted,
-        },
-        "totalEntries": total_entries,
-        "uniqueStudents": unique_students,
-        "topReasons": top_reasons,
-        "stepBreakdown": step_breakdown,
-        "tutorialGroups": sorted_groups,
-    }
     await set_cached(cache_key, result, ttl=120)
     return result
 
