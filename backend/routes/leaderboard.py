@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func
 from database import get_db
 from models import User
 from models.xp_event import XPEvent

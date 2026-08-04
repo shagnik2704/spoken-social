@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from database import get_db
 from dependencies import get_current_user
@@ -37,7 +37,6 @@ async def get_current_user_profile(
     user_loaded.real_user_id = getattr(user, "real_user_id", user.id)
     user_loaded.is_impersonating = getattr(user, "is_impersonating", False)
     user_loaded.target_college_id = getattr(user, "target_college_id", None)
-    print(f"DEBUG /ME: user={user_loaded.email}, effective_role={user_loaded.effective_role}, target_college_id={user_loaded.target_college_id}")
     if user_loaded.target_college_id:
         user_loaded.college_id = user_loaded.target_college_id
 
@@ -105,7 +104,6 @@ async def get_current_user_profile(
 
     badges = [ub.to_api_dict() for ub in user_loaded.badges]
 
-    print(f"DEBUG /ME: user_loaded={user_loaded.email}, final_role={user_loaded.effective_role}, college_id={user_loaded.college_id}")
     return {
         "user": await user_loaded.to_api_dict(db=db),
         "courses": courses,
@@ -165,9 +163,8 @@ class TutorialUpdate(BaseModel):
 
 @router.get('/me/courses/{course_id}/tutorials')
 async def get_my_tutorials(
-    course_id: str, 
-    batch_id: Optional[str] = Query(None),
-    user: User = Depends(get_current_user), 
+    course_id: str,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     stmt = (
@@ -175,14 +172,8 @@ async def get_my_tutorials(
         .options(selectinload(UserTutorial.tutorial))
         .join(Tutorial, UserTutorial.tutorial_id == Tutorial.id)
         .filter(UserTutorial.user_id == user.id, Tutorial.course_id == course_id)
+        .order_by(Tutorial.tutorial_number)
     )
-    
-    if batch_id:
-        # Filter tutorials associated with this specific batch enrollment
-        pass # In our simplified schema, UserTutorial isn't directly batch-linked yet, 
-             # but UserCourse is. For now, we return all for the course.
-    
-    stmt = stmt.order_by(Tutorial.tutorial_number)
     result = await db.execute(stmt)
     tutorials = result.scalars().all()
     

@@ -2,14 +2,12 @@
 # Programme routes — programme listing & filtering
 # ============================================================
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, distinct
-from sqlalchemy.orm import selectinload
-from typing import Optional
 
 from database import get_db
-from models import User, Course, Batch, CollegeCourse, UserCourse
+from models import User, Batch, CollegeCourse, UserCourse
 from models.programme import Programme, ProgrammeCourse
 from dependencies import get_current_user
 

@@ -15,11 +15,16 @@ import io
 from fastapi.responses import StreamingResponse
 import openpyxl
 
+from dashboard_common import (
+    DEFAULT_TUTORIAL_COUNT,
+    course_xp_sum,
+    initials as build_initials,
+)
 from database import get_db
 from cache import get_cached, set_cached
 from models import User, College, UserCourse, UserTutorial, Tutorial
 from models.feedback import TutorialFeedback
-from dependencies import get_current_user, require_coordinator, require_admin
+from dependencies import require_coordinator
 
 router = APIRouter(prefix="/api/coordinator", tags=["coordinator"])
 
@@ -47,7 +52,7 @@ async def _fetch_summary_stats(
         tot_tut_res = await db.execute(
             select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id)
         )
-        total_tutorials = tot_tut_res.scalar() or 20
+        total_tutorials = tot_tut_res.scalar() or DEFAULT_TUTORIAL_COUNT
     T = total_tutorials
     # int(T*0.3) == the Python float threshold `watched > T*0.3` for integer watched counts.
     watched_thresh = int(T * 0.3)
@@ -59,9 +64,7 @@ async def _fetch_summary_stats(
             User.college_id.label("college_id"),
             # Course-scoped XP: only sum xp from THIS course's tutorials (Tutorial.id
             # is non-NULL only when the outer-joined tutorial matched course_id).
-            func.coalesce(
-                func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0
-            ).label("xp"),
+            course_xp_sum().label("xp"),
             func.count(case((UserTutorial.watched == True, Tutorial.id), else_=None)).label("watched"),
             func.count(case((UserTutorial.practiced == True, Tutorial.id), else_=None)).label("completed"),
             func.count(case((UserTutorial.minitask_opted == True, Tutorial.id), else_=None)).label("minitasks"),
@@ -228,7 +231,7 @@ async def _get_student_rows(
     """
     if total_tutorials is None:
         tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
-        total_tutorials = tot_tut_res.scalar() or 20
+        total_tutorials = tot_tut_res.scalar() or DEFAULT_TUTORIAL_COUNT
 
     # ── Step 1: Build the student IDs query (filtered by college, course, batch) ──
     stu_id_query = select(User.id).filter(
@@ -276,7 +279,7 @@ async def _get_student_rows(
         (func.count(
             case((UserTutorial.watched == True, Tutorial.id), else_=None)
          ) > literal(0), literal("at_risk")),
-        (func.coalesce(func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0) > 0, literal("inactive")),
+        (course_xp_sum() > 0, literal("inactive")),
         else_=literal("not_started"),
     ).label("status")
 
@@ -284,7 +287,7 @@ async def _get_student_rows(
         User.id,
         User.display_name,
         User.username,
-        func.coalesce(func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0).label("xp_total"),
+        course_xp_sum().label("xp_total"),
         watched_col,
         completed_col,
         minitask_col,
@@ -352,8 +355,7 @@ async def _get_student_rows(
         name = row.display_name
         username = row.username
 
-        parts = (name or "").split()
-        initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
+        initials = build_initials(name, username)
 
         students.append({
             "id": str(uid),
@@ -450,7 +452,7 @@ async def get_college_details(
     # doubles as the existence check, so the separate College query is gone.
     total_tutorials = (await db.execute(
         select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id)
-    )).scalar() or 20
+    )).scalar() or DEFAULT_TUTORIAL_COUNT
 
     # The summary block is invariant to page/sort/search/status — cache it so paging and
     # searching a college don't re-run the aggregate. Student rows are NOT cached.
@@ -959,8 +961,7 @@ async def get_coordinator_feedback_summary(
             }
 
         student_user = fb.user
-        parts = (student_user.display_name or "").split()
-        initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
+        initials = build_initials(student_user.display_name, student_user.username)
 
         tutorial_groups[tid]["entries"].append({
             "id": str(fb.id),
