@@ -9,6 +9,9 @@ from services.auth import verify_credentials
 from services.jwt import create_access_token
 from database import get_db
 from models.activity import Activity
+import logging
+
+logger = logging.getLogger("spoken_social.auth")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -91,7 +94,10 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
     ))
     await db.commit()
 
-    print(f"DEBUG LOGIN: user={user_info['email']}, role={user_info['role']}, college_id={user_info.get('college_id')}")
+    logger.debug(
+        "login user=%s role=%s college_id=%s",
+        user_info["email"], user_info["role"], user_info.get("college_id"),
+    )
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -101,7 +107,7 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
 
 # ----- Impersonation Endpoints -----
 
-from dependencies import get_current_user, require_admin, require_coordinator
+from dependencies import get_current_user
 from models import User, College
 from services.auth import get_or_create_test_student
 from sqlalchemy import select

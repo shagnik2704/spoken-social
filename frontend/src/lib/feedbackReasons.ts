@@ -29,6 +29,11 @@ export const REASON_LABELS: Record<string, string> = {
     // Forum
     didnt_know_forum: "Didn't know about the forum",
     not_confident: "Not confident answering others' questions",
+    no_questions: "Had no doubts or questions to ask",
+    found_answer_search: 'Found the answer by searching the forum',
+    found_answer_elsewhere: 'Found the answer on Google or documentation',
+    difficult_to_use: 'Forum is difficult to use or navigate',
+    prefer_offline: 'Prefers asking teachers or peers directly',
 
     // Other
     other: 'Other reason',

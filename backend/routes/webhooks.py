@@ -11,7 +11,7 @@ from fastapi import APIRouter, Request, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 from database import get_db
-from services.forum import process_forum_event, process_forum_delete, find_user_by_email
+from services.forum import process_forum_event, process_forum_delete
 
 logger = logging.getLogger("spoken_social.webhooks")
 

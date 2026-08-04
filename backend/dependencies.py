@@ -5,7 +5,10 @@ from models import User
 from database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import logging
 import uuid
+
+logger = logging.getLogger("spoken_social.auth")
 
 security = HTTPBearer()
 
@@ -46,8 +49,12 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     user.target_college_id = payload.get("col")
     user.real_user_id = payload.get("sub")
     user.is_impersonating = payload.get("imp", False)
-    print(f"DEBUG DEPENDENCY: user={user.email}, effective_role={user.effective_role}, college_id={user.target_college_id}")
-    
+    logger.debug(
+        "resolved user=%s effective_role=%s target_college_id=%s",
+        user.email, user.effective_role, user.target_college_id,
+    )
+
+
     if user.target_college_id:
         user.college_id = user.target_college_id
 
