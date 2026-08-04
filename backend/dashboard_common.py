@@ -40,6 +40,21 @@ def chart_series(series, values) -> list[dict]:
     ]
 
 
+def progress_bucket(progress: int) -> int:
+    """Index into PROGRESS_SERIES for a 0–100 progress value."""
+    if progress == 0:
+        return 0
+    if progress <= 25:
+        return 1
+    if progress <= 50:
+        return 2
+    if progress <= 75:
+        return 3
+    if progress <= 99:
+        return 4
+    return 5
+
+
 def initials(display_name: str | None, username: str | None = None) -> str:
     """
     Up to two uppercase initials for an avatar, falling back to username when the

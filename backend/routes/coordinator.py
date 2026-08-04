@@ -17,8 +17,12 @@ import openpyxl
 
 from dashboard_common import (
     DEFAULT_TUTORIAL_COUNT,
+    PROGRESS_SERIES,
+    STATUS_SERIES,
+    chart_series,
     course_xp_sum,
     initials as build_initials,
+    progress_bucket,
 )
 from database import get_db
 from cache import get_cached, set_cached
@@ -656,42 +660,44 @@ async def get_college_analytics(
             "totalTutorials": 0,
             "avgXP": 0,
             "totalXP": 0,
-            "statusData": [
-                {"name": "Completed", "value": 0, "color": "hsl(142, 76%, 36%)"},
-                {"name": "Active", "value": 0, "color": "hsl(221, 83%, 53%)"},
-                {"name": "At Risk of Completion", "value": 0, "color": "hsl(38, 92%, 50%)"},
-                {"name": "Inactive", "value": 0, "color": "hsl(0, 72%, 51%)"}
-            ],
-            "progressData": [
-                {"name": "0%", "value": 0, "color": "hsl(0, 72%, 70%)"},
-                {"name": "1–25%", "value": 0, "color": "hsl(25, 95%, 60%)"},
-                {"name": "26–50%", "value": 0, "color": "hsl(38, 92%, 55%)"},
-                {"name": "51–75%", "value": 0, "color": "hsl(221, 83%, 60%)"},
-                {"name": "76–99%", "value": 0, "color": "hsl(142, 60%, 50%)"},
-                {"name": "100%", "value": 0, "color": "hsl(142, 76%, 36%)"}
-            ],
+            "statusData": chart_series(STATUS_SERIES, [0] * len(STATUS_SERIES)),
+            "progressData": chart_series(PROGRESS_SERIES, [0] * len(PROGRESS_SERIES)),
             "tutorialCompletion": [],
             "topPerformers": [],
             "atRisk": []
         }
 
-    # Fetch the tutorial list once (titles + count); total_tutorials is derived from its
-    # length, removing the separate COUNT query that used to run here.
+    # Tutorial titles and per-tutorial completion counts in one pass. The outer join keeps
+    # tutorials nobody has finished, which the completion chart still has to plot at 0%,
+    # and total_tutorials falls out of the row count.
     tuts_res = await db.execute(
-        select(Tutorial.tutorial_number, Tutorial.title)
+        select(
+            Tutorial.tutorial_number,
+            Tutorial.title,
+            func.count(UserTutorial.user_id).label("completed_count"),
+        )
+        .select_from(Tutorial)
+        .outerjoin(
+            UserTutorial,
+            (UserTutorial.tutorial_id == Tutorial.id)
+            & (UserTutorial.practiced == True)
+            & (UserTutorial.user_id.in_(student_ids)),
+        )
         .filter(Tutorial.course_id == course_id)
+        .group_by(Tutorial.tutorial_number, Tutorial.title)
         .order_by(Tutorial.tutorial_number)
     )
     tuts_data = tuts_res.all()
     tuts_map = {row.tutorial_number: row.title for row in tuts_data}
-    total_tutorials = len(tuts_data) or 20
+    tut_counts = {row.tutorial_number: row.completed_count for row in tuts_data}
+    total_tutorials = len(tuts_data) or DEFAULT_TUTORIAL_COUNT
 
     student_metrics_res = await db.execute(
         select(
             User.id,
             User.display_name,
             User.username,
-            func.coalesce(func.sum(case((Tutorial.id.isnot(None), UserTutorial.xp_earned), else_=0)), 0).label("xp_total"),
+            course_xp_sum().label("xp_total"),
             func.count(
                 case((UserTutorial.watched == True, Tutorial.id), else_=None)
             ).label("watched"),
@@ -710,51 +716,36 @@ async def get_college_analytics(
     students = student_metrics_res.all()
 
     status_counts = {"completed": 0, "active": 0, "at_risk": 0, "inactive": 0}
-    progress_counts = {"0%": 0, "1–25%": 0, "26–50%": 0, "51–75%": 0, "76–99%": 0, "100%": 0}
-    
+    progress_counts = [0] * len(PROGRESS_SERIES)
+
     total_watched = 0
     total_xp = 0
     total_progress = 0
-    
+
     all_students_mapped = []
-    
-    for row in students:
-        uid, name, username, xp, watched, completed = row
-        progress = round((completed / total_tutorials) * 100) if total_tutorials > 0 else 0
+
+    for uid, name, username, xp, watched, completed in students:
+        progress = round((completed / total_tutorials) * 100)
         total_watched += watched
         total_xp += xp
         total_progress += progress
-        
-        # Status calculation
+
         if completed >= total_tutorials:
             status = "completed"
-            status_counts["completed"] += 1
         elif watched > total_tutorials * 0.3:
             status = "active"
-            status_counts["active"] += 1
         elif watched > 0:
             status = "at_risk"
-            status_counts["at_risk"] += 1
         else:
             status = "inactive"
-            status_counts["inactive"] += 1
-            
-        # Progress calculation
-        if progress == 0: progress_counts["0%"] += 1
-        elif progress <= 25: progress_counts["1–25%"] += 1
-        elif progress <= 50: progress_counts["26–50%"] += 1
-        elif progress <= 75: progress_counts["51–75%"] += 1
-        elif progress <= 99: progress_counts["76–99%"] += 1
-        else: progress_counts["100%"] += 1
-            
-        display = name or username or ""
-        parts = display.split()
-        initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
-            
+
+        status_counts[status] += 1
+        progress_counts[progress_bucket(progress)] += 1
+
         all_students_mapped.append({
             "id": str(uid),
-            "name": display,
-            "initials": initials,
+            "name": name or username or "",
+            "initials": build_initials(name, username),
             "xp": xp,
             "progress": progress,
             "tutorialsWatched": watched,
@@ -764,65 +755,44 @@ async def get_college_analytics(
             "lastActive": "—"
         })
 
-    # Sort top performers (only those with XP > 0)
-    top_performers_eligible = [s for s in all_students_mapped if s["xp"] > 0]
-    sorted_by_xp = sorted(top_performers_eligible, key=lambda x: x["xp"], reverse=True)
-    top_performers = sorted_by_xp[:5]
-    
-    # Sort at risk
-    has_any_activity = any(s["xp"] > 0 or s["tutorialsWatched"] > 0 for s in all_students_mapped)
-    allowed_statuses = ["at_risk", "inactive", "not_started"] if has_any_activity else ["at_risk", "inactive"]
-    at_risk_list = [s for s in all_students_mapped if s["status"] in allowed_statuses]
-    at_risk_list.sort(key=lambda x: x["progress"])
-    
-    # Tutorial wise completion
-    tut_completion_res = await db.execute(
-        select(
-            Tutorial.tutorial_number,
-            func.count(UserTutorial.user_id).label("count")
-        ).select_from(Tutorial)
-        .join(UserTutorial, (UserTutorial.tutorial_id == Tutorial.id) & (UserTutorial.practiced == True))
-        .join(User, User.id == UserTutorial.user_id)
-        .filter(User.id.in_(student_ids))
-        .filter(Tutorial.course_id == course_id)
-        .group_by(Tutorial.tutorial_number)
-    )
-    tut_completion_data = tut_completion_res.all()
-    tut_counts = {row.tutorial_number: row.count for row in tut_completion_data}
-    # tuts_map (tutorial titles) was already fetched above alongside total_tutorials.
+    top_performers = sorted(
+        (s for s in all_students_mapped if s["xp"] > 0),
+        key=lambda s: s["xp"],
+        reverse=True,
+    )[:5]
 
-    tutorial_completion = []
-    for i in range(1, total_tutorials + 1):
-        count = tut_counts.get(i, 0)
-        rate = round((count / total) * 100) if total > 0 else 0
-        tutorial_completion.append({
+    # The ladder above only ever assigns these four statuses, so the "not_started" case the
+    # previous filter allowed for — and the has_any_activity flag that gated it — could
+    # never match anything.
+    at_risk_list = sorted(
+        (s for s in all_students_mapped if s["status"] in ("at_risk", "inactive")),
+        key=lambda s: s["progress"],
+    )
+
+    tutorial_completion = [
+        {
             "number": i,
             "title": tuts_map.get(i, f"Tutorial {i}"),
-            "completedCount": count,
-            "rate": rate
-        })
+            "completedCount": tut_counts.get(i, 0),
+            "rate": round((tut_counts.get(i, 0) / total) * 100),
+        }
+        for i in range(1, total_tutorials + 1)
+    ]
 
     result = {
         "totalStudents": total,
-        "avgProgress": round(total_progress / total) if total > 0 else 0,
-        "avgWatched": round(total_watched / total, 1) if total > 0 else 0,
+        "avgProgress": round(total_progress / total),
+        "avgWatched": round(total_watched / total, 1),
         "totalTutorials": total_tutorials,
-        "avgXP": round(total_xp / total) if total > 0 else 0,
+        "avgXP": round(total_xp / total),
         "totalXP": total_xp,
-        "statusData": [
-            {"name": "Completed", "value": status_counts["completed"], "color": "hsl(142, 76%, 36%)"},
-            {"name": "Active", "value": status_counts["active"], "color": "hsl(221, 83%, 53%)"},
-            {"name": "At Risk of Completion", "value": status_counts["at_risk"], "color": "hsl(38, 92%, 50%)"},
-            {"name": "Inactive", "value": status_counts["inactive"], "color": "hsl(0, 72%, 51%)"}
-        ],
-        "progressData": [
-            {"name": "0%", "value": progress_counts["0%"], "color": "hsl(0, 72%, 70%)"},
-            {"name": "1–25%", "value": progress_counts["1–25%"], "color": "hsl(25, 95%, 60%)"},
-            {"name": "26–50%", "value": progress_counts["26–50%"], "color": "hsl(38, 92%, 55%)"},
-            {"name": "51–75%", "value": progress_counts["51–75%"], "color": "hsl(221, 83%, 60%)"},
-            {"name": "76–99%", "value": progress_counts["76–99%"], "color": "hsl(142, 60%, 50%)"},
-            {"name": "100%", "value": progress_counts["100%"], "color": "hsl(142, 76%, 36%)"}
-        ],
+        "statusData": chart_series(STATUS_SERIES, [
+            status_counts["completed"],
+            status_counts["active"],
+            status_counts["at_risk"],
+            status_counts["inactive"],
+        ]),
+        "progressData": chart_series(PROGRESS_SERIES, progress_counts),
         "tutorialCompletion": tutorial_completion,
         "topPerformers": top_performers,
         "atRisk": at_risk_list

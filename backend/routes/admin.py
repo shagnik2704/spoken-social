@@ -25,6 +25,7 @@ from dashboard_common import (
     chart_series,
     course_xp_sum,
     initials as build_initials,
+    progress_bucket,
 )
 from database import get_db
 from demo_data import get_mock_comparison_data, generate_deterministic_mock_metrics
@@ -123,7 +124,7 @@ async def get_platform_summary(
     # ----- Compute derived metrics -----
     students_enriched = []
     status_counts = {"completed": 0, "active": 0, "at_risk": 0, "inactive": 0, "not_started": 0}
-    progress_buckets = {"0": 0, "1-25": 0, "26-50": 0, "51-75": 0, "76-99": 0, "100": 0}
+    progress_buckets = [0] * len(PROGRESS_SERIES)
     total_progress = 0
 
     for row in student_metrics:
@@ -142,20 +143,7 @@ async def get_platform_summary(
             status = "inactive" if xp > 0 else "not_started"
 
         status_counts[status] += 1
-
-        # Progress buckets
-        if progress == 0:
-            progress_buckets["0"] += 1
-        elif progress <= 25:
-            progress_buckets["1-25"] += 1
-        elif progress <= 50:
-            progress_buckets["26-50"] += 1
-        elif progress <= 75:
-            progress_buckets["51-75"] += 1
-        elif progress <= 99:
-            progress_buckets["76-99"] += 1
-        else:
-            progress_buckets["100"] += 1
+        progress_buckets[progress_bucket(progress)] += 1
 
         initials = build_initials(name, username)
 
@@ -259,14 +247,7 @@ async def get_platform_summary(
             status_counts["at_risk"],
             status_counts["inactive"] + status_counts["not_started"],
         ]),
-        "progressDistribution": chart_series(PROGRESS_SERIES, [
-            progress_buckets["0"],
-            progress_buckets["1-25"],
-            progress_buckets["26-50"],
-            progress_buckets["51-75"],
-            progress_buckets["76-99"],
-            progress_buckets["100"],
-        ]),
+        "progressDistribution": chart_series(PROGRESS_SERIES, progress_buckets),
         "topPerformers": top_performers,
         "atRiskStudents": at_risk,
         "tutorialCompletion": tutorial_completion,
