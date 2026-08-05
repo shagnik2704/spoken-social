@@ -10,7 +10,7 @@ from cache import get_cached,set_cached
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case, cast, Date
+from sqlalchemy import select, func, case, cast, literal, Date
 from datetime import datetime, date
 import calendar
 import openpyxl
@@ -23,7 +23,6 @@ from dashboard_common import (
     chart_series,
     course_xp_sum,
     initials as build_initials,
-    progress_bucket,
 )
 from database import get_db
 from demo_data import get_mock_comparison_data, generate_deterministic_mock_metrics
@@ -34,6 +33,105 @@ from models.xp_event import XPEvent
 from dependencies import require_admin
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+# Status ladder for the platform summary, in precedence order. Unlike the coordinator's
+# four-way split this separates "inactive" (no tutorials watched, but some XP) from
+# "not_started" (nothing at all), which the dashboard needs to tell a cohort that fell
+# behind from one that never began.
+STATUS_LADDER = ("completed", "active", "at_risk", "inactive", "not_started")
+
+# Bucket predicates, in the same order as PROGRESS_SERIES. Expressed as callables so they
+# can be applied to a SQL column here and reused against a plain int in tests.
+PROGRESS_BUCKET_CONDITIONS = (
+    lambda p: p == 0,
+    lambda p: (p > 0) & (p <= 25),
+    lambda p: (p > 25) & (p <= 50),
+    lambda p: (p > 50) & (p <= 75),
+    lambda p: (p > 75) & (p <= 99),
+    lambda p: p > 99,
+)
+
+
+def _platform_student_subquery(
+    course_id: str,
+    batch_id: Optional[str],
+    state: Optional[str],
+    total_tutorials: int,
+):
+    """
+    One row per in-scope student, with course-scoped aggregates plus the derived progress
+    and status columns. Mirrors the per-student Python block this replaced, including the
+    status precedence and the `watched > total_tutorials * 0.3` threshold — for integer
+    watched counts, `watched > int(T*0.3)` is the same predicate.
+    """
+    T = total_tutorials
+    watched_col = func.count(case((UserTutorial.watched == True, Tutorial.id), else_=None))
+    completed_col = func.count(case((UserTutorial.practiced == True, Tutorial.id), else_=None))
+    minitask_col = func.count(case((UserTutorial.minitask_opted == True, Tutorial.id), else_=None))
+    xp_col = course_xp_sum()
+
+    query = (
+        select(
+            User.id.label("id"),
+            User.display_name.label("display_name"),
+            User.username.label("username"),
+            College.name.label("college_name"),
+            xp_col.label("xp"),
+            watched_col.label("watched"),
+            completed_col.label("completed"),
+            minitask_col.label("minitasks_opted"),
+            func.round(completed_col * 100.0 / literal(T)).label("progress"),
+            case(
+                (completed_col >= literal(T), literal("completed")),
+                (watched_col > literal(int(T * 0.3)), literal("active")),
+                (watched_col > literal(0), literal("at_risk")),
+                (xp_col > literal(0), literal("inactive")),
+                else_=literal("not_started"),
+            ).label("status"),
+        )
+        .select_from(User)
+        .join(UserCourse, UserCourse.user_id == User.id)
+        .outerjoin(UserTutorial, UserTutorial.user_id == User.id)
+        .outerjoin(
+            Tutorial,
+            (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id),
+        )
+    )
+
+    # A state filter joins College inwardly, which drops students with no college — the
+    # behaviour this endpoint has always had, preserved deliberately.
+    if state:
+        query = query.join(College, College.id == User.college_id).filter(
+            College.location.ilike(f"%{state}%")
+        )
+    else:
+        query = query.outerjoin(College, College.id == User.college_id)
+
+    query = query.filter(
+        User.role == "student",
+        User.is_test_account != True,
+        UserCourse.course_id == course_id,
+    )
+    if batch_id:
+        query = query.filter(UserCourse.batch_id == batch_id)
+
+    return query.group_by(User.id, College.name).subquery("platform_students")
+
+
+def _student_row_to_dict(row) -> dict:
+    """Shape a platform_students row the way the dashboard's student lists expect."""
+    return {
+        "id": str(row.id),
+        "name": row.display_name or row.username or "",
+        "initials": build_initials(row.display_name, row.username),
+        "xp": row.xp,
+        "progress": int(row.progress),
+        "status": row.status,
+        "watched": row.watched,
+        "completed": row.completed,
+        "minitasksOpted": row.minitasks_opted,
+        "collegeName": row.college_name or "Unknown",
+    }
 
 
 @router.get("/platform-summary")
@@ -57,48 +155,11 @@ async def get_platform_summary(
     tot_tut_res = await db.execute(select(func.count(Tutorial.id)).filter(Tutorial.course_id == course_id))
     total_tutorials = tot_tut_res.scalar() or DEFAULT_TUTORIAL_COUNT
 
-    # ----- Per-student metrics (one query) -----
-    query = select(
-        User.id,
-        User.display_name,
-        User.username,
-        course_xp_sum().label("xp_total"),
-        User.college_id,
-        func.count(
-            case((UserTutorial.watched == True, Tutorial.id), else_=None)
-        ).label("watched"),
-        func.count(
-            case((UserTutorial.practiced == True, Tutorial.id), else_=None)
-        ).label("completed"),
-        func.count(
-            case((UserTutorial.minitask_opted == True, Tutorial.id), else_=None)
-        ).label("minitasks_opted"),
-    ).outerjoin(
-        UserTutorial, UserTutorial.user_id == User.id
-    ).outerjoin(
-        Tutorial,
-        (Tutorial.id == UserTutorial.tutorial_id) & (Tutorial.course_id == course_id)
-    ).join(
-        UserCourse, UserCourse.user_id == User.id
-    ).filter(
-        UserCourse.course_id == course_id
-    )
-
-    if batch_id:
-        query = query.filter(UserCourse.batch_id == batch_id)
-
-    if state:
-        query = query.join(College, College.id == User.college_id).filter(
-            User.role == "student",
-            User.is_test_account != True,
-            College.location.ilike(f"%{state}%")
-        )
-    else:
-        query = query.filter(User.role == "student", User.is_test_account != True)
-
-    query = query.group_by(User.id)
-    res_metrics = await db.execute(query)
-    student_metrics = res_metrics.all()
+    # ----- Per-student metrics, as a subquery the aggregates below run over -----
+    # Everything past this point is computed in SQL. This used to materialize one Python
+    # dict per student on the entire platform just to produce a handful of counters, two
+    # top-10 lists and six progress buckets.
+    students = _platform_student_subquery(course_id, batch_id, state, total_tutorials)
 
     # ----- Build college name lookup -----
     college_query = (
@@ -118,63 +179,56 @@ async def get_platform_summary(
         
     colleges_res = await db.execute(college_query.distinct())
     colleges_loaded = colleges_res.all()
-    college_names = {c.id: c.name for c in colleges_loaded}
 
-    # ----- Compute derived metrics -----
-    students_enriched = []
-    status_counts = {"completed": 0, "active": 0, "at_risk": 0, "inactive": 0, "not_started": 0}
-    progress_buckets = [0] * len(PROGRESS_SERIES)
-    total_progress = 0
+    # ----- Counters, buckets and sums: one aggregate over the subquery -----
+    agg = (await db.execute(
+        select(
+            func.count().label("total"),
+            *[
+                func.sum(case((students.c.status == name, 1), else_=0)).label(f"n_{name}")
+                for name in STATUS_LADDER
+            ],
+            *[
+                func.sum(case((cond(students.c.progress), 1), else_=0)).label(f"bucket_{i}")
+                for i, cond in enumerate(PROGRESS_BUCKET_CONDITIONS)
+            ],
+            func.sum(students.c.xp).label("total_xp"),
+            func.sum(students.c.watched).label("total_watched"),
+            func.sum(students.c.progress).label("progress_sum"),
+        )
+    )).one()
 
-    for row in student_metrics:
-        uid, name, username, xp, college_id, watched, completed, minitasks_opted = row
-        progress = round((completed / total_tutorials) * 100) if total_tutorials > 0 else 0
-        total_progress += progress
+    status_counts = {name: (getattr(agg, f"n_{name}") or 0) for name in STATUS_LADDER}
+    progress_buckets = [getattr(agg, f"bucket_{i}") or 0 for i in range(len(PROGRESS_SERIES))]
 
-        # Derive status
-        if completed >= total_tutorials:
-            status = "completed"
-        elif watched > total_tutorials * 0.3:
-            status = "active"
-        elif watched > 0:
-            status = "at_risk"
-        else:
-            status = "inactive" if xp > 0 else "not_started"
-
-        status_counts[status] += 1
-        progress_buckets[progress_bucket(progress)] += 1
-
-        initials = build_initials(name, username)
-
-        students_enriched.append({
-            "id": str(uid),
-            "name": name or username or "",
-            "initials": initials,
-            "xp": xp,
-            "progress": progress,
-            "status": status,
-            "watched": watched,
-            "completed": completed,
-            "minitasksOpted": minitasks_opted,
-            "collegeName": college_names.get(college_id, "Unknown"),
-        })
-
-    total_students = len(students_enriched)
-    avg_progress = round(total_progress / total_students) if total_students > 0 else 0
-    avg_xp = round(sum(s["xp"] for s in students_enriched) / total_students) if total_students > 0 else 0
+    total_students = agg.total or 0
+    total_xp = int(agg.total_xp or 0)
+    # Averages stay in Python so they keep the exact rounding the endpoint has always used.
+    avg_progress = round(float(agg.progress_sum or 0) / total_students) if total_students > 0 else 0
+    avg_xp = round(total_xp / total_students) if total_students > 0 else 0
     completion_rate = round((status_counts["completed"] / total_students) * 100) if total_students > 0 else 0
 
     # ----- Top 10 performers by XP (only those with XP > 0) -----
-    top_performers_eligible = [s for s in students_enriched if s["xp"] > 0]
-    top_performers = sorted(top_performers_eligible, key=lambda s: s["xp"], reverse=True)[:10]
+    # ORDER BY ... LIMIT 10 in SQL, with id as a tiebreaker so equal-XP students come back
+    # in a stable order instead of whatever the scan happened to produce.
+    top_rows = (await db.execute(
+        select(students)
+        .where(students.c.xp > 0)
+        .order_by(students.c.xp.desc(), students.c.id)
+        .limit(10)
+    )).all()
+    top_performers = [_student_row_to_dict(r) for r in top_rows]
 
     # ----- At-risk students (at_risk + inactive + not_started, sorted by lowest progress) -----
-    has_any_activity = any(s["xp"] > 0 or s["watched"] > 0 for s in students_enriched)
+    has_any_activity = total_xp > 0 or int(agg.total_watched or 0) > 0
     allowed_statuses = ("at_risk", "inactive", "not_started") if has_any_activity else ("at_risk", "inactive")
-    at_risk = sorted(
-        [s for s in students_enriched if s["status"] in allowed_statuses],
-        key=lambda s: s["progress"],
-    )[:10]
+    at_risk_rows = (await db.execute(
+        select(students)
+        .where(students.c.status.in_(allowed_statuses))
+        .order_by(students.c.progress, students.c.id)
+        .limit(10)
+    )).all()
+    at_risk = [_student_row_to_dict(r) for r in at_risk_rows]
 
     # ----- Tutorial-wise completion rates -----
     # The numerator must count only students in the SAME population as total_students
