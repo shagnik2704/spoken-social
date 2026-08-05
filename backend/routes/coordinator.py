@@ -10,10 +10,9 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case, literal
-import io
-from fastapi.responses import StreamingResponse
 import openpyxl
 
+from excel_export import workbook_response, write_styled_sheet
 from dashboard_common import (
     DEFAULT_TUTORIAL_COUNT,
     PROGRESS_SERIES,
@@ -26,7 +25,7 @@ from dashboard_common import (
 from database import get_db
 from cache import get_cached, set_cached
 from models import User, College, UserCourse, UserTutorial, Tutorial
-from dependencies import require_coordinator
+from dependencies import require_coordinator, require_college_access
 from services.feedback_summary import build_feedback_summary
 
 router = APIRouter(prefix="/api/coordinator", tags=["coordinator"])
@@ -437,19 +436,12 @@ async def get_college_details(
     sort: str = Query("progress"),
     status: str = Query("all"),
     search: str = Query(""),
-    user: User = Depends(require_coordinator),
+    user: User = Depends(require_college_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Returns a specific college's details + paginated student list for a course/batch.
     """
-    # Coordinator can only see their own college
-    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only view your own college's students",
-        )
-
     # Compute the tutorial count once and share it across the summary aggregate and the
     # student-rows query (avoids two duplicate COUNTs). The summary's own College fetch
     # doubles as the existence check, so the separate College query is gone.
@@ -515,18 +507,12 @@ async def export_college_students(
     college_id: str,
     course_id: str = Query("linux"),
     batch_id: Optional[str] = Query(None),
-    user: User = Depends(require_coordinator),
+    user: User = Depends(require_college_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Exports a list of all students and their progress to an Excel file.
     """
-    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only export your own college's students",
-        )
-
     # Fetch max students for export
     student_data = await _get_student_rows(
         db, college_id, course_id=course_id, batch_id=batch_id,
@@ -534,83 +520,36 @@ async def export_college_students(
         status_filter="all", search="",
     )
 
-    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-
     wb = openpyxl.Workbook()
     sheet = wb.active
     sheet.title = "Student Progress"
 
-    # ── Column config: (header, width) ──
-    columns = [
-        ("S.No.", 10),
-        ("Student Name", 35),
-        ("Progress Percentage", 25),
-        ("Tutorials Completed", 25),
-        ("Mini-Tasks Opted", 22),
-    ]
-
-    # Set column widths
-    for col_idx, (_, width) in enumerate(columns, start=1):
-        col_letter = openpyxl.utils.get_column_letter(col_idx)
-        sheet.column_dimensions[col_letter].width = width
-
-    # ── Header row ──
-    header_font = Font(bold=True, color="FFFFFF", size=11)
-    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-    header_align = Alignment(horizontal="center", vertical="center")
-
-    for col_idx, (title, _) in enumerate(columns, start=1):
-        cell = sheet.cell(row=1, column=col_idx, value=title)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_align
-    sheet.row_dimensions[1].height = 28
-
-    # ── Styling helpers ──
-    thin_border = Border(
-        left=Side(style="thin", color="D9D9D9"),
-        right=Side(style="thin", color="D9D9D9"),
-        top=Side(style="thin", color="D9D9D9"),
-        bottom=Side(style="thin", color="D9D9D9"),
+    write_styled_sheet(
+        sheet,
+        columns=[
+            ("S.No.", 10),
+            ("Student Name", 35),
+            ("Progress Percentage", 25),
+            ("Tutorials Completed", 25),
+            ("Mini-Tasks Opted", 22),
+        ],
+        rows=[
+            [
+                index,
+                student["name"],
+                f"{student['progress']}%",
+                f"{student['tutorialsCompleted']}/{student['totalTutorials']}",
+                student.get("minitasksOpted", 0),
+            ]
+            for index, student in enumerate(student_data["students"], start=1)
+        ],
     )
-    center_align = Alignment(horizontal="center", vertical="center")
-    left_align = Alignment(horizontal="left", vertical="center", indent=1)
-    even_fill = PatternFill(start_color="F2F7FB", end_color="F2F7FB", fill_type="solid")
-
-    # ── Data rows ──
-    for index, student in enumerate(student_data["students"], start=1):
-        row_num = index + 1  # row 1 is header
-        row_data = [
-            index,
-            student["name"],
-            f"{student['progress']}%",
-            f"{student['tutorialsCompleted']}/{student['totalTutorials']}",
-            student.get("minitasksOpted", 0),
-        ]
-        for col_idx, value in enumerate(row_data, start=1):
-            cell = sheet.cell(row=row_num, column=col_idx, value=value)
-            cell.border = thin_border
-            cell.alignment = left_align if col_idx == 2 else center_align
-            if index % 2 == 0:
-                cell.fill = even_fill
-        sheet.row_dimensions[row_num].height = 22
-
-    buffer = io.BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
 
     res_col = await db.execute(select(College.name).filter(College.id == college_id))
     college = res_col.scalars().first()
     cname = college.replace(" ", "_").replace(",", "") if college else "College"
 
-    resp_headers = {
-        "Content-Disposition": f'attachment; filename="{cname}_Students_Report.xlsx"'
-    }
-    return StreamingResponse(
-        buffer,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers=resp_headers,
-    )
+    return workbook_response(wb, f"{cname}_Students_Report.xlsx")
 
 
 @router.get("/colleges/{college_id}/analytics")
@@ -618,19 +557,13 @@ async def get_college_analytics(
     college_id: str,
     course_id: str = Query("linux"),
     batch_id: Optional[str] = Query(None),
-    user: User = Depends(require_coordinator),
+    user: User = Depends(require_college_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Returns deep analytics arrays (status distribution, top performers, etc.)
     for the exact college. Fetches and aggregates all students natively.
     """
-    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only view your own college's analytics",
-        )
-
     cache_key = f"coord:analytics:{college_id}:{course_id}:{batch_id or 'all'}"
     cached = await get_cached(cache_key)
     if cached is not None:
@@ -812,7 +745,7 @@ async def get_coordinator_feedback_summary(
     reason: Optional[str] = Query(None, description="Filter by reason key"),
     course_id: str = Query("linux"),
     batch_id: Optional[str] = Query(None),
-    user: User = Depends(require_coordinator),
+    user: User = Depends(require_college_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -820,12 +753,6 @@ async def get_coordinator_feedback_summary(
     Same shape as admin feedback-summary, but hard-filtered to the given college.
     Coordinators can only access their own college.
     """
-    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only view your own college's feedback",
-        )
-
     cache_key = (
         f"fb:{college_id}:{course_id}:{batch_id or '-'}:"
         f"{tutorial_id or '-'}:{step_type or '-'}:{reason or '-'}"

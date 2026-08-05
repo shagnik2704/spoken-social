@@ -6,8 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from database import get_db
 from dependencies import get_current_user
-from models import User, UserCourse, UserTutorial, UserBadge, Tutorial, Course, CollegeCourse
+from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
 from models.xp_event import XPEvent
+from services.courses import list_admin_courses, list_college_courses
 
 
 
@@ -41,58 +42,9 @@ async def get_current_user_profile(
         user_loaded.college_id = user_loaded.target_college_id
 
     if user_loaded.effective_role == "admin":
-        # Fetch all courses with their batches
-        query = select(Course).options(selectinload(Course.batches))
-        if programme_id:
-            from models.programme import ProgrammeCourse
-            query = query.join(ProgrammeCourse, ProgrammeCourse.course_id == Course.id).filter(ProgrammeCourse.programme_id == programme_id)
-        query = query.order_by(Course.title)
-        
-        courses_res = await db.execute(query)
-        all_courses = courses_res.scalars().all()
-        courses = []
-        for c in all_courses:
-            c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
-            batches = [b for b in c.batches if b.programme_id == programme_id] if programme_id else c.batches
-            c_dict["batches"] = [b.to_api_dict() for b in batches]
-            active_b = next((b for b in batches if b.status == "active"), batches[0] if batches else None)
-            if active_b:
-                c_dict["batchId"] = str(active_b.id)
-                c_dict["batchName"] = active_b.name
-                c_dict["batchStatus"] = active_b.computed_status
-            else:
-                c_dict["batchId"] = None
-                c_dict["batchName"] = None
-                c_dict["batchStatus"] = "inactive"
-            courses.append(c_dict)
+        courses = await list_admin_courses(db, programme_id)
     elif user_loaded.effective_role == "coordinator":
-        # Fetch courses enabled for coordinator's college, with batches
-        query = (
-            select(Course)
-            .join(CollegeCourse, CollegeCourse.course_id == Course.id)
-            .filter(CollegeCourse.college_id == user_loaded.college_id)
-        )
-        if programme_id:
-            query = query.filter(CollegeCourse.programme_id == programme_id)
-        query = query.options(selectinload(Course.batches)).order_by(Course.title)
-        
-        courses_res = await db.execute(query)
-        col_courses = courses_res.scalars().all()
-        courses = []
-        for c in col_courses:
-            c_dict = c.to_api_dict() if hasattr(c, 'to_api_dict') else {"id": c.id, "title": c.title, "description": c.description}
-            batches = [b for b in c.batches if b.programme_id == programme_id] if programme_id else c.batches
-            c_dict["batches"] = [b.to_api_dict() for b in batches]
-            active_b = next((b for b in batches if b.status == "active"), batches[0] if batches else None)
-            if active_b:
-                c_dict["batchId"] = str(active_b.id)
-                c_dict["batchName"] = active_b.name
-                c_dict["batchStatus"] = active_b.computed_status
-            else:
-                c_dict["batchId"] = None
-                c_dict["batchName"] = None
-                c_dict["batchStatus"] = "inactive"
-            courses.append(c_dict)
+        courses = await list_college_courses(db, user_loaded.college_id, programme_id)
     else:
         if programme_id:
             courses = [
