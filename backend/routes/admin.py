@@ -239,6 +239,10 @@ async def get_platform_summary(
             "totalActive": status_counts["active"],
             "totalAtRisk": status_counts["at_risk"],
             "totalInactive": status_counts["inactive"] + status_counts["not_started"],
+            # Broken out so the dashboard can tell "behind" apart from "never began" — a
+            # cohort where nobody has started needs a different message, not a count of
+            # students needing attention.
+            "totalNotStarted": status_counts["not_started"],
         },
         "statusDistribution": chart_series(STATUS_SERIES, [
             status_counts["completed"],

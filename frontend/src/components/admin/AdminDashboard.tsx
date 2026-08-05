@@ -73,6 +73,7 @@ interface PlatformSummary {
         totalActive: number
         totalAtRisk: number
         totalInactive: number
+        totalNotStarted: number
     }
     statusDistribution: { name: string; value: number; color: string }[]
     progressDistribution: { name: string; value: number; color: string }[]
@@ -217,6 +218,10 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
 }) {
     const m = summary.metrics
 
+    // A cohort where every enrolled learner is still at zero isn't "N need attention" —
+    // nobody has begun. Saying so is more useful than a count that implies they fell behind.
+    const nobodyStarted = m.totalNotStarted > 0 && m.totalNotStarted === m.totalStudents
+
     return (
         <div className="space-y-5">
             {/* Platform-wide Metric Cards */}
@@ -242,13 +247,23 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                     subtext={`${m.totalCompleted} of ${m.totalStudents} completed`}
                     color="bg-success/10 text-success"
                 />
-                <MetricCard
-                    icon={AlertTriangle}
-                    label="Need Attention"
-                    value={m.totalAtRisk + m.totalInactive}
-                    subtext={`${m.totalAtRisk} at risk of completion · ${m.totalInactive} inactive`}
-                    color="bg-warning/10 text-warning"
-                />
+                {nobodyStarted ? (
+                    <MetricCard
+                        icon={Clock}
+                        label="Not Started"
+                        value={m.totalNotStarted}
+                        subtext={`no learner in this cohort has begun`}
+                        color="bg-muted text-muted-foreground"
+                    />
+                ) : (
+                    <MetricCard
+                        icon={AlertTriangle}
+                        label="Need Attention"
+                        value={m.totalAtRisk + m.totalInactive}
+                        subtext={`${m.totalAtRisk} at risk of completion · ${m.totalInactive} inactive`}
+                        color="bg-warning/10 text-warning"
+                    />
+                )}
             </div>
 
             {/* College Summary Cards */}
@@ -347,17 +362,24 @@ function OverviewTab({ colleges, summary, onStudentClick }: {
                         <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
                             <AlertTriangle className="h-4 w-4 text-warning" />
                             At-Risk Learners — All Colleges
-                            {(summary.metrics.totalAtRisk + summary.metrics.totalInactive) > 0 && (
+                            {nobodyStarted ? (
+                                <Badge className="bg-muted text-muted-foreground border-0 text-[10px] px-1.5 py-0 h-4">
+                                    {m.totalNotStarted} not started
+                                </Badge>
+                            ) : (summary.metrics.totalAtRisk + summary.metrics.totalInactive) > 0 && (
                                 <Badge className="bg-destructive/10 text-destructive border-0 text-[10px] px-1.5 py-0 h-4">
                                     {summary.metrics.totalAtRisk + summary.metrics.totalInactive} need attention
                                 </Badge>
                             )}
                         </h3>
                         {summary.atRiskStudents.length === 0 ? (
-                            summary.metrics.avgProgress === 0 && summary.metrics.avgXP === 0 ? (
+                            nobodyStarted ? (
                                 <div className="text-center py-6">
                                     <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                                     <p className="text-sm font-medium text-muted-foreground">No learning activity started yet</p>
+                                    <p className="text-[11px] text-muted-foreground/70 mt-1">
+                                        All {m.totalNotStarted} enrolled learners are yet to begin
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="text-center py-6">
