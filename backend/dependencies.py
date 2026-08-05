@@ -71,6 +71,20 @@ def require_coordinator(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def require_college_access(college_id: str, user: User = Depends(require_coordinator)) -> User:
+    """
+    Coordinator routes scoped to a {college_id} path segment. Admins pass through; a
+    coordinator may only reach their own college. Resolves college_id from the path, so it
+    replaces the identical inline check every one of those routes used to open with.
+    """
+    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only access your own college's data",
+        )
+    return user
+
+
 def require_admin(user: User = Depends(get_current_user)) -> User:
     """Only real admins can access admin routes. Effective role isn't enough for platform admin."""
     # We check if the ACTUAL user behind the token is an admin

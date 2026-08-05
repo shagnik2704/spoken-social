@@ -26,7 +26,7 @@ from dashboard_common import (
 from database import get_db
 from cache import get_cached, set_cached
 from models import User, College, UserCourse, UserTutorial, Tutorial
-from dependencies import require_coordinator
+from dependencies import require_coordinator, require_college_access
 from services.feedback_summary import build_feedback_summary
 
 router = APIRouter(prefix="/api/coordinator", tags=["coordinator"])
@@ -437,19 +437,12 @@ async def get_college_details(
     sort: str = Query("progress"),
     status: str = Query("all"),
     search: str = Query(""),
-    user: User = Depends(require_coordinator),
+    user: User = Depends(require_college_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Returns a specific college's details + paginated student list for a course/batch.
     """
-    # Coordinator can only see their own college
-    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only view your own college's students",
-        )
-
     # Compute the tutorial count once and share it across the summary aggregate and the
     # student-rows query (avoids two duplicate COUNTs). The summary's own College fetch
     # doubles as the existence check, so the separate College query is gone.
@@ -515,18 +508,12 @@ async def export_college_students(
     college_id: str,
     course_id: str = Query("linux"),
     batch_id: Optional[str] = Query(None),
-    user: User = Depends(require_coordinator),
+    user: User = Depends(require_college_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Exports a list of all students and their progress to an Excel file.
     """
-    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only export your own college's students",
-        )
-
     # Fetch max students for export
     student_data = await _get_student_rows(
         db, college_id, course_id=course_id, batch_id=batch_id,
@@ -618,19 +605,13 @@ async def get_college_analytics(
     college_id: str,
     course_id: str = Query("linux"),
     batch_id: Optional[str] = Query(None),
-    user: User = Depends(require_coordinator),
+    user: User = Depends(require_college_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Returns deep analytics arrays (status distribution, top performers, etc.)
     for the exact college. Fetches and aggregates all students natively.
     """
-    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only view your own college's analytics",
-        )
-
     cache_key = f"coord:analytics:{college_id}:{course_id}:{batch_id or 'all'}"
     cached = await get_cached(cache_key)
     if cached is not None:
@@ -812,7 +793,7 @@ async def get_coordinator_feedback_summary(
     reason: Optional[str] = Query(None, description="Filter by reason key"),
     course_id: str = Query("linux"),
     batch_id: Optional[str] = Query(None),
-    user: User = Depends(require_coordinator),
+    user: User = Depends(require_college_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -820,12 +801,6 @@ async def get_coordinator_feedback_summary(
     Same shape as admin feedback-summary, but hard-filtered to the given college.
     Coordinators can only access their own college.
     """
-    if user.effective_role == "coordinator" and str(user.college_id) != str(college_id):
-        raise HTTPException(
-            status_code=403,
-            detail="You can only view your own college's feedback",
-        )
-
     cache_key = (
         f"fb:{college_id}:{course_id}:{batch_id or '-'}:"
         f"{tutorial_id or '-'}:{step_type or '-'}:{reason or '-'}"
