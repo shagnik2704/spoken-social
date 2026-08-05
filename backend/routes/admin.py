@@ -507,7 +507,9 @@ async def get_college_daily_xp(
 ):
     """
     Returns daily average XP per college for a given month.
-    For each day, we compute: sum of XP that day per student, then average across students.
+    For each day: total XP earned that day in this course, divided by the college's
+    enrolled students — students who earned nothing count as zero. Dividing by earners
+    instead would make one active student out of 300 chart the same as 300 out of 300.
     """
     # Parse month
     if month:
@@ -606,12 +608,30 @@ async def get_college_daily_xp(
         .subquery()
     )
 
-    # Main query: average daily XP per college per day
+    # Enrolled-student count per college — the denominator below. Same population as the
+    # numerator's students (role, test-account and course filters all match).
+    enrolled_res = await db.execute(
+        select(User.college_id, func.count(func.distinct(User.id)).label("enrolled"))
+        .join(UserCourse, UserCourse.user_id == User.id)
+        .filter(
+            User.role == "student",
+            User.is_test_account != True,
+            UserCourse.course_id == course_id,
+            User.college_id.in_([c.id for c in colleges]),
+        )
+        .group_by(User.college_id)
+    )
+    enrolled_by_college = {row.college_id: row.enrolled for row in enrolled_res.all()}
+
+    # Daily XP totals per college. Averaging happens in Python against the enrolled count
+    # rather than as SQL AVG over the subquery, because AVG would divide by the number of
+    # students who happened to earn that day — making one active student out of 300 chart
+    # identically to 300 out of 300.
     result = await db.execute(
         select(
             daily_student_xp.c.college_id,
             daily_student_xp.c.xp_date,
-            func.round(func.avg(daily_student_xp.c.daily_xp), 1).label("avg_xp"),
+            func.sum(daily_student_xp.c.daily_xp).label("total_xp"),
         )
         .group_by(daily_student_xp.c.college_id, daily_student_xp.c.xp_date)
         .order_by(daily_student_xp.c.xp_date)
@@ -629,7 +649,8 @@ async def get_college_daily_xp(
     for row in rows:
         day_num = row.xp_date.day
         college_id = row.college_id
-        avg_xp = float(row.avg_xp) if row.avg_xp else 0
+        enrolled = enrolled_by_college.get(college_id, 0)
+        avg_xp = round(float(row.total_xp or 0) / enrolled, 1) if enrolled else 0
         if 1 <= day_num <= days_in_month:
             series[day_num - 1][college_id] = avg_xp
 
