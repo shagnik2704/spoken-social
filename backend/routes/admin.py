@@ -13,10 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case, cast, Date
 from datetime import datetime, date
 import calendar
-import io
-from fastapi.responses import StreamingResponse
 import openpyxl
 
+from excel_export import workbook_response, write_styled_sheet
 from dashboard_common import (
     DEFAULT_TUTORIAL_COUNT,
     PROGRESS_SERIES,
@@ -328,83 +327,36 @@ async def export_all_colleges(
     
     colleges_summary = await _build_college_summary(db, course_id=course_id, batch_id=batch_id)
 
-    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-
     wb = openpyxl.Workbook()
     sheet = wb.active
     sheet.title = "Colleges Report"
 
-    # ── Column config: (header, width) ──
-    columns = [
-        ("S.No.", 10),
-        ("College Name", 45),
-        ("Total Students Enrolled", 28),
-        ("Active + Completed", 24),
-        ("Fully Completed Students", 28),
-        ("Students Opted for Minitasks", 30),
-        ("Average Progress Percentage", 32),
-    ]
-
-    # Set column widths
-    for col_idx, (_, width) in enumerate(columns, start=1):
-        col_letter = openpyxl.utils.get_column_letter(col_idx)
-        sheet.column_dimensions[col_letter].width = width
-
-    # ── Header row ──
-    header_font = Font(bold=True, color="FFFFFF", size=11)
-    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-    header_align = Alignment(horizontal="center", vertical="center")
-
-    for col_idx, (title, _) in enumerate(columns, start=1):
-        cell = sheet.cell(row=1, column=col_idx, value=title)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_align
-    sheet.row_dimensions[1].height = 28
-
-    # ── Styling helpers ──
-    thin_border = Border(
-        left=Side(style="thin", color="D9D9D9"),
-        right=Side(style="thin", color="D9D9D9"),
-        top=Side(style="thin", color="D9D9D9"),
-        bottom=Side(style="thin", color="D9D9D9"),
+    write_styled_sheet(
+        sheet,
+        columns=[
+            ("S.No.", 10),
+            ("College Name", 45),
+            ("Total Students Enrolled", 28),
+            ("Active + Completed", 24),
+            ("Fully Completed Students", 28),
+            ("Students Opted for Minitasks", 30),
+            ("Average Progress Percentage", 32),
+        ],
+        rows=[
+            [
+                index,
+                col["name"],
+                col["totalCourseStudents"],
+                col["activeStudents"],
+                col["completedStudents"],
+                col.get("studentsWithMinitasks", 0),
+                f"{col['avgProgress']}%",
+            ]
+            for index, col in enumerate(colleges_summary, start=1)
+        ],
     )
-    center_align = Alignment(horizontal="center", vertical="center")
-    left_align = Alignment(horizontal="left", vertical="center", indent=1)
-    even_fill = PatternFill(start_color="F2F7FB", end_color="F2F7FB", fill_type="solid")
 
-    # ── Data rows ──
-    for index, col in enumerate(colleges_summary, start=1):
-        row_num = index + 1
-        row_data = [
-            index,
-            col["name"],
-            col["totalCourseStudents"],
-            col["activeStudents"],
-            col["completedStudents"],
-            col.get("studentsWithMinitasks", 0),
-            f"{col['avgProgress']}%",
-        ]
-        for col_idx, value in enumerate(row_data, start=1):
-            cell = sheet.cell(row=row_num, column=col_idx, value=value)
-            cell.border = thin_border
-            cell.alignment = left_align if col_idx == 2 else center_align
-            if index % 2 == 0:
-                cell.fill = even_fill
-        sheet.row_dimensions[row_num].height = 22
-
-    buffer = io.BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
-
-    headers_resp = {
-        "Content-Disposition": 'attachment; filename="Platform_Colleges_Report.xlsx"'
-    }
-    return StreamingResponse(
-        buffer,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers=headers_resp,
-    )
+    return workbook_response(wb, "Platform_Colleges_Report.xlsx")
 
 
 # ============================================================
@@ -428,8 +380,6 @@ async def export_minitask_students(
     enrolled students only (UserCourse join) and the same batch filter. Previously the
     export skipped both, so it included unenrolled/other-batch rows the screen never showed.
     """
-    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-
     # Query all minitask opt-ins with student + tutorial + college info
     query = (
         select(
@@ -462,76 +412,36 @@ async def export_minitask_students(
     sheet = wb.active
     sheet.title = "Mini-Task Opt-ins"
 
-    # Column config: (header, width)
-    columns = [
-        ("S.No.", 10),
-        ("Student Name", 35),
-        ("Email", 40),
-        ("College", 45),
-        ("Tutorial #", 14),
-        ("Tutorial Title", 45),
-    ]
+    # Left-align the text columns (name, email, college, tutorial title); centre the rest.
+    TEXT_COLS = (2, 3, 4, 6)
 
-    for col_idx, (_, width) in enumerate(columns, start=1):
-        col_letter = openpyxl.utils.get_column_letter(col_idx)
-        sheet.column_dimensions[col_letter].width = width
-
-    # Header row
-    header_font = Font(bold=True, color="FFFFFF", size=11)
-    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-    header_align = Alignment(horizontal="center", vertical="center")
-
-    for col_idx, (title, _) in enumerate(columns, start=1):
-        cell = sheet.cell(row=1, column=col_idx, value=title)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_align
-    sheet.row_dimensions[1].height = 28
-
-    # Styling helpers
-    thin_border = Border(
-        left=Side(style="thin", color="D9D9D9"),
-        right=Side(style="thin", color="D9D9D9"),
-        top=Side(style="thin", color="D9D9D9"),
-        bottom=Side(style="thin", color="D9D9D9"),
+    write_styled_sheet(
+        sheet,
+        columns=[
+            ("S.No.", 10),
+            ("Student Name", 35),
+            ("Email", 40),
+            ("College", 45),
+            ("Tutorial #", 14),
+            ("Tutorial Title", 45),
+        ],
+        rows=[
+            [
+                index,
+                row.display_name or row.username or "",
+                row.email or "",
+                row.college_name or "Unknown",
+                row.tutorial_number,
+                row.tutorial_title,
+            ]
+            for index, row in enumerate(rows, start=1)
+        ],
+        left_align_cols=TEXT_COLS,
+        autofilter=True,
+        freeze_header=True,
     )
-    center_align = Alignment(horizontal="center", vertical="center")
-    left_align = Alignment(horizontal="left", vertical="center", indent=1)
-    even_fill = PatternFill(start_color="F2F7FB", end_color="F2F7FB", fill_type="solid")
-
-    # Data rows
-    for index, row in enumerate(rows, start=1):
-        row_num = index + 1
-        student_name = row.display_name or row.username or ""
-        row_data = [
-            index,
-            student_name,
-            row.email or "",
-            row.college_name or "Unknown",
-            row.tutorial_number,
-            row.tutorial_title,
-        ]
-        for col_idx, value in enumerate(row_data, start=1):
-            cell = sheet.cell(row=row_num, column=col_idx, value=value)
-            cell.border = thin_border
-            # Left-align name, email, college, tutorial title; center the rest
-            cell.alignment = left_align if col_idx in (2, 3, 4, 6) else center_align
-            if index % 2 == 0:
-                cell.fill = even_fill
-        sheet.row_dimensions[row_num].height = 22
-
-    # Enable AutoFilter on all columns so admin can filter/sort directly in Excel
-    last_row = len(rows) + 1  # header + data rows
-    last_col = openpyxl.utils.get_column_letter(len(columns))
-    sheet.auto_filter.ref = f"A1:{last_col}{last_row}"
-
-    # Freeze the header row so it stays visible when scrolling
-    sheet.freeze_panes = "A2"
 
     # ── Sheet 2: Unique Students (one row per student) ──
-    sheet2 = wb.create_sheet(title="Unique Students")
-
-    # Group rows by email
     from collections import OrderedDict
     student_map = OrderedDict()
     for row in rows:
@@ -547,63 +457,33 @@ async def export_minitask_students(
             f"{row.tutorial_number}. {row.tutorial_title}"
         )
 
-    cols2 = [
-        ("S.No.", 10),
-        ("Student Name", 35),
-        ("Email", 40),
-        ("College", 45),
-        ("Total Mini-Tasks", 18),
-        ("Tutorials Opted", 70),
-    ]
-
-    for col_idx, (_, width) in enumerate(cols2, start=1):
-        col_letter = openpyxl.utils.get_column_letter(col_idx)
-        sheet2.column_dimensions[col_letter].width = width
-
-    for col_idx, (title, _) in enumerate(cols2, start=1):
-        cell = sheet2.cell(row=1, column=col_idx, value=title)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_align
-    sheet2.row_dimensions[1].height = 28
-
-    for index, (email, info) in enumerate(student_map.items(), start=1):
-        row_num = index + 1
-        tutorials_str = ", ".join(info["tutorials"])
-        row_data = [
-            index,
-            info["name"],
-            info["email"],
-            info["college"],
-            len(info["tutorials"]),
-            tutorials_str,
-        ]
-        for col_idx, value in enumerate(row_data, start=1):
-            cell = sheet2.cell(row=row_num, column=col_idx, value=value)
-            cell.border = thin_border
-            cell.alignment = left_align if col_idx in (2, 3, 4, 6) else center_align
-            if index % 2 == 0:
-                cell.fill = even_fill
-        sheet2.row_dimensions[row_num].height = 22
-
-    # AutoFilter + freeze on Sheet 2
-    last_row2 = len(student_map) + 1
-    last_col2 = openpyxl.utils.get_column_letter(len(cols2))
-    sheet2.auto_filter.ref = f"A1:{last_col2}{last_row2}"
-    sheet2.freeze_panes = "A2"
-
-    buffer = io.BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
-
-    headers_resp = {
-        "Content-Disposition": 'attachment; filename="MiniTask_OptIn_Report.xlsx"'
-    }
-    return StreamingResponse(
-        buffer,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers=headers_resp,
+    write_styled_sheet(
+        wb.create_sheet(title="Unique Students"),
+        columns=[
+            ("S.No.", 10),
+            ("Student Name", 35),
+            ("Email", 40),
+            ("College", 45),
+            ("Total Mini-Tasks", 18),
+            ("Tutorials Opted", 70),
+        ],
+        rows=[
+            [
+                index,
+                info["name"],
+                info["email"],
+                info["college"],
+                len(info["tutorials"]),
+                ", ".join(info["tutorials"]),
+            ]
+            for index, info in enumerate(student_map.values(), start=1)
+        ],
+        left_align_cols=TEXT_COLS,
+        autofilter=True,
+        freeze_header=True,
     )
+
+    return workbook_response(wb, "MiniTask_OptIn_Report.xlsx")
 
 
 # ============================================================
