@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { User, Course, Badge, Tutorial, RadioValue, TutorialField, ForumActivityMap } from '@/types'
 import api from '@/lib/axios'
+import {queryClient} from '@/lib/queryClient'
 
 
 interface UserState {
@@ -154,7 +155,10 @@ export const useUserStore = create<UserState>((set, get) => ({
             })
         })
 
-        api.put(`/api/me/courses/${courseId}/tutorials/${tutorialId}`, { field, value: boolValue })
+        api.put(`/api/me/courses/${courseId}/tutorials/${tutorialId}`, { field, value: boolValue }).then(()=>{
+            queryClient.invalidateQueries({queryKey:['leaderboard']})
+            queryClient.invalidateQueries({queryKey:['xp-history']})
+        })
     },
 
     login: (user) => {
