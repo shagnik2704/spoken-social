@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="960" viewBox="0 0 1300 960" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="1300" height="960" fill="#ffffff"/>
+  <text x="650" y="34" text-anchor="middle" font-size="21" font-weight="bold" fill="#111827">Spoken Social — Entity-Relationship Overview (core tables)</text>
+  <text x="650" y="56" text-anchor="middle" font-size="12" fill="#64748b">Arrows point from foreign key to referenced table · 27 tables total, social-feed schema grouped</text>
+
+  <!-- helper styles: content boxes -->
+  <!-- Column A: content hierarchy -->
+  <g>
+    <rect x="45" y="90" width="205" height="64" rx="7" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1.8"/>
+    <text x="147" y="112" text-anchor="middle" font-size="14" font-weight="bold" fill="#4c1d95">programmes</text>
+    <text x="147" y="132" text-anchor="middle" font-size="10.5" fill="#475569">id PK · name</text>
+
+    <rect x="45" y="230" width="205" height="72" rx="7" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1.8"/>
+    <text x="147" y="252" text-anchor="middle" font-size="14" font-weight="bold" fill="#4c1d95">courses</text>
+    <text x="147" y="272" text-anchor="middle" font-size="10.5" fill="#475569">id PK · name</text>
+    <text x="147" y="287" text-anchor="middle" font-size="10.5" fill="#475569">total_tutorials</text>
+
+    <rect x="45" y="380" width="205" height="72" rx="7" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1.8"/>
+    <text x="147" y="402" text-anchor="middle" font-size="14" font-weight="bold" fill="#4c1d95">batches</text>
+    <text x="147" y="422" text-anchor="middle" font-size="10.5" fill="#475569">id PK · course_id FK</text>
+    <text x="147" y="437" text-anchor="middle" font-size="10.5" fill="#475569">start/end date · status</text>
+
+    <rect x="45" y="520" width="205" height="72" rx="7" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1.8"/>
+    <text x="147" y="542" text-anchor="middle" font-size="14" font-weight="bold" fill="#4c1d95">tutorials</text>
+    <text x="147" y="562" text-anchor="middle" font-size="10.5" fill="#475569">id PK · course_id FK</text>
+    <text x="147" y="577" text-anchor="middle" font-size="10.5" fill="#475569">title · order</text>
+  </g>
+
+  <!-- Junctions -->
+  <g>
+    <rect x="330" y="150" width="190" height="58" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5 3"/>
+    <text x="425" y="172" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#334155">programme_courses</text>
+    <text x="425" y="190" text-anchor="middle" font-size="10" fill="#64748b">programme_id · course_id</text>
+
+    <rect x="330" y="300" width="190" height="66" rx="7" fill="#eef2ff" stroke="#283593" stroke-width="1.8"/>
+    <text x="425" y="322" text-anchor="middle" font-size="13" font-weight="bold" fill="#283593">user_courses</text>
+    <text x="425" y="340" text-anchor="middle" font-size="10" fill="#475569">user_id · course_id · batch_id</text>
+    <text x="425" y="355" text-anchor="middle" font-size="10" fill="#475569">(enrolment)</text>
+
+    <rect x="330" y="470" width="190" height="86" rx="7" fill="#eef2ff" stroke="#283593" stroke-width="2.2"/>
+    <text x="425" y="492" text-anchor="middle" font-size="13" font-weight="bold" fill="#283593">user_tutorials</text>
+    <text x="425" y="510" text-anchor="middle" font-size="10" fill="#475569">user_id · tutorial_id</text>
+    <text x="425" y="525" text-anchor="middle" font-size="10" fill="#475569">watched · practiced · assignment</text>
+    <text x="425" y="540" text-anchor="middle" font-size="10" fill="#475569">xp_earned (derived from flags)</text>
+  </g>
+
+  <!-- Users center -->
+  <rect x="590" y="300" width="230" height="120" rx="9" fill="#fefce8" stroke="#a16207" stroke-width="2.4"/>
+  <text x="705" y="326" text-anchor="middle" font-size="16" font-weight="bold" fill="#854d0e">users</text>
+  <text x="705" y="348" text-anchor="middle" font-size="10.5" fill="#475569">id PK · email · role</text>
+  <text x="705" y="364" text-anchor="middle" font-size="10.5" fill="#475569">xp_total · level · college_id FK</text>
+  <text x="705" y="380" text-anchor="middle" font-size="10.5" fill="#475569">is_test_account NOT NULL</text>
+  <text x="705" y="396" text-anchor="middle" font-size="10.5" fill="#475569">(student / coordinator / admin)</text>
+
+  <!-- Right column -->
+  <g>
+    <rect x="1010" y="90" width="240" height="80" rx="7" fill="#f0fdfa" stroke="#0f766e" stroke-width="1.8"/>
+    <text x="1130" y="112" text-anchor="middle" font-size="14" font-weight="bold" fill="#115e59">colleges</text>
+    <text x="1130" y="132" text-anchor="middle" font-size="10.5" fill="#475569">id PK · name · location</text>
+    <text x="1130" y="147" text-anchor="middle" font-size="10.5" fill="#475569">coordinator linkage</text>
+
+    <rect x="1010" y="210" width="240" height="86" rx="7" fill="#fff7ed" stroke="#c2410c" stroke-width="1.8"/>
+    <text x="1130" y="232" text-anchor="middle" font-size="14" font-weight="bold" fill="#9a3412">xp_events</text>
+    <text x="1130" y="252" text-anchor="middle" font-size="10.5" fill="#475569">user_id FK · xp_delta · course_id</text>
+    <text x="1130" y="267" text-anchor="middle" font-size="10.5" fill="#475569">source_type · created_at (indexed)</text>
+    <text x="1130" y="282" text-anchor="middle" font-size="10.5" fill="#475569">append-only journal</text>
+
+    <rect x="1010" y="336" width="240" height="80" rx="7" fill="#fff7ed" stroke="#c2410c" stroke-width="1.8"/>
+    <text x="1130" y="358" text-anchor="middle" font-size="14" font-weight="bold" fill="#9a3412">forum_activities</text>
+    <text x="1130" y="378" text-anchor="middle" font-size="10.5" fill="#475569">user_id · tutorial_id · type</text>
+    <text x="1130" y="393" text-anchor="middle" font-size="10.5" fill="#475569">posted_at · deleted · xp_awarded</text>
+
+    <rect x="1010" y="456" width="240" height="66" rx="7" fill="#fff7ed" stroke="#c2410c" stroke-width="1.8"/>
+    <text x="1130" y="478" text-anchor="middle" font-size="14" font-weight="bold" fill="#9a3412">tutorial_feedback</text>
+    <text x="1130" y="498" text-anchor="middle" font-size="10.5" fill="#475569">user_id · tutorial_id · reason</text>
+
+    <rect x="1010" y="562" width="240" height="66" rx="7" fill="#f8fafc" stroke="#475569" stroke-width="1.8"/>
+    <text x="1130" y="584" text-anchor="middle" font-size="14" font-weight="bold" fill="#334155">activity</text>
+    <text x="1130" y="604" text-anchor="middle" font-size="10.5" fill="#475569">user_id · type · data JSONB (IP, reason)</text>
+
+    <rect x="1010" y="668" width="240" height="66" rx="7" fill="#f8fafc" stroke="#475569" stroke-width="1.8"/>
+    <text x="1130" y="690" text-anchor="middle" font-size="14" font-weight="bold" fill="#334155">impersonation_logs</text>
+    <text x="1130" y="710" text-anchor="middle" font-size="10.5" fill="#475569">admin_id · target_id · start/end</text>
+
+    <rect x="750" y="90" width="190" height="58" rx="7" fill="#ffffff" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5 3"/>
+    <text x="845" y="112" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#334155">college_courses</text>
+    <text x="845" y="130" text-anchor="middle" font-size="10" fill="#64748b">college_id · course_id</text>
+  </g>
+
+  <!-- Social cluster -->
+  <rect x="45" y="680" width="640" height="200" rx="9" fill="#fdf2f8" stroke="#be185d" stroke-width="1.8" stroke-dasharray="7 4"/>
+  <text x="365" y="706" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#9d174d">Social-feed schema (implemented, currently disabled in UI)</text>
+  <g font-size="11.5" fill="#334155">
+    <rect x="70" y="726" width="130" height="40" rx="5" fill="#ffffff" stroke="#be185d"/><text x="135" y="750" text-anchor="middle">posts</text>
+    <rect x="215" y="726" width="130" height="40" rx="5" fill="#ffffff" stroke="#be185d"/><text x="280" y="750" text-anchor="middle">post_likes</text>
+    <rect x="360" y="726" width="140" height="40" rx="5" fill="#ffffff" stroke="#be185d"/><text x="430" y="750" text-anchor="middle">post_comments</text>
+    <rect x="515" y="726" width="130" height="40" rx="5" fill="#ffffff" stroke="#be185d"/><text x="580" y="750" text-anchor="middle">post_shares</text>
+    <rect x="70" y="786" width="130" height="40" rx="5" fill="#ffffff" stroke="#be185d"/><text x="135" y="810" text-anchor="middle">follows</text>
+    <rect x="215" y="786" width="130" height="40" rx="5" fill="#ffffff" stroke="#be185d"/><text x="280" y="810" text-anchor="middle">hashtags</text>
+    <rect x="360" y="786" width="140" height="40" rx="5" fill="#ffffff" stroke="#be185d"/><text x="430" y="810" text-anchor="middle">post_hashtags</text>
+    <rect x="515" y="786" width="130" height="40" rx="5" fill="#ffffff" stroke="#be185d"/><text x="580" y="810" text-anchor="middle">post_tags · tags</text>
+    <text x="365" y="856" text-anchor="middle" font-size="10.5" fill="#9d174d">all reference users(id); polymorphic interactions for likes/shares</text>
+  </g>
+
+  <!-- Arrows -->
+  <!-- programme_courses -->
+  <line x1="330" y1="170" x2="250" y2="130" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+  <line x1="330" y1="195" x2="250" y2="255" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+  <!-- college_courses -->
+  <line x1="940" y1="112" x2="1010" y2="118" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+  <path d="M 750 125 C 560 140 320 190 253 258" stroke="#475569" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+  <!-- batches -> courses ; tutorials -> courses -->
+  <line x1="147" y1="380" x2="147" y2="302" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+  <path d="M 100 520 C 70 440 70 380 105 305" stroke="#475569" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+  <!-- user_courses -> users / courses / batches -->
+  <line x1="520" y1="330" x2="590" y2="340" stroke="#283593" stroke-width="1.8" marker-end="url(#a)"/>
+  <line x1="330" y1="315" x2="252" y2="280" stroke="#283593" stroke-width="1.8" marker-end="url(#a)"/>
+  <line x1="330" y1="345" x2="252" y2="400" stroke="#283593" stroke-width="1.8" marker-end="url(#a)"/>
+  <!-- user_tutorials -> users / tutorials -->
+  <line x1="520" y1="500" x2="620" y2="422" stroke="#283593" stroke-width="1.8" marker-end="url(#a)"/>
+  <line x1="330" y1="520" x2="252" y2="548" stroke="#283593" stroke-width="1.8" marker-end="url(#a)"/>
+  <!-- users -> colleges -->
+  <path d="M 820 330 C 900 240 950 170 1005 135" stroke="#a16207" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+  <!-- right column -> users -->
+  <line x1="1010" y1="260" x2="822" y2="345" stroke="#c2410c" stroke-width="1.6" marker-end="url(#a)"/>
+  <line x1="1010" y1="370" x2="822" y2="372" stroke="#c2410c" stroke-width="1.6" marker-end="url(#a)"/>
+  <path d="M 1010 480 C 920 470 860 430 822 400" stroke="#c2410c" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+  <path d="M 1010 590 C 900 560 850 470 810 422" stroke="#475569" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+  <path d="M 1010 695 C 880 660 800 500 780 424" stroke="#475569" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+  <!-- forum_activities -> tutorials (long) -->
+  <path d="M 1010 405 C 800 620 480 640 255 580" stroke="#c2410c" stroke-width="1.4" stroke-dasharray="5 3" fill="none" marker-end="url(#a)"/>
+  <!-- social -> users -->
+  <path d="M 685 720 C 720 620 700 500 703 424" stroke="#be185d" stroke-width="1.6" stroke-dasharray="6 3" fill="none" marker-end="url(#a)"/>
+</svg>

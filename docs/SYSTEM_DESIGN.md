@@ -26,74 +26,92 @@
 
 ---
 
-## 1. Current Architecture Audit
+## 1. Current Architecture Audit *(updated August 2026)*
+
+> This section originally audited the February 2026 prototype — synchronous SQLAlchemy,
+> an in-process APScheduler, an in-memory SSE manager, and Python-side dashboard
+> aggregation. That system no longer exists: the July–August 2026 overhaul resolved most
+> of what Section 2 identified (each row there now carries a status). Sections 3–17 are
+> the forward-looking scale roadmap and are intentionally left as written.
 
 ### What Exists Today
 
 ```
-┌──────────────┐     ┌───────────────┐     ┌──────────────┐
-│  React SPA   │────▸│  FastAPI       │────▸│  PostgreSQL  │
-│  (Vite/TS)   │     │  (single proc) │     │  (single DB) │
-│              │     │  Uvicorn       │     │              │
-│  Zustand     │     │  sync routes   │     │  ~15 tables  │
-│  TanStack Q  │     │  SSE manager   │     │              │
-└──────────────┘     │  APScheduler   │     └──────────────┘
-                     └───────────────┘
+┌──────────────┐      ┌────────────────────┐      ┌────────────────┐
+|  React SPA   |─────▸|  FastAPI (async)   |─────▸|  PostgreSQL 16 |
+|  Vite / TS   |      |  asyncpg + pooling |      |  27 tables     |
+|  Zustand +   |      |  36 endpoints      |      |  30 indexes    |
+|  TanStack Q  |      |  10 routers        |      |  19 migrations |
+└──────────────┘      └─────────┬──────────┘      └───────▲────────┘
+                                |  Redis 7                |
+                      ┌─────────▼──────────┐              |
+                      |  arq worker        |──────────────┘
+                      |  - forum XP sweep  |
+                      |    (15 min, 24 h   |
+                      |    verify window)  |
+                      |  - nightly XP      |
+                      |    invariants      |
+                      └────────────────────┘
+
+  Observability: Prometheus + node-exporter + cAdvisor (cardinality-tuned),
+  Loki + Grafana Alloy (log shipping), 12-tool read-only MCP server.
+  All services run from one docker-compose.yml on a single cloud VM.
 ```
 
-| Component | Current State | Scale Concern |
-|-----------|--------------|---------------|
-| **Database** | Single PostgreSQL, sync `create_engine()` | No connection pooling, no read replicas, single point of failure |
-| **ORM** | Synchronous SQLAlchemy sessions | Blocks the event loop; no async I/O |
-| **API Server** | Single Uvicorn process, `--reload` | No worker processes, no load balancing |
-| **SSE Manager** | In-memory `SSEManager` singleton | State lost on restart; can't scale horizontally |
-| **Scheduler** | In-process `APScheduler` | Runs inside API process; duplicate jobs if multiple workers |
-| **Feed** | `joinedload()` on 5 relations, `LIMIT 50` | No pagination cursor; N+1 risk as data grows; no caching |
-| **Coordinator** | Loads ALL students into Python, then filters/sorts | O(N) memory; breaks at 10K+ students per college |
-| **Admin** | Loads ALL feedback into Python dicts | O(N) memory; aggregation should be in SQL |
-| **Leaderboard** | Full table scan `ORDER BY xp_total DESC LIMIT 100` | No caching; recalculated on every request |
-| **Auth** | JWT decode + DB lookup on every request | No token caching; DB hit per request |
-| **CORS** | Hardcoded localhost origins | Must be dynamic for production |
-| **Frontend** | No service worker, no offline, no PWA | No offline capability |
+| Component | Current State (Aug 2026) | Notes |
+|-----------|--------------------------|-------|
+| **Database** | PostgreSQL 16, async engine (`asyncpg`), pool_size 10 / max_overflow 5 / pre-ping | Sync engine retained only for offline scripts |
+| **ORM** | SQLAlchemy 2.0 async sessions via FastAPI dependency | One session per request; no leaks |
+| **API Server** | Async FastAPI behind nginx (Compose) | 36 REST endpoints across 10 routers |
+| **Scheduler** | arq worker in its own container | Forum-XP sweep every 15 min; integrity check nightly 02:00 IST |
+| **Real-time** | None (SSE removed) | Gamification feedback is optimistic-UI + cache invalidation |
+| **Coordinator / Admin** | All aggregation in SQL (`CASE` + grouped subqueries) | Per-college summary: 3 queries regardless of college count; platform summary: 1 aggregate query |
+| **Leaderboard** | `RANK()` over covering descending indexes, straight from PostgreSQL | 0.11 ms/read measured; deliberately uncached — see `docs/leaderboard-cache-coherence.md` |
+| **XP engine** | Single-writer idempotent recompute + append-only `xp_events` journal | Nightly invariants generated from the rules; exposed as Prometheus gauges |
+| **Caching** | Redis cache-aside, 120–300 s TTLs on analytics endpoints | Fail-open: a Redis outage degrades to direct reads |
+| **Auth** | External Spoken Tutorial credential verification; JWT HS256 (24 h) with real + effective identity for impersonation | No local password storage; impersonation audit-logged |
+| **Frontend** | React 19 + TS strict; Zustand + TanStack Query; 5 lazy route chunks | Optimistic XP updates wired to query-cache invalidation |
+| **Observability** | Prometheus / Loki / Alloy / exporters + MCP server | `/metrics` excluded from its own instrumentation; exporter cardinality deliberately reduced |
 
 ### Current Data Model Strengths ✅
 - UUIDs as primary keys (horizontally scalable)
-- Proper indexes on `xp_total`, `created_at`, `user_id`
-- Foreign key constraints with `ON DELETE CASCADE`
-- JSONB for flexible fields (feedback `reasons`)
+- 30 declared indexes, including covering indexes (`INCLUDE` columns) for course-XP sums and composite descending indexes for college leaderboards
+- `is_test_account` NOT NULL by migration — a schema constraint, after NULL three-valued logic silently hid students from filters
+- Append-only `xp_events` journal with source attribution — windowed leaderboards and audits derive from it
+- JSONB for flexible fields (feedback reasons, login telemetry)
 
 ---
 
-## 2. Identified Bottlenecks
+## 2. Identified Bottlenecks *(status as of August 2026)*
 
 ### 🔴 Critical (Breaks at ~1K users)
 
-| # | Bottleneck | Location | Impact |
-|---|-----------|----------|--------|
-| 1 | **Sync DB driver** | `database.py` — `create_engine()` with sync `sessionmaker` | Blocks Uvicorn's async event loop. Under 100 concurrent requests, response times spike to 2-5s |
-| 2 | **In-memory SSE** | `sse.py` — `SSEManager` stores clients in a Python list | Cannot scale to multiple workers/pods. All clients disconnected on deploy |
-| 3 | **Feed: no cursor pagination** | `routes/feed.py` — `LIMIT 50` with no `offset`/`cursor` | Cannot load older posts; duplicate posts if new posts are created between pages |
-| 4 | **Coordinator: Python-side filtering** | `routes/coordinator.py:210` — `all_rows = q.all()` then Python filter/sort | Loads ALL students into RAM. At 5K students/college → ~50MB per request |
-| 5 | **Admin: Python dict aggregation** | `routes/admin.py:219` — loops through `all_feedback` in Python | Should be `GROUP BY` in SQL. At 100K feedback entries → timeout |
+| # | Bottleneck | Status (Aug 2026) |
+|---|-----------|-------------------|
+| 1 | **Sync DB driver** blocking the event loop | ✅ **Resolved** — async engine over asyncpg; pool tuned (10 + 5 overflow, pre-ping) |
+| 2 | **In-memory SSE** | ✅ **Resolved by removal** — SSE deleted; no real-time channel is currently needed |
+| 3 | **Feed: no cursor pagination** | ⬜ Open — the feed itself is disabled in the UI; revisit before launch |
+| 4 | **Coordinator: Python-side filtering** | ✅ **Resolved** — single two-level SQL aggregate for all colleges (was 2 + 3N queries) |
+| 5 | **Admin: Python dict aggregation** | ✅ **Resolved** — platform summary is one aggregate SQL query (PR #25) |
 
 ### 🟡 High (Breaks at ~10K users)
 
-| # | Bottleneck | Location | Impact |
-|---|-----------|----------|--------|
-| 6 | **No connection pool** | `database.py` — default pool settings | PostgreSQL max_connections (~100) exhausted under load |
-| 7 | **N+1 in `to_api_dict()`** | `models/user.py:44-70` — runs 4 COUNT queries per user | Leaderboard with 100 users = 400 extra queries |
-| 8 | **No caching** | Everywhere | Leaderboard, college summaries, tutorial counts recomputed on every request |
-| 9 | **Single scheduler** | `scheduler.py` — APScheduler in API process | Multiple workers = multiple scheduler instances = duplicate cron jobs |
-| 10 | **Hardcoded `course_id == "linux"`** | `coordinator.py`, `admin.py` | Cannot support multi-course deployments |
+| # | Bottleneck | Status (Aug 2026) |
+|---|-----------|-------------------|
+| 6 | **No connection pool** | ✅ **Resolved** — explicit pool configuration |
+| 7 | **N+1 in `to_api_dict()`** | ✅ **Resolved** — 5 scalar subqueries in a single SELECT |
+| 8 | **No caching** | ✅ **Resolved where warranted** — Redis TTL cache-aside on analytics; the leaderboard is *deliberately* uncached after measurement (0.11 ms) and a cache-coherence post-mortem |
+| 9 | **Single in-process scheduler** | ✅ **Resolved** — APScheduler replaced by an arq worker in its own container |
+| 10 | **Hardcoded `course_id == "linux"`** | ✅ **Resolved** — programmes → courses → batches hierarchy (May–June 2026 refactor) |
 
 ### 🟢 Medium (Breaks at ~100K users)
 
-| # | Bottleneck | Location | Impact |
-|---|-----------|----------|--------|
-| 11 | **No read replicas** | Single PostgreSQL | All reads compete with writes |
-| 12 | **No CDN** | Static assets served by Vite/Nginx | Slow for users far from the server |
-| 13 | **No rate limiting** | No middleware | Vulnerable to abuse; XP manipulation |
-| 14 | **No background workers** | All processing is inline | Heavy operations (reports, notifications) block API responses |
+| # | Bottleneck | Status (Aug 2026) |
+|---|-----------|-------------------|
+| 11 | **No read replicas** | ⬜ Open — not needed at current load; constant-query-count design defers this |
+| 12 | **No CDN** | ⬜ Open — static bundle served by nginx |
+| 13 | **No rate limiting** | ⬜ Open — highest-priority remaining item |
+| 14 | **No background workers** | ✅ **Resolved** — arq worker (forum XP, nightly integrity) |
 
 ---
 
