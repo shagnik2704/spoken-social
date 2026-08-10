@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="830" viewBox="0 0 1440 830" font-family="Helvetica, Arial, sans-serif">
+<defs>
+  <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#3949ab"/><stop offset="1" stop-color="#0f766e"/>
+  </linearGradient>
+  <marker id="m" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+    <path d="M 0 1 L 9 5 L 0 9 z" fill="#8b99b5"/>
+  </marker>
+  <filter id="sh" x="-8%" y="-8%" width="116%" height="120%">
+    <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.14"/>
+  </filter>
+</defs>
+<style>
+  .bg{fill:#0b1120}.card{fill:#111a2e;stroke:#253352;stroke-width:1.5}
+  .cardA{fill:#161e42;stroke:#8c9eff;stroke-width:2}
+  .cardB{fill:#0c2a28;stroke:#2dd4bf;stroke-width:2}
+  .cardC{fill:#2a2008;stroke:#fbbf24;stroke-width:2}
+  .cardD{fill:#2d1414;stroke:#f87171;stroke-width:2}
+  .cardE{fill:#221641;stroke:#a78bfa;stroke-width:2;stroke-dasharray:6 3}
+  .cardG{fill:#0f2a18;stroke:#4ade80;stroke-width:2}
+  .inner{fill:#0b1120;stroke:#3b4a7a;stroke-width:1.2}
+  .band{fill:#0e1526;stroke:#2b3a5c;stroke-width:1.5}
+  .t1{fill:#e6ecf7;font-weight:700}.t2{fill:#c3cee3;font-weight:600}
+  .lbl{fill:#a8b6d0}.mut{fill:#7c8aa5}
+  .tA{fill:#8c9eff;font-weight:700}.tB{fill:#2dd4bf;font-weight:700}
+  .tC{fill:#fbbf24;font-weight:700}.tD{fill:#f87171;font-weight:700}
+  .tE{fill:#a78bfa;font-weight:700}.tG{fill:#4ade80;font-weight:700}
+  .arr{stroke:#8b99b5;stroke-width:2;fill:none}
+  .arrA{stroke:#8c9eff;stroke-width:2.2;fill:none}
+  .arrB{stroke:#2dd4bf;stroke-width:2;fill:none}
+  .arrD{stroke:#f87171;stroke-width:2;fill:none}
+  .arrE{stroke:#a78bfa;stroke-width:2;stroke-dasharray:6 3;fill:none}
+  .arrG{stroke:#4ade80;stroke-width:2;fill:none}
+  .pill{fill:#111a2e;stroke:#3b4a7a;stroke-width:1}
+  .pilltext{fill:#a8b6d0;font-weight:600}
+  .accent{fill:url(#brand)}
+  .num{fill:#0b1120;font-weight:700}
+  .numbg{fill:#8c9eff}
+  .gold{fill:#fbbf24;font-weight:700}
+</style>
+<rect class="bg" width="1440" height="830"/>
+
+<rect class="accent" x="40" y="34" width="56" height="8" rx="4"/>
+<text x="40" y="74" font-size="26" class="t1">The XP Integrity Triangle</text>
+<text x="40" y="98" font-size="13.5" class="mut">one writer · one journal · one checker generated from the same rules</text>
+<!-- Step 1: student write -->
+<circle class="numbg" cx="84" cy="176" r="15"/><text x="84" y="181" font-size="13" text-anchor="middle" class="num">1</text>
+<text x="112" y="181" font-size="15" class="t2">A student answers a tutorial step — the UI updates instantly, then the backend recomputes</text>
+
+<g filter="url(#sh)"><rect class="cardA" x="60" y="210" width="320" height="104" rx="14"/></g>
+<text x="220" y="240" font-size="14.5" text-anchor="middle" class="tA">PUT /tutorials/&#123;id&#125;</text>
+<text x="220" y="262" font-size="12" text-anchor="middle" class="lbl">watched · practiced · assignment · minitask</text>
+<text x="220" y="284" font-size="11.5" text-anchor="middle" class="mut">optimistic UI mirrors the same XP map</text>
+
+<g filter="url(#sh)"><rect class="cardA" x="480" y="196" width="400" height="132" rx="14"/></g>
+<text x="680" y="226" font-size="15" text-anchor="middle" class="tA">recompute_tutorial_xp(row)</text>
+<text x="680" y="250" font-size="12.5" text-anchor="middle" class="lbl">xp_earned = Σ XP_MAP over TRUE flags — never incremented</text>
+<text x="680" y="270" font-size="12.5" text-anchor="middle" class="lbl">returns a delta · idempotent: same flags → 0</text>
+<text x="680" y="294" font-size="11.5" text-anchor="middle" class="mut">the ONLY code path that writes XP — every writer calls it</text>
+
+<g filter="url(#sh)"><rect class="cardC" x="1010" y="196" width="380" height="132" rx="14"/></g>
+<text x="1200" y="226" font-size="15" text-anchor="middle" class="tC">xp_events (append-only)</text>
+<text x="1200" y="250" font-size="12.5" text-anchor="middle" class="lbl">user · Δxp · source_type · course · timestamp</text>
+<text x="1200" y="270" font-size="12.5" text-anchor="middle" class="lbl">feeds weekly/monthly boards + history charts</text>
+<text x="1200" y="294" font-size="11.5" text-anchor="middle" class="mut">reconciliation events excluded from windows</text>
+
+<path class="arrA" d="M 380 262 L 476 262" marker-end="url(#m)"/>
+<path class="arrA" d="M 880 262 L 1006 262" marker-end="url(#m)"/>
+<rect class="pill" x="896" y="240" width="96" height="22" rx="11"/><text x="944" y="255" font-size="10.5" text-anchor="middle" class="pilltext">journal entry</text>
+
+<!-- Step 2: forum path -->
+<circle class="numbg" cx="84" cy="392" r="15"/><text x="84" y="397" font-size="13" text-anchor="middle" class="num">2</text>
+<text x="112" y="397" font-size="15" class="t2">Forum XP is promised immediately but paid only after surviving 24 hours — farming earns nothing</text>
+
+<g filter="url(#sh)"><rect class="cardE" x="60" y="426" width="320" height="104" rx="14"/></g>
+<text x="220" y="456" font-size="14.5" text-anchor="middle" class="tE">Forum webhook</text>
+<text x="220" y="478" font-size="12" text-anchor="middle" class="lbl">question / answer posted (or deleted)</text>
+<text x="220" y="500" font-size="11.5" text-anchor="middle" class="mut">shared-secret verified · idempotent per post ID</text>
+
+<g filter="url(#sh)"><rect class="card" x="480" y="426" width="400" height="104" rx="14"/></g>
+<text x="680" y="456" font-size="14.5" text-anchor="middle" class="t2">Dashboard radio flips — XP does NOT move</text>
+<text x="680" y="478" font-size="12" text-anchor="middle" class="lbl">activity recorded with posted_at · deleted · xp_awarded</text>
+<text x="680" y="500" font-size="11.5" text-anchor="middle" class="mut">flag and xp_earned legitimately disagree during the window</text>
+
+<g filter="url(#sh)"><rect class="cardG" x="1010" y="426" width="380" height="104" rx="14"/></g>
+<text x="1200" y="456" font-size="14.5" text-anchor="middle" class="tG">arq sweep — every 15 min</text>
+<text x="1200" y="478" font-size="12" text-anchor="middle" class="lbl">pays posts ≥ 24 h old, never deleted</text>
+<text x="1200" y="500" font-size="11.5" text-anchor="middle" class="mut">needs the ABSENCE of a delete → fails safe</text>
+
+<path class="arrE" d="M 380 478 L 476 478" marker-end="url(#m)"/>
+<path class="arrG" d="M 880 478 L 1006 478" marker-end="url(#m)"/>
+<path class="arrG" d="M 1200 426 C 1200 380 1000 340 884 300" marker-end="url(#m)"/>
+<rect class="pill" x="1046" y="360" width="150" height="22" rx="11"/><text x="1121" y="375" font-size="10.5" text-anchor="middle" class="pilltext">same recompute function</text>
+
+<!-- Step 3: invariants -->
+<circle class="numbg" cx="84" cy="608" r="15"/><text x="84" y="613" font-size="13" text-anchor="middle" class="num">3</text>
+<text x="112" y="613" font-size="15" class="t2">Every night, seven invariants generated from the SAME rules verify the books — a healthy system reports all zeros</text>
+
+<g filter="url(#sh)"><rect class="cardG" x="60" y="642" width="560 " height="150" rx="14"/></g>
+<text x="340" y="672" font-size="14.5" text-anchor="middle" class="tG">Nightly integrity check — 02:00 IST</text>
+<text x="340" y="696" font-size="12" text-anchor="middle" class="lbl">rows match flags · totals match row sums · signed drift · levels</text>
+<text x="340" y="714" font-size="12" text-anchor="middle" class="lbl">impossible totals · impossible rows · NULL test flags</text>
+<text x="340" y="738" font-size="11.5" text-anchor="middle" class="mut">SQL built from XP_MAP + level thresholds — rule changes can never</text>
+<text x="340" y="754" font-size="11.5" text-anchor="middle" class="mut">leave the checker asserting stale rules · pending forum XP exempted only inside its window</text>
+
+<g filter="url(#sh)"><rect class="cardC" x="700" y="642" width="330" height="150" rx="14"/></g>
+<text x="865" y="672" font-size="14.5" text-anchor="middle" class="tC">xp_integrity_* gauges</text>
+<text x="865" y="696" font-size="12" text-anchor="middle" class="lbl">7 counters + healthy + age_seconds</text>
+<text x="865" y="716" font-size="12" text-anchor="middle" class="lbl">worker → Redis → custom Prometheus collector</text>
+<text x="865" y="740" font-size="11.5" text-anchor="middle" class="mut">a stalled checker is itself visible (age grows)</text>
+
+<g filter="url(#sh)"><rect class="cardD" x="1110" y="642" width="280" height="150" rx="14"/></g>
+<text x="1250" y="672" font-size="14.5" text-anchor="middle" class="tD">On violation</text>
+<text x="1250" y="696" font-size="12" text-anchor="middle" class="lbl">names the 10 worst-affected</text>
+<text x="1250" y="714" font-size="12" text-anchor="middle" class="lbl">students, not just a count</text>
+<text x="1250" y="738" font-size="11.5" text-anchor="middle" class="mut">Aug 2026: caught &amp; repaid ~49k XP,</text>
+<text x="1250" y="754" font-size="11.5" text-anchor="middle" class="mut">then held at zero ever since</text>
+
+<path class="arrG" d="M 620 717 L 696 717" marker-end="url(#m)"/>
+<path class="arrD" d="M 1030 717 L 1106 717" marker-end="url(#m)"/>
+
+</svg>

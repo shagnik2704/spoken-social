@@ -12,3 +12,9 @@ node_modules
 backend/scripts/data/backups/
 
 backups/
+
+# Local review tooling (lavish) and agent skills
+.lavish/
+.claude/
+.agents/
+skills-lock.json

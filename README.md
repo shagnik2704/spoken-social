@@ -33,29 +33,24 @@ The engineering centre of gravity is **correctness at scale**: XP is accounting-
 
 ## Architecture
 
-![System architecture](docs/img/architecture.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">
+  <img alt="System architecture — 11 Docker Compose services" src="docs/img/architecture.svg">
+</picture>
 
 Eleven Compose services: React SPA behind nginx, async FastAPI backend, PostgreSQL 16, Redis 7, an arq worker, and the observability group (Prometheus, node-exporter, cAdvisor, Loki, Grafana Alloy, MCP server). Redis has three duties: fail-open TTL cache for analytics, arq job queue, and the handoff channel carrying integrity results from worker to backend.
 
-![ER overview](docs/img/erd.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/erd-dark.svg">
+  <img alt="Entity-relationship overview of the core schema" src="docs/img/erd.svg">
+</picture>
 
-### The XP write path at a glance
+### The XP integrity triangle
 
-```mermaid
-sequenceDiagram
-    participant S as Student (SPA)
-    participant A as FastAPI
-    participant P as PostgreSQL
-    participant F as ST Forums
-    participant W as arq worker
-    S->>A: PUT tutorial step (UI already updated optimistically)
-    A->>P: recompute_tutorial_xp() → delta, journal xp_event
-    F->>A: webhook: question/answer posted (shared-secret)
-    A->>P: record activity, flip dashboard radio — no XP yet
-    W->>P: sweep every 15 min — pay XP only for posts ≥24h old, undeleted
-    W->>P: nightly 02:00 IST — check 7 invariants (all must be 0)
-    W-->>A: result via Redis → xp_integrity_* Prometheus gauges
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/xp-flow-dark.svg">
+  <img alt="The XP integrity triangle: one writer, one journal, one checker" src="docs/img/xp-flow.svg">
+</picture>
 
 One function writes XP, one journal records it, one checker generated from the same rules verifies it nightly — that triangle is the whole integrity story.
 
