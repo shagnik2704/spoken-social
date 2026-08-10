@@ -15,7 +15,11 @@ This file contains local development commands, project style rules, and specific
 - **Run dev server:** `uvicorn main:app --reload --host 0.0.0.0 --port 8000`
 - **Run migrations:** `alembic upgrade head`
 - **Create new migration:** `alembic revision --autogenerate -m "description"`
-- **Run tests:** `pytest` (within `backend/`)
+- **Run tests:** `PYTHONPATH=. pytest` (within `backend/`; needs a local PostgreSQL — the suite creates a throwaway test database)
+- **Run worker:** `arq worker.WorkerSettings` (within `backend/`; needs Redis)
+
+### Deployment (production)
+- **Deploy:** `docker compose up -d --build` **before** `docker compose exec backend alembic upgrade head` — rebuilding first is load-bearing; migrating inside a stale image silently no-ops.
 
 ---
 

@@ -1,139 +1,170 @@
-# Spoken Social — Gamified Learning & Community Platform
+# Spoken Social — Gamified Learning Platform
 
-Spoken Social is a robust, gamified learning management system (LMS) intertwined with social network mechanics. It provides structured courses (e.g., Linux, C++), real-time experience points (XP) tracking, leaderboards, a social feed, and incredibly detailed administrative dashboards.
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.133-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-PostgreSQL--backed-brightgreen)
 
-The backend is built for performance and scale using **FastAPI** and **PostgreSQL**, leaning heavily on **SQLAlchemy ORM**, **Server-Sent Events (SSE)**, and advanced **SQL aggregations** to compute deep analytics in real-time.
+A gamified learning management platform for [Spoken Tutorial](https://spoken-tutorial.org) cohort programmes. Students track per-tutorial progress and earn XP, levels, and leaderboard positions; college coordinators and programme administrators get live, drill-down analytics for every institution on the platform.
 
----
+In production serving **5,400+ students across 170+ colleges** (two cohorts: a live Faculty Development Programme cohort plus an imported legacy cohort), deployed as Docker Compose on a single cloud VM.
 
-## 🛠 Tech Stack
+The engineering centre of gravity is **correctness at scale**: XP is accounting-like state written concurrently by user actions, external webhooks, and data imports — so the design uses a single-writer XP engine, an append-only event journal, and nightly machine-checked invariants, with all analytics computed in SQL at constant query cost.
 
-### Backend Core
-- **Framework:** FastAPI (Python 3) for high-performance, async REST APIs.
-- **Server:** Uvicorn (ASGI web server).
-- **Database:** PostgreSQL (Relational Data).
-- **ORM:** SQLAlchemy 2.0 (Declarative Base, complex query building).
-- **Migrations:** Alembic.
-- **Real-Time:** Server-Sent Events (SSE) via FastAPI StreamingResponse.
-- **Background Jobs:** APScheduler (AsyncIOScheduler) with CronTriggers.
-- **Authentication:** JWT (JSON Web Tokens) with Python-JOSE & Passlib.
-
-### Frontend
-- **Framework:** React / Vite with TypeScript.
-- **State Management:** Zustand.
-- **Styling:** Tailwind CSS + Radix UI (shadcn/ui).
-- **Charts:** Recharts.
+**Jump to:** [Features](#features) · [Architecture](#architecture) · [Getting Started](#getting-started) · [Testing](#testing) · [Deployment](#deployment) · [Docs Index](#documentation-index)
 
 ---
 
-## 🏗 Backend Architecture & In-Depth Features
+## Features
 
-The Spoken Social backend is segmented into specialized modules (routers) with a focus on strict Role-Based Access Control (RBAC) and performance. Here's a deep dive into every backend feature and how it works under the hood.
-
-### 1. Authentication & Security (`routes/auth.py`, `dependencies.py`)
-The system uses stateless JWT authentication.
-- **How it works:** When a user logs in, the backend verifies their credentials against highly secure hashed passwords in PostgreSQL. It generates an access token encoded with the user's UUID. 
-- **RBAC (Role-Based Access Control):** 
-  - Every API request passes through Dependency Injection (`Depends(get_current_user)`).
-  - Specialized dependencies enforce role limits. `require_coordinator` blocks anyone except `"coordinator"` or `"admin"` from accessing college data. `require_admin` restricts analytics endpoints strictly to the `"admin"` role.
-
-### 2. Gamified Learning System: XP & Leveling (`routes/user.py`)
-The core loop of Spoken Social is watching tutorials, practicing, and asking questions, all of which reward XP to the user.
-- **Tutorial Tracking (`UserTutorial`):** A many-to-many relationship tracking a user's progress through a course. It logs boolean states: `watched`, `practiced`, `assignment_done`, etc.
-- **Dynamic XP Recalculation:** When a tutorial component is completed (e.g., a PUT request marking `practiced=True`), the backend re-calculates the XP earned solely for that tutorial based on an `XP_MAP`. 
-- **Auto-Leveling:** It computes the `xp_gained` differential, updates the user's `xp_total`, and runs an IF/ELSE cascade to determine if the user has reached a new Level boundary (e.g., 500 XP = "Explorer", 12000 XP = "Spoken Legend").
-- **Audit Logging (`XPEvent`):** Every single point of XP awarded is logged as an atomic `XPEvent` row. This allows for historic graphs of XP over time.
-
-### 3. Real-Time Synchronization via SSE (`routes/sse.py`, `sse.py`)
-To make the gamification feel alive, the backend uses Server-Sent Events to push data down to clients instantly, without holding WebSocket connections.
-- **How it works:** When a user's XP changes (via tutorial completion or manual XP grant), the backend triggers `sse_manager.broadcast_sync(...)`.
-- **The SSE Route:** The `/api/events` endpoint returns a `StreamingResponse` powered by an async generator. 
-- **Queueing Engine:** `sse_manager` maintains a thread-safe registry of connected clients. If there are no messages, the generator yields a `: keepalive\n\n` heartbeat every 15 seconds to prevent the browser or proxy (like Nginx) from dropping the idle HTTP connection.
-
-### 4. High-Performance Social Feed (`routes/feed.py`)
-The feed merges traditional LMS with a social network.
-- **The N+1 Problem:** Loading a timeline of posts, along with their authors, their likes, their comments, and hashtags could trigger hundreds of SQL queries (The N+1 Query Problem).
-- **The Solution:** The backend utilizes SQLAlchemy's `joinedload()`. In a single, massive SQL query, the `feed` route fetches the latest 50 posts and eager-loads the `author`, `likes`, `comments`, `shares`, and `post_hashtags`. 
-- **Deduplication:** Because `joinedload` on multiple one-to-many relationships causes SQL Cartesian plane row duplication, the backend gracefully iterates and deduplicates the result set in Python before returning it.
-
-### 5. Advanced SQL Aggregations: Coordinator Dashboard (`routes/coordinator.py`)
-Coordinators need to see the "health" of their college. Calculating this in Python by loading thousands of students into RAM would crash the server.
-- **How it works:** The calculation is pushed entirely down to PostgreSQL.
-- **Conditional Counts:** Using SQLAlchemy's `case()` and `func.count()`, the query dynamically counts how many tutorials a user has completed vs. how many exist in absolute total.
-- **Status Computation:** The database returns individual student metrics (`watched`, `completed`). The backend then clusters them into cohorts:
-  - `completed`: Finished all tutorials.
-  - `active`: Watched > 30% of materials.
-  - `at_risk`: At Risk of Completion (watched a few, but no recent completion).
-  - `inactive`: Registered but 0 progress.
-- **Pagination:** The route handles server-side pagination, searching, and sorting with O(1) memory overhead, regardless of the college's size.
-
-### 6. Admin Analytics & Feedback Drilldowns (`routes/admin.py`)
-Admins receive rich telemetry on *why* students are struggling.
-- **How it works:** When students complete a course, they can leave feedback (via `TutorialFeedback`). The admin route groups this feedback.
-- **Dictionary Aggregation:** It loops through all database feedbacks, utilizing Python dictionaries to compile a frequency map of `reason_counts` and `step_type_counts` (e.g., "Audio Issue", "Too Fast").
-- **Drilldown Views:** It returns sorted arrays of top reasons, and deeply nested JSON structures clustering feedback per tutorial and per student, allowing the frontend admin panel to render pie charts and bar charts instantly.
-
-### 7. Background Task Scheduler (`scheduler.py`)
-Some computations (like calculating weekly leaderboard deltas) shouldn't happen during a web request.
-- **How it works:** `APScheduler` is configured with a `CronTrigger` running natively inside the async event loop of FastAPI.
-- **Execution:** Every Monday at 00:05 IST, it connects to the DB via `SessionLocal`, and executes a raw SQL Stored Procedure (`SELECT compute_leaderboard_weekly()`). This resets weekly XP variables for all players on the platform simultaneously without locking the main API threads.
+- **Tutorial progress tracking** — per-tutorial state (watched / practiced / assignment / mini-task) with progressive unlocking; answering "No" routes through a feedback modal that feeds admin analytics; archived batches become read-only.
+- **XP & levels** — fixed rule map (watch 10, practice 10, assignment 5, forum ask 5, forum answer 10), six level tiers, every change journaled to an append-only `xp_events` table.
+- **Leaderboards** — three scopes (global / college / course) × three windows (all-time / monthly / weekly), competition-style tie ranking via SQL `RANK()`, IST-correct window boundaries, and the viewer's own rank always returned. Served straight from PostgreSQL — a measured 0.11 ms per read made a cache unnecessary (see `docs/leaderboard-cache-coherence.md` for why the cache that used to exist was removed).
+- **Forum XP with anti-abuse** — forum posts arrive via signed webhooks; XP pays out only after a post survives a 24-hour verification window undeleted, so post-then-delete farms nothing.
+- **Institutional analytics** — coordinator (per-college) and admin (platform-wide) dashboards: status cohorts, comparisons, daily-XP charts, feedback drill-downs, styled Excel exports. All aggregation happens in SQL (the per-college summary is 3 queries regardless of college count).
+- **RBAC + impersonation** — student / coordinator / admin roles enforced per route; admins can impersonate for support through the ordinary token flow, audit-logged start to end.
+- **Nightly integrity invariants** — seven SQL invariants generated from the XP rules themselves, run nightly by the worker and exposed as Prometheus gauges; violations name the worst-affected students.
+- **AI-queryable observability** — a 12-tool read-only [MCP](https://modelcontextprotocol.io) server over PostgreSQL, Prometheus, and Loki, with structured audit logging (arguments, never results).
+- A social feed (posts, likes, comments, follows) is implemented but currently disabled in the UI.
 
 ---
 
-## 🗄️ Database Models (`models/`)
+## Architecture
 
-The PostgreSQL schema is fully typed and connected via Foreign Keys.
-- **`User`**: Tracks `xp_total`, `level`, roles (`student`, `coordinator`, `admin`).
-- **`College`**: Binds users together. Links to a Coordinator.
-- **`Tutorial` / `Course`**: Static catalog of the LMS content.
-- **`UserTutorial`**: State machine mapping a User to a Tutorial.
-- **`Post` / `Comment` / `Interaction`**: Social graph data. Polymorphic interactions handle likes and shares.
-- **`Follow`**: Self-referential Many-to-Many mapping for the user follow system.
-- **`XPEvent`**: Time-series log of all points gained.
+![System architecture](docs/img/architecture.svg)
 
----
+Eleven Compose services: React SPA behind nginx, async FastAPI backend, PostgreSQL 16, Redis 7, an arq worker, and the observability group (Prometheus, node-exporter, cAdvisor, Loki, Grafana Alloy, MCP server). Redis has three duties: fail-open TTL cache for analytics, arq job queue, and the handoff channel carrying integrity results from worker to backend.
 
-## 🚀 Running the Project Locally
+![ER overview](docs/img/erd.svg)
 
-### Prerequisites
-- Python 3.10+
-- Node.js v18+
-- PostgreSQL server
+### The XP write path at a glance
 
-### 1. Database Setup
-Ensure PostgreSQL is running. Create a database named `spoken_social`.
-Provide your connection string in backend `.env`:
-```env
-DATABASE_URL=postgresql://user:password@localhost/spoken_social
-JWT_SECRET=your_super_secret_key
+```mermaid
+sequenceDiagram
+    participant S as Student (SPA)
+    participant A as FastAPI
+    participant P as PostgreSQL
+    participant F as ST Forums
+    participant W as arq worker
+    S->>A: PUT tutorial step (UI already updated optimistically)
+    A->>P: recompute_tutorial_xp() → delta, journal xp_event
+    F->>A: webhook: question/answer posted (shared-secret)
+    A->>P: record activity, flip dashboard radio — no XP yet
+    W->>P: sweep every 15 min — pay XP only for posts ≥24h old, undeleted
+    W->>P: nightly 02:00 IST — check 7 invariants (all must be 0)
+    W-->>A: result via Redis → xp_integrity_* Prometheus gauges
 ```
 
-### 2. Start Backend
+One function writes XP, one journal records it, one checker generated from the same rules verifies it nightly — that triangle is the whole integrity story.
+
+| Layer | Technology |
+|---|---|
+| Backend | FastAPI 0.133 (async end-to-end), SQLAlchemy 2.0 over asyncpg, Alembic (19 migrations) |
+| Background jobs | arq — forum-XP verification sweep every 15 min; nightly integrity check at 02:00 IST |
+| Database | PostgreSQL 16 — 27 tables, 30 indexes (incl. covering indexes for course-XP sums) |
+| Cache / queue | Redis 7 (cache-aside with 120–300 s TTLs; fail-open on outage) |
+| Frontend | React 19 + TypeScript (strict), Vite 7, Zustand + TanStack Query, Tailwind CSS 4, Recharts |
+| Auth | Spoken Tutorial credential API verification (no local passwords), JWT HS256, 24 h expiry |
+| Observability | Prometheus, Loki, Grafana Alloy, node-exporter, cAdvisor (cardinality-tuned), custom MCP server |
+
+### Design decisions worth knowing
+
+1. **Single-writer XP.** `UserTutorial.xp_earned` is always recomputed from the row's flags — never incremented. Every writer calls `services/xp.py::recompute_tutorial_xp`, which is idempotent and returns a delta. Double-counting is structurally impossible; repeated webhook deliveries are harmless.
+2. **Fat database, thin application.** Dashboards aggregate with SQL `CASE`/`GROUP BY` inside grouped subqueries — the platform summary is one aggregate query; loading cohorts into Python is a bug, not a pattern.
+3. **Measure before caching.** The leaderboard has no cache on purpose: a top-100 over a covering descending index costs the same at 100,000 students as at 5,000, and the Redis mirror it replaced caused every leaderboard bug found in the August 2026 audit.
+4. **Invariants generated from rules.** The nightly checker builds its SQL from `XP_MAP` and the level thresholds, so changing the earning rules can never leave the checker asserting stale ones.
+5. **Fail-safe by absence.** Forum XP requires the *absence* of a delete event rather than the successful delivery of one; a stalled worker fires an invariant instead of staying invisible.
+
+---
+
+## Getting Started
+
+Prerequisites: Python 3.10+, Node 18+, PostgreSQL 16, Redis 7 (Redis optional locally — the cache is fail-open and the worker is only needed for forum XP / nightly checks).
+
 ```bash
+# Backend — backend/.env needs DATABASE_URL and JWT_SECRET
 cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# Run migrations (creates tables)
 alembic upgrade head
+uvicorn main:app --reload --host 0.0.0.0 --port 8000   # docs at :8000/docs
 
-# Run server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-*API documentation automatically generates at: `http://localhost:8000/docs`*
+# Worker (optional locally)
+arq worker.WorkerSettings
 
-### 3. Start Frontend
-```bash
-cd frontend
+# Frontend
+cd ../frontend
 npm install
-npm run dev
+npm run dev                                             # :5173
 ```
-*App is available at: `http://localhost:5173`*
+
+Key environment variables: `DATABASE_URL`, `JWT_SECRET`, `REDIS_URL`, `APP_TIMEZONE` (default `Asia/Kolkata` — governs every daily/weekly chart bucket), `DEV_BYPASS_ENABLED` (local-only login bypass; **must be unset in production**), `VITE_API_URL` (frontend build). The Compose stack reads `POSTGRES_*` and `MCP_DATABASE_URL` from a `.env` beside `docker-compose.yml`.
+
+## Testing
+
+```bash
+cd backend && PYTHONPATH=. pytest
+```
+
+110 test functions (128 collected) run against a **real disposable PostgreSQL database** — not SQLite, not mocks — because the leaderboard depends on window functions and three-valued NULL semantics that mocks would not exercise. The conftest creates a throwaway DB per session and truncates between tests; legacy ad-hoc scripts are quarantined via `collect_ignore`.
+
+## Deployment
+
+Production is Docker Compose on a cloud VM; one `docker-compose.yml` is tracked in git and used in every environment, with per-host differences confined to `.env`.
+
+```bash
+git pull
+docker compose up -d --build       # ALWAYS rebuild BEFORE migrating — running
+                                   # alembic in a stale image silently no-ops
+docker compose exec backend alembic upgrade head
+```
+
+Database backups via `backup_db.sh`. Rollback: check out the previous commit and rebuild. Destructive seed/reset scripts refuse to run against a non-local `DATABASE_URL` unless explicitly overridden (`backend/scripts/_guard.py`).
 
 ---
 
-## 🧠 Design Philosophy & Best Practices
-1. **Fat Database, Thin Application:** Heavy analytics and leaderboard rankings are pushed to PostgreSQL using raw SQL procedures and SQLAlchemy `func` methods to drastically lower API memory usage.
-2. **Context Managers for Safety:** `Yields` in FastAPI dependencies guarantee that database connections are always closed and returned to the pool, preventing connection leaks.
-3. **Event-Driven UI:** Using SSE instead of Websockets handles one-way data flow (Server-to-Client) much more efficiently with lower overhead, perfect for Gamification pop-ups.
+## Repository Layout
+
+```
+spoken-social/
+|-- backend/
+|   |-- routes/            # 10 routers, 36 REST endpoints
+|   |-- services/          # xp, leaderboard, forum, integrity, ...
+|   |-- models/            # 27 SQLAlchemy models, 30 indexes
+|   |-- alembic/versions/  # 19 migrations incl. legacy-cohort backfills
+|   |-- tests/             # pytest vs a real throwaway PostgreSQL
+|   |-- scripts/           # seed / reconcile / guard scripts
+|   |-- worker.py          # arq cron jobs
+|   `-- integrity_metrics.py  # custom Prometheus collector
+|-- frontend/src/          # React 19 + TS strict; stores, query hooks, components
+|-- mcp-observability/     # 12-tool read-only MCP server
+|-- observability/         # Prometheus, Loki, Alloy configuration
+|-- docs/                  # design docs and post-mortems (index below)
+`-- docker-compose.yml     # all 11 services, one file
+```
+
+## Documentation Index
+
+| Document | What it is |
+|---|---|
+| [DESIGN.md](DESIGN.md) | Original product-design document (Feb 2026) — vision, personas, page-by-page UX. Partly aspirational; see its status banner. |
+| [docs/SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md) | High-level design: current architecture audit (updated Aug 2026) + the forward-looking scale roadmap. |
+| [docs/leaderboard-cache-coherence.md](docs/leaderboard-cache-coherence.md) | Post-mortem: the four-bug leaderboard family, its single root cause, and the measurements behind removing the cache. |
+| [docs/dashboard-correctness-fixes.md](docs/dashboard-correctness-fixes.md) | Four rounds of dashboard correctness fixes with before/after reasoning, including the XP write-path unification. |
+| [docs/mcp-observability-journey.md](docs/mcp-observability-journey.md) | Build journal of the MCP observability server, including its audit-logging design. |
+| [docs/dashboard-design.md](docs/dashboard-design.md) | Dashboard UX/design notes. |
+| [CLAUDE.md](CLAUDE.md) | Working conventions for coding agents: commands, design tokens, code style. |
+
+## Contributing
+
+This is an internship project developed for the Spoken Tutorial ecosystem. Development conventions (commands, design tokens, code style) live in [CLAUDE.md](CLAUDE.md); design rationale belongs in `docs/`, not inline comments. Feature work goes through pull requests against `master`.
+
+## License
+
+Not yet licensed — a LICENSE file is pending. Until one is added, all rights reserved.
+
+## Acknowledgements
+
+Built during an internship at EduPyramids Educational Services (SINE, IIT Bombay) under the mentorship of Saisudha Sugavanam and Madhulika Goyal, for cohort programmes of the [Spoken Tutorial](https://spoken-tutorial.org) project.

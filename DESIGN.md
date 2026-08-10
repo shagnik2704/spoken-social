@@ -2,6 +2,14 @@
 
 > **"Facebook meets Duolingo meets LinkedIn, purpose-built for Spoken Tutorial"**
 
+> **Status (August 2026):** this is the original product-design document from project
+> inception (February 2026), kept as the vision reference. What shipped: the gamified
+> learner dashboard, XP/levels/leaderboards, coordinator and admin analytics, forum-XP
+> integration, and multi-programme support. Built but currently disabled in the UI: the
+> social feed (posts, likes, comments, follows). Not built: streaks, badges UI,
+> professional-profile features. For the system as it actually runs today, see
+> [README.md](README.md) and [docs/SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md).
+
 A social learning platform for college students that integrates with [Spoken Tutorial](https://spoken-tutorial.org). It combines a **gamified learner dashboard** with a **professional social network** — making open-source software learning engaging, trackable, and community-driven.
 
 ---
