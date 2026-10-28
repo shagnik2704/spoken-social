@@ -985,14 +985,20 @@ export default function CoordinatorDashboard() {
     // Reset to page 1 when the (settled) search term changes.
     useEffect(() => { setPage(1) }, [debouncedSearch])
 
-    const handleViewAsStudent = async (_studentId: string) => {
+    const handleViewAsStudent = async (studentId?: string) => {
         try {
-            await impersonate(MY_COLLEGE_ID, 'student')
+            const success = await impersonate(MY_COLLEGE_ID, 'student', studentId)
+            if (!success) {
+                const error = useAuthStore.getState().error || 'Failed to switch to learner view'
+                toast.error(error)
+                return
+            }
             await useUserStore.getState().fetchUser()
             toast.success('Viewing platform as a learner')
             navigate('/dashboard')
         } catch (e) {
             console.error('Failed to impersonate student', e)
+            toast.error('An unexpected error occurred during impersonation')
         }
     }
 
@@ -1057,16 +1063,7 @@ export default function CoordinatorDashboard() {
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={async () => {
-                            try {
-                                await impersonate(MY_COLLEGE_ID, 'student')
-                                await useUserStore.getState().fetchUser()
-                                toast.success('Viewing platform as a learner')
-                                navigate('/dashboard')
-                            } catch (e) {
-                                console.error('Failed to switch to learner view', e)
-                            }
-                        }}
+                        onClick={() => handleViewAsStudent()}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 border border-border/40 transition-colors rounded-md shadow-sm"
                     >
                         <Eye className="h-3.5 w-3.5" />

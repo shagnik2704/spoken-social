@@ -56,11 +56,19 @@ async def get_current_user_profile(
 
     badges = [ub.to_api_dict() for ub in user_loaded.badges]
 
+    user_dict = await user_loaded.to_api_dict(db=db)
+    user_dict["role"] = user_loaded.effective_role
+    user_dict["effectiveRole"] = user_loaded.effective_role
+    user_dict["isImpersonating"] = user_loaded.is_impersonating
+    if user_loaded.target_college_id:
+        user_dict["collegeId"] = user_loaded.target_college_id
+
     return {
-        "user": await user_loaded.to_api_dict(db=db),
+        "user": user_dict,
         "courses": courses,
         "badges": badges,
     }
+
 
 
 class ProfileUpdate(BaseModel):

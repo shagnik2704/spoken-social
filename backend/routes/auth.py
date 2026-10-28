@@ -31,6 +31,7 @@ class LoginResponse(BaseModel):
 class ImpersonateRequest(BaseModel):
     college_id: str
     target_role: str = "coordinator"  # coordinator | student
+    target_user_id: str | None = None  # optional: specific student id to impersonate
 
 # ----- Endpoints -----
 
@@ -73,13 +74,19 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
             detail=user_info["error"],
         )
 
+    # Determine genuine impersonation context: only if real_user != effective_user or selected role differs
+    is_imp = bool(
+        (user_info.get("real_user_id") and user_info["real_user_id"] != user_info["user_id"])
+        or (body.role and body.role != user_info.get("role"))
+    )
+
     # Create a JWT with the user_id and effective role
     token = create_access_token(
         user_id=user_info.get("real_user_id", user_info["user_id"]),
         effective_user_id=user_info["user_id"],
         effective_role=body.role or user_info["role"],
-        is_impersonating=user_info.get("real_user_id") != user_info["user_id"] or user_info.get("college_id") is not None,
-        target_college_id=user_info.get("college_id")
+        is_impersonating=is_imp,
+        target_college_id=user_info.get("college_id") if is_imp else None
     )
 
     # Log successful login
@@ -95,8 +102,8 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
     await db.commit()
 
     logger.debug(
-        "login user=%s role=%s college_id=%s",
-        user_info["email"], user_info["role"], user_info.get("college_id"),
+        "login user=%s role=%s college_id=%s is_impersonating=%s",
+        user_info["email"], user_info["role"], user_info.get("college_id"), is_imp,
     )
     return {
         "access_token": token,
@@ -109,7 +116,7 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
 
 from dependencies import get_current_user
 from models import User, College
-from services.auth import get_or_create_test_student
+from services.auth import get_or_create_test_student, get_or_create_test_coordinator
 from sqlalchemy import select
 
 @router.post("/impersonate")
@@ -123,13 +130,27 @@ async def impersonate(
     Admins can impersonate Coordinator or Student.
     Coordinators can switch to 'Student View' of their own college.
     """
-    # 1. Permission checks
-    if user.role == "admin":
+    # 1. Determine actual caller's underlying role
+    real_role = user.role
+    real_college_id = user.college_id
+    if user.is_impersonating and user.real_user_id:
+        try:
+            res_real = await db.execute(select(User).filter_by(id=uuid.UUID(str(user.real_user_id))))
+            real_user = res_real.scalars().first()
+            if real_user:
+                real_role = real_user.role
+                real_college_id = real_user.college_id
+        except (ValueError, TypeError):
+            pass
+
+    # Permission checks
+    if real_role == "admin":
         # Admin can impersonate anyone
         pass
-    elif user.role == "coordinator":
-        # Coordinator can only impersonate student of THEIR own college
-        if body.college_id != user.college_id:
+    elif real_role == "coordinator":
+        # Coordinator can only impersonate student of their own college
+        effective_col = real_college_id or user.college_id
+        if body.college_id != effective_col:
             raise HTTPException(status_code=403, detail="Coordinators can only impersonate their own college")
         if body.target_role != "student":
             raise HTTPException(status_code=403, detail="Coordinators can only impersonate student role")
@@ -139,12 +160,21 @@ async def impersonate(
     # 2. Identify target user (test student or coordinator)
     target_user_id = None
     if body.target_role == "student":
-        # Get/create test student for this college
-        test_student = await get_or_create_test_student(db, body.college_id)
-        target_user_id = str(test_student.id)
+        if body.target_user_id:
+            try:
+                stu_uuid = uuid.UUID(body.target_user_id)
+            except (ValueError, TypeError):
+                raise HTTPException(status_code=400, detail="Invalid target user ID")
+            res_target = await db.execute(select(User).filter_by(id=stu_uuid))
+            target_user = res_target.scalars().first()
+            if not target_user:
+                raise HTTPException(status_code=404, detail="Student not found")
+            target_user_id = str(target_user.id)
+        else:
+            test_student = await get_or_create_test_student(db, body.college_id)
+            target_user_id = str(test_student.id)
     else:
         # Coordinator impersonation by Admin
-        # Find the coordinator for this college (who might have role='admin' or role='coordinator' in DB)
         from sqlalchemy import or_
         result = await db.execute(select(User).filter(
             User.college_id == body.college_id,
@@ -152,13 +182,16 @@ async def impersonate(
         ))
         coord = result.scalars().first()
         if not coord:
-            raise HTTPException(status_code=404, detail="No coordinator found for this college")
+            coord = await get_or_create_test_coordinator(db, body.college_id)
         target_user_id = str(coord.id)
 
-    # 3. Create new token with impersonation context
+    # 3. Cast UUIDs cleanly
+    real_uid = uuid.UUID(str(user.real_user_id)) if (user.is_impersonating and user.real_user_id) else user.id
+    target_uid = uuid.UUID(str(target_user_id))
+
     token = create_access_token(
-        user_id=str(user.real_user_id) if user.is_impersonating else str(user.id),
-        effective_user_id=target_user_id,
+        user_id=str(real_uid),
+        effective_user_id=str(target_uid),
         effective_role=body.target_role,
         is_impersonating=True,
         target_college_id=body.college_id
@@ -167,8 +200,8 @@ async def impersonate(
     # 4. Audit Log
     from models.impersonation_log import ImpersonationLog
     db.add(ImpersonationLog(
-        real_user_id=user.real_user_id if user.is_impersonating else user.id,
-        effective_user_id=uuid.UUID(target_user_id),
+        real_user_id=real_uid,
+        effective_user_id=target_uid,
         effective_role=body.target_role,
         target_college_id=body.college_id,
         action="start"
@@ -184,10 +217,12 @@ async def exit_impersonation(user: User = Depends(get_current_user), db: AsyncSe
     if not user.is_impersonating:
         raise HTTPException(status_code=400, detail="Not currently impersonating")
 
+    real_uid = uuid.UUID(str(user.real_user_id)) if user.real_user_id else user.id
+
     # Audit Log
     from models.impersonation_log import ImpersonationLog
     db.add(ImpersonationLog(
-        real_user_id=user.real_user_id,
+        real_user_id=real_uid,
         effective_user_id=user.id,
         effective_role=user.effective_role,
         target_college_id=user.target_college_id,
@@ -195,11 +230,11 @@ async def exit_impersonation(user: User = Depends(get_current_user), db: AsyncSe
     ))
     
     # Get real user to find their real role
-    result = await db.execute(select(User).filter_by(id=user.real_user_id))
+    result = await db.execute(select(User).filter_by(id=real_uid))
     real_user = result.scalars().first()
     
     token = create_access_token(
-        user_id=str(user.real_user_id),
+        user_id=str(real_uid),
         effective_role=real_user.role if real_user else "admin"
     )
     

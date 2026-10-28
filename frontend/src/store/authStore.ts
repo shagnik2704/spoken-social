@@ -11,7 +11,7 @@ interface AuthState {
 
     login: (email: string, password: string, role?: string, collegeId?: string) => Promise<boolean>
     logout: () => void
-    impersonate: (collegeId: string, targetRole: string) => Promise<boolean>
+    impersonate: (collegeId: string, targetRole: string, targetUserId?: string) => Promise<boolean>
     exitImpersonation: () => Promise<boolean>
 }
 
@@ -90,12 +90,16 @@ export const useAuthStore = create<AuthState>((set) => ({
         })
     },
 
-    impersonate: async (collegeId, targetRole) => {
+    impersonate: async (collegeId, targetRole, targetUserId?: string) => {
         try {
-            const { data } = await api.post('/api/auth/impersonate', { 
+            const payload: any = { 
                 college_id: collegeId, 
                 target_role: targetRole 
-            })
+            }
+            if (targetUserId) {
+                payload.target_user_id = targetUserId
+            }
+            const { data } = await api.post('/api/auth/impersonate', payload)
             localStorage.setItem('token', data.access_token)
             localStorage.setItem('isImpersonating', 'true')
             // Don't clear activeProgrammeId/activeCourseId — the subsequent 
@@ -111,10 +115,13 @@ export const useAuthStore = create<AuthState>((set) => ({
             set({
                 token: data.access_token,
                 isImpersonating: true,
+                error: null,
             })
             return true
-        } catch (error) {
+        } catch (error: any) {
             console.error('Impersonation failed:', error)
+            const detail = error?.response?.data?.detail || 'Impersonation failed'
+            set({ error: detail })
             return false
         }
     },

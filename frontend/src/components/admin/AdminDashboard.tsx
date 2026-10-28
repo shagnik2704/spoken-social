@@ -1403,12 +1403,18 @@ export default function AdminDashboard() {
 
     const handleImpersonateCoordinator = async (collegeId: string) => {
         try {
-            await impersonate(collegeId, 'coordinator')
+            const success = await impersonate(collegeId, 'coordinator')
+            if (!success) {
+                const error = useAuthStore.getState().error || 'Failed to switch to coordinator view'
+                toast.error(error)
+                return
+            }
             await useUserStore.getState().fetchUser()
             toast.success('Viewing platform as a coordinator')
             navigate('/coordinator')
         } catch (e) {
             console.error('Failed to impersonate coordinator', e)
+            toast.error('An unexpected error occurred during impersonation')
         }
     }
 

@@ -30,6 +30,8 @@ export function ImpersonationBanner() {
             } else {
                 navigate('/dashboard')
             }
+        } else {
+            toast.error('Failed to exit view. Please try again.')
         }
     }
 

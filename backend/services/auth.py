@@ -320,6 +320,18 @@ async def _sync_enrollments(
                 "course_id": cc.course_id,
                 "batch_id": batch.id if batch else None,
             })
+
+        # If college has no college_courses defined, fall back to active batches
+        if not courses_to_enroll:
+            active_batches_res = await db.execute(
+                select(Batch).filter_by(status="active").order_by(Batch.start_date.desc())
+            )
+            active_batches = active_batches_res.scalars().all()
+            for b in active_batches:
+                courses_to_enroll.append({
+                    "course_id": b.course_id,
+                    "batch_id": b.id,
+                })
     else:
         # No courses and no college — nothing to enroll
         return
@@ -396,9 +408,15 @@ async def get_or_create_test_student(db: AsyncSession, college_id: str) -> User:
     user = result.scalars().first()
     
     if not user:
+        clean_slug = "".join(c for c in college_id if c.isalnum() or c == "_")[:35]
+        username = f"@test_{clean_slug}"
+        u_res = await db.execute(select(User).filter_by(username=username))
+        if u_res.scalars().first():
+            username = f"@test_{clean_slug}_{uuid.uuid4().hex[:6]}"
+
         user = User(
             id=uuid.uuid4(),
-            username=f"@test_{college_id}",
+            username=username,
             display_name=f"Test Student ({college_id})",
             email=test_email,
             role="student",
@@ -416,4 +434,42 @@ async def get_or_create_test_student(db: AsyncSession, college_id: str) -> User:
         await db.refresh(user)
         
     return user
+
+
+async def get_or_create_test_coordinator(db: AsyncSession, college_id: str) -> User:
+    """Get or create a testing placeholder coordinator for this college."""
+    test_email = f"test-coord@{college_id}.spoken.in"
+    result = await db.execute(select(User).filter_by(email=test_email))
+    user = result.scalars().first()
+    
+    if not user:
+        # Fetch college name for display
+        c_res = await db.execute(select(College).filter_by(id=college_id))
+        college = c_res.scalars().first()
+        college_name = college.name if college else college_id
+
+        clean_slug = "".join(c for c in college_id if c.isalnum() or c == "_")[:35]
+        username = f"@coord_{clean_slug}"
+        u_res = await db.execute(select(User).filter_by(username=username))
+        if u_res.scalars().first():
+            username = f"@coord_{clean_slug}_{uuid.uuid4().hex[:6]}"
+
+        user = User(
+            id=uuid.uuid4(),
+            username=username,
+            display_name=f"Coordinator ({college_name})",
+            email=test_email,
+            role="coordinator",
+            college_id=college_id,
+            is_test_account=True,
+            xp_total=0,
+            level=1,
+        )
+        db.add(user)
+        await db.flush()
+        await db.commit()
+        await db.refresh(user)
+        
+    return user
+
 
