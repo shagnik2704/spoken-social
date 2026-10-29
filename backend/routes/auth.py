@@ -112,6 +112,54 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
     }
 
 
+class SSOExchangeRequest(BaseModel):
+    token: str
+
+
+@router.post("/sso-exchange", response_model=LoginResponse)
+async def sso_exchange(body: SSOExchangeRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    """
+    Exchange a short-lived signed JWT from Spoken Tutorial (or SWAYAM Plus handoff)
+    for a Spoken Social session token.
+    """
+    from services.auth import verify_sso_token
+    user_info = await verify_sso_token(body.token, db)
+    if not user_info:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired SSO handoff token",
+        )
+
+    token = create_access_token(
+        user_id=user_info["user_id"],
+        effective_user_id=user_info["user_id"],
+        effective_role=user_info["role"],
+        target_college_id=user_info.get("college_id"),
+    )
+
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+
+    import uuid
+    db.add(Activity(
+        user_id=uuid.UUID(user_info["user_id"]),
+        activity_type="login_sso",
+        activity_data={
+            "ip": client_ip,
+            "user_agent": user_agent,
+            "email": user_info["email"],
+            "provider": user_info.get("provider", "spoken_tutorial"),
+        },
+    ))
+    await db.commit()
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user_info,
+    }
+
+
 # ----- Impersonation Endpoints -----
 
 from dependencies import get_current_user

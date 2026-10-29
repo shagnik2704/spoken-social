@@ -144,6 +144,8 @@ spoken-social/
 
 | Document | What it is |
 |---|---|
+| [docs/SPOKEN_SOCIAL_PRODUCT_BRIEF.md](docs/SPOKEN_SOCIAL_PRODUCT_BRIEF.md) | **Product & Application Brief** (User-directed, non-technical): purpose, personas, core features, hosted learning activities, and future roadmap. Available in [.docx](docs/Spoken_Social_Product_Brief.docx) and [.pdf](docs/Spoken_Social_Product_Brief.pdf). |
+| [docs/SPOKEN_SOCIAL_TECHNICAL_BRIEF.md](docs/SPOKEN_SOCIAL_TECHNICAL_BRIEF.md) | **Technical & Architecture Brief** (Engineering-focused): system architecture, single-writer XP engine, SQL invariants, sub-ms leaderboards, and scale roadmap. Available in [.docx](docs/Spoken_Social_Technical_Brief.docx) and [.pdf](docs/Spoken_Social_Technical_Brief.pdf). |
 | [DESIGN.md](DESIGN.md) | Original product-design document (Feb 2026) — vision, personas, page-by-page UX. Partly aspirational; see its status banner. |
 | [docs/SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md) | High-level design: current architecture audit (updated Aug 2026) + the forward-looking scale roadmap. |
 | [docs/leaderboard-cache-coherence.md](docs/leaderboard-cache-coherence.md) | Post-mortem: the four-bug leaderboard family, its single root cause, and the measurements behind removing the cache. |

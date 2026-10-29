@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useTheme } from '@/hooks/useTheme'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,7 @@ interface CourseBadge {
 }
 
 export const LoginPage: React.FC = (): React.JSX.Element => {
+    const [searchParams] = useSearchParams()
     const [email, setEmail] = useState<string>('')
     const [password, setPassword] = useState<string>('')
     const [showPassword, setShowPassword] = useState<boolean>(false)
@@ -23,6 +24,13 @@ export const LoginPage: React.FC = (): React.JSX.Element => {
     const error = useAuthStore(state => state.error)
     const navigate = useNavigate()
     const { theme, toggleTheme } = useTheme()
+
+    useEffect(() => {
+        const token = searchParams.get('token') || searchParams.get('sso_token')
+        if (token) {
+            navigate(`/sso?${searchParams.toString()}`, { replace: true })
+        }
+    }, [searchParams, navigate])
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault()
@@ -279,7 +287,7 @@ export const LoginPage: React.FC = (): React.JSX.Element => {
 
                 {/* Platform Support Footer */}
                 <div className="text-center mt-8 text-xs text-slate-500 dark:text-slate-400 relative z-10 max-w-sm">
-                    <p className="text-slate-400 dark:text-slate-500">Registered Faculty Development Programme platform.</p>
+                    <p className="text-slate-400 dark:text-slate-500">Official Spoken Tutorial learning and community platform.</p>
                     <p className="mt-1.5 flex items-center justify-center gap-1">
                         <span>Need assistance?</span>
                         <a href="mailto:support@edupyramids.org" className="text-[#F26C25] hover:text-[#d95616] hover:underline font-semibold transition-colors duration-200 ease-in-out">

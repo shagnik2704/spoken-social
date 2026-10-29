@@ -47,6 +47,7 @@ export interface Course {
     batchId?: string | null
     batchName?: string | null
     batchStatus?: string
+    uiLayout?: 'standard_tracker' | 'learner_pack' | string
 }
 
 // ----- Badges -----
@@ -203,3 +204,100 @@ export interface ForumPost {
 }
 
 export type ForumActivityMap = Record<string, ForumPost[]>
+
+// ----- Learner Pack Types -----
+
+export interface QuizOption {
+    id: string
+    text: string
+}
+
+export interface QuizQuestionData {
+    id: string
+    questionNumber: number
+    questionText: string
+    options: QuizOption[]
+    selectedOption?: string
+    correctOption?: string
+    explanation?: string
+    isCorrect?: boolean
+}
+
+export interface TutorialContentData {
+    weekNumber: number
+    readingTitle: string
+    readingMarkdown: string
+    readingTimeMinutes: number
+    tryItInstructions: string
+    reflectionPrompt: string
+    reflectionMinSentences: number
+    keyTerms: { term: string; meaning: string }[]
+    readMore: { title: string; author: string; desc: string }[]
+}
+
+export interface LearnerPackTutorialDetail {
+    tutorialId: string
+    tutorialNumber: number
+    title: string
+    courseId: string
+    content: TutorialContentData | null
+    quiz: {
+        hasAttempted: boolean
+        score: number | null
+        totalQuestions: number
+        passed: boolean
+        submittedAt: string | null
+        questions: QuizQuestionData[]
+    }
+    userReflection: {
+        reflectionText: string
+        wordCount: number
+        submittedAt: string
+    } | null
+    userTutorial: Tutorial
+}
+
+export interface LearnerPackOverviewTutorial {
+    id: string
+    number: number
+    title: string
+    week: number
+    hasContent: boolean
+    readingTitle?: string
+    readingTimeMinutes?: number
+    userProgress: {
+        watched: boolean
+        readingCompleted: boolean
+        reflectionSubmitted: boolean
+        reflectionWordCount: number
+        quizPassed: boolean
+        quizScore: number | null
+        status: string
+        xpEarned: number
+    }
+}
+
+export interface HabitMilestone {
+    week: number
+    logType: 'emotion' | 'belief' | 'empathy' | 'breathing' | 'portfolio'
+    title: string
+    days: number
+}
+
+export interface LearnerPackOverview {
+    courseId: string
+    title: string
+    uiLayout: string
+    totalWeeks: number
+    tutorials: LearnerPackOverviewTutorial[]
+    habitMilestones: HabitMilestone[]
+}
+
+export interface HabitLogCheckinItem {
+    id: string
+    dayNumber: number
+    checkinDate: string
+    summaryReflection: string | null
+    summarySubmittedAt: string | null
+}
+

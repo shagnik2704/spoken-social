@@ -15,7 +15,11 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://shagniksarkar@localhost:5432/spoken_social")
+if DATABASE_URL and "@postgres/" in DATABASE_URL and not os.path.exists("/.dockerenv"):
+    DATABASE_URL = DATABASE_URL.replace("@postgres/", "@localhost:5432/")
+elif DATABASE_URL and "@postgres:" in DATABASE_URL and not os.path.exists("/.dockerenv"):
+    DATABASE_URL = DATABASE_URL.replace("@postgres:", "@localhost:")
 
 # --- Async engine (for the API server) ---
 ASYNC_DATABASE_URL = DATABASE_URL

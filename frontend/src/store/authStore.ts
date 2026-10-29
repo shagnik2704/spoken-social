@@ -10,6 +10,7 @@ interface AuthState {
     error: string | null
 
     login: (email: string, password: string, role?: string, collegeId?: string) => Promise<boolean>
+    ssoLogin: (ssoToken: string) => Promise<boolean>
     logout: () => void
     impersonate: (collegeId: string, targetRole: string, targetUserId?: string) => Promise<boolean>
     exitImpersonation: () => Promise<boolean>
@@ -21,6 +22,50 @@ export const useAuthStore = create<AuthState>((set) => ({
     isAuthenticated: !!localStorage.getItem('token'),
     isImpersonating: localStorage.getItem('isImpersonating') === 'true',
     error: null,
+
+    ssoLogin: async (ssoToken: string) => {
+        set({ error: null, isLoading: true })
+        try {
+            const { data } = await api.post('/api/auth/sso-exchange', { token: ssoToken })
+            localStorage.setItem('token', data.access_token)
+            localStorage.removeItem('isImpersonating')
+            localStorage.removeItem('activeProgrammeId')
+            localStorage.removeItem('activeProgrammeName')
+            localStorage.removeItem('activeCourseId')
+            
+            const isSwayam = data.user?.provider === 'swayam'
+            if (isSwayam) {
+                localStorage.setItem('activeProgrammeId', 'swayam_plus')
+                localStorage.setItem('activeProgrammeName', 'SWAYAM Plus')
+            }
+
+            useUserStore.setState({
+                activeProgrammeId: isSwayam ? 'swayam_plus' : '',
+                activeProgrammeName: isSwayam ? 'SWAYAM Plus' : '',
+                activeCourseId: '',
+                courses: [],
+                badges: [],
+                tutorials: [],
+                programmes: [],
+            })
+
+            set({
+                token: data.access_token,
+                isLoading: false,
+                isAuthenticated: true,
+                isImpersonating: false,
+            })
+            return true
+        } catch (error: any) {
+            console.error('SSO login failed:', error)
+            const detail = error?.response?.data?.detail || 'SSO authentication failed'
+            set({
+                isLoading: false,
+                error: detail,
+            })
+            return false
+        }
+    },
 
     login: async (email, password, role?: string, collegeId?: string) => {
         set({ error: null, isLoading: true })

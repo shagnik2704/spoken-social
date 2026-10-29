@@ -2,14 +2,13 @@ import {
     Zap, ChevronRight, Trophy, Lock,
     BookOpen, Hand, Code, Terminal, BarChart3, FileText, Settings,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
-    CheckCircle2, Database, Brain, FlaskConical
+    CheckCircle2, Database, Brain, FlaskConical, Compass
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { ActiveCourseTracker } from './ActiveCourseTracker'
-
-
+import { LearnerPackTracker } from './LearnerPackTracker'
 import { useUserStore } from '@/store/userStore'
 import type { UpcomingEvent } from '@/types'
 
@@ -28,6 +27,7 @@ const courseIconMap: Record<string, React.ReactNode> = {
     'PostgreSQL': <Database className="h-6 w-6 text-sky-500" />,
     'AI': <Brain className="h-6 w-6 text-purple-500" />,
     'PHD': <FlaskConical className="h-6 w-6 text-amber-500" />,
+    'Personality and Human Development': <Compass className="h-6 w-6 text-primary" />,
 }
 
 
@@ -323,8 +323,11 @@ function UpcomingDeadlines() {
 // ===== MAIN DASHBOARD PAGE =====
 
 export default function Dashboard() {
-    const { user, isLoading } = useUserStore()
+    const { user, isLoading, courses, activeCourseId } = useUserStore()
     const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
+
+    const activeCourse = courses.find(c => c.id === activeCourseId)
+    const isLearnerPack = activeCourse?.uiLayout === 'learner_pack'
 
     if (isLoading) {
         return (
@@ -351,8 +354,12 @@ export default function Dashboard() {
                 <XPLevelCard />
             </div>
 
-            {/* Section 3: Active Course Tracker */}
-            <ActiveCourseTracker />
+            {/* Section 3: Active Course Tracker or SWAYAM Plus Learner Pack */}
+            {isLearnerPack ? (
+                <LearnerPackTracker />
+            ) : (
+                <ActiveCourseTracker />
+            )}
 
             {/* Weekly Goal removed from schema */}
 

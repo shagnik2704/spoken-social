@@ -16,10 +16,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.user import User
 from models.college import College
-from models.course import UserCourse
+from models.course import UserCourse, Course
 from models.tutorial import Tutorial, UserTutorial
 from models.college_course import CollegeCourse
 from models.batch import Batch
+from jose import jwt, JWTError
 
 SPOKEN_TUTORIAL_VERIFY_URL = os.environ.get(
     "SPOKEN_TUTORIAL_VERIFY_URL",
@@ -471,5 +472,152 @@ async def get_or_create_test_coordinator(db: AsyncSession, college_id: str) -> U
         await db.refresh(user)
         
     return user
+
+
+SPOKEN_SSO_SECRET = os.environ.get("SPOKEN_SSO_SECRET", os.environ.get("SECRET_KEY", "spoken-social-dev-secret-key-change-me-later"))
+
+
+async def verify_sso_token(token: str, db: AsyncSession) -> dict | None:
+    """
+    Verifies a signed SSO handoff token from Spoken Tutorial website (or SWAYAM Plus flow),
+    provisions or loads the student user, ensures enrollment in active batch, and returns user dict.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            SPOKEN_SSO_SECRET,
+            algorithms=["HS256"],
+            audience="spoken-social",
+        )
+    except JWTError:
+        try:
+            payload = jwt.decode(
+                token,
+                SPOKEN_SSO_SECRET,
+                algorithms=["HS256"],
+                options={"verify_aud": False},
+            )
+        except JWTError:
+            return None
+
+    email = payload.get("email")
+    if not email:
+        return None
+
+    email = email.strip().lower()
+    sub = payload.get("sub", email.split("@")[0])
+    first_name = payload.get("first_name", "")
+    last_name = payload.get("last_name", "")
+    full_name = payload.get("name") or f"{first_name} {last_name}".strip() or sub
+    swayam_sub = payload.get("swayam_sub")
+    college_name = payload.get("college_name")
+    college_id = payload.get("college_id")
+
+    # College setup if given
+    if college_name and not college_id:
+        c_res = await db.execute(select(College).filter_by(name=college_name))
+        c_obj = c_res.scalars().first()
+        if c_obj:
+            college_id = c_obj.id
+        else:
+            college_id = college_name.lower().replace(" ", "_").replace(",", "")[:45]
+            db.add(College(id=college_id, name=college_name))
+            await db.flush()
+
+    # Find or provision user
+    result = await db.execute(select(User).filter_by(email=email))
+    user = result.scalars().first()
+
+    if not user:
+        clean_user = "".join(c for c in sub if c.isalnum() or c == "_")[:35]
+        username = f"@{clean_user}" if not clean_user.startswith("@") else clean_user
+        # Check uniqueness of username
+        u_check = (await db.execute(select(User).filter_by(username=username))).scalars().first()
+        if u_check:
+            username = f"{username}_{uuid.uuid4().hex[:4]}"
+
+        user = User(
+            id=uuid.uuid4(),
+            username=username,
+            display_name=full_name,
+            email=email,
+            role="student",
+            college_id=college_id,
+            xp_total=0,
+            level=1,
+        )
+        db.add(user)
+        await db.flush()
+
+    # Determine courses to enroll
+    api_courses = payload.get("courses")
+    formatted = []
+    if api_courses and isinstance(api_courses, list):
+        for item in api_courses:
+            if isinstance(item, str):
+                raw = item.strip().lower()
+                clean = raw.replace("swayam_plus-", "").replace("swayam_", "").replace("swayam-", "").strip()
+                # Find course by id or title
+                c_res = await db.execute(
+                    select(Course).filter(
+                        (Course.id == raw) | (Course.id == clean) | (Course.title.ilike(item.strip()))
+                    )
+                )
+                c_match = c_res.scalars().first()
+                if c_match:
+                    # Find active batch for this course, preferring swayam_plus programme if swayam_sub is present
+                    b = None
+                    if swayam_sub:
+                        b_res = await db.execute(
+                            select(Batch).filter(
+                                Batch.course_id == c_match.id,
+                                Batch.programme_id == "swayam_plus",
+                                Batch.status == "active"
+                            ).order_by(Batch.start_date.desc())
+                        )
+                        b = b_res.scalars().first()
+                    if not b:
+                        b_res = await db.execute(
+                            select(Batch).filter_by(course_id=c_match.id, status="active").order_by(Batch.start_date.desc())
+                        )
+                        b = b_res.scalars().first()
+                    formatted.append({"course_id": c_match.id, "batch_id": b.id if b else None})
+            elif isinstance(item, dict) and "course_id" in item:
+                c_id = item["course_id"]
+                c_res = await db.execute(select(Course).filter_by(id=c_id))
+                if c_res.scalars().first():
+                    formatted.append(item)
+    api_courses = formatted
+
+    if not api_courses:
+        if swayam_sub:
+            # Check for active batch in swayam_plus programme
+            b_res = await db.execute(
+                select(Batch).filter(Batch.programme_id == "swayam_plus", Batch.status == "active").order_by(Batch.start_date.desc())
+            )
+            batch = b_res.scalars().first()
+            if batch:
+                api_courses = [{"course_id": batch.course_id, "batch_id": batch.id}]
+
+        if not api_courses:
+            # Fall back to personality_dev if exists
+            b_res = await db.execute(select(Batch).filter_by(course_id="personality_dev", status="active"))
+            batch = b_res.scalars().first()
+            if batch:
+                api_courses = [{"course_id": "personality_dev", "batch_id": batch.id}]
+
+    await _sync_enrollments(db, user, api_courses, college_id or user.college_id)
+    await db.commit()
+
+    return {
+        "user_id": str(user.id),
+        "display_name": user.display_name,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "college_id": user.college_id,
+        "provider": "swayam" if swayam_sub else "spoken_tutorial",
+    }
+
 
 

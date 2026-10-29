@@ -18,3 +18,9 @@ backups/
 .claude/
 .agents/
 skills-lock.json
+
+# OS and Presentation files
+.DS_Store
+/*.docx
+/*.pptx
+

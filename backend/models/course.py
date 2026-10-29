@@ -12,6 +12,7 @@ class Course(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text)
     forum_category = Column(String(200))  # e.g., "Linux New" — maps to forum's FOSS category
+    ui_layout = Column(String(50), default="standard_tracker", nullable=False)  # "standard_tracker" | "learner_pack"
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
@@ -52,6 +53,7 @@ class UserCourse(Base):
         return {
             "id": self.course_id,
             "title": self.course.title if self.course else "",
+            "uiLayout": self.course.ui_layout if self.course else "standard_tracker",
             "status": self.status,
             "progressPercent": float(self.progress_percent or 0),
             "completedAt": self.completed_at.isoformat() if self.completed_at else None,

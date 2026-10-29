@@ -18,3 +18,11 @@ from models.batch import Batch
 from models.college_course import CollegeCourse
 from models.programme import Programme, ProgrammeCourse
 from models.impersonation_log import ImpersonationLog
+from models.learner_pack import (
+    TutorialContent,
+    QuizQuestion,
+    UserReflection,
+    UserQuizAttempt,
+    UserHabitLogCheckin,
+)
+
