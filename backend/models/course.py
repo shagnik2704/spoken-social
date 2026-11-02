@@ -37,6 +37,7 @@ class UserCourse(Base):
     status = Column(String(20), nullable=False, default="in_progress")
     progress_percent = Column(Numeric(5, 2), default=0)
     completed_at = Column(DateTime(timezone=True))
+    swayam_enrollment_id = Column(String(255), nullable=True, index=True)
 
     # Relationships
     user = relationship("User", back_populates="courses")

@@ -9,6 +9,7 @@ from dependencies import get_current_user
 from models import User, UserCourse, UserTutorial, UserBadge, Tutorial
 from models.xp_event import XPEvent
 from services.courses import list_admin_courses, list_college_courses
+from services.swayam import sync_course_progress_and_swayam
 
 
 
@@ -243,6 +244,8 @@ async def update_tutorial(
         db.add(xp_event)
 
         recalc_level(user)
+
+    await sync_course_progress_and_swayam(db, user.id, course_id)
 
     await db.commit()
 

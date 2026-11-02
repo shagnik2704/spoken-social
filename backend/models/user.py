@@ -24,6 +24,7 @@ class User(Base):
     # NOT NULL: every `is_test_account != True` filter in the codebase silently drops
     # NULL rows, so a nullable column here hides real students (see migration a1b2c3d4e5f6).
     is_test_account = Column(Boolean, nullable=False, server_default=false(), default=False)
+    swayam_sub = Column(String(255), unique=True, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships

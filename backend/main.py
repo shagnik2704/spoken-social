@@ -16,6 +16,7 @@ from routes.webhooks import router as webhooks_router
 from routes.course import router as course_router
 from routes.programme import router as programme_router
 from routes.learner_pack import router as learner_pack_router
+from routes.swayam import router as swayam_router
 
 
 
@@ -58,3 +59,4 @@ app.include_router(webhooks_router)
 app.include_router(course_router)
 app.include_router(programme_router)
 app.include_router(learner_pack_router)
+app.include_router(swayam_router)

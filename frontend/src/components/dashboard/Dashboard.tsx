@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import {
     Zap, ChevronRight, Trophy, Lock,
     BookOpen, Hand, Code, Terminal, BarChart3, FileText, Settings,
@@ -323,8 +325,34 @@ function UpcomingDeadlines() {
 // ===== MAIN DASHBOARD PAGE =====
 
 export default function Dashboard() {
+    const params = useParams<{ courseId?: string }>()
+    const [searchParams] = useSearchParams()
+    const targetCourseId = params.courseId || searchParams.get('course')
+    const swayamEnrollmentId = searchParams.get('swayamEnrollmentId') || searchParams.get('enrollmentId')
+
     const { user, isLoading, courses, activeCourseId } = useUserStore()
     const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
+    const setActiveCourse = useUserStore(state => state.setActiveCourse)
+
+    useEffect(() => {
+        if (swayamEnrollmentId) {
+            localStorage.setItem('swayamEnrollmentId', swayamEnrollmentId)
+        }
+    }, [swayamEnrollmentId])
+
+    useEffect(() => {
+        if (targetCourseId && courses && courses.length > 0) {
+            const normalized = targetCourseId.trim().toLowerCase().replace('swayam_plus-', '').replace('swayam_', '')
+            const matched = courses.find(c => 
+                c.id.toLowerCase() === targetCourseId.toLowerCase() ||
+                c.id.toLowerCase() === normalized ||
+                c.title.toLowerCase() === targetCourseId.toLowerCase()
+            )
+            if (matched && matched.id !== activeCourseId) {
+                setActiveCourse(matched.id)
+            }
+        }
+    }, [targetCourseId, courses, activeCourseId, setActiveCourse])
 
     const activeCourse = courses.find(c => c.id === activeCourseId)
     const isLearnerPack = activeCourse?.uiLayout === 'learner_pack'

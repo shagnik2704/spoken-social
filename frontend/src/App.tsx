@@ -31,11 +31,14 @@ function AppContent() {
   const isUserLoading = useUserStore(state => state.isLoading)
   const activeProgrammeId = useUserStore(state => state.activeProgrammeId)
 
-  // Redirect any URL with ?token= or ?sso_token= to /sso
+  // Redirect any URL with ?token= or ?sso_token= to /sso, preserving current path as target
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     if ((params.get('token') || params.get('sso_token')) && !location.pathname.startsWith('/sso') && !location.pathname.startsWith('/auth/sso')) {
-      navigate(`/sso${location.search}`, { replace: true })
+      if (location.pathname && location.pathname !== '/') {
+        params.set('target', location.pathname)
+      }
+      navigate(`/sso?${params.toString()}`, { replace: true })
     }
   }, [location.pathname, location.search, navigate])
 
@@ -113,6 +116,7 @@ function AppContent() {
               <Route path="/programmes" element={<Navigate to="/" replace />} />
               {/* <Route path="/feed" element={<Feed />} /> */}
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/courses/:courseId" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/coordinator" element={<CoordinatorDashboard />} />

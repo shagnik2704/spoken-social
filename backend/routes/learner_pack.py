@@ -32,6 +32,7 @@ from models.learner_pack import (
 )
 from models.xp_event import XPEvent
 from services.xp import recompute_tutorial_xp, recalc_level
+from services.swayam import sync_course_progress_and_swayam
 
 router = APIRouter(prefix="/api/learner-pack", tags=["learner_pack"])
 
@@ -319,6 +320,8 @@ async def mark_reading_complete(
                 course_id=ut.tutorial.course_id if ut.tutorial else None,
             ))
             recalc_level(user)
+        if ut.tutorial and ut.tutorial.course_id:
+            await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()
 
     return {"success": True, "userTutorial": ut.to_api_dict()}
@@ -351,6 +354,8 @@ async def mark_activity_complete(
             course_id=ut.tutorial.course_id if ut.tutorial else None,
         ))
         recalc_level(user)
+        if ut.tutorial and ut.tutorial.course_id:
+            await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()
 
     return {"success": True, "userTutorial": ut.to_api_dict()}
@@ -414,6 +419,9 @@ async def submit_reflection(
             course_id=ut.tutorial.course_id if ut.tutorial else None,
         ))
         recalc_level(user)
+
+    if ut.tutorial and ut.tutorial.course_id:
+        await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
 
     await db.commit()
 
@@ -518,6 +526,9 @@ async def submit_quiz(
             course_id=ut.tutorial.course_id if ut.tutorial else None,
         ))
         recalc_level(user)
+
+    if ut.tutorial and ut.tutorial.course_id:
+        await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
 
     await db.commit()
 

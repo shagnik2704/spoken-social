@@ -38,7 +38,22 @@ export const SSOCallbackPage: React.FC = () => {
                     toast.success('Successfully authenticated via SWAYAM Plus!', {
                         description: 'Welcome to your Spoken Social learning space.'
                     })
-                    navigate('/', { replace: true })
+
+                    const rawTarget = searchParams.get('target') || searchParams.get('target_link_uri')
+                    let destination = '/'
+                    if (rawTarget) {
+                        if (rawTarget.startsWith('/') && !rawTarget.startsWith('//')) {
+                            destination = rawTarget
+                        } else {
+                            try {
+                                const parsed = new URL(rawTarget)
+                                destination = parsed.pathname + parsed.search
+                            } catch {
+                                destination = '/'
+                            }
+                        }
+                    }
+                    navigate(destination, { replace: true })
                 } catch (e) {
                     console.error('Failed to load user profile after SSO:', e)
                     navigate('/', { replace: true })
