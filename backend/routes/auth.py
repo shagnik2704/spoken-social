@@ -125,6 +125,29 @@ async def sso_exchange(body: SSOExchangeRequest, request: Request, db: AsyncSess
     from services.auth import verify_sso_token
     user_info = await verify_sso_token(body.token, db)
     if not user_info:
+        # Check if body.token is an already-issued Spoken Social session token (e.g. from direct SWAYAM SSO)
+        from services.jwt import decode_token
+        decoded = decode_token(body.token)
+        if decoded and decoded.get("sub"):
+            try:
+                import uuid
+                user_uuid = uuid.UUID(decoded["sub"])
+                u_res = await db.execute(select(User).filter_by(id=user_uuid))
+                existing_user = u_res.scalars().first()
+                if existing_user:
+                    user_info = {
+                        "user_id": str(existing_user.id),
+                        "display_name": existing_user.display_name,
+                        "username": existing_user.username,
+                        "email": existing_user.email,
+                        "role": decoded.get("role") or existing_user.role,
+                        "college_id": existing_user.college_id,
+                        "provider": "swayam" if existing_user.swayam_sub else "spoken_social",
+                    }
+            except Exception as exc:
+                logger.warning("Could not decode session token in sso_exchange: %s", exc)
+
+    if not user_info:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired SSO handoff token",

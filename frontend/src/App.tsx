@@ -36,7 +36,11 @@ function AppContent() {
     const params = new URLSearchParams(location.search)
     if ((params.get('token') || params.get('sso_token')) && !location.pathname.startsWith('/sso') && !location.pathname.startsWith('/auth/sso')) {
       if (location.pathname && location.pathname !== '/') {
-        params.set('target', location.pathname)
+        const targetParams = new URLSearchParams(location.search)
+        targetParams.delete('token')
+        targetParams.delete('sso_token')
+        const qs = targetParams.toString()
+        params.set('target', location.pathname + (qs ? `?${qs}` : ''))
       }
       navigate(`/sso?${params.toString()}`, { replace: true })
     }
