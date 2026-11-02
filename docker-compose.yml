@@ -17,11 +17,19 @@ services:
 
   backend:
     build: ./backend
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       SECRET_KEY: ${SECRET_KEY}
       REDIS_URL: redis://redis:6379
       DEV_BYPASS_ENABLED: ${DEV_BYPASS_ENABLED:-false}
+      SWAYAM_BASE_URL: ${SWAYAM_BASE_URL:-https://swayamplus.education.gov.in}
+      SWAYAM_OIDC_CLIENT_ID: ${SWAYAM_OIDC_CLIENT_ID:-}
+      SWAYAM_OIDC_CLIENT_SECRET: ${SWAYAM_OIDC_CLIENT_SECRET:-}
+      SWAYAM_REDIRECT_URI: ${SWAYAM_REDIRECT_URI:-}
+      SWAYAM_M2M_CLIENT_ID: ${SWAYAM_M2M_CLIENT_ID:-}
+      SWAYAM_M2M_CLIENT_SECRET: ${SWAYAM_M2M_CLIENT_SECRET:-}
     ports:
       - "127.0.0.1:${BACKEND_HOST_PORT:-8000}:8000"
     depends_on:
