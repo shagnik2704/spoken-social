@@ -86,6 +86,14 @@ async def swayam_login_start(
             base = "https://" + base[7:]
         redirect_uri = f"{base}/api/auth/swayam/callback"
 
+    client_id = SWAYAM_OIDC_CLIENT_ID or os.environ.get("SWAYAM_OIDC_CLIENT_ID", "")
+    if not client_id:
+        logger.error("SWAYAM SSO error: SWAYAM_OIDC_CLIENT_ID is not configured in environment")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="SWAYAM_OIDC_CLIENT_ID is not configured on server",
+        )
+
     # Generate PKCE and state values
     code_verifier = random_urlsafe_string(48)
     code_challenge = pkce_challenge(code_verifier)
@@ -105,7 +113,7 @@ async def swayam_login_start(
     await db.commit()
 
     params = {
-        "client_id": SWAYAM_OIDC_CLIENT_ID,
+        "client_id": client_id,
         "redirect_uri": redirect_uri,
         "response_type": "code",
         "scope": "openid email profile",
