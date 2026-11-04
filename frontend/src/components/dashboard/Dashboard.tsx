@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
     Zap, ChevronRight, Trophy, Lock,
-    BookOpen, Hand, Code, Terminal, BarChart3, FileText, Settings,
+    BookOpen, Code, Terminal, BarChart3, FileText, Settings,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
     CheckCircle2, Database, Brain, FlaskConical, Compass
 } from 'lucide-react'
@@ -50,26 +50,31 @@ function getGreeting(): string {
 
 
 function GreetingBanner() {
-
     const userName = useUserStore(state => state.user?.displayName)
     const firstName = userName?.split(' ')[0]
-
+    const activeProgrammeName = useUserStore(state => state.activeProgrammeName)
 
     return (
-        <Card className="border-warning/20 bg-gradient-to-r from-warning/5 via-orange-500/5 to-danger/5">
-            <CardContent className="p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Hand className="h-5 w-5 text-xp-gold shrink-0" />
-                            <h1 className="text-lg sm:text-2xl font-bold">
-                                {getGreeting()}, {firstName || 'there'}!
-                            </h1>
-                        </div>
-                        <p className="text-muted-foreground text-sm mt-1">
-                            Ready to learn something new today?
-                        </p>
+        <Card className="border-border/80 bg-card shadow-xs">
+            <CardContent className="p-5 sm:p-6 flex flex-col justify-between h-full">
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xl">👋</span>
+                        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+                            {getGreeting()}, {firstName || 'there'}!
+                        </h1>
                     </div>
+                    <p className="text-muted-foreground text-xs sm:text-sm">
+                        Welcome back to your learning workspace.
+                    </p>
+                </div>
+                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5 font-medium">
+                        <span className="size-2 rounded-full bg-emerald-500" />
+                        {activeProgrammeName || 'SWAYAM Plus'} Active
+                    </span>
+                    <span className="text-muted-foreground/40">•</span>
+                    <span>Self-paced Curriculum</span>
                 </div>
             </CardContent>
         </Card>
@@ -84,34 +89,38 @@ function XPLevelCard() {
     const xpPercent = Math.round((user.xpTotal / user.xpForNextLevel) * 100)
 
     return (
-        <Card>
-            <CardContent className="p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="flex items-center gap-2 min-w-0">
-                        <Zap className="h-5 w-5 text-xp-gold shrink-0" />
-                        <div className="min-w-0">
-                            <span className="text-sm font-semibold">Level {user.level}</span>
-                            <span className="text-xs text-muted-foreground ml-1.5">— {user.levelTitle}</span>
+        <Card className="border-border/80 bg-card shadow-xs">
+            <CardContent className="p-5 sm:p-6 flex flex-col justify-between h-full">
+                <div>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 shrink-0">
+                                <Zap className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                                <span className="text-sm font-bold text-foreground">Level {user.level}</span>
+                                <span className="text-xs text-muted-foreground ml-1.5 font-medium">— {user.levelTitle}</span>
+                            </div>
+                        </div>
+                        <Badge variant="outline" className="bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-mono font-semibold shrink-0">
+                            {user.xpTotal.toLocaleString()} XP
+                        </Badge>
+                    </div>
+                    <div className="space-y-1.5">
+                        <Progress value={xpPercent} className="h-2 bg-muted rounded-full" />
+                        <div className="flex justify-between text-[11px] font-medium text-muted-foreground">
+                            <span>{user.xpTotal.toLocaleString()} / {user.xpForNextLevel.toLocaleString()} XP</span>
+                            <span className="font-mono">{xpPercent}%</span>
                         </div>
                     </div>
-                    <Badge variant="secondary" className="bg-xp-gold/15 text-xp-gold text-xs font-mono shrink-0">
-                        {user.xpTotal.toLocaleString()} XP
-                    </Badge>
                 </div>
-                <div className="space-y-2">
-                    <Progress value={xpPercent} className="h-2.5 bg-muted" />
-                    <div className="flex justify-between text-[11px] text-muted-foreground">
-                        <span>{user.xpTotal.toLocaleString()} / {user.xpForNextLevel.toLocaleString()} XP</span>
-                        <span>{xpPercent}%</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                        <span className="inline-block h-2 w-2 rounded-full bg-success" />
+                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5 font-medium">
+                        <span className="size-2 rounded-full bg-emerald-500" />
                         +{user.xpToday} XP today
                     </span>
-                    <span className="flex items-center gap-1.5">
-                        <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                    <span className="flex items-center gap-1.5 font-medium">
+                        <span className="size-2 rounded-full bg-primary" />
                         +{user.xpThisWeek} XP this week
                     </span>
                 </div>
@@ -371,9 +380,14 @@ export default function Dashboard() {
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             {!activeBatchIsActive && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-center gap-3 text-destructive">
-                    <Lock className="h-4 w-4 shrink-0" />
-                    <p className="text-xs font-semibold uppercase tracking-wider">Archived Batch</p>
+                <div className="rounded-xl border border-border/80 bg-muted/40 px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-muted-foreground shadow-2xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <Lock className="h-3.5 w-3.5 text-muted-foreground/80 shrink-0" />
+                        <span className="truncate">Viewing historical batch archive (Read-Only).</span>
+                    </div>
+                    <Link to="/landing" className="text-xs font-semibold text-primary hover:underline shrink-0">
+                        Switch Batch →
+                    </Link>
                 </div>
             )}
             {/* Section 1 & 2: Greeting + XP side by side on desktop */}

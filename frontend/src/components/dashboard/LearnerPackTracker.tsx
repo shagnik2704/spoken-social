@@ -364,7 +364,7 @@ export function LearnerPackTracker() {
     return (
         <div className="space-y-6">
             {/* Header Card */}
-            <Card className="border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card shadow-sm overflow-hidden">
+            <Card className="border border-border/80 bg-card shadow-xs overflow-hidden">
                 <CardContent className="p-6 sm:p-7">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="space-y-1.5">
@@ -382,7 +382,7 @@ export function LearnerPackTracker() {
                                 </div>
                             </div>
                         </div>
-                        <Badge variant="outline" className="px-3.5 py-1.5 font-mono text-xs font-semibold border-primary/30 text-primary bg-primary/10 shadow-2xs">
+                        <Badge variant="outline" className="px-3.5 py-1.5 font-mono text-xs font-semibold border-border bg-muted/60 text-foreground shadow-2xs">
                             {completedTuts} / {totalTuts} Completed ({progressPercent}%)
                         </Badge>
                     </div>
@@ -523,13 +523,13 @@ export function LearnerPackTracker() {
                                                                 </span>
                                                             )}
                                                             {tut.hasCodeFiles && (
-                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.2 rounded border border-emerald-500/20">
+                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/70">
                                                                     <Code2 className="h-3 w-3" />
                                                                     Code Files
                                                                 </span>
                                                             )}
                                                             {tut.hasInstructionSheet && (
-                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.2 rounded border border-sky-500/20">
+                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/70">
                                                                     <FileText className="h-3 w-3" />
                                                                     PDF Sheet
                                                                 </span>
