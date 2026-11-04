@@ -20,7 +20,9 @@ import {
     Shield,
     Calendar,
     BookOpen,
+    ChevronLeft,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -221,81 +223,123 @@ export function TopBar() {
 export function DesktopSidebar() {
     const location = useLocation()
     const user = useUserStore(state => state.user)
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        return localStorage.getItem('spoken_sidebar_collapsed') === 'true'
+    })
+
+    const toggleSidebar = () => {
+        setIsCollapsed(prev => {
+            const next = !prev
+            localStorage.setItem('spoken_sidebar_collapsed', String(next))
+            return next
+        })
+    }
 
     return (
-        <aside className="hidden lg:flex flex-col w-60 border-r border-border bg-card/50 shrink-0">
-            <nav className="flex flex-col gap-1 p-3 flex-1">
-                {navItems
-                    .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
-                        const isActive = location.pathname === item.path
+        <div className="relative hidden lg:flex shrink-0">
+            <aside
+                className={cn(
+                    "flex flex-col border-r border-border bg-card/50 transition-all duration-300 ease-in-out overflow-hidden h-full",
+                    isCollapsed ? "w-0 border-r-transparent opacity-0 pointer-events-none" : "w-60 border-border opacity-100"
+                )}
+            >
+                <div className="w-60 min-w-[240px] flex flex-col h-full">
+                    <nav className="flex flex-col gap-1 p-3 flex-1">
+                        {navItems
+                            .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
+                                const isActive = location.pathname === item.path
 
-                        // Post button opens the compose modal
-                        if (item.label === 'Post') {
-                            return (
-                                <TooltipProvider key={item.label}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed">
-                                                <item.icon className="h-5 w-5" />
-                                                {item.label}
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="right">
-                                            <p>Coming soon!</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                // <button
-                                //     key={item.label}
-                                //     onClick={openCompose}
-                                //     className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium
-                                //            text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
-                                // >
-                                //     <item.icon className="h-5 w-5" />
-                                //     {item.label}
-                                // </button>
-                            )
-                        }
-                        if (item.label === 'Feed') {
-                            return (
-                                <TooltipProvider key={item.label}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed">
-                                                <item.icon className="h-5 w-5" />
-                                                {item.label}
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="right">
-                                            <p>Coming soon!</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )
-                        }
+                                // Post button opens the compose modal
+                                if (item.label === 'Post') {
+                                    return (
+                                        <TooltipProvider key={item.label}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed">
+                                                        <item.icon className="h-5 w-5" />
+                                                        {item.label}
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right">
+                                                    <p>Coming soon!</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )
+                                }
+                                if (item.label === 'Feed') {
+                                    return (
+                                        <TooltipProvider key={item.label}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed">
+                                                        <item.icon className="h-5 w-5" />
+                                                        {item.label}
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right">
+                                                    <p>Coming soon!</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )
+                                }
 
-                        return (
-                            <Link
-                                key={item.label}
-                                to={item.path}
-                                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
-                                ${isActive
-                                        ? 'bg-primary/15 text-primary'
-                                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                                    }`}
-                            >
-                                <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
-                                {item.label}
-                                {isActive && (
-                                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                                return (
+                                    <Link
+                                        key={item.label}
+                                        to={item.path}
+                                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
+                                        ${isActive
+                                                ? 'bg-primary/15 text-primary font-semibold'
+                                                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                                            }`}
+                                    >
+                                        <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
+                                        {item.label}
+                                        {isActive && (
+                                            <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                                        )}
+                                    </Link>
+                                )
+                            })}
+                    </nav>
+                </div>
+            </aside>
+
+            {/* Middle panel separator collapse/expand toggle button with animated arrow */}
+            <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <button
+                            onClick={toggleSidebar}
+                            className={cn(
+                                "absolute top-1/2 -translate-y-1/2 z-40",
+                                "flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card/95 backdrop-blur-xs text-muted-foreground",
+                                "shadow-sm hover:shadow-md hover:bg-accent hover:text-foreground hover:border-primary/50",
+                                "transition-[left,transform,background-color,border-color,color] duration-300 ease-in-out cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            )}
+                            style={{
+                                left: isCollapsed ? '8px' : '226px',
+                            }}
+                            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                        >
+                            <ChevronLeft
+                                className={cn(
+                                    "h-4 w-4 transition-transform duration-300 ease-in-out",
+                                    isCollapsed
+                                        ? "rotate-180 group-hover:translate-x-0.5 text-primary"
+                                        : "rotate-0 group-hover:-translate-x-0.5"
                                 )}
-                            </Link>
-                        )
-                    })}
-            </nav>
-
-
-        </aside>
+                            />
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs">
+                        {isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        </div>
     )
 }
 
