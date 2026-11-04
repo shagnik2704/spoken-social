@@ -85,10 +85,12 @@ export function LearnerPackTracker() {
     const [habitNote, setHabitNote] = useState('')
     const [isCheckingIn, setIsCheckingIn] = useState(false)
 
-    const fetchOverview = async () => {
+    const fetchOverview = async (isBackground = false) => {
         if (!activeCourseId) return
         try {
-            setIsLoading(true)
+            if (!isBackground && !overview) {
+                setIsLoading(true)
+            }
             const [ovRes, logsRes] = await Promise.all([
                 api.get(`/api/learner-pack/course/${activeCourseId}/overview`),
                 api.get(`/api/learner-pack/habit-logs/${activeCourseId}`)
@@ -99,7 +101,9 @@ export function LearnerPackTracker() {
             console.error('Failed to load learner pack overview', err)
             toast.error('Could not load course curriculum.')
         } finally {
-            setIsLoading(false)
+            if (!isBackground) {
+                setIsLoading(false)
+            }
         }
     }
 
@@ -144,7 +148,7 @@ export function LearnerPackTracker() {
                     }
                 })
             }
-            fetchOverview()
+            fetchOverview(true)
         } catch (err) {
             toast.error('Failed to update video progress.')
         }
@@ -171,7 +175,7 @@ export function LearnerPackTracker() {
                     }
                 })
             }
-            fetchOverview()
+            fetchOverview(true)
         } catch (err) {
             toast.error('Failed to update reading status.')
         }
@@ -193,7 +197,7 @@ export function LearnerPackTracker() {
                     }
                 })
             }
-            fetchOverview()
+            fetchOverview(true)
         } catch (err) {
             toast.error('Failed to mark exercise status.')
         } finally {
@@ -226,7 +230,7 @@ export function LearnerPackTracker() {
                     }
                 })
             }
-            fetchOverview()
+            fetchOverview(true)
         } catch (err) {
             toast.error('Failed to submit reflection.')
         } finally {
@@ -273,7 +277,7 @@ export function LearnerPackTracker() {
                     completed: true
                 }
             })
-            fetchOverview()
+            fetchOverview(true)
         } catch (err) {
             toast.error('Failed to submit quiz.')
         } finally {
@@ -295,7 +299,7 @@ export function LearnerPackTracker() {
             })
             toast.success(`Day ${dayNumber} check-in recorded! 🌱`)
             setHabitNote('')
-            fetchOverview()
+            fetchOverview(true)
         } catch (err) {
             toast.error('Failed to record habit check-in.')
         } finally {
@@ -303,7 +307,7 @@ export function LearnerPackTracker() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading && !overview) {
         return (
             <Card className="animate-pulse">
                 <CardContent className="p-8 space-y-4">
