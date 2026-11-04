@@ -17,7 +17,7 @@ import {
     CheckCircle2, ChevronDown, Lock, BookOpen,
     PlayCircle, HelpCircle, PenTool, Sparkles,
     Heart, Lightbulb, Compass,
-    Check, ArrowRight, ExternalLink
+    Check, ArrowRight, ExternalLink, Download, FileText
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -67,7 +67,7 @@ export function LearnerPackTracker() {
     const [activeTutorialId, setActiveTutorialId] = useState<string | null>(null)
     const [tutorialDetail, setTutorialDetail] = useState<LearnerPackTutorialDetail | null>(null)
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
-    const [activeTab, setActiveTab] = useState<'reading' | 'activity' | 'quiz' | 'video'>('reading')
+    const [activeTab, setActiveTab] = useState<'video' | 'reading' | 'activity' | 'quiz'>('video')
 
     // Reflection submission state
     const [reflectionText, setReflectionText] = useState('')
@@ -109,7 +109,7 @@ export function LearnerPackTracker() {
     const openTutorialModal = async (tutId: string) => {
         setActiveTutorialId(tutId)
         setIsLoadingDetail(true)
-        setActiveTab('reading')
+        setActiveTab('video')
         setQuizAnswers({})
         try {
             const res = await api.get(`/api/learner-pack/tutorials/${tutId}`)
@@ -125,6 +125,33 @@ export function LearnerPackTracker() {
             setActiveTutorialId(null)
         } finally {
             setIsLoadingDetail(false)
+        }
+    }
+
+    const handleMarkVideoWatched = async () => {
+        if (!activeTutorialId) return
+        try {
+            await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/video-watched`)
+            toast.success('Video watched! +10 XP awarded 🎬')
+            addXP(10)
+            if (tutorialDetail) {
+                setTutorialDetail({
+                    ...tutorialDetail,
+                    userTutorial: {
+                        ...tutorialDetail.userTutorial,
+                        watched: 'yes'
+                    }
+                })
+            }
+            fetchOverview()
+        } catch (err) {
+            toast.error('Failed to update video progress.')
+        }
+    }
+
+    const handleVideoEnded = () => {
+        if (tutorialDetail && tutorialDetail.userTutorial.watched !== 'yes') {
+            handleMarkVideoWatched()
         }
     }
 
@@ -474,10 +501,19 @@ export function LearnerPackTracker() {
                                                         <Badge
                                                             variant="outline"
                                                             className={`text-[10px] px-1.5 py-0 ${p.watched ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' : 'text-muted-foreground/50 border-dashed'}`}
-                                                            title="Reading / Video Watched"
+                                                            title="Video Watched"
                                                         >
-                                                            {p.watched ? '✓ Read' : 'Read'}
+                                                            {p.watched ? '✓ Watched' : 'Watch'}
                                                         </Badge>
+                                                        {tut.hasCodeFiles && (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                                                title="Companion Code Files available"
+                                                            >
+                                                                Code
+                                                            </Badge>
+                                                        )}
                                                         <Badge
                                                             variant="outline"
                                                             className={`text-[10px] px-1.5 py-0 ${p.reflectionSubmitted ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' : 'text-muted-foreground/50 border-dashed'}`}
@@ -549,8 +585,21 @@ export function LearnerPackTracker() {
                                     </div>
                                 </div>
 
-                                {/* Modern Step Navigation Tabs */}
+                                {/* Modern Step Navigation Tabs: Video First! */}
                                 <div className="flex items-center gap-2 mt-4 pt-2 border-t border-border/50 overflow-x-auto no-scrollbar">
+                                    <button
+                                        onClick={() => setActiveTab('video')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${activeTab === 'video'
+                                            ? 'bg-primary text-primary-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                            }`}
+                                    >
+                                        <PlayCircle className="h-4 w-4" />
+                                        <span>1. Watch Video</span>
+                                        {tutorialDetail.userTutorial.watched === 'yes' && (
+                                            <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
+                                        )}
+                                    </button>
                                     <button
                                         onClick={() => setActiveTab('reading')}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${activeTab === 'reading'
@@ -559,7 +608,7 @@ export function LearnerPackTracker() {
                                             }`}
                                     >
                                         <BookOpen className="h-4 w-4" />
-                                        <span>1. Reading</span>
+                                        <span>2. Reading Notes</span>
                                         {tutorialDetail.userTutorial.watched === 'yes' && (
                                             <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
                                         )}
@@ -572,7 +621,7 @@ export function LearnerPackTracker() {
                                             }`}
                                     >
                                         <PenTool className="h-4 w-4" />
-                                        <span>2. Activity & Reflection</span>
+                                        <span>{tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? '3. Assignment & Practice' : '3. Activity & Reflection'}</span>
                                         {(tutorialDetail.userReflection || tutorialDetail.userTutorial.minitaskOpted === 'yes') && (
                                             <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
                                         )}
@@ -585,27 +634,170 @@ export function LearnerPackTracker() {
                                             }`}
                                     >
                                         <HelpCircle className="h-4 w-4" />
-                                        <span>3. Quiz (5 MCQs)</span>
+                                        <span>4. Quiz (5 MCQs)</span>
                                         {tutorialDetail.quiz.hasAttempted && (
                                             <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold ${tutorialDetail.quiz.passed ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
                                                 }`}>✓</span>
                                         )}
                                     </button>
-                                    <button
-                                        onClick={() => setActiveTab('video')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${activeTab === 'video'
-                                            ? 'bg-primary text-primary-foreground shadow-sm'
-                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                                            }`}
-                                    >
-                                        <PlayCircle className="h-4 w-4" />
-                                        <span>Video Link</span>
-                                    </button>
                                 </div>
                             </div>
 
+                            {/* DYNAMIC RESOURCE BAR: Only renders if resources actually exist for this tutorial! */}
+                            {(tutorialDetail.codeFilesUrl || tutorialDetail.instructionSheetUrl || tutorialDetail.videoUrl) && (
+                                <div className="px-5 sm:px-8 py-2.5 bg-muted/40 border-b border-border/60 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+                                    <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                                        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground/80">
+                                            Resources:
+                                        </span>
+
+                                        {/* Code Files Button (Dynamic: only for courses with code files) */}
+                                        {tutorialDetail.codeFilesUrl && (
+                                            <a
+                                                href={tutorialDetail.codeFilesUrl}
+                                                download
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-medium transition-colors"
+                                            >
+                                                <Download className="h-3.5 w-3.5" />
+                                                <span>Download Code Files (.zip)</span>
+                                            </a>
+                                        )}
+
+                                        {/* Instruction Sheet Button (Dynamic: only for courses with instruction sheets) */}
+                                        {tutorialDetail.instructionSheetUrl && (
+                                            <a
+                                                href={tutorialDetail.instructionSheetUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 font-medium transition-colors"
+                                            >
+                                                <FileText className="h-3.5 w-3.5" />
+                                                <span>Instruction Sheet (PDF)</span>
+                                            </a>
+                                        )}
+
+                                        <span className="text-[11px] text-muted-foreground bg-muted px-2.5 py-1 rounded-md border border-border/50 flex items-center gap-1">
+                                            <span>🌐</span> Spoken Tutorial Media
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-[11px]">
+                                        <span className="text-muted-foreground">Status:</span>
+                                        <span className={`px-2.5 py-0.5 rounded font-medium border ${tutorialDetail.userTutorial.watched === 'yes'
+                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                                            }`}>
+                                            {tutorialDetail.userTutorial.watched === 'yes' ? '✓ Watched (+10 XP)' : 'Not Watched'}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Modal Body / Tab Content */}
-                            {/* TAB 1: READING — Full Width Clean Reader Canvas */}
+                            {/* TAB 1: VIDEO (FIRST) */}
+                            {activeTab === 'video' && (
+                                <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center bg-background/50 min-h-0">
+                                    <div className="w-full max-w-4xl space-y-4 my-auto">
+                                        {tutorialDetail.videoUrl ? (
+                                            <div className="space-y-4">
+                                                <div className="relative aspect-video w-full rounded-2xl bg-black border border-border/80 overflow-hidden shadow-2xl flex items-center justify-center">
+                                                    <video
+                                                        key={tutorialDetail.videoUrl}
+                                                        controls
+                                                        playsInline
+                                                        preload="metadata"
+                                                        poster={tutorialDetail.videoPosterUrl || undefined}
+                                                        className="w-full h-full object-contain"
+                                                        onEnded={handleVideoEnded}
+                                                    >
+                                                        <source src={tutorialDetail.videoUrl} type="video/webm" />
+                                                        Your browser does not support WebM video streaming.
+                                                    </video>
+                                                </div>
+
+                                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-card border border-border/80 shadow-xs">
+                                                    <div className="text-xs text-muted-foreground leading-relaxed">
+                                                        {tutorialDetail.codeFilesUrl ? (
+                                                            <p>
+                                                                💻 <strong>Coding Exercise:</strong> Download the companion <code className="text-emerald-600 dark:text-emerald-400 font-semibold">Code Files (.zip)</code> in the resources bar above to follow along and test code in your local editor.
+                                                            </p>
+                                                        ) : (
+                                                            <p>
+                                                                🎧 <strong>Tip:</strong> Watch carefully and observe the key concepts. Mark as watched when finished to earn your +10 XP, then proceed to the Reading Notes.
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={handleMarkVideoWatched}
+                                                            disabled={tutorialDetail.userTutorial.watched === 'yes'}
+                                                            className="text-xs font-semibold flex-1 sm:flex-none"
+                                                        >
+                                                            {tutorialDetail.userTutorial.watched === 'yes' ? '✓ Watched (+10 XP)' : 'Mark as Watched (+10 XP)'}
+                                                        </Button>
+                                                        <Button
+                                                            onClick={() => setActiveTab('reading')}
+                                                            className="text-xs font-bold flex-1 sm:flex-none gap-1.5"
+                                                        >
+                                                            <span>Next: Reading Notes</span>
+                                                            <ArrowRight className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="max-w-lg mx-auto text-center space-y-5 p-8 rounded-2xl bg-card border shadow-sm">
+                                                <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-2xs">
+                                                    <PlayCircle className="h-9 w-9" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h3 className="text-xl font-bold text-foreground">
+                                                        Spoken Tutorial Audiovisual Video
+                                                    </h3>
+                                                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                                        This tutorial is accompanied by an audiovisual Spoken Tutorial. You can watch it in English or dubbed into Indian regional languages (Hindi, Marathi, Tamil, Telugu, and more).
+                                                    </p>
+                                                </div>
+                                                <div className="pt-3 flex flex-col sm:flex-row justify-center gap-3">
+                                                    <a
+                                                        href="https://spoken-tutorial.org"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-2xs"
+                                                    >
+                                                        Open Spoken Tutorial Player
+                                                        <ExternalLink className="h-4 w-4" />
+                                                    </a>
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={handleMarkVideoWatched}
+                                                        disabled={tutorialDetail.userTutorial.watched === 'yes'}
+                                                        className="text-xs"
+                                                    >
+                                                        {tutorialDetail.userTutorial.watched === 'yes' ? '✓ Watched' : 'Mark as Watched (+10 XP)'}
+                                                    </Button>
+                                                </div>
+                                                <div className="pt-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        onClick={() => setActiveTab('reading')}
+                                                        className="text-xs font-semibold gap-1"
+                                                    >
+                                                        <span>Continue to Reading Notes</span>
+                                                        <ArrowRight className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 2: READING — Full Width Clean Reader Canvas */}
                             {activeTab === 'reading' && (
                                 <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-10 sm:py-10 bg-background/50 min-h-0">
                                     <div className="max-w-3xl mx-auto space-y-8">
@@ -650,7 +842,9 @@ export function LearnerPackTracker() {
                                                 }}
                                                 className="font-semibold text-xs sm:text-sm shrink-0 gap-1.5 w-full sm:w-auto"
                                             >
-                                                {tutorialDetail.userTutorial.watched === 'yes' ? 'Proceed to Activity & Reflection' : 'Mark Complete (+10 XP) & Continue'}
+                                                {tutorialDetail.userTutorial.watched === 'yes'
+                                                    ? (tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? 'Proceed to Assignment & Practice' : 'Proceed to Activity & Reflection')
+                                                    : 'Mark Complete (+10 XP) & Continue'}
                                                 <ArrowRight className="h-4 w-4" />
                                             </Button>
                                         </div>
@@ -685,7 +879,9 @@ export function LearnerPackTracker() {
                                                         </div>
                                                         <div>
                                                             <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600">Part 1</span>
-                                                            <h3 className="text-base font-bold text-foreground">Private Notebook Exercise</h3>
+                                                            <h3 className="text-base font-bold text-foreground">
+                                                                {tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? 'Hands-On Practice / Assignment' : 'Private Notebook Exercise'}
+                                                            </h3>
                                                         </div>
                                                     </div>
 
@@ -980,44 +1176,6 @@ export function LearnerPackTracker() {
                                                     : isSubmittingQuiz
                                                         ? 'Evaluating Answers...'
                                                         : 'Submit Answers (+10 XP)'}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* TAB 4: VIDEO */}
-                            {activeTab === 'video' && (
-                                <div className="flex-1 overflow-y-auto p-12 flex items-center justify-center bg-muted/10 min-h-0">
-                                    <div className="max-w-lg mx-auto text-center space-y-5 p-8 rounded-2xl bg-card border shadow-sm">
-                                        <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-2xs">
-                                            <PlayCircle className="h-9 w-9" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-bold text-foreground">
-                                                Watch on Spoken Tutorial
-                                            </h3>
-                                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                                                This tutorial is accompanied by an audiovisual Spoken Tutorial. You can watch it in English or dubbed into Indian regional languages (Hindi, Marathi, Tamil, Telugu, and more).
-                                            </p>
-                                        </div>
-                                        <div className="pt-3 flex flex-col sm:flex-row justify-center gap-3">
-                                            <a
-                                                href="https://spoken-tutorial.org"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-2xs"
-                                            >
-                                                Open Spoken Tutorial Player
-                                                <ExternalLink className="h-4 w-4" />
-                                            </a>
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleMarkReadingComplete}
-                                                disabled={tutorialDetail.userTutorial.watched === 'yes'}
-                                                className="text-xs"
-                                            >
-                                                {tutorialDetail.userTutorial.watched === 'yes' ? '✓ Watched' : 'Mark as Watched (+10 XP)'}
                                             </Button>
                                         </div>
                                     </div>

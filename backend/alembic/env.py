@@ -13,8 +13,9 @@ load_dotenv()
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override the ini-file DB URL with the one from .env
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
+# Override the ini-file DB URL with the one from database.py (handles Docker vs local localhost mapping)
+from database import SYNC_DATABASE_URL, Base
+config.set_main_option("sqlalchemy.url", SYNC_DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -23,7 +24,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from database import Base
+
 # Import ALL models so Alembic can see them
 from models.user import User
 from models.course import Course, UserCourse
@@ -35,6 +36,8 @@ from models.follow import Follow
 from models.hashtag import Tag, PostTag, Hashtag, PostHashtag, HashtagCount
 from models.xp_event import XPEvent
 from models.activity import Activity
+from models.learner_pack import TutorialContent, QuizQuestion, UserReflection, UserQuizAttempt, UserHabitLogCheckin
+from models.swayam import SwayamOIDCState
 
 target_metadata = Base.metadata
 

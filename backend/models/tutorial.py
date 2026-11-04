@@ -14,6 +14,12 @@ class Tutorial(Base):
     tutorial_number = Column(Integer, nullable=False)
     title = Column(String(255), nullable=False)
     content = Column(Text)
+    video_url = Column(Text, nullable=True)
+    video_poster_url = Column(Text, nullable=True)
+    code_files_url = Column(Text, nullable=True)
+    instruction_sheet_url = Column(Text, nullable=True)
+    assignment_url = Column(Text, nullable=True)
+    assignment_instructions = Column(Text, nullable=True)
     xp_reward = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
@@ -70,4 +76,10 @@ class UserTutorial(Base):
             "forumAnswered": self.forum_answered,
             "minitaskOpted": self.minitask_opted,
             "xpEarned": self.xp_earned,
+            "videoUrl": self.tutorial.video_url if self.tutorial else None,
+            "videoPosterUrl": self.tutorial.video_poster_url if self.tutorial else None,
+            "codeFilesUrl": self.tutorial.code_files_url if self.tutorial else None,
+            "instructionSheetUrl": self.tutorial.instruction_sheet_url if self.tutorial else None,
+            "assignmentUrl": self.tutorial.assignment_url if self.tutorial else None,
+            "assignmentInstructions": self.tutorial.assignment_instructions if self.tutorial else None,
         }

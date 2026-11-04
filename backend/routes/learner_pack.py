@@ -165,6 +165,12 @@ async def get_course_overview(
             "hasContent": content is not None,
             "readingTitle": content.reading_title if content else None,
             "readingTimeMinutes": content.reading_time_minutes if content else 15,
+            "videoUrl": (content.video_url if content and content.video_url else tut.video_url),
+            "videoPosterUrl": (content.video_poster_url if content and content.video_poster_url else tut.video_poster_url),
+            "hasVideo": bool((content and content.video_url) or tut.video_url),
+            "hasCodeFiles": bool((content and content.code_files_url) or tut.code_files_url),
+            "hasInstructionSheet": bool((content and content.instruction_sheet_url) or tut.instruction_sheet_url),
+            "hasAssignment": bool((content and (content.assignment_url or content.assignment_instructions)) or tut.assignment_url or tut.assignment_instructions),
             "userProgress": {
                 "watched": ut.watched if ut else False,
                 "readingCompleted": ut.watched if ut else False,
@@ -264,6 +270,13 @@ async def get_tutorial_content(
         "tutorialNumber": tutorial.tutorial_number,
         "title": tutorial.title,
         "courseId": tutorial.course_id,
+        "videoUrl": (content.video_url if content and content.video_url else tutorial.video_url),
+        "videoPosterUrl": (content.video_poster_url if content and content.video_poster_url else tutorial.video_poster_url),
+        "videoDurationSeconds": content.video_duration_seconds if content else None,
+        "codeFilesUrl": (content.code_files_url if content and content.code_files_url else tutorial.code_files_url),
+        "instructionSheetUrl": (content.instruction_sheet_url if content and content.instruction_sheet_url else tutorial.instruction_sheet_url),
+        "assignmentUrl": (content.assignment_url if content and content.assignment_url else tutorial.assignment_url),
+        "assignmentInstructions": (content.assignment_instructions if content and content.assignment_instructions else tutorial.assignment_instructions),
         "content": {
             "weekNumber": content.week_number if content else 1,
             "readingTitle": content.reading_title if content else f"Reading for {tutorial.title}",
@@ -274,6 +287,7 @@ async def get_tutorial_content(
             "reflectionMinSentences": content.reflection_min_sentences if content else 3,
             "keyTerms": content.key_terms if content else [],
             "readMore": content.read_more if content else [],
+            "assignmentInstructions": (content.assignment_instructions if content and content.assignment_instructions else tutorial.assignment_instructions),
         } if content else None,
         "quiz": {
             "hasAttempted": has_attempted_quiz,
@@ -290,6 +304,18 @@ async def get_tutorial_content(
         } if user_reflection else None,
         "userTutorial": ut.to_api_dict(),
     }
+
+
+@router.post("/tutorials/{tutorial_id}/video-watched")
+async def mark_video_watched(
+    tutorial_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Marks the in-app video as watched (watched=True) and awards 10 XP.
+    """
+    return await mark_reading_complete(tutorial_id, user, db)
 
 
 @router.post("/tutorials/{tutorial_id}/reading-complete")

@@ -25,13 +25,24 @@ class TutorialContent(Base):
     tutorial_id = Column(PG_UUID(as_uuid=True), ForeignKey("tutorials.id", ondelete="CASCADE"), unique=True, nullable=False)
     week_number = Column(Integer, nullable=False, default=1)
     
+    # Video Section
+    video_url = Column(Text, nullable=True)                  # Spoken Tutorial .webm direct URL
+    video_poster_url = Column(Text, nullable=True)           # Spoken Tutorial video thumbnail/poster
+    video_duration_seconds = Column(Integer, nullable=True)  # Duration in seconds
+    
+    # Companion Resource Files (Course-Specific)
+    code_files_url = Column(Text, nullable=True)             # Download URL for code files (.zip / .py)
+    instruction_sheet_url = Column(Text, nullable=True)      # URL for instruction sheet (PDF)
+    
     # Reading Section
     reading_title = Column(String(255), nullable=False)
-    reading_markdown = Column(Text, nullable=False)       # Full structured reading text
+    reading_markdown = Column(Text, nullable=False)          # Full structured reading text
     reading_time_minutes = Column(Integer, default=15)
     
-    # Activity ("Try it") Section
-    try_it_instructions = Column(Text, nullable=False)    # Private notebook instructions
+    # Activity & Assignment Section
+    try_it_instructions = Column(Text, nullable=False)       # Private notebook instructions
+    assignment_url = Column(Text, nullable=True)             # Optional hands-on assignment URL / repo
+    assignment_instructions = Column(Text, nullable=True)    # Optional hands-on assignment task description
     
     # Reflection Prompt Section
     reflection_prompt = Column(Text, nullable=False)      # Questions for 3-5 sentence reflection

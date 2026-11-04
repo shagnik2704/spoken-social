@@ -233,6 +233,7 @@ export interface TutorialContentData {
     reflectionMinSentences: number
     keyTerms: { term: string; meaning: string }[]
     readMore: { title: string; author: string; desc: string }[]
+    assignmentInstructions?: string | null
 }
 
 export interface LearnerPackTutorialDetail {
@@ -240,6 +241,13 @@ export interface LearnerPackTutorialDetail {
     tutorialNumber: number
     title: string
     courseId: string
+    videoUrl?: string | null
+    videoPosterUrl?: string | null
+    videoDurationSeconds?: number | null
+    codeFilesUrl?: string | null
+    instructionSheetUrl?: string | null
+    assignmentUrl?: string | null
+    assignmentInstructions?: string | null
     content: TutorialContentData | null
     quiz: {
         hasAttempted: boolean
@@ -265,6 +273,12 @@ export interface LearnerPackOverviewTutorial {
     hasContent: boolean
     readingTitle?: string
     readingTimeMinutes?: number
+    videoUrl?: string | null
+    videoPosterUrl?: string | null
+    hasVideo?: boolean
+    hasCodeFiles?: boolean
+    hasInstructionSheet?: boolean
+    hasAssignment?: boolean
     userProgress: {
         watched: boolean
         readingCompleted: boolean
