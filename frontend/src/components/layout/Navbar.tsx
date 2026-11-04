@@ -239,39 +239,45 @@ export function DesktopSidebar() {
         <div className="relative hidden lg:flex shrink-0">
             <aside
                 className={cn(
-                    "flex flex-col border-r border-border bg-card/50 transition-all duration-300 ease-in-out h-full select-none overflow-hidden",
+                    "flex flex-col border-r border-border bg-card/50 transition-[width] duration-300 ease-in-out h-full select-none overflow-hidden",
                     isCollapsed ? "w-16" : "w-60"
                 )}
             >
-                <div className={cn(
-                    "flex flex-col h-full transition-all duration-300",
-                    isCollapsed ? "w-16" : "w-60"
-                )}>
-                    <nav className={cn(
-                        "flex flex-col gap-1.5 flex-1 transition-all duration-300",
-                        isCollapsed ? "p-2 items-center" : "p-3"
-                    )}>
+                <div className="w-60 min-w-[240px] flex flex-col h-full">
+                    <nav className="flex flex-col gap-1.5 px-2 py-3 flex-1">
                         {navItems
                             .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
                                 const isActive = location.pathname === item.path
 
                                 // Post / Feed disabled buttons with Tooltips
                                 if (item.label === 'Post' || item.label === 'Feed') {
+                                    const disabledItem = (
+                                        <div
+                                            className="flex items-center h-10 w-full rounded-xl text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed px-3.5 gap-3 overflow-hidden"
+                                        >
+                                            <div className="size-5 shrink-0 flex items-center justify-center">
+                                                <item.icon className="size-5 shrink-0" />
+                                            </div>
+                                            <div
+                                                className={cn(
+                                                    "flex items-center min-w-0 flex-1 overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap",
+                                                    isCollapsed
+                                                        ? "max-w-0 opacity-0 -translate-x-3 pointer-events-none"
+                                                        : "max-w-[160px] opacity-100 translate-x-0"
+                                                )}
+                                            >
+                                                <span className="truncate text-sm font-medium">{item.label}</span>
+                                            </div>
+                                        </div>
+                                    )
+
                                     return (
                                         <TooltipProvider key={item.label} delayDuration={150}>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <div
-                                                        className={cn(
-                                                            "flex items-center rounded-xl text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed transition-all",
-                                                            isCollapsed ? "h-10 w-10 justify-center" : "gap-3 px-3 py-2.5"
-                                                        )}
-                                                    >
-                                                        <item.icon className="h-5 w-5 shrink-0" />
-                                                        {!isCollapsed && <span>{item.label}</span>}
-                                                    </div>
+                                                    {disabledItem}
                                                 </TooltipTrigger>
-                                                <TooltipContent side="right" sideOffset={12}>
+                                                <TooltipContent side="right" sideOffset={14}>
                                                     <p>{item.label}: Coming soon!</p>
                                                 </TooltipContent>
                                             </Tooltip>
@@ -283,43 +289,47 @@ export function DesktopSidebar() {
                                     <Link
                                         to={item.path}
                                         className={cn(
-                                            "flex items-center rounded-xl text-sm font-medium transition-all group/item",
-                                            isCollapsed
-                                                ? "h-10 w-10 justify-center"
-                                                : "gap-3 px-3 py-2.5",
+                                            "flex items-center h-10 w-full rounded-xl text-sm font-medium transition-colors duration-200 group/item overflow-hidden px-3.5 gap-3",
                                             isActive
                                                 ? "bg-primary/15 text-primary font-semibold shadow-2xs"
                                                 : "text-muted-foreground hover:bg-accent hover:text-foreground"
                                         )}
                                     >
-                                        <item.icon className={cn("h-5 w-5 shrink-0 transition-transform group-hover/item:scale-110", isActive ? "text-primary" : "")} />
-                                        {!isCollapsed && (
-                                            <>
-                                                <span className="truncate">{item.label}</span>
-                                                {isActive && (
-                                                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                                                )}
-                                            </>
-                                        )}
+                                        <div className="size-5 shrink-0 flex items-center justify-center">
+                                            <item.icon className={cn("size-5 shrink-0 transition-transform group-hover/item:scale-110", isActive ? "text-primary" : "")} />
+                                        </div>
+                                        <div
+                                            className={cn(
+                                                "flex items-center min-w-0 flex-1 overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap",
+                                                isCollapsed
+                                                    ? "max-w-0 opacity-0 -translate-x-3 pointer-events-none"
+                                                    : "max-w-[160px] opacity-100 translate-x-0"
+                                            )}
+                                        >
+                                            <span className="truncate text-sm font-medium">{item.label}</span>
+                                            {isActive && (
+                                                <div className="ml-auto size-1.5 rounded-full bg-primary shrink-0 mr-0.5" />
+                                            )}
+                                        </div>
                                     </Link>
                                 )
 
-                                if (isCollapsed) {
-                                    return (
-                                        <TooltipProvider key={item.label} delayDuration={100}>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
+                                return (
+                                    <TooltipProvider key={item.label} delayDuration={100}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="w-full">
                                                     {navLink}
-                                                </TooltipTrigger>
+                                                </div>
+                                            </TooltipTrigger>
+                                            {isCollapsed && (
                                                 <TooltipContent side="right" sideOffset={14} className="font-medium text-xs">
                                                     <p>{item.label}</p>
                                                 </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    )
-                                }
-
-                                return <div key={item.label} className="w-full">{navLink}</div>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )
                             })}
                     </nav>
                 </div>
