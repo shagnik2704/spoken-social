@@ -654,63 +654,80 @@ export function LearnerPackTracker() {
                                     <button
                                         onClick={() => setActiveTab('video')}
                                         className={cn(
-                                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'video'
-                                                ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
+                                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                         )}
                                     >
-                                        <PlayCircle className={cn("h-4 w-4", activeTab === 'video' ? "text-primary" : "text-muted-foreground")} />
+                                        <PlayCircle className={cn("h-4 w-4", activeTab === 'video' ? "text-primary-foreground" : "text-muted-foreground")} />
                                         <span>1. Watch Video</span>
                                         {tutorialDetail.userTutorial.watched === 'yes' && (
-                                            <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
+                                            <span className={cn(
+                                                "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                activeTab === 'video'
+                                                    ? "bg-primary-foreground/20 text-primary-foreground"
+                                                    : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                            )}>✓</span>
                                         )}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('reading')}
                                         className={cn(
-                                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'reading'
-                                                ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
+                                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                         )}
                                     >
-                                        <BookOpen className={cn("h-4 w-4", activeTab === 'reading' ? "text-primary" : "text-muted-foreground")} />
+                                        <BookOpen className={cn("h-4 w-4", activeTab === 'reading' ? "text-primary-foreground" : "text-muted-foreground")} />
                                         <span>2. Reading Notes</span>
                                         {tutorialDetail.userTutorial.watched === 'yes' && (
-                                            <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
+                                            <span className={cn(
+                                                "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                activeTab === 'reading'
+                                                    ? "bg-primary-foreground/20 text-primary-foreground"
+                                                    : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                            )}>✓</span>
                                         )}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('activity')}
                                         className={cn(
-                                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'activity'
-                                                ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
+                                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                         )}
                                     >
-                                        <PenTool className={cn("h-4 w-4", activeTab === 'activity' ? "text-primary" : "text-muted-foreground")} />
+                                        <PenTool className={cn("h-4 w-4", activeTab === 'activity' ? "text-primary-foreground" : "text-muted-foreground")} />
                                         <span>{tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? '3. Assignment & Practice' : '3. Activity & Reflection'}</span>
                                         {(tutorialDetail.userReflection || tutorialDetail.userTutorial.minitaskOpted === 'yes') && (
-                                            <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
+                                            <span className={cn(
+                                                "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                activeTab === 'activity'
+                                                    ? "bg-primary-foreground/20 text-primary-foreground"
+                                                    : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                            )}>✓</span>
                                         )}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('quiz')}
                                         className={cn(
-                                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'quiz'
-                                                ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
+                                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                         )}
                                     >
-                                        <HelpCircle className={cn("h-4 w-4", activeTab === 'quiz' ? "text-primary" : "text-muted-foreground")} />
+                                        <HelpCircle className={cn("h-4 w-4", activeTab === 'quiz' ? "text-primary-foreground" : "text-muted-foreground")} />
                                         <span>4. Quiz (5 MCQs)</span>
                                         {tutorialDetail.quiz.hasAttempted && (
                                             <span className={cn(
                                                 "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
-                                                tutorialDetail.quiz.passed ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
+                                                activeTab === 'quiz'
+                                                    ? "bg-primary-foreground/20 text-primary-foreground"
+                                                    : tutorialDetail.quiz.passed ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
                                             )}>✓</span>
                                         )}
                                     </button>
