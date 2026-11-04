@@ -373,26 +373,26 @@ export function LearnerPackTracker() {
                     </div>
 
                     <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-border/60">
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-background/80 border border-border/60 shadow-2xs">
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
                             <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
                                 <PlayCircle className="h-4 w-4" />
                             </div>
                             <div>
-                                <p className="text-[11px] font-bold text-foreground">Videos</p>
+                                <p className="text-[11px] font-bold text-foreground">17 Videos</p>
                                 <p className="text-[10px] text-muted-foreground">+10 XP per video</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-background/80 border border-border/60 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
                                 <BookOpen className="h-4 w-4" />
                             </div>
                             <div>
-                                <p className="text-[11px] font-bold text-foreground">Readings</p>
+                                <p className="text-[11px] font-bold text-foreground">17 Readings</p>
                                 <p className="text-[10px] text-muted-foreground">+10 XP study notes</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-background/80 border border-border/60 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
                                 <PenTool className="h-4 w-4" />
                             </div>
                             <div>
@@ -400,8 +400,8 @@ export function LearnerPackTracker() {
                                 <p className="text-[10px] text-muted-foreground">+5 XP per entry</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-background/80 border border-border/60 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
                                 <HelpCircle className="h-4 w-4" />
                             </div>
                             <div>
@@ -563,7 +563,7 @@ export function LearnerPackTracker() {
                                                                 "text-[10px] px-2 py-0.5 font-medium transition-colors",
                                                                 p.watched 
                                                                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
-                                                                    : "text-muted-foreground/60 border-dashed"
+                                                                    : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
                                                             )}
                                                             title="Video Watched"
                                                         >
@@ -574,8 +574,8 @@ export function LearnerPackTracker() {
                                                             className={cn(
                                                                 "text-[10px] px-2 py-0.5 font-medium transition-colors",
                                                                 p.reflectionSubmitted 
-                                                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30" 
-                                                                    : "text-muted-foreground/60 border-dashed"
+                                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                    : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
                                                             )}
                                                             title="Written Reflection"
                                                         >
@@ -586,8 +586,8 @@ export function LearnerPackTracker() {
                                                             className={cn(
                                                                 "text-[10px] px-2 py-0.5 font-medium transition-colors",
                                                                 p.quizPassed 
-                                                                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30" 
-                                                                    : "text-muted-foreground/60 border-dashed"
+                                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                    : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
                                                             )}
                                                             title="5-Question Automated Quiz"
                                                         >
@@ -753,10 +753,10 @@ export function LearnerPackTracker() {
                                                 download
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-background hover:bg-muted text-foreground border border-border/80 font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs"
                                             >
-                                                <Code2 className="h-3.5 w-3.5" />
-                                                <span>Download Code Files (.zip)</span>
+                                                <Code2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                                <span>Code Files (.zip)</span>
                                             </a>
                                         )}
 
@@ -766,9 +766,9 @@ export function LearnerPackTracker() {
                                                 href={tutorialDetail.instructionSheetUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/25 font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-background hover:bg-muted text-foreground border border-border/80 font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs"
                                             >
-                                                <FileText className="h-3.5 w-3.5" />
+                                                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                                                 <span>Instruction Sheet (PDF)</span>
                                             </a>
                                         )}
@@ -785,11 +785,11 @@ export function LearnerPackTracker() {
                                             "px-2.5 py-0.5 rounded-full font-medium border flex items-center gap-1.5 shadow-2xs",
                                             tutorialDetail.userTutorial.watched === 'yes'
                                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                                                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                                : "bg-muted/60 text-muted-foreground border-border/70"
                                         )}>
                                             <span className={cn(
                                                 "size-1.5 rounded-full",
-                                                tutorialDetail.userTutorial.watched === 'yes' ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+                                                tutorialDetail.userTutorial.watched === 'yes' ? "bg-emerald-500" : "bg-muted-foreground/50"
                                             )} />
                                             <span>{tutorialDetail.userTutorial.watched === 'yes' ? 'Watched (+10 XP)' : 'Unwatched'}</span>
                                         </span>
@@ -987,11 +987,11 @@ export function LearnerPackTracker() {
                                             <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
                                                 <div className="space-y-4">
                                                     <div className="flex items-center gap-2.5">
-                                                        <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                                        <div className="p-2.5 rounded-xl bg-muted text-foreground border border-border/70">
                                                             <PenTool className="h-5 w-5" />
                                                         </div>
                                                         <div>
-                                                            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600">Part 1</span>
+                                                            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground">Part 1</span>
                                                             <h3 className="text-base font-bold text-foreground">
                                                                 {tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? 'Hands-On Practice / Assignment' : 'Private Notebook Exercise'}
                                                             </h3>
@@ -1010,10 +1010,10 @@ export function LearnerPackTracker() {
                                                         {tryItSteps.map((step, idx) => (
                                                             <div
                                                                 key={idx}
-                                                                className="p-3.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1 hover:border-amber-500/30 transition-colors"
+                                                                className="p-3.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1 hover:border-primary/40 transition-colors"
                                                             >
                                                                 <div className="flex items-center gap-2">
-                                                                    <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20">
+                                                                    <Badge variant="outline" className="text-[10px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground border-border/80">
                                                                         Step {idx + 1}
                                                                     </Badge>
                                                                 </div>
