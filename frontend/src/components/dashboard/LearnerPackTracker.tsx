@@ -277,11 +277,7 @@ export function LearnerPackTracker() {
             })
             const { score, totalQuestions, passed, results, xpGained } = res.data
 
-            if (passed) {
-                toast.success(`Quiz passed with ${score}/${totalQuestions}! +${xpGained} XP 🎉`)
-            } else {
-                toast.warning(`Scored ${score}/${totalQuestions}. Review the explanations below!`)
-            }
+            toast.success(`Quiz completed! Scored ${score}/${totalQuestions}${xpGained > 0 ? ` (+${xpGained} XP)` : ''} 🎉`)
             if (xpGained > 0) addXP(xpGained)
 
             setTutorialDetail({
@@ -719,7 +715,7 @@ export function LearnerPackTracker() {
                                                 "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
                                                 activeTab === 'quiz'
                                                     ? "bg-primary-foreground/20 text-primary-foreground"
-                                                    : tutorialDetail.quiz.passed ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
+                                                    : ((tutorialDetail.quiz.score ?? 0) >= 3) ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
                                             )}>✓</span>
                                         )}
                                     </button>
@@ -1141,28 +1137,28 @@ export function LearnerPackTracker() {
                                                         <Badge variant="outline" className="text-xs font-mono">5 Questions</Badge>
                                                     </div>
                                                     <p className="text-xs text-muted-foreground">
-                                                        Passing grade: 60% (3 / 5). Full rationales and explanations will be unlocked upon submission.
+                                                        5 multiple-choice questions. Full rationales and explanations will be unlocked upon submission.
                                                     </p>
                                                 </div>
 
                                                 {tutorialDetail.quiz.hasAttempted ? (
-                                                    <div className={`px-4 py-2 rounded-xl border flex items-center gap-3 ${tutorialDetail.quiz.passed
-                                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600'
-                                                        : 'bg-amber-500/10 border-amber-500/20 text-amber-600'
-                                                        }`}>
-                                                        <div className="text-right">
-                                                            <div className="text-xs uppercase font-bold tracking-wider">
-                                                                {tutorialDetail.quiz.passed ? 'Passed 🎉' : 'Needs Review'}
-                                                            </div>
-                                                            <div className="text-lg font-black font-mono">
-                                                                {tutorialDetail.quiz.score} / {tutorialDetail.quiz.totalQuestions}
-                                                            </div>
+                                                    <div className={cn(
+                                                        "px-4 py-2 rounded-xl border flex flex-col items-center sm:items-end justify-center min-w-[90px]",
+                                                        ((tutorialDetail.quiz.score ?? 0) >= 3)
+                                                            ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
+                                                            : 'bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400'
+                                                    )}>
+                                                        <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                                                            Score
+                                                        </div>
+                                                        <div className="text-xl font-bold font-mono">
+                                                            {tutorialDetail.quiz.score} / {tutorialDetail.quiz.totalQuestions}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex items-center gap-2 text-xs font-mono font-semibold text-xp-gold bg-xp-gold/10 border border-xp-gold/20 px-3 py-1.5 rounded-xl">
-                                                        <Sparkles className="h-4 w-4" />
-                                                        +10 XP on Pass
+                                                    <div className="flex items-center gap-2 text-xs font-mono font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
+                                                        <Sparkles className="h-4 w-4 text-amber-500" />
+                                                        +10 XP
                                                     </div>
                                                 )}
                                             </div>
@@ -1292,27 +1288,25 @@ export function LearnerPackTracker() {
                                                         )}
                                                     </div>
 
-                                                    {!tutorialDetail.quiz.passed && (
-                                                        <div className="flex justify-end">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                onClick={() => {
-                                                                    setQuizAnswers({})
-                                                                    setTutorialDetail({
-                                                                        ...tutorialDetail,
-                                                                        quiz: {
-                                                                            ...tutorialDetail.quiz,
-                                                                            hasAttempted: false
-                                                                        }
-                                                                    })
-                                                                }}
-                                                                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-                                                            >
-                                                                Retake Quiz Attempt
-                                                            </Button>
-                                                        </div>
-                                                    )}
+                                                    <div className="flex justify-end">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                setQuizAnswers({})
+                                                                setTutorialDetail({
+                                                                    ...tutorialDetail,
+                                                                    quiz: {
+                                                                        ...tutorialDetail.quiz,
+                                                                        hasAttempted: false
+                                                                    }
+                                                                })
+                                                            }}
+                                                            className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                                                        >
+                                                            Retake Quiz
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

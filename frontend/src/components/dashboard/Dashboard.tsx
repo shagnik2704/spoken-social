@@ -52,11 +52,10 @@ function getGreeting(): string {
 function GreetingBanner() {
     const userName = useUserStore(state => state.user?.displayName)
     const firstName = userName?.split(' ')[0]
-    const activeProgrammeName = useUserStore(state => state.activeProgrammeName)
 
     return (
         <Card className="border-border/80 bg-card shadow-xs">
-            <CardContent className="p-5 sm:p-6 flex flex-col justify-between h-full">
+            <CardContent className="p-5 sm:p-6 flex flex-col justify-center h-full">
                 <div className="space-y-1.5">
                     <div className="flex items-center gap-2 mb-1">
                         <span className="text-xl">👋</span>
@@ -67,14 +66,6 @@ function GreetingBanner() {
                     <p className="text-muted-foreground text-xs sm:text-sm">
                         Welcome back to your learning workspace.
                     </p>
-                </div>
-                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1.5 font-medium">
-                        <span className="size-2 rounded-full bg-emerald-500" />
-                        {activeProgrammeName || 'SWAYAM Plus'} Active
-                    </span>
-                    <span className="text-muted-foreground/40">•</span>
-                    <span>Self-paced Curriculum</span>
                 </div>
             </CardContent>
         </Card>
