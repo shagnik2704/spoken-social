@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useUserStore } from '@/store/userStore'
-import { Loader2, AlertCircle, ArrowRight } from 'lucide-react'
+import { Loader2, AlertCircle, ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 export const SSOCallbackPage: React.FC = () => {
     const [searchParams] = useSearchParams()
     const ssoLogin = useAuthStore(state => state.ssoLogin)
+    const login = useAuthStore(state => state.login)
     const fetchUser = useUserStore(state => state.fetchUser)
     const navigate = useNavigate()
 
@@ -119,12 +120,30 @@ export const SSOCallbackPage: React.FC = () => {
                                 </p>
                             </div>
                             <Button
-                                onClick={() => navigate('/')}
+                                onClick={() => navigate('/login')}
                                 className="w-full bg-[#1A237E] hover:bg-[#151b66] text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer mt-4"
                             >
                                 <span>Go to Login</span>
                                 <ArrowRight className="w-4 h-4" />
                             </Button>
+
+                            {import.meta.env.DEV && (
+                                <Button
+                                    variant="outline"
+                                    onClick={async () => {
+                                        const ok = await login('swayam_tester@test.com', 'password123')
+                                        if (ok) {
+                                            await fetchUser()
+                                            toast.success('Signed in as SWAYAM Test Student')
+                                            navigate('/', { replace: true })
+                                        }
+                                    }}
+                                    className="w-full border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer mt-2"
+                                >
+                                    <Sparkles className="w-4 h-4 text-amber-500" />
+                                    <span>One-Click Dev Login (SWAYAM Learner)</span>
+                                </Button>
+                            )}
                         </div>
                     )}
                 </div>

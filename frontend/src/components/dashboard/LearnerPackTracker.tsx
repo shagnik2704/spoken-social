@@ -17,10 +17,11 @@ import {
     CheckCircle2, ChevronDown, Lock, BookOpen,
     PlayCircle, HelpCircle, PenTool, Sparkles,
     Heart, Lightbulb, Compass,
-    Check, ArrowRight, ExternalLink, Download, FileText
+    Check, ArrowRight, ExternalLink, FileText, Code2
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -336,47 +337,73 @@ export function LearnerPackTracker() {
     return (
         <div className="space-y-6">
             {/* Header Card */}
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background">
-                <CardContent className="p-6">
+            <Card className="border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card shadow-sm overflow-hidden">
+                <CardContent className="p-6 sm:p-7">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                                <Compass className="h-6 w-6 text-primary" />
-                                <h2 className="text-xl font-bold tracking-tight">{overview.title}</h2>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+                                    <Compass className="h-6 w-6 text-primary" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans">
+                                        {overview.title}
+                                    </h2>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">
+                                        12-Week Interactive Curriculum & Learning Workspace
+                                    </p>
+                                </div>
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                                12-Week SWAYAM Plus Life-Skills & Human Development Workspace
-                            </p>
                         </div>
-                        <Badge variant="outline" className="px-3 py-1 font-mono text-xs border-primary/30 text-primary bg-primary/10">
+                        <Badge variant="outline" className="px-3.5 py-1.5 font-mono text-xs font-semibold border-primary/30 text-primary bg-primary/10 shadow-2xs">
                             {completedTuts} / {totalTuts} Completed ({progressPercent}%)
                         </Badge>
                     </div>
 
-                    <div className="mt-4 space-y-1.5">
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Course Completion Progress</span>
-                            <span>{progressPercent}%</span>
+                    <div className="mt-5 space-y-2">
+                        <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                            <span>Curriculum Progress</span>
+                            <span className="font-mono text-foreground font-semibold">{progressPercent}%</span>
                         </div>
-                        <Progress value={progressPercent} className="h-2.5 bg-muted" />
+                        <Progress value={progressPercent} className="h-2.5 bg-muted/80 rounded-full" />
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-muted-foreground pt-4 border-t">
-                        <div className="flex items-center gap-1.5">
-                            <PlayCircle className="h-4 w-4 text-primary" />
-                            <span>17 Videos (+10 XP)</span>
+                    <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-border/60">
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-background/80 border border-border/60 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                                <PlayCircle className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-bold text-foreground">Videos</p>
+                                <p className="text-[10px] text-muted-foreground">+10 XP per video</p>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <BookOpen className="h-4 w-4 text-emerald-500" />
-                            <span>17 Readings (+10 XP)</span>
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-background/80 border border-border/60 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                <BookOpen className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-bold text-foreground">Readings</p>
+                                <p className="text-[10px] text-muted-foreground">+10 XP study notes</p>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <PenTool className="h-4 w-4 text-amber-500" />
-                            <span>17 Reflections (+5 XP)</span>
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-background/80 border border-border/60 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                <PenTool className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-bold text-foreground">Practice & Reflection</p>
+                                <p className="text-[10px] text-muted-foreground">+5 XP per entry</p>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <HelpCircle className="h-4 w-4 text-purple-500" />
-                            <span>17 Quizzes (85 MCQs)</span>
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-background/80 border border-border/60 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                                <HelpCircle className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-bold text-foreground">85 MCQs</p>
+                                <p className="text-[10px] text-muted-foreground">+10 XP per quiz</p>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
@@ -476,57 +503,91 @@ export function LearnerPackTracker() {
                                         return (
                                             <div
                                                 key={tut.id}
-                                                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-xl border bg-card hover:bg-muted/20 transition-all gap-3"
+                                                className={cn(
+                                                    "group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border transition-all gap-4",
+                                                    isCompleted 
+                                                        ? "bg-card/60 border-emerald-500/25 hover:border-emerald-500/40 hover:shadow-xs" 
+                                                        : (p.watched || p.reflectionSubmitted)
+                                                            ? "bg-card border-primary/30 hover:border-primary/50 shadow-2xs"
+                                                            : "bg-card border-border/70 hover:border-primary/30 hover:shadow-2xs"
+                                                )}
                                             >
-                                                <div className="space-y-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-mono font-bold text-primary">
-                                                            #{tut.number}
-                                                        </span>
-                                                        <h4 className="text-sm font-semibold truncate text-foreground">
+                                                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                                                    <div className={cn(
+                                                        "h-8 w-8 rounded-lg font-mono text-xs font-bold flex items-center justify-center shrink-0 border transition-colors",
+                                                        isCompleted
+                                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                                                            : (p.watched || p.reflectionSubmitted)
+                                                                ? "bg-primary/10 text-primary border-primary/25"
+                                                                : "bg-muted text-muted-foreground border-border/60"
+                                                    )}>
+                                                        {isCompleted ? "✓" : `#${tut.number}`}
+                                                    </div>
+                                                    <div className="space-y-1 min-w-0">
+                                                        <h4 className="text-sm font-semibold truncate text-foreground group-hover:text-primary transition-colors">
                                                             {tut.title}
                                                         </h4>
+                                                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                                                            {tut.readingTitle && (
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <BookOpen className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                                                                    <span>{tut.readingTimeMinutes || 15}m read</span>
+                                                                </span>
+                                                            )}
+                                                            {tut.hasCodeFiles && (
+                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.2 rounded border border-emerald-500/20">
+                                                                    <Code2 className="h-3 w-3" />
+                                                                    Code Files
+                                                                </span>
+                                                            )}
+                                                            {tut.hasInstructionSheet && (
+                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.2 rounded border border-sky-500/20">
+                                                                    <FileText className="h-3 w-3" />
+                                                                    PDF Sheet
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    {tut.readingTitle && (
-                                                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                                            <BookOpen className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-                                                            {tut.readingTitle} ({tut.readingTimeMinutes || 15} mins)
-                                                        </p>
-                                                    )}
                                                 </div>
 
-                                                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                                                <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
                                                     {/* Step Badges */}
-                                                    <div className="flex items-center gap-1">
+                                                    <div className="flex items-center gap-1.5">
                                                         <Badge
                                                             variant="outline"
-                                                            className={`text-[10px] px-1.5 py-0 ${p.watched ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' : 'text-muted-foreground/50 border-dashed'}`}
+                                                            className={cn(
+                                                                "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                p.watched 
+                                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                    : "text-muted-foreground/60 border-dashed"
+                                                            )}
                                                             title="Video Watched"
                                                         >
-                                                            {p.watched ? '✓ Watched' : 'Watch'}
+                                                            {p.watched ? "✓ Video" : "Video"}
                                                         </Badge>
-                                                        {tut.hasCodeFiles && (
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                                                                title="Companion Code Files available"
-                                                            >
-                                                                Code
-                                                            </Badge>
-                                                        )}
                                                         <Badge
                                                             variant="outline"
-                                                            className={`text-[10px] px-1.5 py-0 ${p.reflectionSubmitted ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' : 'text-muted-foreground/50 border-dashed'}`}
-                                                            title="Written Reflection Submitted"
+                                                            className={cn(
+                                                                "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                p.reflectionSubmitted 
+                                                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30" 
+                                                                    : "text-muted-foreground/60 border-dashed"
+                                                            )}
+                                                            title="Written Reflection"
                                                         >
-                                                            {p.reflectionSubmitted ? '✓ Reflection' : 'Reflection'}
+                                                            {p.reflectionSubmitted ? "✓ Reflection" : "Reflection"}
                                                         </Badge>
                                                         <Badge
                                                             variant="outline"
-                                                            className={`text-[10px] px-1.5 py-0 ${p.quizPassed ? 'bg-purple-500/10 text-purple-600 border-purple-500/30' : 'text-muted-foreground/50 border-dashed'}`}
+                                                            className={cn(
+                                                                "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                p.quizPassed 
+                                                                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30" 
+                                                                    : "text-muted-foreground/60 border-dashed"
+                                                            )}
                                                             title="5-Question Automated Quiz"
                                                         >
-                                                            {p.quizPassed ? `✓ Quiz (${p.quizScore}/5)` : 'Quiz'}
+                                                            {p.quizPassed ? `✓ Quiz (${p.quizScore}/5)` : "Quiz"}
                                                         </Badge>
                                                     </div>
 
@@ -534,10 +595,13 @@ export function LearnerPackTracker() {
                                                         size="sm"
                                                         variant={isCompleted ? "outline" : "default"}
                                                         onClick={() => openTutorialModal(tut.id)}
-                                                        className="text-xs font-medium h-8"
+                                                        className={cn(
+                                                            "text-xs font-semibold h-8.5 px-3.5 transition-all shadow-2xs hover:shadow-xs",
+                                                            !isCompleted && "bg-primary text-primary-foreground hover:bg-primary/90"
+                                                        )}
                                                     >
-                                                        {isCompleted ? 'Review' : (p.watched || p.reflectionSubmitted) ? 'Continue' : 'Open Tutorial'}
-                                                        <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                                                        <span>{isCompleted ? 'Review' : (p.watched || p.reflectionSubmitted) ? 'Continue' : 'Open Tutorial'}</span>
+                                                        <ArrowRight className="h-3.5 w-3.5 ml-1.5 group-hover:translate-x-0.5 transition-transform" />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -586,58 +650,68 @@ export function LearnerPackTracker() {
                                 </div>
 
                                 {/* Modern Step Navigation Tabs: Video First! */}
-                                <div className="flex items-center gap-2 mt-4 pt-2 border-t border-border/50 overflow-x-auto no-scrollbar">
+                                <div className="flex items-center gap-1.5 mt-4 p-1 rounded-xl bg-muted/60 border border-border/60 overflow-x-auto no-scrollbar shadow-inner">
                                     <button
                                         onClick={() => setActiveTab('video')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${activeTab === 'video'
-                                            ? 'bg-primary text-primary-foreground shadow-sm'
-                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                                            }`}
+                                        className={cn(
+                                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            activeTab === 'video'
+                                                ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
+                                        )}
                                     >
-                                        <PlayCircle className="h-4 w-4" />
+                                        <PlayCircle className={cn("h-4 w-4", activeTab === 'video' ? "text-primary" : "text-muted-foreground")} />
                                         <span>1. Watch Video</span>
                                         {tutorialDetail.userTutorial.watched === 'yes' && (
-                                            <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
+                                            <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
                                         )}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('reading')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${activeTab === 'reading'
-                                            ? 'bg-primary text-primary-foreground shadow-sm'
-                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                                            }`}
+                                        className={cn(
+                                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            activeTab === 'reading'
+                                                ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
+                                        )}
                                     >
-                                        <BookOpen className="h-4 w-4" />
+                                        <BookOpen className={cn("h-4 w-4", activeTab === 'reading' ? "text-primary" : "text-muted-foreground")} />
                                         <span>2. Reading Notes</span>
                                         {tutorialDetail.userTutorial.watched === 'yes' && (
-                                            <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
+                                            <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
                                         )}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('activity')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${activeTab === 'activity'
-                                            ? 'bg-primary text-primary-foreground shadow-sm'
-                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                                            }`}
+                                        className={cn(
+                                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            activeTab === 'activity'
+                                                ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
+                                        )}
                                     >
-                                        <PenTool className="h-4 w-4" />
+                                        <PenTool className={cn("h-4 w-4", activeTab === 'activity' ? "text-primary" : "text-muted-foreground")} />
                                         <span>{tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? '3. Assignment & Practice' : '3. Activity & Reflection'}</span>
                                         {(tutorialDetail.userReflection || tutorialDetail.userTutorial.minitaskOpted === 'yes') && (
-                                            <span className="h-4 w-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
+                                            <span className="size-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</span>
                                         )}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('quiz')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${activeTab === 'quiz'
-                                            ? 'bg-primary text-primary-foreground shadow-sm'
-                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                                            }`}
+                                        className={cn(
+                                            "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                            activeTab === 'quiz'
+                                                ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
+                                        )}
                                     >
-                                        <HelpCircle className="h-4 w-4" />
+                                        <HelpCircle className={cn("h-4 w-4", activeTab === 'quiz' ? "text-primary" : "text-muted-foreground")} />
                                         <span>4. Quiz (5 MCQs)</span>
                                         {tutorialDetail.quiz.hasAttempted && (
-                                            <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold ${tutorialDetail.quiz.passed ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
-                                                }`}>✓</span>
+                                            <span className={cn(
+                                                "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                tutorialDetail.quiz.passed ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
+                                            )}>✓</span>
                                         )}
                                     </button>
                                 </div>
@@ -645,10 +719,10 @@ export function LearnerPackTracker() {
 
                             {/* DYNAMIC RESOURCE BAR: Only renders if resources actually exist for this tutorial! */}
                             {(tutorialDetail.codeFilesUrl || tutorialDetail.instructionSheetUrl || tutorialDetail.videoUrl) && (
-                                <div className="px-5 sm:px-8 py-2.5 bg-muted/40 border-b border-border/60 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+                                <div className="px-5 sm:px-8 py-2.5 bg-muted/30 border-b border-border/60 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-sm">
                                     <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-                                        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground/80">
-                                            Resources:
+                                        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground/80 flex items-center gap-1">
+                                            <span>Course Assets:</span>
                                         </span>
 
                                         {/* Code Files Button (Dynamic: only for courses with code files) */}
@@ -658,9 +732,9 @@ export function LearnerPackTracker() {
                                                 download
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-medium transition-colors"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs"
                                             >
-                                                <Download className="h-3.5 w-3.5" />
+                                                <Code2 className="h-3.5 w-3.5" />
                                                 <span>Download Code Files (.zip)</span>
                                             </a>
                                         )}
@@ -671,25 +745,32 @@ export function LearnerPackTracker() {
                                                 href={tutorialDetail.instructionSheetUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 font-medium transition-colors"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/25 font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs"
                                             >
                                                 <FileText className="h-3.5 w-3.5" />
                                                 <span>Instruction Sheet (PDF)</span>
                                             </a>
                                         )}
 
-                                        <span className="text-[11px] text-muted-foreground bg-muted px-2.5 py-1 rounded-md border border-border/50 flex items-center gap-1">
-                                            <span>🌐</span> Spoken Tutorial Media
+                                        <span className="text-[11px] text-muted-foreground bg-background/80 px-2.5 py-1 rounded-lg border border-border/60 flex items-center gap-1.5 shadow-2xs">
+                                            <span className="size-1.5 rounded-full bg-primary" />
+                                            <span>Spoken Tutorial Media</span>
                                         </span>
                                     </div>
 
                                     <div className="flex items-center gap-2 text-[11px]">
-                                        <span className="text-muted-foreground">Status:</span>
-                                        <span className={`px-2.5 py-0.5 rounded font-medium border ${tutorialDetail.userTutorial.watched === 'yes'
-                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                                            }`}>
-                                            {tutorialDetail.userTutorial.watched === 'yes' ? '✓ Watched (+10 XP)' : 'Not Watched'}
+                                        <span className="text-muted-foreground font-medium">Status:</span>
+                                        <span className={cn(
+                                            "px-2.5 py-0.5 rounded-full font-medium border flex items-center gap-1.5 shadow-2xs",
+                                            tutorialDetail.userTutorial.watched === 'yes'
+                                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                        )}>
+                                            <span className={cn(
+                                                "size-1.5 rounded-full",
+                                                tutorialDetail.userTutorial.watched === 'yes' ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+                                            )} />
+                                            <span>{tutorialDetail.userTutorial.watched === 'yes' ? 'Watched (+10 XP)' : 'Unwatched'}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -713,21 +794,29 @@ export function LearnerPackTracker() {
                                                         onEnded={handleVideoEnded}
                                                     >
                                                         <source src={tutorialDetail.videoUrl} type="video/webm" />
+                                                        {tutorialDetail.videoUrl && tutorialDetail.videoUrl.endsWith('-English.webm') && (
+                                                            <source src={tutorialDetail.videoUrl.replace('-English.webm', '-English-sample.webm')} type="video/webm" />
+                                                        )}
                                                         Your browser does not support WebM video streaming.
                                                     </video>
                                                 </div>
 
                                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-card border border-border/80 shadow-xs">
-                                                    <div className="text-xs text-muted-foreground leading-relaxed">
-                                                        {tutorialDetail.codeFilesUrl ? (
-                                                            <p>
-                                                                💻 <strong>Coding Exercise:</strong> Download the companion <code className="text-emerald-600 dark:text-emerald-400 font-semibold">Code Files (.zip)</code> in the resources bar above to follow along and test code in your local editor.
-                                                            </p>
-                                                        ) : (
-                                                            <p>
-                                                                🎧 <strong>Tip:</strong> Watch carefully and observe the key concepts. Mark as watched when finished to earn your +10 XP, then proceed to the Reading Notes.
-                                                            </p>
-                                                        )}
+                                                    <div className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2.5">
+                                                        <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5">
+                                                            <Lightbulb className="h-4 w-4" />
+                                                        </div>
+                                                        <div>
+                                                            {tutorialDetail.codeFilesUrl ? (
+                                                                <p>
+                                                                    <strong>Coding Follow-Along:</strong> Download the companion <code className="text-emerald-600 dark:text-emerald-400 font-semibold">Code Files (.zip)</code> in the resources tray above to reproduce this tutorial in your local development environment.
+                                                                </p>
+                                                            ) : (
+                                                                <p>
+                                                                    <strong>Learning Tip:</strong> Watch carefully and follow each demonstration. Mark as watched to claim your <span className="text-primary font-semibold">+10 XP</span>, then proceed to the Reading Notes.
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
@@ -735,13 +824,16 @@ export function LearnerPackTracker() {
                                                             variant="outline"
                                                             onClick={handleMarkVideoWatched}
                                                             disabled={tutorialDetail.userTutorial.watched === 'yes'}
-                                                            className="text-xs font-semibold flex-1 sm:flex-none"
+                                                            className={cn(
+                                                                "text-xs font-semibold flex-1 sm:flex-none shadow-2xs transition-all",
+                                                                tutorialDetail.userTutorial.watched === 'yes' && "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                                                            )}
                                                         >
                                                             {tutorialDetail.userTutorial.watched === 'yes' ? '✓ Watched (+10 XP)' : 'Mark as Watched (+10 XP)'}
                                                         </Button>
                                                         <Button
                                                             onClick={() => setActiveTab('reading')}
-                                                            className="text-xs font-bold flex-1 sm:flex-none gap-1.5"
+                                                            className="text-xs font-bold flex-1 sm:flex-none gap-1.5 shadow-2xs hover:shadow-xs"
                                                         >
                                                             <span>Next: Reading Notes</span>
                                                             <ArrowRight className="h-4 w-4" />

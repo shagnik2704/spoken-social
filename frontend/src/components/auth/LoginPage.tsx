@@ -280,6 +280,23 @@ export const LoginPage: React.FC = (): React.JSX.Element => {
                                     </>
                                 )}
                             </Button>
+
+                            {import.meta.env.DEV && (
+                                <div className="pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setEmail('swayam_tester@test.com')
+                                            setPassword('password123')
+                                            toast.info('Filled SWAYAM Test credentials')
+                                        }}
+                                        className="w-full text-xs text-muted-foreground hover:text-foreground py-2 px-3 rounded-xl border border-dashed border-border/80 hover:border-primary/50 bg-muted/30 hover:bg-muted/60 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                    >
+                                        <Terminal className="w-3.5 h-3.5 text-primary" />
+                                        <span>Auto-fill SWAYAM Test Student (Local Dev)</span>
+                                    </button>
+                                </div>
+                            )}
                             
                         </form>
                     </div>
