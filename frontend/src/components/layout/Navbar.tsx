@@ -243,7 +243,10 @@ export function DesktopSidebar() {
                     isCollapsed ? "w-16" : "w-60"
                 )}
             >
-                <div className="w-60 min-w-[240px] flex flex-col h-full">
+                <div className={cn(
+                    "flex flex-col h-full transition-[width] duration-300 ease-in-out overflow-hidden",
+                    isCollapsed ? "w-16" : "w-60"
+                )}>
                     <nav className="flex flex-col gap-1.5 px-2 py-3 flex-1">
                         {navItems
                             .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
@@ -277,7 +280,7 @@ export function DesktopSidebar() {
                                                 <TooltipTrigger asChild>
                                                     {disabledItem}
                                                 </TooltipTrigger>
-                                                <TooltipContent side="right" sideOffset={14}>
+                                                <TooltipContent side="right" sideOffset={8}>
                                                     <p>{item.label}: Coming soon!</p>
                                                 </TooltipContent>
                                             </Tooltip>
@@ -314,22 +317,22 @@ export function DesktopSidebar() {
                                     </Link>
                                 )
 
-                                return (
-                                    <TooltipProvider key={item.label} delayDuration={100}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div className="w-full">
+                                if (isCollapsed) {
+                                    return (
+                                        <TooltipProvider key={item.label} delayDuration={50}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
                                                     {navLink}
-                                                </div>
-                                            </TooltipTrigger>
-                                            {isCollapsed && (
-                                                <TooltipContent side="right" sideOffset={14} className="font-medium text-xs">
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={8} className="font-medium text-xs shadow-md">
                                                     <p>{item.label}</p>
                                                 </TooltipContent>
-                                            )}
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )
+                                }
+
+                                return <div key={item.label} className="w-full">{navLink}</div>
                             })}
                     </nav>
                 </div>
