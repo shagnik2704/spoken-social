@@ -111,11 +111,32 @@ export function LearnerPackTracker() {
         fetchOverview()
     }, [activeCourseId])
 
+    const [videoWatchPercent, setVideoWatchPercent] = useState<number>(0)
+
+    const switchTab = (tab: 'video' | 'reading' | 'activity' | 'quiz') => {
+        setActiveTab(tab)
+        requestAnimationFrame(() => {
+            const btn = document.getElementById(`tab-btn-${tab}`)
+            if (btn) {
+                btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+            }
+            const modalBody = document.getElementById('tutorial-modal-body')
+            if (modalBody) {
+                modalBody.scrollTo({ top: 0, behavior: 'smooth' })
+            }
+        })
+    }
+
     const openTutorialModal = async (tutId: string) => {
         setActiveTutorialId(tutId)
         setIsLoadingDetail(true)
         setActiveTab('video')
+        setVideoWatchPercent(0)
         setQuizAnswers({})
+        requestAnimationFrame(() => {
+            const btn = document.getElementById('tab-btn-video')
+            if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+        })
         try {
             const res = await api.get(`/api/learner-pack/tutorials/${tutId}`)
             const data: LearnerPackTutorialDetail = res.data
@@ -654,9 +675,10 @@ export function LearnerPackTracker() {
                                 </div>
 
                                 {/* Modern Step Navigation Tabs: Video First! */}
-                                <div className="flex items-center gap-1.5 mt-4 p-1 rounded-xl bg-muted/60 border border-border/60 overflow-x-auto no-scrollbar shadow-inner">
+                                <div id="tutorial-tab-bar" className="flex items-center gap-1.5 mt-4 p-1 rounded-xl bg-muted/60 border border-border/60 overflow-x-auto no-scrollbar shadow-inner scroll-smooth">
                                     <button
-                                        onClick={() => setActiveTab('video')}
+                                        id="tab-btn-video"
+                                        onClick={() => switchTab('video')}
                                         className={cn(
                                             "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'video'
@@ -676,7 +698,8 @@ export function LearnerPackTracker() {
                                         )}
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('reading')}
+                                        id="tab-btn-reading"
+                                        onClick={() => switchTab('reading')}
                                         className={cn(
                                             "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'reading'
@@ -696,7 +719,8 @@ export function LearnerPackTracker() {
                                         )}
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('activity')}
+                                        id="tab-btn-activity"
+                                        onClick={() => switchTab('activity')}
                                         className={cn(
                                             "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'activity'
@@ -716,7 +740,8 @@ export function LearnerPackTracker() {
                                         )}
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('quiz')}
+                                        id="tab-btn-quiz"
+                                        onClick={() => switchTab('quiz')}
                                         className={cn(
                                             "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'quiz'
@@ -738,69 +763,10 @@ export function LearnerPackTracker() {
                                 </div>
                             </div>
 
-                            {/* DYNAMIC RESOURCE BAR: Only renders if resources actually exist for this tutorial! */}
-                            {(tutorialDetail.codeFilesUrl || tutorialDetail.instructionSheetUrl || tutorialDetail.videoUrl) && (
-                                <div className="px-5 sm:px-8 py-2.5 bg-muted/30 border-b border-border/60 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-sm">
-                                    <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-                                        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground/80 flex items-center gap-1">
-                                            <span>Course Assets:</span>
-                                        </span>
-
-                                        {/* Code Files Button (Dynamic: only for courses with code files) */}
-                                        {tutorialDetail.codeFilesUrl && (
-                                            <a
-                                                href={tutorialDetail.codeFilesUrl}
-                                                download
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-background hover:bg-muted text-foreground border border-border/80 font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs"
-                                            >
-                                                <Code2 className="h-3.5 w-3.5 text-muted-foreground" />
-                                                <span>Code Files (.zip)</span>
-                                            </a>
-                                        )}
-
-                                        {/* Instruction Sheet Button (Dynamic: only for courses with instruction sheets) */}
-                                        {tutorialDetail.instructionSheetUrl && (
-                                            <a
-                                                href={tutorialDetail.instructionSheetUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-background hover:bg-muted text-foreground border border-border/80 font-medium transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs"
-                                            >
-                                                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                                                <span>Instruction Sheet (PDF)</span>
-                                            </a>
-                                        )}
-
-                                        <span className="text-[11px] text-muted-foreground bg-background/80 px-2.5 py-1 rounded-lg border border-border/60 flex items-center gap-1.5 shadow-2xs">
-                                            <span className="size-1.5 rounded-full bg-primary" />
-                                            <span>Spoken Tutorial Media</span>
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 text-[11px]">
-                                        <span className="text-muted-foreground font-medium">Status:</span>
-                                        <span className={cn(
-                                            "px-2.5 py-0.5 rounded-full font-medium border flex items-center gap-1.5 shadow-2xs",
-                                            tutorialDetail.userTutorial.watched === 'yes'
-                                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                                                : "bg-muted/60 text-muted-foreground border-border/70"
-                                        )}>
-                                            <span className={cn(
-                                                "size-1.5 rounded-full",
-                                                tutorialDetail.userTutorial.watched === 'yes' ? "bg-emerald-500" : "bg-muted-foreground/50"
-                                            )} />
-                                            <span>{tutorialDetail.userTutorial.watched === 'yes' ? 'Watched (+10 XP)' : 'Unwatched'}</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
-
                             {/* Modal Body / Tab Content */}
                             {/* TAB 1: VIDEO (FIRST) */}
                             {activeTab === 'video' && (
-                                <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center bg-background/50 min-h-0">
+                                <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center bg-background/50 min-h-0">
                                     <div className="w-full max-w-4xl space-y-4 my-auto">
                                         {tutorialDetail.videoUrl ? (
                                             <div className="space-y-4">
@@ -812,6 +778,19 @@ export function LearnerPackTracker() {
                                                         preload="metadata"
                                                         poster={tutorialDetail.videoPosterUrl || undefined}
                                                         className="w-full h-full object-contain"
+                                                        onTimeUpdate={(e) => {
+                                                            const v = e.currentTarget
+                                                            if (v.duration > 0) {
+                                                                const pct = Math.round((v.currentTime / v.duration) * 100)
+                                                                setVideoWatchPercent(prev => {
+                                                                    const highest = Math.max(prev, pct)
+                                                                    if (highest >= 80 && tutorialDetail.userTutorial.watched !== 'yes') {
+                                                                        handleMarkVideoWatched()
+                                                                    }
+                                                                    return highest
+                                                                })
+                                                            }
+                                                        }}
                                                         onEnded={handleVideoEnded}
                                                     >
                                                         <source src={tutorialDetail.videoUrl} type="video/webm" />
@@ -828,33 +807,28 @@ export function LearnerPackTracker() {
                                                             <Lightbulb className="h-4 w-4" />
                                                         </div>
                                                         <div>
-                                                            {tutorialDetail.codeFilesUrl ? (
-                                                                <p>
-                                                                    <strong>Coding Follow-Along:</strong> Download the companion <code className="text-emerald-600 dark:text-emerald-400 font-semibold">Code Files (.zip)</code> in the resources tray above to reproduce this tutorial in your local development environment.
-                                                                </p>
-                                                            ) : (
-                                                                <p>
-                                                                    <strong>Learning Tip:</strong> Watch carefully and follow each demonstration. Mark as watched to claim your <span className="text-primary font-semibold">+10 XP</span>, then proceed to the Reading Notes.
-                                                                </p>
-                                                            )}
+                                                            <p>
+                                                                <strong>Automatic Watch Tracking:</strong> Watch at least 80% of this tutorial to automatically unlock completion and earn your <span className="text-primary font-semibold">+10 XP</span>. No manual button click required.
+                                                            </p>
                                                         </div>
                                                     </div>
 
                                                     <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+                                                        {tutorialDetail.userTutorial.watched === 'yes' ? (
+                                                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-2xs">
+                                                                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                                                <span>Video Watched (+10 XP)</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/60 border border-border/80 text-xs text-muted-foreground shadow-2xs">
+                                                                <div className="size-2 rounded-full bg-primary animate-pulse" />
+                                                                <span>Watched: {videoWatchPercent}% (Completes at 80%)</span>
+                                                            </div>
+                                                        )}
+
                                                         <Button
-                                                            variant="outline"
-                                                            onClick={handleMarkVideoWatched}
-                                                            disabled={tutorialDetail.userTutorial.watched === 'yes'}
-                                                            className={cn(
-                                                                "text-xs font-semibold flex-1 sm:flex-none shadow-2xs transition-all",
-                                                                tutorialDetail.userTutorial.watched === 'yes' && "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
-                                                            )}
-                                                        >
-                                                            {tutorialDetail.userTutorial.watched === 'yes' ? '✓ Watched (+10 XP)' : 'Mark as Watched (+10 XP)'}
-                                                        </Button>
-                                                        <Button
-                                                            onClick={() => setActiveTab('reading')}
-                                                            className="text-xs font-bold flex-1 sm:flex-none gap-1.5 shadow-2xs hover:shadow-xs"
+                                                            onClick={() => switchTab('reading')}
+                                                            className="text-xs font-bold flex-1 sm:flex-none gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer"
                                                         >
                                                             <span>Next: Reading Notes</span>
                                                             <ArrowRight className="h-4 w-4" />
@@ -912,7 +886,7 @@ export function LearnerPackTracker() {
 
                             {/* TAB 2: READING — Full Width Clean Reader Canvas */}
                             {activeTab === 'reading' && (
-                                <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-10 sm:py-10 bg-background/50 min-h-0">
+                                <div id="tutorial-modal-body" className="flex-1 overflow-y-auto px-4 py-6 sm:px-10 sm:py-10 bg-background/50 min-h-0">
                                     <div className="max-w-3xl mx-auto space-y-8">
                                         <div className="prose prose-slate dark:prose-invert max-w-none text-foreground/90 font-sans leading-relaxed text-sm sm:text-base space-y-5">
                                             <ReactMarkdown
@@ -944,16 +918,16 @@ export function LearnerPackTracker() {
                                             <div className="space-y-1 text-center sm:text-left">
                                                 <h4 className="font-bold text-foreground text-sm sm:text-base">Finished this reading?</h4>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Mark as read to claim +10 XP and move directly to the private notebook activity & reflection.
+                                                    Mark as read to claim +10 XP and move directly to the personal notebook exercise & reflection.
                                                 </p>
                                             </div>
                                             <Button
                                                 size="lg"
                                                 onClick={async () => {
                                                     await handleMarkReadingComplete()
-                                                    setActiveTab('activity')
+                                                    switchTab('activity')
                                                 }}
-                                                className="font-semibold text-xs sm:text-sm shrink-0 gap-1.5 w-full sm:w-auto"
+                                                className="font-semibold text-xs sm:text-sm shrink-0 gap-1.5 w-full sm:w-auto cursor-pointer"
                                             >
                                                 {tutorialDetail.userTutorial.watched === 'yes'
                                                     ? (tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? 'Proceed to Assignment & Practice' : 'Proceed to Activity & Reflection')
@@ -965,7 +939,7 @@ export function LearnerPackTracker() {
                                 </div>
                             )}
 
-                            {/* TAB 2: ACTIVITY & REFLECTION — Responsive Two-Column Studio */}
+                            {/* TAB 3: ACTIVITY & REFLECTION — Responsive Two-Column Studio */}
                             {activeTab === 'activity' && (() => {
                                 const rawTryIt = tutorialDetail.content?.tryItInstructions || ''
                                 const stepRegex = /(?:\*\*Step\s+\d+:\*\*|\b\d+\.\s+)/
@@ -981,9 +955,9 @@ export function LearnerPackTracker() {
                                 const isActivityDone = (tutorialDetail.userTutorial.minitaskOpted as any) === true || tutorialDetail.userTutorial.minitaskOpted === 'yes'
 
                                 return (
-                                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-muted/10 min-h-0">
+                                    <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-muted/10 min-h-0">
                                         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-                                            {/* Left Column (5 cols on lg, full width on mobile): Private Notebook Exercise */}
+                                            {/* Left Column (5 cols on lg, full width on mobile): Personal Notebook Exercise */}
                                             <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
                                                 <div className="space-y-4">
                                                     <div className="flex items-center gap-2.5">
@@ -993,10 +967,40 @@ export function LearnerPackTracker() {
                                                         <div>
                                                             <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground">Part 1</span>
                                                             <h3 className="text-base font-bold text-foreground">
-                                                                {tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? 'Hands-On Practice / Assignment' : 'Private Notebook Exercise'}
+                                                                {tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? 'Hands-On Practice / Assignment' : 'Personal Notebook Exercise'}
                                                             </h3>
                                                         </div>
                                                     </div>
+
+                                                    {/* Explicit callout: Personal notebook & No upload needed */}
+                                                    <div className="p-3.5 rounded-xl bg-muted/60 border border-border/80 text-xs text-foreground/90 space-y-1.5 shadow-2xs">
+                                                        <div className="flex items-center gap-2 font-bold text-foreground">
+                                                            <Lock className="h-3.5 w-3.5 text-primary" />
+                                                            <span>Personal Notebook • No Upload Needed</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                            This exercise is for your own personal reflection and self-growth. You <strong>do not need to upload or submit any files</strong> here. Complete the exercise in your physical notebook, diary, or notes app, then check off the exercise below.
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Optional Code Files Download Tile */}
+                                                    {tutorialDetail.codeFilesUrl && (
+                                                        <div className="p-3 rounded-xl bg-card border border-border/80 flex items-center justify-between gap-3 text-xs shadow-2xs">
+                                                            <div className="flex items-center gap-2 text-foreground font-medium">
+                                                                <Code2 className="h-4 w-4 text-primary" />
+                                                                <span>Companion Code Files (.zip)</span>
+                                                            </div>
+                                                            <a
+                                                                href={tutorialDetail.codeFilesUrl}
+                                                                download
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary/90 transition-all shadow-2xs cursor-pointer"
+                                                            >
+                                                                Download .zip
+                                                            </a>
+                                                        </div>
+                                                    )}
 
                                                     {/* Intro description */}
                                                     {tryItIntro && (
@@ -1041,15 +1045,15 @@ export function LearnerPackTracker() {
                                                                 </div>
                                                                 <p className="text-[11px] text-muted-foreground">
                                                                     {isActivityDone
-                                                                        ? 'Private notebook exercise verified! +5 XP awarded.'
-                                                                        : 'Click when finished writing in your personal notebook.'}
+                                                                        ? 'Personal notebook exercise verified! +5 XP awarded.'
+                                                                        : 'Click when finished writing in your personal notebook. No upload needed.'}
                                                                 </p>
                                                             </div>
                                                             <Button
                                                                 size="sm"
                                                                 onClick={handleMarkActivityComplete}
                                                                 disabled={isActivityDone || isMarkingActivity}
-                                                                className={`text-xs font-semibold shrink-0 w-full sm:w-auto ${isActivityDone
+                                                                className={`text-xs font-semibold shrink-0 w-full sm:w-auto cursor-pointer ${isActivityDone
                                                                     ? 'bg-emerald-600 hover:bg-emerald-600 text-white shadow-2xs'
                                                                     : ''
                                                                     }`}
@@ -1061,11 +1065,6 @@ export function LearnerPackTracker() {
                                                                         : 'Mark Done (+5 XP)'}
                                                             </Button>
                                                         </div>
-                                                    </div>
-
-                                                    <div className="p-2.5 rounded-lg bg-background/80 border text-[11px] text-muted-foreground flex items-center gap-2">
-                                                        <Lock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                                        <span>Your notebook is private and physical/digital. It is never uploaded or viewed by anyone.</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1146,17 +1145,17 @@ export function LearnerPackTracker() {
                                                             <Button
                                                                 onClick={handleSubmitReflection}
                                                                 disabled={isSubmittingReflection || !reflectionText.trim()}
-                                                                className="font-semibold text-xs flex-1 sm:flex-none"
+                                                                className="font-semibold text-xs flex-1 sm:flex-none cursor-pointer"
                                                             >
                                                                 {isSubmittingReflection ? 'Saving...' : tutorialDetail.userReflection ? 'Update Reflection' : 'Submit Reflection (+5 XP)'}
                                                             </Button>
                                                             {tutorialDetail.userReflection && (
                                                                 <Button
                                                                     variant="outline"
-                                                                    onClick={() => setActiveTab('quiz')}
-                                                                    className="text-xs gap-1"
+                                                                    onClick={() => switchTab('quiz')}
+                                                                    className="text-xs gap-1 cursor-pointer"
                                                                 >
-                                                                    Take Quiz
+                                                                    <span>Take Quiz</span>
                                                                     <ArrowRight className="h-3.5 w-3.5" />
                                                                 </Button>
                                                             )}
@@ -1169,131 +1168,199 @@ export function LearnerPackTracker() {
                                 )
                             })()}
 
-                            {/* TAB 3: QUIZ (5 MCQs) — Spacious Assessment */}
-                            {activeTab === 'quiz' && (
-                                <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-muted/10 min-h-0">
-                                    <div className="max-w-4xl mx-auto space-y-6">
-                                        {/* Quiz Overview Banner */}
-                                        <div className="p-6 rounded-2xl bg-card border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="text-lg font-bold text-foreground">Tutorial Knowledge Quiz</h3>
-                                                    <Badge variant="outline" className="text-xs font-mono">5 Questions</Badge>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Passing grade: 60% (3 / 5). Full rationales and explanations will be unlocked upon submission.
-                                                </p>
-                                            </div>
+                            {/* TAB 4: QUIZ (5 MCQs) — Spacious Assessment */}
+                            {activeTab === 'quiz' && (() => {
+                                const nextTutorial = overview?.tutorials.find(t => t.number === tutorialDetail.tutorialNumber + 1)
 
-                                            {tutorialDetail.quiz.hasAttempted ? (
-                                                <div className={`px-4 py-2 rounded-xl border flex items-center gap-3 ${tutorialDetail.quiz.passed
-                                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600'
-                                                    : 'bg-amber-500/10 border-amber-500/20 text-amber-600'
-                                                    }`}>
-                                                    <div className="text-right">
-                                                        <div className="text-xs uppercase font-bold tracking-wider">
-                                                            {tutorialDetail.quiz.passed ? 'Passed 🎉' : 'Needs Review'}
-                                                        </div>
-                                                        <div className="text-lg font-black font-mono">
-                                                            {tutorialDetail.quiz.score} / {tutorialDetail.quiz.totalQuestions}
+                                return (
+                                    <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-6 sm:p-8 bg-muted/10 min-h-0">
+                                        <div className="max-w-4xl mx-auto space-y-6">
+                                            {/* Quiz Overview Banner */}
+                                            <div className="p-6 rounded-2xl bg-card border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-lg font-bold text-foreground">Tutorial Knowledge Quiz</h3>
+                                                        <Badge variant="outline" className="text-xs font-mono">5 Questions</Badge>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Passing grade: 60% (3 / 5). Full rationales and explanations will be unlocked upon submission.
+                                                    </p>
+                                                </div>
+
+                                                {tutorialDetail.quiz.hasAttempted ? (
+                                                    <div className={`px-4 py-2 rounded-xl border flex items-center gap-3 ${tutorialDetail.quiz.passed
+                                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600'
+                                                        : 'bg-amber-500/10 border-amber-500/20 text-amber-600'
+                                                        }`}>
+                                                        <div className="text-right">
+                                                            <div className="text-xs uppercase font-bold tracking-wider">
+                                                                {tutorialDetail.quiz.passed ? 'Passed 🎉' : 'Needs Review'}
+                                                            </div>
+                                                            <div className="text-lg font-black font-mono">
+                                                                {tutorialDetail.quiz.score} / {tutorialDetail.quiz.totalQuestions}
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 text-xs font-mono font-semibold text-xp-gold bg-xp-gold/10 border border-xp-gold/20 px-3 py-1.5 rounded-xl">
+                                                        <Sparkles className="h-4 w-4" />
+                                                        +10 XP on Pass
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Questions */}
+                                            <div className="space-y-5">
+                                                {tutorialDetail.quiz.questions.map((q) => {
+                                                    const selected = quizAnswers[String(q.questionNumber)] || q.selectedOption
+                                                    const isSubmitted = tutorialDetail.quiz.hasAttempted
+
+                                                    return (
+                                                        <div key={q.id} className="p-6 rounded-2xl border bg-card shadow-sm space-y-4">
+                                                            <div className="flex items-start gap-3">
+                                                                <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                                                                    {q.questionNumber}
+                                                                </div>
+                                                                <h4 className="text-sm sm:text-base font-semibold text-foreground leading-relaxed flex-1">
+                                                                    {q.questionText}
+                                                                </h4>
+                                                            </div>
+
+                                                            {/* Options */}
+                                                            <RadioGroup
+                                                                value={selected || ''}
+                                                                onValueChange={(val) => setQuizAnswers({ ...quizAnswers, [String(q.questionNumber)]: val })}
+                                                                disabled={isSubmitted}
+                                                                className="space-y-2.5 pt-1 pl-10"
+                                                            >
+                                                                {q.options.map((opt) => {
+                                                                    const isCorrect = isSubmitted && q.correctOption === opt.id
+                                                                    const isChosen = selected === opt.id
+                                                                    const isWrong = isSubmitted && isChosen && !isCorrect
+
+                                                                    return (
+                                                                        <label
+                                                                            key={opt.id}
+                                                                            className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs sm:text-sm cursor-pointer transition-all ${isCorrect
+                                                                                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-medium'
+                                                                                : isWrong
+                                                                                    ? 'border-destructive bg-destructive/10 text-destructive font-medium'
+                                                                                    : isChosen
+                                                                                        ? 'border-primary bg-primary/5 text-foreground ring-1 ring-primary/20'
+                                                                                        : 'border-border hover:bg-muted/40 text-muted-foreground hover:text-foreground'
+                                                                                }`}
+                                                                        >
+                                                                            <RadioGroupItem value={opt.id} className="mt-0.5" />
+                                                                            <span className="flex-1 leading-relaxed">
+                                                                                <strong className="mr-1.5 font-bold uppercase">{opt.id}.</strong>
+                                                                                {opt.text}
+                                                                            </span>
+                                                                            {isCorrect && <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
+                                                                        </label>
+                                                                    )
+                                                                })}
+                                                            </RadioGroup>
+
+                                                            {/* Explanation Box */}
+                                                            {isSubmitted && q.explanation && (
+                                                                <div className="mt-4 p-4 rounded-xl bg-muted/60 border border-border/80 text-xs sm:text-sm space-y-1.5 ml-10">
+                                                                    <span className="font-bold text-primary flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                                                                        <Lightbulb className="h-3.5 w-3.5" />
+                                                                        Psychological Rationale & Explanation
+                                                                    </span>
+                                                                    <p className="text-foreground/80 leading-relaxed font-sans">
+                                                                        {q.explanation}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+
+                                            {/* Submit or Completed Actions */}
+                                            {!tutorialDetail.quiz.hasAttempted ? (
+                                                <div className="pt-2 pb-6 flex justify-end">
+                                                    <Button
+                                                        size="lg"
+                                                        onClick={handleSubmitQuiz}
+                                                        disabled={isSubmittingQuiz}
+                                                        className="font-bold text-sm px-6 cursor-pointer shadow-sm"
+                                                    >
+                                                        {isSubmittingQuiz
+                                                            ? 'Evaluating Answers...'
+                                                            : 'Submit Answers (+10 XP)'}
+                                                    </Button>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-2 text-xs font-mono font-semibold text-xp-gold bg-xp-gold/10 border border-xp-gold/20 px-3 py-1.5 rounded-xl">
-                                                    <Sparkles className="h-4 w-4" />
-                                                    +10 XP on Pass
+                                                <div className="space-y-4 pt-2 pb-6">
+                                                    {/* Prompt to move directly to next tutorial */}
+                                                    <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-card to-primary/5 border-2 border-emerald-500/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
+                                                        <div className="space-y-1.5 text-center sm:text-left">
+                                                            <div className="flex items-center gap-2 justify-center sm:justify-start">
+                                                                <span className="text-xl">🎉</span>
+                                                                <h4 className="font-bold text-foreground text-base sm:text-lg">
+                                                                    Tutorial {tutorialDetail.tutorialNumber} Completed!
+                                                                </h4>
+                                                                <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-xs font-bold">
+                                                                    +25 XP Total
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {nextTutorial
+                                                                    ? `Ready for the next lesson? Continue directly to Tutorial ${nextTutorial.number}: ${nextTutorial.title}`
+                                                                    : "Outstanding! You have completed all 17 tutorials in this curriculum."}
+                                                            </p>
+                                                        </div>
+
+                                                        {nextTutorial ? (
+                                                            <Button
+                                                                size="lg"
+                                                                onClick={() => openTutorialModal(nextTutorial.id)}
+                                                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-md shadow-primary/25 cursor-pointer shrink-0 gap-2 w-full sm:w-auto hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                            >
+                                                                <span>Continue to Tutorial {nextTutorial.number}</span>
+                                                                <ArrowRight className="h-4 w-4" />
+                                                            </Button>
+                                                        ) : (
+                                                            <Button
+                                                                size="lg"
+                                                                variant="outline"
+                                                                onClick={() => setActiveTutorialId(null)}
+                                                                className="font-bold text-xs sm:text-sm px-6 py-3 rounded-xl border-emerald-500/30 text-emerald-600 cursor-pointer"
+                                                            >
+                                                                <span>Back to Dashboard</span>
+                                                            </Button>
+                                                        )}
+                                                    </div>
+
+                                                    {!tutorialDetail.quiz.passed && (
+                                                        <div className="flex justify-end">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => {
+                                                                    setQuizAnswers({})
+                                                                    setTutorialDetail({
+                                                                        ...tutorialDetail,
+                                                                        quiz: {
+                                                                            ...tutorialDetail.quiz,
+                                                                            hasAttempted: false
+                                                                        }
+                                                                    })
+                                                                }}
+                                                                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                                                            >
+                                                                Retake Quiz Attempt
+                                                            </Button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* Questions */}
-                                        <div className="space-y-5">
-                                            {tutorialDetail.quiz.questions.map((q) => {
-                                                const selected = quizAnswers[String(q.questionNumber)] || q.selectedOption
-                                                const isSubmitted = tutorialDetail.quiz.hasAttempted
-
-                                                return (
-                                                    <div key={q.id} className="p-6 rounded-2xl border bg-card shadow-sm space-y-4">
-                                                        <div className="flex items-start gap-3">
-                                                            <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                                                                {q.questionNumber}
-                                                            </div>
-                                                            <h4 className="text-sm sm:text-base font-semibold text-foreground leading-relaxed flex-1">
-                                                                {q.questionText}
-                                                            </h4>
-                                                        </div>
-
-                                                        {/* Options */}
-                                                        <RadioGroup
-                                                            value={selected || ''}
-                                                            onValueChange={(val) => setQuizAnswers({ ...quizAnswers, [String(q.questionNumber)]: val })}
-                                                            disabled={isSubmitted}
-                                                            className="space-y-2.5 pt-1 pl-10"
-                                                        >
-                                                            {q.options.map((opt) => {
-                                                                const isCorrect = isSubmitted && q.correctOption === opt.id
-                                                                const isChosen = selected === opt.id
-                                                                const isWrong = isSubmitted && isChosen && !isCorrect
-
-                                                                return (
-                                                                    <label
-                                                                        key={opt.id}
-                                                                        className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs sm:text-sm cursor-pointer transition-all ${isCorrect
-                                                                            ? 'border-emerald-500 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-medium'
-                                                                            : isWrong
-                                                                                ? 'border-destructive bg-destructive/10 text-destructive font-medium'
-                                                                                : isChosen
-                                                                                    ? 'border-primary bg-primary/5 text-foreground ring-1 ring-primary/20'
-                                                                                    : 'border-border hover:bg-muted/40 text-muted-foreground hover:text-foreground'
-                                                                            }`}
-                                                                    >
-                                                                        <RadioGroupItem value={opt.id} className="mt-0.5" />
-                                                                        <span className="flex-1 leading-relaxed">
-                                                                            <strong className="mr-1.5 font-bold uppercase">{opt.id}.</strong>
-                                                                            {opt.text}
-                                                                        </span>
-                                                                        {isCorrect && <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
-                                                                    </label>
-                                                                )
-                                                            })}
-                                                        </RadioGroup>
-
-                                                        {/* Explanation Box */}
-                                                        {isSubmitted && q.explanation && (
-                                                            <div className="mt-4 p-4 rounded-xl bg-muted/60 border border-border/80 text-xs sm:text-sm space-y-1.5 ml-10">
-                                                                <span className="font-bold text-primary flex items-center gap-1.5 text-xs uppercase tracking-wider">
-                                                                    <Lightbulb className="h-3.5 w-3.5" />
-                                                                    Psychological Rationale & Explanation
-                                                                </span>
-                                                                <p className="text-foreground/80 leading-relaxed font-sans">
-                                                                    {q.explanation}
-                                                                </p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-
-                                        {/* Submit Button */}
-                                        <div className="pt-2 pb-6 flex justify-end">
-                                            <Button
-                                                size="lg"
-                                                onClick={handleSubmitQuiz}
-                                                disabled={isSubmittingQuiz || tutorialDetail.quiz.hasAttempted}
-                                                className="font-bold text-sm px-6"
-                                            >
-                                                {tutorialDetail.quiz.hasAttempted
-                                                    ? '✓ Quiz Attempt Completed'
-                                                    : isSubmittingQuiz
-                                                        ? 'Evaluating Answers...'
-                                                        : 'Submit Answers (+10 XP)'}
-                                            </Button>
-                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )
+                            })()}
                         </>
                     )}
                 </DialogContent>
