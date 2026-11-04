@@ -156,6 +156,7 @@ export function LearnerPackTracker() {
 
     const handleMarkVideoWatched = async () => {
         if (!activeTutorialId) return
+        if (tutorialDetail?.userTutorial.watched === 'yes') return
         try {
             await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/video-watched`)
             toast.success('Video watched! +10 XP awarded 🎬')
@@ -183,6 +184,7 @@ export function LearnerPackTracker() {
 
     const handleMarkReadingComplete = async () => {
         if (!activeTutorialId) return
+        if (tutorialDetail?.userTutorial.watched === 'yes') return
         try {
             await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/reading-complete`)
             toast.success('Reading completed! +10 XP awarded 📚')
@@ -395,39 +397,39 @@ export function LearnerPackTracker() {
 
                     <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-border/60">
                         <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
                                 <PlayCircle className="h-4 w-4" />
                             </div>
-                            <div>
-                                <p className="text-[11px] font-bold text-foreground">17 Videos</p>
-                                <p className="text-[10px] text-muted-foreground">+10 XP per video</p>
+                            <div className="min-w-0">
+                                <p className="text-[11px] font-bold text-foreground truncate">17 Core Lessons</p>
+                                <p className="text-[10px] text-muted-foreground truncate">+10 XP (Video or Notes)</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-                                <BookOpen className="h-4 w-4" />
-                            </div>
-                            <div>
-                                <p className="text-[11px] font-bold text-foreground">17 Readings</p>
-                                <p className="text-[10px] text-muted-foreground">+10 XP study notes</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
                                 <PenTool className="h-4 w-4" />
                             </div>
-                            <div>
-                                <p className="text-[11px] font-bold text-foreground">Practice & Reflection</p>
-                                <p className="text-[10px] text-muted-foreground">+5 XP per entry</p>
+                            <div className="min-w-0">
+                                <p className="text-[11px] font-bold text-foreground truncate">17 Reflections</p>
+                                <p className="text-[10px] text-muted-foreground truncate">+5 XP (Notebook practice)</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
                                 <HelpCircle className="h-4 w-4" />
                             </div>
-                            <div>
-                                <p className="text-[11px] font-bold text-foreground">85 MCQs</p>
-                                <p className="text-[10px] text-muted-foreground">+10 XP per quiz</p>
+                            <div className="min-w-0">
+                                <p className="text-[11px] font-bold text-foreground truncate">85 Quiz MCQs</p>
+                                <p className="text-[10px] text-muted-foreground truncate">+10 XP (5 per tutorial)</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-primary/5 border border-primary/20 shadow-2xs">
+                            <div className="p-1.5 rounded-lg bg-primary/15 text-primary shrink-0">
+                                <Sparkles className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[11px] font-bold text-primary truncate">25 XP / Tutorial</p>
+                                <p className="text-[10px] text-muted-foreground truncate">425 XP Curriculum Total</p>
                             </div>
                         </div>
                     </div>
@@ -801,39 +803,28 @@ export function LearnerPackTracker() {
                                                     </video>
                                                 </div>
 
-                                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-card border border-border/80 shadow-xs">
-                                                    <div className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2.5">
-                                                        <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 mt-0.5">
-                                                            <Lightbulb className="h-4 w-4" />
-                                                        </div>
-                                                        <div>
-                                                            <p>
-                                                                <strong>Automatic Watch Tracking:</strong> Watch at least 80% of this tutorial to automatically unlock completion and earn your <span className="text-primary font-semibold">+10 XP</span>. No manual button click required.
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+                                                <div className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-card border border-border/80 shadow-xs">
+                                                    <div>
                                                         {tutorialDetail.userTutorial.watched === 'yes' ? (
                                                             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-2xs">
                                                                 <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                                                                <span>Video Watched (+10 XP)</span>
+                                                                <span>Watched (+10 XP)</span>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/60 border border-border/80 text-xs text-muted-foreground shadow-2xs">
+                                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/60 border border-border/80 text-xs font-medium text-muted-foreground shadow-2xs">
                                                                 <div className="size-2 rounded-full bg-primary animate-pulse" />
-                                                                <span>Watched: {videoWatchPercent}% (Completes at 80%)</span>
+                                                                <span>Watched: {videoWatchPercent}%</span>
                                                             </div>
                                                         )}
-
-                                                        <Button
-                                                            onClick={() => switchTab('reading')}
-                                                            className="text-xs font-bold flex-1 sm:flex-none gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer"
-                                                        >
-                                                            <span>Next: Reading Notes</span>
-                                                            <ArrowRight className="h-4 w-4" />
-                                                        </Button>
                                                     </div>
+
+                                                    <Button
+                                                        onClick={() => switchTab('reading')}
+                                                        className="text-xs font-bold gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer ml-auto"
+                                                    >
+                                                        <span>Next: Reading Notes</span>
+                                                        <ArrowRight className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         ) : (
@@ -914,17 +905,23 @@ export function LearnerPackTracker() {
                                         </div>
 
                                         {/* Completion Banner at bottom of reading */}
-                                        <div className="mt-12 p-6 rounded-2xl bg-card border shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="mt-12 p-6 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
                                             <div className="space-y-1 text-center sm:text-left">
-                                                <h4 className="font-bold text-foreground text-sm sm:text-base">Finished this reading?</h4>
+                                                <h4 className="font-bold text-foreground text-sm sm:text-base">
+                                                    {tutorialDetail.userTutorial.watched === 'yes' ? 'Lesson Reading Complete' : 'Finished this reading?'}
+                                                </h4>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Mark as read to claim +10 XP and move directly to the personal notebook exercise & reflection.
+                                                    {tutorialDetail.userTutorial.watched === 'yes'
+                                                        ? 'Core lesson completed (+10 XP earned). Move directly to the notebook activity & reflection.'
+                                                        : 'Mark as read to claim +10 XP and move directly to the personal notebook exercise & reflection.'}
                                                 </p>
                                             </div>
                                             <Button
                                                 size="lg"
                                                 onClick={async () => {
-                                                    await handleMarkReadingComplete()
+                                                    if (tutorialDetail.userTutorial.watched !== 'yes') {
+                                                        await handleMarkReadingComplete()
+                                                    }
                                                     switchTab('activity')
                                                 }}
                                                 className="font-semibold text-xs sm:text-sm shrink-0 gap-1.5 w-full sm:w-auto cursor-pointer"
