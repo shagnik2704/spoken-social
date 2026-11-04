@@ -394,45 +394,6 @@ export function LearnerPackTracker() {
                         </div>
                         <Progress value={progressPercent} className="h-2.5 bg-muted/80 rounded-full" />
                     </div>
-
-                    <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-border/60">
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                                <PlayCircle className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-foreground truncate">17 Core Lessons</p>
-                                <p className="text-[10px] text-muted-foreground truncate">+10 XP (Video or Notes)</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                                <PenTool className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-foreground truncate">17 Reflections</p>
-                                <p className="text-[10px] text-muted-foreground truncate">+5 XP (Notebook practice)</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-border/70 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                                <HelpCircle className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-foreground truncate">85 Quiz MCQs</p>
-                                <p className="text-[10px] text-muted-foreground truncate">+10 XP (5 per tutorial)</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-primary/5 border border-primary/20 shadow-2xs">
-                            <div className="p-1.5 rounded-lg bg-primary/15 text-primary shrink-0">
-                                <Sparkles className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-primary truncate">25 XP / Tutorial</p>
-                                <p className="text-[10px] text-muted-foreground truncate">425 XP Curriculum Total</p>
-                            </div>
-                        </div>
-                    </div>
                 </CardContent>
             </Card>
 
