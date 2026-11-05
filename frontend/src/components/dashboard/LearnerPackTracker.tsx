@@ -109,6 +109,13 @@ export function LearnerPackTracker() {
             ])
             setOverview(ovRes.data)
             setHabitLogs(logsRes.data.logs || {})
+            const tuts = ovRes.data?.tutorials || []
+            const activeTut = tuts.find(
+                (t: any) => !t.userProgress?.quizPassed && t.userProgress?.status !== 'completed'
+            )
+            if (activeTut?.week) {
+                setOpenWeeks(prev => ({ ...prev, [activeTut.week]: true }))
+            }
         } catch (err: any) {
             console.error('Failed to load learner pack overview', err)
             toast.error('Could not load course curriculum.')
@@ -140,15 +147,18 @@ export function LearnerPackTracker() {
         })
     }
 
-    const openTutorialModal = async (tutId: string) => {
+    const openTutorialModal = async (
+        tutId: string,
+        initialTab: 'video' | 'reading' | 'activity' | 'assignment' | 'quiz' = 'video'
+    ) => {
         setActiveTutorialId(tutId)
         setIsLoadingDetail(true)
-        setActiveTab('video')
+        setActiveTab(initialTab)
         setVideoWatchPercent(0)
         setIsVideoBuffering(false)
         setQuizAnswers({})
         requestAnimationFrame(() => {
-            const btn = document.getElementById('tab-btn-video')
+            const btn = document.getElementById(`tab-btn-${initialTab}`)
             if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
         })
         try {
@@ -395,6 +405,32 @@ export function LearnerPackTracker() {
         milestonesByWeek[m.week] = m
     })
 
+    // Next incomplete tutorial to guide the student directly
+    const nextIncompleteTutorial = overview.tutorials.find(
+        t => !t.userProgress.quizPassed && t.userProgress.status !== 'completed'
+    )
+    const allCompleted = overview.tutorials.length > 0 && !nextIncompleteTutorial
+
+    const getNextStepInfo = (tut: LearnerPackOverviewTutorial) => {
+        const p = tut.userProgress
+        if (!p.watched) {
+            return { stepLabel: 'Watch Video', tab: 'video' as const, isStarted: false }
+        }
+        if (!p.readingCompleted) {
+            return { stepLabel: 'Reading Notes', tab: 'reading' as const, isStarted: true }
+        }
+        if (!p.reflectionSubmitted) {
+            return {
+                stepLabel: tut.hasAssignment ? 'Assignment' : 'Activity & Reflection',
+                tab: tut.hasAssignment ? ('assignment' as const) : ('activity' as const),
+                isStarted: true
+            }
+        }
+        return { stepLabel: 'Quiz', tab: 'quiz' as const, isStarted: true }
+    }
+
+    const nextStep = nextIncompleteTutorial ? getNextStepInfo(nextIncompleteTutorial) : null
+
     return (
         <div className="space-y-6">
             {/* Header Card */}
@@ -431,6 +467,49 @@ export function LearnerPackTracker() {
                 </CardContent>
             </Card>
 
+            {/* Minimal Next-Action Card */}
+            {nextIncompleteTutorial && nextStep && (
+                <Card className="border border-primary/25 bg-primary/[0.03] shadow-2xs hover:shadow-xs transition-all">
+                    <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium flex-wrap">
+                                <span className="font-semibold text-primary">Up Next</span>
+                                <span>•</span>
+                                <span>Week {nextIncompleteTutorial.week}</span>
+                                <span>•</span>
+                                <span className="text-foreground/90 font-medium">{nextStep.stepLabel}</span>
+                            </div>
+                            <h3 className="text-base sm:text-lg font-bold text-foreground truncate">
+                                #{nextIncompleteTutorial.number}. {nextIncompleteTutorial.title}
+                            </h3>
+                        </div>
+                        <Button
+                            onClick={() => openTutorialModal(nextIncompleteTutorial.id, nextStep.tab)}
+                            className="font-semibold text-xs sm:text-sm gap-2 shrink-0 w-full sm:w-auto shadow-2xs hover:shadow-xs cursor-pointer"
+                        >
+                            <span>{nextStep.isStarted ? 'Continue' : 'Start Lesson'}</span>
+                            <ArrowRight className="h-4 w-4" />
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
+
+            {allCompleted && (
+                <Card className="border border-emerald-500/25 bg-emerald-500/[0.03] shadow-2xs">
+                    <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm shrink-0">
+                                ✓
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-foreground">All Tutorials Completed!</h3>
+                                <p className="text-xs text-muted-foreground">You have finished the entire 17-tutorial curriculum.</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* 12-Week Collapsible Accordion */}
             <div className="space-y-3">
                 {Array.from({ length: 12 }, (_, idx) => idx + 1).map((weekNum) => {
@@ -463,7 +542,6 @@ export function LearnerPackTracker() {
                                                 </h3>
                                                 <p className="text-xs text-muted-foreground">
                                                     {tuts.length > 0 ? `${tuts.length} Tutorials` : 'Special Milestone Week'}
-                                                    {milestone && ` • ${milestone.title}`}
                                                 </p>
                                             </div>
                                         </div>
@@ -626,7 +704,7 @@ export function LearnerPackTracker() {
                                                     <Button
                                                         size="sm"
                                                         variant={isCompleted ? "outline" : "default"}
-                                                        onClick={() => openTutorialModal(tut.id)}
+                                                        onClick={() => openTutorialModal(tut.id, isCompleted ? 'video' : getNextStepInfo(tut).tab)}
                                                         className={cn(
                                                             "text-xs font-semibold h-8.5 px-3.5 transition-all shadow-2xs hover:shadow-xs",
                                                             !isCompleted && "bg-primary text-primary-foreground hover:bg-primary/90"
