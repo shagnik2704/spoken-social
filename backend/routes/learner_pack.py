@@ -174,8 +174,9 @@ async def get_course_overview(
             "userProgress": {
                 "watched": ut.watched if ut else False,
                 "readingCompleted": ut.watched if ut else False,
-                "reflectionSubmitted": ref is not None or (ut.assignment_done if ut else False),
+                "reflectionSubmitted": ref is not None or (ut.minitask_opted if ut else False),
                 "reflectionWordCount": ref.word_count if ref else 0,
+                "assignmentDone": bool(ut.assignment_done) if ut else False,
                 "quizPassed": quiz.passed if quiz else (ut.practiced if ut else False),
                 "quizScore": quiz.score if quiz else None,
                 "status": ut.status if ut else "not_started",

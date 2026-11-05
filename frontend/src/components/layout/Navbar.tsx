@@ -74,16 +74,14 @@ export function TopBar() {
         <header className="z-50 w-full border-b border-border bg-card/80 backdrop-blur-xl shrink-0">
             <div className="flex h-14 items-center justify-between px-4 lg:px-6">
                 {/* Left — Logo */}
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                        <img src="/logo.png" alt="EduPyramids" className="h-8 w-8 object-contain" />
-                        <span className="text-lg font-bold tracking-tight hidden sm:inline-block text-foreground">
-                            Spoken Social
-                        </span>
-                        <span className="text-lg font-bold tracking-tight sm:hidden text-foreground">
-                            SS
-                        </span>
-                    </div>
+                <div className="flex items-center gap-2.5">
+                    <img src="/logo.png" alt="EduPyramids" className="h-10 w-10 sm:h-11 sm:w-11 object-contain transition-transform" />
+                    <span className="text-lg sm:text-xl font-bold tracking-tight hidden sm:inline-block text-foreground">
+                        Spoken Social
+                    </span>
+                    <span className="text-lg font-bold tracking-tight sm:hidden text-foreground">
+                        SS
+                    </span>
                 </div>
 
                 {/* Center — Search Bar (Desktop) */}

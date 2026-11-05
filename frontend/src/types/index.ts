@@ -284,6 +284,7 @@ export interface LearnerPackOverviewTutorial {
         readingCompleted: boolean
         reflectionSubmitted: boolean
         reflectionWordCount: number
+        assignmentDone?: boolean
         quizPassed: boolean
         quizScore: number | null
         status: string

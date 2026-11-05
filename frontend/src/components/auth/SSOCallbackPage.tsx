@@ -81,7 +81,7 @@ export const SSOCallbackPage: React.FC = () => {
             <div className="w-full max-w-md relative z-10">
                 {/* Branding header */}
                 <div className="flex flex-col items-center mb-8 text-center">
-                    <div className="w-14 h-14 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 flex items-center justify-center shadow-sm backdrop-blur-md mb-3">
+                    <div className="w-16 h-16 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 flex items-center justify-center shadow-sm backdrop-blur-md mb-3">
                         <img src="/logo.png" alt="EduPyramids Logo" className="w-full h-full object-contain" />
                     </div>
                     <h1 className="font-mono text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">

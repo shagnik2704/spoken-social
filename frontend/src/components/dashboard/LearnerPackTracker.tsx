@@ -549,38 +549,28 @@ export function LearnerPackTracker() {
                                                         <h4 className="text-sm font-semibold truncate text-foreground group-hover:text-primary transition-colors">
                                                             {tut.title}
                                                         </h4>
-                                                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                                                            {tut.readingTitle && (
-                                                                <span className="flex items-center gap-1.5">
-                                                                    <BookOpen className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
-                                                                    <span>{tut.readingTimeMinutes || 15}m read</span>
-                                                                </span>
-                                                            )}
-                                                            {tut.hasCodeFiles && (
-                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/70">
-                                                                    <Code2 className="h-3 w-3" />
-                                                                    Code Files
-                                                                </span>
-                                                            )}
-                                                            {tut.hasInstructionSheet && (
-                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/70">
-                                                                    <FileText className="h-3 w-3" />
-                                                                    PDF Sheet
-                                                                </span>
-                                                            )}
-                                                            {tut.hasAssignment && (
-                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/25">
-                                                                    <FileText className="h-3 w-3 text-amber-500" />
-                                                                    Assignment
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                                        {(tut.hasCodeFiles || tut.hasInstructionSheet) && (
+                                                            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                                                                {tut.hasCodeFiles && (
+                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/70">
+                                                                        <Code2 className="h-3 w-3" />
+                                                                        Code Files
+                                                                    </span>
+                                                                )}
+                                                                {tut.hasInstructionSheet && (
+                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/70">
+                                                                        <FileText className="h-3 w-3" />
+                                                                        PDF Sheet
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 
                                                 <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
                                                     {/* Step Badges */}
-                                                    <div className="flex items-center gap-1.5">
+                                                    <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
                                                         <Badge
                                                             variant="outline"
                                                             className={cn(
@@ -605,6 +595,20 @@ export function LearnerPackTracker() {
                                                         >
                                                             {p.reflectionSubmitted ? "✓ Reflection" : "Reflection"}
                                                         </Badge>
+                                                        {tut.hasAssignment && (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={cn(
+                                                                    "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                    p.assignmentDone 
+                                                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                        : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
+                                                                )}
+                                                                title="Official Assignment (+5 XP)"
+                                                            >
+                                                                {p.assignmentDone ? "✓ Assignment" : "Assignment"}
+                                                            </Badge>
+                                                        )}
                                                         <Badge
                                                             variant="outline"
                                                             className={cn(
@@ -879,18 +883,6 @@ export function LearnerPackTracker() {
                                                     </div>
 
                                                     <div className="flex items-center gap-2 ml-auto">
-                                                        {tutorialDetail.videoUrl && (
-                                                            <a
-                                                                href={tutorialDetail.videoUrl}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                title="Open direct video stream in new tab"
-                                                                className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg border border-border/60 hover:bg-muted/50"
-                                                            >
-                                                                <ExternalLink className="h-3 w-3" />
-                                                                <span>Direct Stream</span>
-                                                            </a>
-                                                        )}
                                                         <Button
                                                             onClick={() => switchTab('reading')}
                                                             className="text-xs font-bold gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer"

@@ -106,7 +106,7 @@ export const LoginPage: React.FC = (): React.JSX.Element => {
 
                 {/* Logo & Header */}
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2 flex items-center justify-center shadow-sm backdrop-blur-md transition-all duration-300 hover:border-indigo-500/40 hover:bg-slate-50 dark:hover:bg-white/10">
+                    <div className="w-14 h-14 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2 flex items-center justify-center shadow-sm backdrop-blur-md transition-all duration-300 hover:border-indigo-500/40 hover:bg-slate-50 dark:hover:bg-white/10">
                         <img src="/logo.png" alt="EduPyramids Logo" className="w-full h-full object-contain" />
                     </div>
                     <div>
@@ -182,7 +182,7 @@ export const LoginPage: React.FC = (): React.JSX.Element => {
 
                 {/* Mobile/Tablet Branding Header */}
                 <div className="lg:hidden flex flex-col items-center mb-8 relative z-10 text-center">
-                    <div className="w-14 h-14 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 flex items-center justify-center shadow-sm backdrop-blur-md mb-3">
+                    <div className="w-16 h-16 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 flex items-center justify-center shadow-sm backdrop-blur-md mb-3">
                         <img src="/logo.png" alt="EduPyramids Logo" className="w-full h-full object-contain" />
                     </div>
                     <h1 className="font-mono text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
