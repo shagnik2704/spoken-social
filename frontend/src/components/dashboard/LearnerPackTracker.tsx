@@ -18,7 +18,7 @@ import {
     PlayCircle, HelpCircle, PenTool, Sparkles,
     Heart, Lightbulb, Compass,
     Check, ArrowRight, ExternalLink, FileText, Code2, Loader2,
-    Copy, Download, ChevronLeft, ChevronRight
+    Download, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -73,7 +73,6 @@ export function LearnerPackTracker() {
 
     // Assignment state
     const [isMarkingAssignment, setIsMarkingAssignment] = useState(false)
-    const [copiedAssignment, setCopiedAssignment] = useState(false)
 
     // Reflection submission state
     const [reflectionText, setReflectionText] = useState('')
@@ -265,13 +264,6 @@ export function LearnerPackTracker() {
         } finally {
             setIsMarkingAssignment(false)
         }
-    }
-
-    const handleCopyAssignment = (text: string) => {
-        navigator.clipboard.writeText(text)
-        setCopiedAssignment(true)
-        toast.success('Assignment instructions copied to clipboard!')
-        setTimeout(() => setCopiedAssignment(false), 2000)
     }
 
     const handleSubmitReflection = async () => {
@@ -1268,73 +1260,22 @@ export function LearnerPackTracker() {
                                 return (
                                     <div id="tutorial-modal-body" className="flex-1 overflow-y-auto px-4 py-6 sm:px-10 sm:py-10 bg-background/50 min-h-0">
                                         <div className="max-w-4xl mx-auto space-y-6">
-                                            {/* Header Card */}
-                                            <div className="p-6 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                                <div className="space-y-1.5">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25 text-xs font-semibold px-2.5 py-0.5">
-                                                            Spoken Tutorial • Official Assignment
-                                                        </Badge>
-                                                        <span className="text-xs text-muted-foreground font-mono">
-                                                            Tutorial #{tutorialDetail.tutorialNumber}
-                                                        </span>
-                                                    </div>
-                                                    <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-                                                        {tutorialDetail.title}
-                                                    </h3>
-                                                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                                                        Practical application exercise prepared by IIT Bombay course instructors to build real-world mastery.
-                                                    </p>
-                                                </div>
-
-                                                {/* Quick Action buttons */}
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    {tutorialDetail.assignmentInstructions && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleCopyAssignment(tutorialDetail.assignmentInstructions || '')}
-                                                            className="text-xs gap-1.5 cursor-pointer shadow-2xs hover:bg-muted"
-                                                        >
-                                                            {copiedAssignment ? (
-                                                                <>
-                                                                    <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                                                                    <span>Copied!</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                                                                    <span>Copy Prompt</span>
-                                                                </>
-                                                            )}
-                                                        </Button>
-                                                    )}
-
+                                            {/* Assignment Body Content */}
+                                            <div className="p-6 sm:p-8 rounded-2xl bg-card border border-border/80 shadow-xs space-y-6">
+                                                <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/60">
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Assignment</h3>
                                                     {tutorialDetail.assignmentUrl && (
                                                         <a
                                                             href={tutorialDetail.assignmentUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-xs font-medium text-foreground transition-all shadow-2xs cursor-pointer"
+                                                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border/80 bg-background hover:bg-muted text-xs sm:text-sm font-semibold text-foreground transition-all shadow-2xs cursor-pointer shrink-0"
                                                         >
-                                                            <Download className="h-3.5 w-3.5 text-muted-foreground" />
-                                                            <span>Original (.txt)</span>
+                                                            <Download className="h-4 w-4 text-primary" />
+                                                            <span>Download Assignment</span>
                                                             <ExternalLink className="h-3 w-3 text-muted-foreground/60" />
                                                         </a>
                                                     )}
-                                                </div>
-                                            </div>
-
-                                            {/* Assignment Body Content */}
-                                            <div className="p-6 sm:p-8 rounded-2xl bg-card border border-border/80 shadow-xs space-y-6">
-                                                <div className="flex items-center gap-2.5 pb-4 border-b border-border/60">
-                                                    <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                                        <FileText className="h-5 w-5" />
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground">Task Overview</span>
-                                                        <h4 className="text-base font-bold text-foreground">Exercise Instructions</h4>
-                                                    </div>
                                                 </div>
 
                                                 {cleanedAssignmentText ? (
@@ -1363,9 +1304,9 @@ export function LearnerPackTracker() {
                                                 <div className="p-4 rounded-xl bg-muted/60 border border-border/70 text-xs text-foreground/90 flex items-start gap-3 shadow-2xs">
                                                     <Sparkles className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                                                     <div className="space-y-1">
-                                                        <p className="font-semibold text-foreground">How to Complete & Discuss</p>
+                                                        <p className="font-semibold text-foreground">How to Complete</p>
                                                         <p className="text-muted-foreground leading-relaxed">
-                                                            Complete this practical task in your physical notebook or discuss it with friends or classmates. You can document your conclusions in your <strong>Reflection Journal</strong> or share your perspective in the Spoken Social community forum.
+                                                            Complete this practical task in your physical notebook or discuss it with friends or classmates.
                                                         </p>
                                                     </div>
                                                 </div>
