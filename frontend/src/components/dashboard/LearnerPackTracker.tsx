@@ -278,9 +278,8 @@ export function LearnerPackTracker() {
 
     const handleSubmitReflection = async () => {
         if (!activeTutorialId) return
-        const words = reflectionText.trim().split(/\s+/).length
-        if (words < 10) {
-            toast.error('Please write a complete reflection (at least 3 sentences).')
+        if (!reflectionText.trim()) {
+            toast.error('Please enter your reflection before submitting.')
             return
         }
 
@@ -1253,7 +1252,7 @@ export function LearnerPackTracker() {
                                                     {/* Textarea */}
                                                     <div className="space-y-2">
                                                         <label className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
-                                                            <span>Your Reflection (3–5 complete sentences)</span>
+                                                            <span>Your Reflection</span>
                                                             <span className="text-[11px] text-muted-foreground font-mono">
                                                                 {reflectionText.trim() ? reflectionText.trim().split(/\s+/).length : 0} words
                                                             </span>
@@ -1262,7 +1261,7 @@ export function LearnerPackTracker() {
                                                             rows={7}
                                                             value={reflectionText}
                                                             onChange={(e) => setReflectionText(e.target.value)}
-                                                            placeholder="Write your reflection here. Address the questions above in 3 to 5 clear sentences..."
+                                                            placeholder="Write your reflection here. Address the questions above..."
                                                             className="text-sm font-sans leading-relaxed resize-none p-3.5"
                                                         />
 
@@ -1272,7 +1271,7 @@ export function LearnerPackTracker() {
                                                                 Visible only to you and academic evaluators
                                                             </span>
                                                             <span className="text-[11px] text-muted-foreground">
-                                                                {tutorialDetail.userReflection ? '✓ Previously submitted' : 'Min 3 sentences required'}
+                                                                {tutorialDetail.userReflection ? '✓ Previously submitted' : 'Personal reflection'}
                                                             </span>
                                                         </div>
                                                     </div>

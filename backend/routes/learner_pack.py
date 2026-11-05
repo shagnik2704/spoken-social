@@ -42,7 +42,7 @@ router = APIRouter(prefix="/api/learner-pack", tags=["learner_pack"])
 # ------------------------------------------------------------
 
 class ReflectionSubmitRequest(BaseModel):
-    reflection_text: str = Field(..., min_length=15, description="3-5 sentence personal reflection")
+    reflection_text: str = Field(..., min_length=1, description="Personal reflection")
 
 
 class QuizSubmitRequest(BaseModel):
@@ -440,11 +440,11 @@ async def submit_reflection(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
-    # Word count estimation
+    # Reflection validation
     text = body.reflection_text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Please enter your reflection before submitting.")
     words = len(text.split())
-    if words < 10:
-        raise HTTPException(status_code=400, detail="Please write a complete reflection of at least 3 sentences.")
 
     # 1. Upsert UserReflection
     ref_res = await db.execute(
