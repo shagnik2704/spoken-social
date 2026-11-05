@@ -17,7 +17,7 @@ import {
     CheckCircle2, ChevronDown, Lock, BookOpen,
     PlayCircle, HelpCircle, PenTool, Sparkles,
     Heart, Lightbulb, Compass,
-    Check, ArrowRight, ExternalLink, FileText, Code2
+    Check, ArrowRight, ExternalLink, FileText, Code2, Loader2
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -112,6 +112,7 @@ export function LearnerPackTracker() {
     }, [activeCourseId])
 
     const [videoWatchPercent, setVideoWatchPercent] = useState<number>(0)
+    const [isVideoBuffering, setIsVideoBuffering] = useState(false)
 
     const switchTab = (tab: 'video' | 'reading' | 'activity' | 'quiz') => {
         setActiveTab(tab)
@@ -132,6 +133,7 @@ export function LearnerPackTracker() {
         setIsLoadingDetail(true)
         setActiveTab('video')
         setVideoWatchPercent(0)
+        setIsVideoBuffering(false)
         setQuizAnswers({})
         requestAnimationFrame(() => {
             const btn = document.getElementById('tab-btn-video')
@@ -734,9 +736,12 @@ export function LearnerPackTracker() {
                                                         key={tutorialDetail.videoUrl}
                                                         controls
                                                         playsInline
-                                                        preload="metadata"
+                                                        preload="auto"
                                                         poster={tutorialDetail.videoPosterUrl || undefined}
                                                         className="w-full h-full object-contain"
+                                                        onWaiting={() => setIsVideoBuffering(true)}
+                                                        onPlaying={() => setIsVideoBuffering(false)}
+                                                        onCanPlay={() => setIsVideoBuffering(false)}
                                                         onTimeUpdate={(e) => {
                                                             const v = e.currentTarget
                                                             if (v.duration > 0) {
@@ -767,6 +772,11 @@ export function LearnerPackTracker() {
                                                                 <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                                                                 <span>Watched (+10 XP)</span>
                                                             </div>
+                                                        ) : isVideoBuffering ? (
+                                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs font-medium text-amber-600 dark:text-amber-400 shadow-2xs">
+                                                                <Loader2 className="size-3.5 animate-spin" />
+                                                                <span>Buffering stream... {videoWatchPercent > 0 ? `(${videoWatchPercent}%)` : ''}</span>
+                                                            </div>
                                                         ) : (
                                                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/60 border border-border/80 text-xs font-medium text-muted-foreground shadow-2xs">
                                                                 <div className="size-2 rounded-full bg-primary animate-pulse" />
@@ -775,13 +785,27 @@ export function LearnerPackTracker() {
                                                         )}
                                                     </div>
 
-                                                    <Button
-                                                        onClick={() => switchTab('reading')}
-                                                        className="text-xs font-bold gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer ml-auto"
-                                                    >
-                                                        <span>Next: Reading Notes</span>
-                                                        <ArrowRight className="h-4 w-4" />
-                                                    </Button>
+                                                    <div className="flex items-center gap-2 ml-auto">
+                                                        {tutorialDetail.videoUrl && (
+                                                            <a
+                                                                href={tutorialDetail.videoUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                title="Open direct video stream in new tab"
+                                                                className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg border border-border/60 hover:bg-muted/50"
+                                                            >
+                                                                <ExternalLink className="h-3 w-3" />
+                                                                <span>Direct Stream</span>
+                                                            </a>
+                                                        )}
+                                                        <Button
+                                                            onClick={() => switchTab('reading')}
+                                                            className="text-xs font-bold gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer"
+                                                        >
+                                                            <span>Next: Reading Notes</span>
+                                                            <ArrowRight className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (
