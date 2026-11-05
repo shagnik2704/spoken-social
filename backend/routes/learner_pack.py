@@ -387,6 +387,42 @@ async def mark_activity_complete(
     return {"success": True, "userTutorial": ut.to_api_dict()}
 
 
+@router.post("/tutorials/{tutorial_id}/assignment-complete")
+async def mark_assignment_complete(
+    tutorial_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Marks the official tutorial assignment as completed (assignment_done = True)
+    and awards 5 XP if not already awarded.
+    """
+    try:
+        tut_uuid = uuid.UUID(tutorial_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid tutorial ID")
+
+    ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    if not ut.assignment_done:
+        ut.assignment_done = True
+        xp_gained = recompute_tutorial_xp(ut)
+        if xp_gained != 0:
+            user.xp_total += xp_gained
+            db.add(XPEvent(
+                user_id=user.id,
+                source_type="assignment_completion",
+                source_id=str(tut_uuid),
+                xp_delta=xp_gained,
+                course_id=ut.tutorial.course_id if ut.tutorial else None,
+            ))
+            recalc_level(user)
+        if ut.tutorial and ut.tutorial.course_id:
+            await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
+        await db.commit()
+
+    return {"success": True, "userTutorial": ut.to_api_dict()}
+
+
 @router.post("/tutorials/{tutorial_id}/reflection")
 async def submit_reflection(
     tutorial_id: str,

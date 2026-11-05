@@ -17,7 +17,8 @@ import {
     CheckCircle2, ChevronDown, Lock, BookOpen,
     PlayCircle, HelpCircle, PenTool, Sparkles,
     Heart, Lightbulb, Compass,
-    Check, ArrowRight, ExternalLink, FileText, Code2, Loader2
+    Check, ArrowRight, ExternalLink, FileText, Code2, Loader2,
+    Copy, Download, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -68,7 +69,11 @@ export function LearnerPackTracker() {
     const [activeTutorialId, setActiveTutorialId] = useState<string | null>(null)
     const [tutorialDetail, setTutorialDetail] = useState<LearnerPackTutorialDetail | null>(null)
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
-    const [activeTab, setActiveTab] = useState<'video' | 'reading' | 'activity' | 'quiz'>('video')
+    const [activeTab, setActiveTab] = useState<'video' | 'reading' | 'activity' | 'assignment' | 'quiz'>('video')
+
+    // Assignment state
+    const [isMarkingAssignment, setIsMarkingAssignment] = useState(false)
+    const [copiedAssignment, setCopiedAssignment] = useState(false)
 
     // Reflection submission state
     const [reflectionText, setReflectionText] = useState('')
@@ -84,6 +89,14 @@ export function LearnerPackTracker() {
     // Habit check-in state
     const [habitNote, setHabitNote] = useState('')
     const [isCheckingIn, setIsCheckingIn] = useState(false)
+
+    // Current tutorial navigation targets
+    const prevTutorial = tutorialDetail && overview?.tutorials
+        ? overview.tutorials.find(t => t.number === tutorialDetail.tutorialNumber - 1)
+        : null
+    const nextTutorial = tutorialDetail && overview?.tutorials
+        ? overview.tutorials.find(t => t.number === tutorialDetail.tutorialNumber + 1)
+        : null
 
     const fetchOverview = async (isBackground = false) => {
         if (!activeCourseId) return
@@ -114,7 +127,7 @@ export function LearnerPackTracker() {
     const [videoWatchPercent, setVideoWatchPercent] = useState<number>(0)
     const [isVideoBuffering, setIsVideoBuffering] = useState(false)
 
-    const switchTab = (tab: 'video' | 'reading' | 'activity' | 'quiz') => {
+    const switchTab = (tab: 'video' | 'reading' | 'activity' | 'assignment' | 'quiz') => {
         setActiveTab(tab)
         requestAnimationFrame(() => {
             const btn = document.getElementById(`tab-btn-${tab}`)
@@ -228,6 +241,37 @@ export function LearnerPackTracker() {
         } finally {
             setIsMarkingActivity(false)
         }
+    }
+
+    const handleMarkAssignmentComplete = async () => {
+        if (!activeTutorialId) return
+        try {
+            setIsMarkingAssignment(true)
+            await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/assignment-complete`)
+            toast.success('Official assignment marked completed! +5 XP awarded 📝')
+            addXP(5)
+            if (tutorialDetail) {
+                setTutorialDetail({
+                    ...tutorialDetail,
+                    userTutorial: {
+                        ...tutorialDetail.userTutorial,
+                        assignmentDone: 'yes'
+                    }
+                })
+            }
+            fetchOverview(true)
+        } catch (err) {
+            toast.error('Failed to update assignment status.')
+        } finally {
+            setIsMarkingAssignment(false)
+        }
+    }
+
+    const handleCopyAssignment = (text: string) => {
+        navigator.clipboard.writeText(text)
+        setCopiedAssignment(true)
+        toast.success('Assignment instructions copied to clipboard!')
+        setTimeout(() => setCopiedAssignment(false), 2000)
     }
 
     const handleSubmitReflection = async () => {
@@ -532,6 +576,12 @@ export function LearnerPackTracker() {
                                                                     PDF Sheet
                                                                 </span>
                                                             )}
+                                                            {tut.hasAssignment && (
+                                                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/25">
+                                                                    <FileText className="h-3 w-3 text-amber-500" />
+                                                                    Assignment
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -613,14 +663,42 @@ export function LearnerPackTracker() {
                         <>
                             {/* Modal Header */}
                             <div className="px-5 sm:px-8 py-4 border-b bg-card shrink-0">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="text-xs font-semibold bg-primary/10 text-primary border-primary/25">
-                                                Tutorial {tutorialDetail.tutorialNumber}
-                                            </Badge>
-                                            <span className="text-xs text-muted-foreground font-medium">
-                                                Week {tutorialDetail.content?.weekNumber || 1} • {WEEK_TITLES[tutorialDetail.content?.weekNumber || 1]?.split(':')[1]?.trim() || 'Personality & Human Development'}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8 sm:pr-10">
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {/* Previous & Next Tutorial Navigation */}
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={!prevTutorial}
+                                                    onClick={() => prevTutorial && openTutorialModal(prevTutorial.id)}
+                                                    className="h-7 px-2 text-xs font-semibold gap-1 text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                                                    title={prevTutorial ? `Back to Tutorial ${prevTutorial.number}: ${prevTutorial.title}` : "First tutorial"}
+                                                >
+                                                    <ChevronLeft className="h-3.5 w-3.5" />
+                                                    <span>Prev</span>
+                                                </Button>
+
+                                                <Badge variant="outline" className="text-xs font-semibold bg-primary/10 text-primary border-primary/25">
+                                                    Tutorial {tutorialDetail.tutorialNumber}
+                                                </Badge>
+
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={!nextTutorial}
+                                                    onClick={() => nextTutorial && openTutorialModal(nextTutorial.id)}
+                                                    className="h-7 px-2 text-xs font-semibold gap-1 text-muted-foreground hover:text-foreground cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                                                    title={nextTutorial ? `Next to Tutorial ${nextTutorial.number}: ${nextTutorial.title}` : "Last tutorial"}
+                                                >
+                                                    <span>Next</span>
+                                                    <ChevronRight className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
+
+                                            <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
+                                                • Week {tutorialDetail.content?.weekNumber || 1} • {WEEK_TITLES[tutorialDetail.content?.weekNumber || 1]?.split(':')[1]?.trim() || 'Personality & Human Development'}
                                             </span>
                                         </div>
                                         <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans">
@@ -628,7 +706,7 @@ export function LearnerPackTracker() {
                                         </DialogTitle>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="flex items-center gap-1.5 font-sans text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full">
+                                        <div className="flex items-center gap-1.5 font-sans text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full shrink-0">
                                             <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                                             <span>+25 XP Total</span>
                                         </div>
@@ -690,7 +768,7 @@ export function LearnerPackTracker() {
                                         )}
                                     >
                                         <PenTool className={cn("h-4 w-4", activeTab === 'activity' ? "text-primary-foreground" : "text-muted-foreground")} />
-                                        <span>{tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? '3. Assignment & Practice' : '3. Activity & Reflection'}</span>
+                                        <span>3. Activity & Reflection</span>
                                         {(tutorialDetail.userReflection || tutorialDetail.userTutorial.minitaskOpted === 'yes') && (
                                             <span className={cn(
                                                 "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
@@ -700,6 +778,29 @@ export function LearnerPackTracker() {
                                             )}>✓</span>
                                         )}
                                     </button>
+                                    {(tutorialDetail.assignmentInstructions || tutorialDetail.assignmentUrl) && (
+                                        <button
+                                            id="tab-btn-assignment"
+                                            onClick={() => switchTab('assignment')}
+                                            className={cn(
+                                                "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
+                                                activeTab === 'assignment'
+                                                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                    : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
+                                            )}
+                                        >
+                                            <FileText className={cn("h-4 w-4", activeTab === 'assignment' ? "text-primary-foreground" : "text-muted-foreground")} />
+                                            <span>4. Assignment</span>
+                                            {(tutorialDetail.userTutorial.assignmentDone === 'yes' || (tutorialDetail.userTutorial.assignmentDone as any) === true) && (
+                                                <span className={cn(
+                                                    "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                    activeTab === 'assignment'
+                                                        ? "bg-primary-foreground/20 text-primary-foreground"
+                                                        : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                                )}>✓</span>
+                                            )}
+                                        </button>
+                                    )}
                                     <button
                                         id="tab-btn-quiz"
                                         onClick={() => switchTab('quiz')}
@@ -711,7 +812,7 @@ export function LearnerPackTracker() {
                                         )}
                                     >
                                         <HelpCircle className={cn("h-4 w-4", activeTab === 'quiz' ? "text-primary-foreground" : "text-muted-foreground")} />
-                                        <span>4. Quiz (5 MCQs)</span>
+                                        <span>{(tutorialDetail.assignmentInstructions || tutorialDetail.assignmentUrl) ? '5. Quiz (5 MCQs)' : '4. Quiz (5 MCQs)'}</span>
                                         {tutorialDetail.quiz.hasAttempted && (
                                             <span className={cn(
                                                 "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
@@ -908,7 +1009,7 @@ export function LearnerPackTracker() {
                                                 className="font-semibold text-xs sm:text-sm shrink-0 gap-1.5 w-full sm:w-auto cursor-pointer"
                                             >
                                                 {tutorialDetail.userTutorial.watched === 'yes'
-                                                    ? (tutorialDetail.codeFilesUrl || tutorialDetail.assignmentUrl ? 'Proceed to Assignment & Practice' : 'Proceed to Activity & Reflection')
+                                                    ? 'Proceed to Activity & Reflection'
                                                     : 'Mark Complete (+10 XP) & Continue'}
                                                 <ArrowRight className="h-4 w-4" />
                                             </Button>
@@ -1130,15 +1231,195 @@ export function LearnerPackTracker() {
                                                             {tutorialDetail.userReflection && (
                                                                 <Button
                                                                     variant="outline"
-                                                                    onClick={() => switchTab('quiz')}
+                                                                    onClick={() => switchTab((tutorialDetail.assignmentInstructions || tutorialDetail.assignmentUrl) ? 'assignment' : 'quiz')}
                                                                     className="text-xs gap-1 cursor-pointer"
                                                                 >
-                                                                    <span>Take Quiz</span>
+                                                                    <span>{(tutorialDetail.assignmentInstructions || tutorialDetail.assignmentUrl) ? 'Next: Assignment' : 'Take Quiz'}</span>
                                                                     <ArrowRight className="h-3.5 w-3.5" />
                                                                 </Button>
                                                             )}
                                                         </div>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })()}
+
+                            {/* TAB 4: OFFICIAL ASSIGNMENT */}
+                            {activeTab === 'assignment' && (() => {
+                                const rawAssignment = tutorialDetail.assignmentInstructions || ''
+                                const assignmentLines = rawAssignment.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+                                const cleanedLines = assignmentLines.filter((l) => {
+                                    const s = l.trim()
+                                    if (s.startsWith('Personality and Human Development') && s.includes('Assignment')) return false
+                                    if (s.toLowerCase().startsWith('as an assignment')) return false
+                                    return true
+                                })
+                                const cleanedAssignmentText = cleanedLines.join('\n').trim()
+
+                                const isDone = Boolean(
+                                    (tutorialDetail.userTutorial.assignmentDone as any) === true ||
+                                    tutorialDetail.userTutorial.assignmentDone === 'yes' ||
+                                    tutorialDetail.userReflection
+                                )
+
+                                return (
+                                    <div id="tutorial-modal-body" className="flex-1 overflow-y-auto px-4 py-6 sm:px-10 sm:py-10 bg-background/50 min-h-0">
+                                        <div className="max-w-4xl mx-auto space-y-6">
+                                            {/* Header Card */}
+                                            <div className="p-6 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div className="space-y-1.5">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25 text-xs font-semibold px-2.5 py-0.5">
+                                                            Spoken Tutorial • Official Assignment
+                                                        </Badge>
+                                                        <span className="text-xs text-muted-foreground font-mono">
+                                                            Tutorial #{tutorialDetail.tutorialNumber}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+                                                        {tutorialDetail.title}
+                                                    </h3>
+                                                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                                        Practical application exercise prepared by IIT Bombay course instructors to build real-world mastery.
+                                                    </p>
+                                                </div>
+
+                                                {/* Quick Action buttons */}
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {tutorialDetail.assignmentInstructions && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleCopyAssignment(tutorialDetail.assignmentInstructions || '')}
+                                                            className="text-xs gap-1.5 cursor-pointer shadow-2xs hover:bg-muted"
+                                                        >
+                                                            {copiedAssignment ? (
+                                                                <>
+                                                                    <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                                                    <span>Copied!</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                    <span>Copy Prompt</span>
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    )}
+
+                                                    {tutorialDetail.assignmentUrl && (
+                                                        <a
+                                                            href={tutorialDetail.assignmentUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/80 bg-background hover:bg-muted text-xs font-medium text-foreground transition-all shadow-2xs cursor-pointer"
+                                                        >
+                                                            <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            <span>Original (.txt)</span>
+                                                            <ExternalLink className="h-3 w-3 text-muted-foreground/60" />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Assignment Body Content */}
+                                            <div className="p-6 sm:p-8 rounded-2xl bg-card border border-border/80 shadow-xs space-y-6">
+                                                <div className="flex items-center gap-2.5 pb-4 border-b border-border/60">
+                                                    <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                        <FileText className="h-5 w-5" />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground">Task Overview</span>
+                                                        <h4 className="text-base font-bold text-foreground">Exercise Instructions</h4>
+                                                    </div>
+                                                </div>
+
+                                                {cleanedAssignmentText ? (
+                                                    <div className="prose prose-slate dark:prose-invert max-w-none text-foreground/90 font-sans leading-relaxed text-sm sm:text-base space-y-4">
+                                                        <ReactMarkdown
+                                                            remarkPlugins={[remarkGfm]}
+                                                            components={{
+                                                                h3: ({ ...props }) => <h3 className="text-base sm:text-lg font-bold text-foreground mt-4 mb-2 font-sans" {...props} />,
+                                                                p: ({ ...props }) => <p className="leading-relaxed mb-3 text-foreground/90 text-sm sm:text-base font-sans" {...props} />,
+                                                                ul: ({ ...props }) => <ul className="list-disc pl-6 mb-4 space-y-2 text-sm sm:text-base text-foreground/90" {...props} />,
+                                                                ol: ({ ...props }) => <ol className="list-decimal pl-6 mb-4 space-y-2 text-sm sm:text-base text-foreground/90" {...props} />,
+                                                                li: ({ ...props }) => <li className="leading-relaxed" {...props} />,
+                                                                strong: ({ ...props }) => <strong className="font-bold text-foreground" {...props} />,
+                                                            }}
+                                                        >
+                                                            {cleanedAssignmentText}
+                                                        </ReactMarkdown>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm text-muted-foreground italic">
+                                                        Assignment instructions will be available shortly.
+                                                    </p>
+                                                )}
+
+                                                {/* Helpful Tip */}
+                                                <div className="p-4 rounded-xl bg-muted/60 border border-border/70 text-xs text-foreground/90 flex items-start gap-3 shadow-2xs">
+                                                    <Sparkles className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                                    <div className="space-y-1">
+                                                        <p className="font-semibold text-foreground">How to Complete & Discuss</p>
+                                                        <p className="text-muted-foreground leading-relaxed">
+                                                            Complete this practical task in your physical notebook or discuss it with friends or classmates. You can document your conclusions in your <strong>Reflection Journal</strong> or share your perspective in the Spoken Social community forum.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Completion and Next Action Footer */}
+                                            <div className="p-6 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                <div className="space-y-1 text-center sm:text-left">
+                                                    <h4 className="font-bold text-foreground text-sm sm:text-base">
+                                                        {isDone ? 'Assignment Completed' : 'Completed this assignment?'}
+                                                    </h4>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {isDone
+                                                            ? 'Assignment has been marked as completed (+5 XP earned). Next step: 5-Question Quiz.'
+                                                            : 'Mark as completed to earn +5 XP toward your course progress.'}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                    {!isDone ? (
+                                                        <Button
+                                                            size="lg"
+                                                            variant="outline"
+                                                            onClick={handleMarkAssignmentComplete}
+                                                            disabled={isMarkingAssignment}
+                                                            className="font-semibold text-xs sm:text-sm gap-1.5 flex-1 sm:flex-none cursor-pointer"
+                                                        >
+                                                            {isMarkingAssignment ? (
+                                                                <>
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                    <span>Saving...</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                                                    <span>Mark Completed (+5 XP)</span>
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    ) : (
+                                                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-xs px-3 py-1.5 font-semibold gap-1.5">
+                                                            <Check className="h-3.5 w-3.5" />
+                                                            <span>Completed (+5 XP)</span>
+                                                        </Badge>
+                                                    )}
+
+                                                    <Button
+                                                        size="lg"
+                                                        onClick={() => switchTab('quiz')}
+                                                        className="font-semibold text-xs sm:text-sm gap-2 flex-1 sm:flex-none cursor-pointer shadow-xs"
+                                                    >
+                                                        <span>Proceed to Quiz</span>
+                                                        <ArrowRight className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>
