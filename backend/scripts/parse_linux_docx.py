@@ -110,9 +110,9 @@ def parse_docx():
         vid_id, slug = media_by_num[tut_num][1], media_by_num[tut_num][2]
         video_url = f"https://spoken-tutorial.org/media/videos/194/{vid_id}/{slug}-English.webm"
         poster_url = f"https://spoken-tutorial.org/media/videos/194/{vid_id}/{slug}-Big.png"
-        code_files_url = "/courses/linux/linux-companion-files.zip"
-        instruction_sheet_url = "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf"
-        installation_sheet_url = "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+        code_files_url = "/downloads/courses/linux/linux-companion-files.zip"
+        instruction_sheet_url = "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf"
+        installation_sheet_url = "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
 
         # Split sections
         sections = {}

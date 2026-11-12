@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/auth/swayam", tags=["swayam"])
 
 
 def _clean_local_target(target: str | None) -> str:
-    """Ensure target URL is safe and stays on our local application."""
+    """Ensure target URL is safe, stays on our local application, and has no trailing slash."""
     if not target:
         return "/courses/personality_dev"
 
@@ -36,14 +36,19 @@ def _clean_local_target(target: str | None) -> str:
     if parsed.scheme and parsed.netloc:
         allowed = ("social.edupyramids.org", "beta.social.edupyramids.org", "localhost", "127.0.0.1")
         if parsed.hostname in allowed or (parsed.hostname and parsed.hostname.endswith(".edupyramids.org")):
-            path = parsed.path or "/"
+            path = (parsed.path or "/").rstrip("/") or "/"
             if parsed.query:
                 path = f"{path}?{parsed.query}"
             return path
         return "/courses/personality_dev"
 
     if target.startswith("/") and not target.startswith("//"):
-        return target
+        # Handle query if present in relative target
+        sub_parsed = urlparse(target)
+        path = (sub_parsed.path or "/").rstrip("/") or "/"
+        if sub_parsed.query:
+            path = f"{path}?{sub_parsed.query}"
+        return path
 
     return "/courses/personality_dev"
 
