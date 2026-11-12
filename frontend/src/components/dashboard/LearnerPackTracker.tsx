@@ -19,7 +19,7 @@ import {
     Heart, Lightbulb, Compass,
     Check, ArrowRight, ExternalLink, FileText, Code2, Loader2,
     Download, ChevronLeft, ChevronRight, FolderArchive, Terminal, Wrench,
-    UploadCloud, ImageIcon, AlertCircle
+    UploadCloud, AlertCircle
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -79,6 +79,16 @@ const getWeekTitle = (weekNum: number, courseId?: string) => {
         return LINUX_WEEKS[weekNum] || `Week ${weekNum}`
     }
     return PERSONALITY_DEV_WEEKS[weekNum] || `Week ${weekNum}`
+}
+
+export const resolveMediaUrl = (url?: string | null) => {
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) return url
+    const apiUrl = import.meta.env.VITE_API_URL || ''
+    if (apiUrl && !apiUrl.startsWith('/')) {
+        return `${apiUrl.replace(/\/$/, '')}${url}`
+    }
+    return url
 }
 
 export function LearnerPackTracker() {
@@ -1484,132 +1494,117 @@ export function LearnerPackTracker() {
                                 if (isLinux && isSetupTutorial) {
                                     return (
                                         <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-muted/10 min-h-0">
-                                            <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-                                                {/* Left Column: Installation Steps */}
-                                                <div className="lg:col-span-5 space-y-4">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
-                                                            <Wrench className="h-5 w-5" />
+                                            <div className="max-w-4xl mx-auto space-y-6">
+                                                {/* Header Banner */}
+                                                <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-blue-600/10 via-primary/5 to-emerald-600/10 border border-border/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <Badge variant="outline" className="text-[11px] font-mono font-bold px-2.5 py-0.5 bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30">
+                                                                🛠️ LAB ENVIRONMENT SETUP
+                                                            </Badge>
+                                                            <span className="text-xs text-muted-foreground font-semibold">
+                                                                Tutorial {tutorialDetail.tutorialNumber}
+                                                            </span>
                                                         </div>
-                                                        <div>
-                                                            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-primary">Lab Setup</span>
-                                                            <h3 className="text-base font-bold text-foreground">
-                                                                {tutorialDetail.tutorialNumber === 1 ? 'VirtualBox Installation' : 'Ubuntu OS Installation'}
-                                                            </h3>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-foreground space-y-1.5 shadow-2xs">
-                                                        <div className="flex items-center gap-2 font-bold text-blue-600 dark:text-blue-400">
-                                                            <Sparkles className="h-3.5 w-3.5" />
-                                                            <span>Setup Verification Milestone (+15 XP)</span>
-                                                        </div>
-                                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                                            Complete the installation on your local machine. Once finished, upload a screenshot to verify your lab environment. No multiple-choice quiz is required for this setup tutorial!
+                                                        <h2 className="text-lg sm:text-xl font-bold text-foreground">
+                                                            {tutorialDetail.title}
+                                                        </h2>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Set up your virtual machine locally. Submit a verification screenshot to complete this milestone and unlock subsequent hands-on tutorials.
                                                         </p>
                                                     </div>
-
-                                                    {/* Numbered Step Cards */}
-                                                    <div className="space-y-2.5">
-                                                        {tryItSteps.map((step, idx) => (
-                                                            <div key={idx} className="p-3.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1">
-                                                                <Badge variant="outline" className="text-[10px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground">
-                                                                    Step {idx + 1}
-                                                                </Badge>
-                                                                <p className="text-xs text-foreground/90 leading-relaxed pt-1">
-                                                                    {step}
-                                                                </p>
-                                                            </div>
-                                                        ))}
+                                                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-1.5 shrink-0 bg-background/80 p-3 rounded-xl border border-border/60">
+                                                        <span className="text-[11px] text-muted-foreground font-medium">Completion Award</span>
+                                                        <Badge className="bg-emerald-600 text-white font-bold text-xs px-3 py-1">+15 XP</Badge>
                                                     </div>
                                                 </div>
 
-                                                {/* Right Column: Screenshot Upload Studio */}
-                                                <div className="lg:col-span-7 space-y-4">
-                                                    <div className="p-6 rounded-2xl bg-card border shadow-sm space-y-4">
-                                                        <div className="flex items-center justify-between border-b pb-4">
-                                                            <div className="flex items-center gap-2.5">
-                                                                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                                                                    <ImageIcon className="h-5 w-5" />
-                                                                </div>
-                                                                <div>
-                                                                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Proof of Setup</span>
-                                                                    <h3 className="text-base font-bold text-foreground">Upload Screenshot</h3>
-                                                                </div>
-                                                            </div>
-                                                            <Badge className="bg-emerald-600 text-white font-semibold text-xs">+15 XP</Badge>
+                                                {/* 3 Step Flow Cards */}
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                                                    <div className="p-4 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="size-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">1</span>
+                                                            <span className="text-xs font-bold text-foreground">Prepare & Install</span>
                                                         </div>
+                                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                            {tutorialDetail.tutorialNumber === 1
+                                                                ? 'Check CPU virtualization in Task Manager, then download and install VirtualBox.'
+                                                                : 'Download Ubuntu 24.04 ISO, create a VirtualBox VM, and boot the installer.'}
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-4 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="size-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">2</span>
+                                                            <span className="text-xs font-bold text-foreground">Open Verification View</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                            {tutorialDetail.tutorialNumber === 1
+                                                                ? 'In VirtualBox Manager, open Help → About VirtualBox to show the version.'
+                                                                : 'Boot into Ubuntu and open the desktop screen inside the VM window.'}
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-4 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="size-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">3</span>
+                                                            <span className="text-xs font-bold text-foreground">Upload Proof</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                            Take a screenshot of the window and upload it below. No MCQ quiz is required for setup tutorials!
+                                                        </p>
+                                                    </div>
+                                                </div>
 
-                                                        {/* Previously Submitted Image Preview */}
-                                                        {tutorialDetail.userReflection?.imageUrl && !screenshotFile ? (
-                                                            <div className="space-y-4">
-                                                                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
-                                                                    <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                                {/* Main Verification & Proof Area */}
+                                                <div className="p-6 rounded-2xl bg-card border border-border/90 shadow-sm space-y-5">
+                                                    {/* If Already Submitted */}
+                                                    {tutorialDetail.userReflection?.imageUrl && !screenshotFile ? (
+                                                        <div className="space-y-4">
+                                                            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                                <div className="space-y-0.5">
+                                                                    <div className="flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-400">
                                                                         <CheckCircle2 className="h-4 w-4" />
-                                                                        <span>Setup screenshot verified and approved!</span>
+                                                                        <span>Setup Screenshot Submitted & Recorded</span>
                                                                     </div>
-                                                                    <span className="text-[11px] text-muted-foreground font-mono">
-                                                                        {new Date(tutorialDetail.userReflection.submittedAt).toLocaleDateString()}
-                                                                    </span>
+                                                                    <p className="text-[11px] text-muted-foreground">
+                                                                        Submitted on {new Date(tutorialDetail.userReflection.submittedAt).toLocaleDateString()} • Recorded in your student lab portfolio (reviewed during course evaluation)
+                                                                    </p>
                                                                 </div>
-                                                                <div className="rounded-xl overflow-hidden border border-border/80 bg-black/5 dark:bg-black/20 p-2 text-center">
-                                                                    <img
-                                                                        src={tutorialDetail.userReflection.imageUrl}
-                                                                        alt="Setup Screenshot"
-                                                                        className="max-h-72 mx-auto rounded-lg object-contain shadow-xs"
-                                                                    />
-                                                                    {tutorialDetail.userReflection.reflectionText && (
-                                                                        <p className="text-xs text-muted-foreground pt-2 italic">
-                                                                            "{tutorialDetail.userReflection.reflectionText}"
-                                                                        </p>
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex items-center justify-between pt-2">
-                                                                    <label className="text-xs font-semibold text-primary hover:underline cursor-pointer">
-                                                                        <span>Upload a different screenshot</span>
-                                                                        <input
-                                                                            type="file"
-                                                                            accept="image/png,image/jpeg,image/webp"
-                                                                            className="hidden"
-                                                                            onChange={(e) => {
-                                                                                const file = e.target.files?.[0]
-                                                                                if (file) {
-                                                                                    if (file.size > 5 * 1024 * 1024) {
-                                                                                        toast.error('File size exceeds 5 MB limit.')
-                                                                                        return
-                                                                                    }
-                                                                                    setScreenshotFile(file)
-                                                                                    setScreenshotPreview(URL.createObjectURL(file))
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                    </label>
-                                                                    {nextTutorial && (
-                                                                        <Button
-                                                                            onClick={() => openTutorialModal(nextTutorial.id)}
-                                                                            className="text-xs font-semibold gap-1.5"
-                                                                        >
-                                                                            <span>Next Tutorial</span>
-                                                                            <ArrowRight className="h-3.5 w-3.5" />
-                                                                        </Button>
-                                                                    )}
-                                                                </div>
+                                                                <Badge variant="outline" className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 text-xs font-semibold px-2.5 py-1 shrink-0 self-start sm:self-auto">
+                                                                    ✓ Milestone Complete (+15 XP)
+                                                                </Badge>
                                                             </div>
-                                                        ) : (
-                                                            <div className="space-y-4">
-                                                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                                                    {tutorialDetail.tutorialNumber === 1
-                                                                        ? 'Take a screenshot of VirtualBox Manager with Help → About window open showing the installed version.'
-                                                                        : 'Take a screenshot of the Ubuntu desktop running inside your Oracle VirtualBox window.'}
-                                                                </p>
 
-                                                                {/* Dropzone */}
-                                                                <label className={cn(
-                                                                    "border-2 border-dashed rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all",
-                                                                    screenshotPreview
-                                                                        ? "border-primary/50 bg-primary/5"
-                                                                        : "border-border/80 hover:border-primary/60 hover:bg-muted/40"
-                                                                )}>
+                                                            {/* Screenshot Preview with clean framing and full-size link */}
+                                                            <div className="rounded-xl overflow-hidden border border-border/80 bg-slate-950/5 dark:bg-black/30 p-3 text-center space-y-2">
+                                                                <a
+                                                                    href={resolveMediaUrl(tutorialDetail.userReflection.imageUrl)}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="block group relative"
+                                                                    title="Click to view full image in new tab"
+                                                                >
+                                                                    <img
+                                                                        src={resolveMediaUrl(tutorialDetail.userReflection.imageUrl)}
+                                                                        alt="Setup Verification Screenshot"
+                                                                        className="max-h-80 mx-auto rounded-lg object-contain shadow-xs group-hover:opacity-95 transition-opacity"
+                                                                    />
+                                                                    <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded-md bg-black/70 text-white text-[10px] font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <ExternalLink className="h-3 w-3" />
+                                                                        <span>Open full size</span>
+                                                                    </div>
+                                                                </a>
+                                                                {tutorialDetail.userReflection.reflectionText && (
+                                                                    <p className="text-xs text-muted-foreground pt-1 italic font-sans">
+                                                                        "{tutorialDetail.userReflection.reflectionText}"
+                                                                    </p>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Footer Actions */}
+                                                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t">
+                                                                <label className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1.5 cursor-pointer">
+                                                                    <UploadCloud className="h-4 w-4" />
+                                                                    <span>Replace with another screenshot</span>
                                                                     <input
                                                                         type="file"
                                                                         accept="image/png,image/jpeg,image/webp"
@@ -1626,76 +1621,125 @@ export function LearnerPackTracker() {
                                                                             }
                                                                         }}
                                                                     />
-                                                                    {screenshotPreview ? (
-                                                                        <div className="space-y-3">
-                                                                            <img
-                                                                                src={screenshotPreview}
-                                                                                alt="Preview"
-                                                                                className="max-h-56 mx-auto rounded-xl object-contain shadow-xs border"
-                                                                            />
-                                                                            <div className="text-xs text-foreground font-semibold flex items-center justify-center gap-2">
-                                                                                <span>{screenshotFile?.name}</span>
-                                                                                <Badge variant="outline" className="text-[10px]">
-                                                                                    {screenshotFile ? (screenshotFile.size / 1024).toFixed(0) + ' KB' : ''}
-                                                                                </Badge>
-                                                                            </div>
-                                                                            <span className="text-[11px] text-primary hover:underline">Click to change image</span>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="space-y-2">
-                                                                            <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-                                                                                <UploadCloud className="h-6 w-6" />
-                                                                            </div>
-                                                                            <div className="text-xs font-semibold text-foreground">
-                                                                                Click to upload or drag and drop screenshot
-                                                                            </div>
-                                                                            <p className="text-[11px] text-muted-foreground">
-                                                                                PNG, JPG, or WEBP (Max 5 MB)
-                                                                            </p>
-                                                                        </div>
-                                                                    )}
                                                                 </label>
-
-                                                                <div className="space-y-1.5">
-                                                                    <label className="text-xs font-semibold text-muted-foreground">
-                                                                        Notes or Machine Details (Optional)
-                                                                    </label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={screenshotNotes}
-                                                                        onChange={(e) => setScreenshotNotes(e.target.value)}
-                                                                        placeholder="e.g. Windows 11, VirtualBox 7.0 installed cleanly"
-                                                                        className="w-full text-xs p-2.5 rounded-xl border bg-background text-foreground"
-                                                                    />
-                                                                </div>
-
-                                                                <div className="flex items-center justify-between pt-2">
-                                                                    {screenshotFile && (
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            onClick={() => {
-                                                                                setScreenshotFile(null)
-                                                                                setScreenshotPreview(tutorialDetail.userReflection?.imageUrl || null)
-                                                                            }}
-                                                                            className="text-xs text-muted-foreground"
-                                                                        >
-                                                                            Cancel
-                                                                        </Button>
-                                                                    )}
+                                                                {nextTutorial && (
                                                                     <Button
-                                                                        onClick={handleScreenshotUpload}
-                                                                        disabled={!screenshotFile || isSubmittingLab}
-                                                                        className="font-semibold text-xs ml-auto gap-2 cursor-pointer"
+                                                                        onClick={() => openTutorialModal(nextTutorial.id)}
+                                                                        className="font-semibold text-xs gap-1.5 w-full sm:w-auto cursor-pointer"
                                                                     >
-                                                                        {isSubmittingLab ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
-                                                                        <span>{isSubmittingLab ? 'Uploading...' : 'Verify Setup Screenshot (+15 XP)'}</span>
+                                                                        <span>Proceed to Tutorial {nextTutorial.number}: {nextTutorial.title}</span>
+                                                                        <ArrowRight className="h-3.5 w-3.5" />
                                                                     </Button>
-                                                                </div>
+                                                                )}
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                        </div>
+                                                    ) : (
+                                                        /* If Not Yet Submitted or Re-uploading */
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center justify-between border-b pb-3">
+                                                                <div>
+                                                                    <h3 className="text-sm font-bold text-foreground">Upload Proof of Installation</h3>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        {tutorialDetail.tutorialNumber === 1
+                                                                            ? 'Screenshot of VirtualBox Manager with Help → About window open showing installed version.'
+                                                                            : 'Screenshot of Ubuntu 24.04 desktop running inside your Oracle VirtualBox window.'}
+                                                                    </p>
+                                                                </div>
+                                                                <Badge className="bg-emerald-600 text-white font-semibold text-xs">+15 XP</Badge>
+                                                            </div>
+
+                                                            {/* Modern Upload Dropzone */}
+                                                            <label className={cn(
+                                                                "border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all",
+                                                                screenshotPreview
+                                                                    ? "border-primary/50 bg-primary/5"
+                                                                    : "border-border/80 hover:border-primary/60 hover:bg-muted/40"
+                                                            )}>
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/png,image/jpeg,image/webp"
+                                                                    className="hidden"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0]
+                                                                        if (file) {
+                                                                            if (file.size > 5 * 1024 * 1024) {
+                                                                                toast.error('File size exceeds 5 MB limit.')
+                                                                                return
+                                                                            }
+                                                                            setScreenshotFile(file)
+                                                                            setScreenshotPreview(URL.createObjectURL(file))
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                {screenshotPreview ? (
+                                                                    <div className="space-y-3">
+                                                                        <img
+                                                                            src={screenshotPreview}
+                                                                            alt="Preview"
+                                                                            className="max-h-64 mx-auto rounded-xl object-contain shadow-xs border"
+                                                                        />
+                                                                        <div className="text-xs text-foreground font-semibold flex items-center justify-center gap-2">
+                                                                            <span>{screenshotFile?.name}</span>
+                                                                            <Badge variant="outline" className="text-[10px]">
+                                                                                {screenshotFile ? (screenshotFile.size / 1024).toFixed(0) + ' KB' : ''}
+                                                                            </Badge>
+                                                                        </div>
+                                                                        <span className="text-[11px] text-primary hover:underline">Click to choose a different image</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="space-y-2.5">
+                                                                        <div className="size-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-2xs">
+                                                                            <UploadCloud className="h-7 w-7" />
+                                                                        </div>
+                                                                        <div className="text-sm font-semibold text-foreground">
+                                                                            Click to select screenshot or drag and drop here
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground">
+                                                                            Supports PNG, JPG, or WEBP (Maximum size: 5 MB)
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </label>
+
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-xs font-semibold text-muted-foreground">
+                                                                    Setup Notes / Machine Details (Optional)
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={screenshotNotes}
+                                                                    onChange={(e) => setScreenshotNotes(e.target.value)}
+                                                                    placeholder="e.g. Windows 11 64-bit, VirtualBox 7.0 installed smoothly"
+                                                                    className="w-full text-xs p-2.5 rounded-xl border bg-background text-foreground"
+                                                                />
+                                                            </div>
+
+                                                            <div className="flex items-center justify-between pt-2">
+                                                                {screenshotFile && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() => {
+                                                                            setScreenshotFile(null)
+                                                                            setScreenshotPreview(tutorialDetail.userReflection?.imageUrl || null)
+                                                                        }}
+                                                                        className="text-xs text-muted-foreground cursor-pointer"
+                                                                    >
+                                                                        Cancel
+                                                                    </Button>
+                                                                )}
+                                                                <Button
+                                                                    onClick={handleScreenshotUpload}
+                                                                    disabled={!screenshotFile || isSubmittingLab}
+                                                                    className="font-semibold text-xs ml-auto gap-2 cursor-pointer"
+                                                                >
+                                                                    {isSubmittingLab ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                                                                    <span>{isSubmittingLab ? 'Uploading...' : 'Submit Setup Screenshot (+15 XP)'}</span>
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
