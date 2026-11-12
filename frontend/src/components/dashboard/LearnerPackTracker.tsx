@@ -235,7 +235,7 @@ export function LearnerPackTracker() {
         if (tutorialDetail?.userTutorial.watched === 'yes') return
         try {
             await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/video-watched`)
-            toast.success('Video watched! +10 XP awarded 🎬')
+            toast.success('Video watched! +10 XP awarded')
             addXP(10)
             if (tutorialDetail) {
                 setTutorialDetail({
@@ -263,7 +263,7 @@ export function LearnerPackTracker() {
         if (tutorialDetail?.userTutorial.watched === 'yes') return
         try {
             await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/reading-complete`)
-            toast.success('Reading completed! +10 XP awarded 📚')
+            toast.success('Reading completed! +10 XP awarded')
             addXP(10)
             if (tutorialDetail) {
                 setTutorialDetail({
@@ -285,7 +285,7 @@ export function LearnerPackTracker() {
         try {
             setIsMarkingActivity(true)
             await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/activity-complete`)
-            toast.success('Private notebook exercise completed! +5 XP awarded 📓')
+            toast.success('Private notebook exercise completed! +5 XP awarded')
             addXP(5)
             if (tutorialDetail) {
                 setTutorialDetail({
@@ -309,7 +309,7 @@ export function LearnerPackTracker() {
         try {
             setIsMarkingAssignment(true)
             await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/assignment-complete`)
-            toast.success('Official assignment marked completed! +5 XP awarded 📝')
+            toast.success('Official assignment marked completed! +5 XP awarded')
             addXP(5)
             if (tutorialDetail) {
                 setTutorialDetail({
@@ -340,7 +340,7 @@ export function LearnerPackTracker() {
             const res = await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/reflection`, {
                 reflection_text: reflectionText
             })
-            toast.success('Reflection submitted! +5 XP awarded ✨')
+            toast.success('Reflection submitted! +5 XP awarded')
             addXP(5)
             if (tutorialDetail) {
                 setTutorialDetail({
@@ -376,7 +376,7 @@ export function LearnerPackTracker() {
             const res = await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/terminal-submission`, {
                 commands_output: text
             })
-            toast.success('Terminal lab submission verified! +10 XP awarded 💻')
+            toast.success('Terminal lab submission verified! +10 XP awarded')
             addXP(res.data.xpGained || 10)
             setTutorialDetail(prev => prev ? {
                 ...prev,
@@ -412,7 +412,7 @@ export function LearnerPackTracker() {
             const res = await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/screenshot-submission`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             })
-            toast.success('Installation screenshot verified! +15 XP awarded 🚀')
+            toast.success('Installation screenshot verified! +15 XP awarded')
             addXP(res.data.xpGained || 15)
             setScreenshotPreview(res.data.submission?.imageUrl || null)
             setScreenshotFile(null)
@@ -446,7 +446,7 @@ export function LearnerPackTracker() {
             })
             const { score, totalQuestions, passed, results, xpGained } = res.data
 
-            toast.success(`Quiz completed! Scored ${score}/${totalQuestions}${xpGained > 0 ? ` (+${xpGained} XP)` : ''} 🎉`)
+            toast.success(`Quiz completed! Scored ${score}/${totalQuestions}${xpGained > 0 ? ` (+${xpGained} XP)` : ''}`)
             if (xpGained > 0) addXP(xpGained)
 
             setTutorialDetail({
@@ -485,7 +485,7 @@ export function LearnerPackTracker() {
                 checkin_date: todayStr,
                 summary_reflection: habitNote.trim() || undefined
             })
-            toast.success(`Day ${dayNumber} check-in recorded! 🌱`)
+            toast.success(`Day ${dayNumber} check-in recorded!`)
             setHabitNote('')
             fetchOverview(true)
         } catch (err) {
@@ -621,10 +621,10 @@ export function LearnerPackTracker() {
             )}
 
             {allCompleted && (
-                <Card className="border border-emerald-500/25 bg-emerald-500/[0.03] shadow-2xs">
+                <Card className="border border-success/25 bg-success/[0.03] shadow-2xs">
                     <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-success/10 text-success flex items-center justify-center font-bold text-sm shrink-0">
                                 ✓
                             </div>
                             <div>
@@ -645,7 +645,7 @@ export function LearnerPackTracker() {
                     const weekCompleted = tuts.length > 0 && tuts.every(t => t.userProgress.quizPassed)
 
                     return (
-                        <Card key={weekNum} className={`border transition-colors ${weekCompleted ? 'border-emerald-500/30 bg-emerald-500/[0.02]' : 'border-border'}`}>
+                        <Card key={weekNum} className={`border transition-colors ${weekCompleted ? 'border-success/30 bg-success/[0.02]' : 'border-border'}`}>
                             <Collapsible
                                 open={isWeekOpen}
                                 onOpenChange={(open) => setOpenWeeks({ ...openWeeks, [weekNum]: open })}
@@ -654,7 +654,7 @@ export function LearnerPackTracker() {
                                     <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors">
                                         <div className="flex items-center gap-3">
                                             {weekCompleted ? (
-                                                <div className="h-7 w-7 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                                                <div className="h-7 w-7 rounded-full bg-success/10 text-success flex items-center justify-center shrink-0">
                                                     <CheckCircle2 className="h-4 w-4" />
                                                 </div>
                                             ) : (
@@ -673,7 +673,7 @@ export function LearnerPackTracker() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {milestone && (
-                                                <Badge variant="secondary" className="text-[11px] bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                                <Badge variant="secondary" className="text-[11px] bg-warning/10 text-warning border border-warning/20">
                                                     {milestone.title}
                                                 </Badge>
                                             )}
@@ -685,9 +685,9 @@ export function LearnerPackTracker() {
                                 <CollapsibleContent className="px-4 pb-4 pt-1 space-y-3">
                                     {/* Milestone Card if present */}
                                     {milestone && (
-                                        <div className="p-3.5 rounded-lg bg-amber-500/5 border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                        <div className="p-3.5 rounded-lg bg-warning/5 border border-warning/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                             <div className="flex items-center gap-2.5">
-                                                <div className="p-2 rounded-full bg-amber-500/10 text-amber-600">
+                                                <div className="p-2 rounded-full bg-warning/10 text-warning">
                                                     <Heart className="h-4 w-4" />
                                                 </div>
                                                 <div>
@@ -708,7 +708,7 @@ export function LearnerPackTracker() {
                                                             onClick={() => !isChecked && handleHabitCheckin(milestone.logType, d)}
                                                             disabled={isChecked || isCheckingIn}
                                                             className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-all ${isChecked
-                                                                ? 'bg-emerald-500 text-white cursor-default'
+                                                                ? 'bg-success/15 text-success cursor-default'
                                                                 : 'bg-muted hover:bg-primary/20 hover:text-primary text-muted-foreground cursor-pointer'
                                                                 }`}
                                                             title={isChecked ? `Day ${d} checked in` : `Click to check-in for Day ${d}`}
@@ -732,7 +732,7 @@ export function LearnerPackTracker() {
                                                 className={cn(
                                                     "group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border transition-all gap-4",
                                                     isCompleted 
-                                                        ? "bg-card/60 border-emerald-500/25 hover:border-emerald-500/40 hover:shadow-xs" 
+                                                        ? "bg-card/60 border-success/25 hover:border-success/40 hover:shadow-xs" 
                                                         : (p.watched || p.reflectionSubmitted)
                                                             ? "bg-card border-primary/30 hover:border-primary/50 shadow-2xs"
                                                             : "bg-card border-border/70 hover:border-primary/30 hover:shadow-2xs"
@@ -742,7 +742,7 @@ export function LearnerPackTracker() {
                                                     <div className={cn(
                                                         "h-8 w-8 rounded-lg font-mono text-xs font-bold flex items-center justify-center shrink-0 border transition-colors",
                                                         isCompleted
-                                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                                                            ? "bg-success/10 text-success border-success/25"
                                                             : (p.watched || p.reflectionSubmitted)
                                                                 ? "bg-primary/10 text-primary border-primary/25"
                                                                 : "bg-muted text-muted-foreground border-border/60"
@@ -778,9 +778,9 @@ export function LearnerPackTracker() {
                                                         <Badge
                                                             variant="outline"
                                                             className={cn(
-                                                                "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                "text-[11px] px-2 py-0.5 font-medium transition-colors",
                                                                 p.watched 
-                                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                    ? "bg-success/10 text-success border-success/30" 
                                                                     : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
                                                             )}
                                                             title="Video Watched"
@@ -790,9 +790,9 @@ export function LearnerPackTracker() {
                                                         <Badge
                                                             variant="outline"
                                                             className={cn(
-                                                                "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                "text-[11px] px-2 py-0.5 font-medium transition-colors",
                                                                 p.reflectionSubmitted 
-                                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                    ? "bg-success/10 text-success border-success/30" 
                                                                     : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
                                                             )}
                                                             title="Written Reflection"
@@ -803,9 +803,9 @@ export function LearnerPackTracker() {
                                                             <Badge
                                                                 variant="outline"
                                                                 className={cn(
-                                                                    "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                    "text-[11px] px-2 py-0.5 font-medium transition-colors",
                                                                     p.assignmentDone 
-                                                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                        ? "bg-success/10 text-success border-success/30" 
                                                                         : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
                                                                 )}
                                                                 title="Official Assignment (+5 XP)"
@@ -817,9 +817,9 @@ export function LearnerPackTracker() {
                                                             <Badge
                                                                 variant="outline"
                                                                 className={cn(
-                                                                    "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                    "text-[11px] px-2 py-0.5 font-medium transition-colors",
                                                                     p.reflectionSubmitted
-                                                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                                                        ? "bg-success/10 text-success border-success/30"
                                                                         : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
                                                                 )}
                                                                 title="Hands-on installation verification"
@@ -830,9 +830,9 @@ export function LearnerPackTracker() {
                                                             <Badge
                                                                 variant="outline"
                                                                 className={cn(
-                                                                    "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                    "text-[11px] px-2 py-0.5 font-medium transition-colors",
                                                                     p.quizPassed 
-                                                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                        ? "bg-success/10 text-success border-success/30" 
                                                                         : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
                                                                 )}
                                                                 title="5-Question Automated Quiz"
@@ -867,12 +867,12 @@ export function LearnerPackTracker() {
 
             {/* Tutorial Interactive Workspace Modal (Wide, Spacious & Simplified UX) */}
             <Dialog open={!!activeTutorialId} onOpenChange={(open) => !open && setActiveTutorialId(null)}>
-                <DialogContent className="sm:max-w-5xl w-[98vw] max-w-full h-[95vh] max-h-[95vh] flex flex-col p-0 overflow-hidden gap-0 rounded-2xl border shadow-2xl bg-card">
+                <DialogContent className="sm:max-w-5xl w-[98vw] max-w-full h-[95vh] max-h-[95vh] flex flex-col p-0 overflow-hidden gap-0 rounded-2xl border shadow-lg bg-card">
                     {isLoadingDetail || !tutorialDetail ? (
                         <div className="p-12 text-center space-y-4 my-auto">
                             <div className="h-6 w-1/4 bg-muted animate-pulse mx-auto rounded" />
                             <div className="h-4 w-1/2 bg-muted/60 animate-pulse mx-auto rounded" />
-                            <div className="h-64 bg-muted/30 animate-pulse rounded-2xl max-w-2xl mx-auto" />
+                            <div className="h-64 bg-muted/30 animate-pulse rounded-xl max-w-2xl mx-auto" />
                         </div>
                     ) : (
                         <>
@@ -921,8 +921,8 @@ export function LearnerPackTracker() {
                                         </DialogTitle>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="flex items-center gap-1.5 font-sans text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full shrink-0">
-                                            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                                        <div className="flex items-center gap-1.5 font-sans text-xs text-foreground font-semibold bg-muted/60 border border-border px-3 py-1.5 rounded-full shrink-0">
+                                            <Sparkles className="h-3.5 w-3.5 text-xp-gold" />
                                             <span>+25 XP Total</span>
                                         </div>
                                     </div>
@@ -936,7 +936,7 @@ export function LearnerPackTracker() {
                                         className={cn(
                                             "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'video'
-                                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                ? "bg-primary text-primary-foreground shadow-xs"
                                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                         )}
                                     >
@@ -944,10 +944,10 @@ export function LearnerPackTracker() {
                                         <span>1. Watch Video</span>
                                         {tutorialDetail.userTutorial.watched === 'yes' && (
                                             <span className={cn(
-                                                "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                "size-4 rounded-full flex items-center justify-center text-[11px] font-bold",
                                                 activeTab === 'video'
                                                     ? "bg-primary-foreground/20 text-primary-foreground"
-                                                    : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                                    : "bg-success/20 text-success"
                                             )}>✓</span>
                                         )}
                                     </button>
@@ -957,7 +957,7 @@ export function LearnerPackTracker() {
                                         className={cn(
                                             "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'reading'
-                                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                ? "bg-primary text-primary-foreground shadow-xs"
                                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                         )}
                                     >
@@ -965,10 +965,10 @@ export function LearnerPackTracker() {
                                         <span>2. Reading Notes</span>
                                         {tutorialDetail.userTutorial.watched === 'yes' && (
                                             <span className={cn(
-                                                "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                "size-4 rounded-full flex items-center justify-center text-[11px] font-bold",
                                                 activeTab === 'reading'
                                                     ? "bg-primary-foreground/20 text-primary-foreground"
-                                                    : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                                    : "bg-success/20 text-success"
                                             )}>✓</span>
                                         )}
                                     </button>
@@ -978,7 +978,7 @@ export function LearnerPackTracker() {
                                         className={cn(
                                             "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                             activeTab === 'activity'
-                                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                ? "bg-primary text-primary-foreground shadow-xs"
                                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                         )}
                                     >
@@ -998,10 +998,10 @@ export function LearnerPackTracker() {
                                         </span>
                                         {(tutorialDetail.userReflection || tutorialDetail.userTutorial.assignmentDone === 'yes' || tutorialDetail.userTutorial.minitaskOpted === 'yes') && (
                                             <span className={cn(
-                                                "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                "size-4 rounded-full flex items-center justify-center text-[11px] font-bold",
                                                 activeTab === 'activity'
                                                     ? "bg-primary-foreground/20 text-primary-foreground"
-                                                    : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                                    : "bg-success/20 text-success"
                                             )}>✓</span>
                                         )}
                                     </button>
@@ -1012,7 +1012,7 @@ export function LearnerPackTracker() {
                                             className={cn(
                                                 "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                                 activeTab === 'assignment'
-                                                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                    ? "bg-primary text-primary-foreground shadow-xs"
                                                     : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                             )}
                                         >
@@ -1020,10 +1020,10 @@ export function LearnerPackTracker() {
                                             <span>4. Assignment</span>
                                             {(tutorialDetail.userTutorial.assignmentDone === 'yes' || (tutorialDetail.userTutorial.assignmentDone as any) === true) && (
                                                 <span className={cn(
-                                                    "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                    "size-4 rounded-full flex items-center justify-center text-[11px] font-bold",
                                                     activeTab === 'assignment'
                                                         ? "bg-primary-foreground/20 text-primary-foreground"
-                                                        : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                                        : "bg-success/20 text-success"
                                                 )}>✓</span>
                                             )}
                                         </button>
@@ -1035,7 +1035,7 @@ export function LearnerPackTracker() {
                                             className={cn(
                                                 "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                                 activeTab === 'quiz'
-                                                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                    ? "bg-primary text-primary-foreground shadow-xs"
                                                     : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                             )}
                                         >
@@ -1043,10 +1043,10 @@ export function LearnerPackTracker() {
                                             <span>{(tutorialDetail.assignmentInstructions || tutorialDetail.assignmentUrl) ? '5. Quiz (5 MCQs)' : '4. Quiz (5 MCQs)'}</span>
                                             {tutorialDetail.quiz.hasAttempted && (
                                                 <span className={cn(
-                                                    "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                    "size-4 rounded-full flex items-center justify-center text-[11px] font-bold",
                                                     activeTab === 'quiz'
                                                         ? "bg-primary-foreground/20 text-primary-foreground"
-                                                        : ((tutorialDetail.quiz.score ?? 0) >= 3) ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
+                                                        : ((tutorialDetail.quiz.score ?? 0) >= 3) ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'
                                                 )}>✓</span>
                                             )}
                                         </button>
@@ -1061,7 +1061,7 @@ export function LearnerPackTracker() {
                                     <div className="w-full max-w-4xl space-y-4 my-auto">
                                         {tutorialDetail.videoUrl ? (
                                             <div className="space-y-4">
-                                                <div className="relative aspect-video w-full rounded-2xl bg-black border border-border/80 overflow-hidden shadow-2xl flex items-center justify-center">
+                                                <div className="relative aspect-video w-full rounded-xl bg-black border border-border/80 overflow-hidden shadow-sm flex items-center justify-center">
                                                     <video
                                                         key={tutorialDetail.videoUrl}
                                                         controls
@@ -1098,12 +1098,12 @@ export function LearnerPackTracker() {
                                                 <div className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-xl bg-card border border-border/80 shadow-xs">
                                                     <div>
                                                         {tutorialDetail.userTutorial.watched === 'yes' ? (
-                                                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-2xs">
-                                                                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                                                                <span>Watched (+10 XP)</span>
+                                                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-success/10 border border-success/25 text-success text-xs font-semibold shadow-2xs">
+                                                                <CheckCircle2 className="h-4 w-4 text-success" />
+                                                                <span>Watched</span>
                                                             </div>
                                                         ) : isVideoBuffering ? (
-                                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs font-medium text-amber-600 dark:text-amber-400 shadow-2xs">
+                                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-warning/10 border border-warning/25 text-xs font-medium text-warning shadow-2xs">
                                                                 <Loader2 className="size-3.5 animate-spin" />
                                                                 <span>Buffering stream... {videoWatchPercent > 0 ? `(${videoWatchPercent}%)` : ''}</span>
                                                             </div>
@@ -1130,7 +1130,7 @@ export function LearnerPackTracker() {
                                                 {(tutorialDetail.codeFilesUrl || tutorialDetail.instructionSheetUrl || tutorialDetail.installationSheetUrl) && (
                                                     <div className="space-y-4 pt-1">
                                                         {/* Sub-tab segmented pill bar */}
-                                                        <div className="flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-card border border-border/80 shadow-2xs">
+                                                        <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-card border border-border/80 shadow-2xs">
                                                             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                                                                 <button
                                                                     type="button"
@@ -1152,7 +1152,7 @@ export function LearnerPackTracker() {
                                                                         className={cn(
                                                                             "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer",
                                                                             videoSubTab === 'code'
-                                                                                ? "bg-amber-600 text-white shadow-xs dark:bg-amber-500"
+                                                                                ? "bg-primary text-primary-foreground shadow-xs"
                                                                                 : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                                                                         )}
                                                                     >
@@ -1167,7 +1167,7 @@ export function LearnerPackTracker() {
                                                                         className={cn(
                                                                             "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer",
                                                                             videoSubTab === 'instruction'
-                                                                                ? "bg-blue-600 text-white shadow-xs dark:bg-blue-500"
+                                                                                ? "bg-primary text-primary-foreground shadow-xs"
                                                                                 : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                                                                         )}
                                                                     >
@@ -1182,7 +1182,7 @@ export function LearnerPackTracker() {
                                                                         className={cn(
                                                                             "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer",
                                                                             videoSubTab === 'installation'
-                                                                                ? "bg-emerald-600 text-white shadow-xs dark:bg-emerald-500"
+                                                                                ? "bg-primary text-primary-foreground shadow-xs"
                                                                                 : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                                                                         )}
                                                                     >
@@ -1195,7 +1195,7 @@ export function LearnerPackTracker() {
 
                                                         {/* Sub-tab 1: Stream overview info */}
                                                         {videoSubTab === 'stream' && (
-                                                            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                            <div className="p-4 sm:p-5 rounded-xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                                                 <div className="space-y-1">
                                                                     <h4 className="text-sm font-bold text-foreground">Interactive Audiovisual Tutorial</h4>
                                                                     <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1218,13 +1218,13 @@ export function LearnerPackTracker() {
 
                                                         {/* Sub-tab 2: Course Code Files (.zip) */}
                                                         {videoSubTab === 'code' && tutorialDetail.codeFilesUrl && (
-                                                            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
+                                                            <div className="p-4 sm:p-5 rounded-xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
                                                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
                                                                     <div className="space-y-0.5">
                                                                         <div className="flex items-center gap-2">
-                                                                            <FolderArchive className="h-4 w-4 text-amber-500" />
+                                                                            <FolderArchive className="h-4 w-4 text-primary" />
                                                                             <h4 className="text-sm font-bold text-foreground">Companion Course Files</h4>
-                                                                            <Badge variant="outline" className="text-[10px] font-mono">.zip archive</Badge>
+                                                                            <Badge variant="outline" className="text-[11px] font-mono">.zip archive</Badge>
                                                                         </div>
                                                                         <p className="text-xs text-muted-foreground">
                                                                             Sample datasets, test text files, and demonstration scripts for hands-on terminal commands.
@@ -1280,13 +1280,13 @@ export function LearnerPackTracker() {
 
                                                         {/* Sub-tab 3: Instruction Sheet (.pdf) */}
                                                         {videoSubTab === 'instruction' && tutorialDetail.instructionSheetUrl && (
-                                                            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
+                                                            <div className="p-4 sm:p-5 rounded-xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
                                                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
                                                                     <div className="space-y-0.5">
                                                                         <div className="flex items-center gap-2">
-                                                                            <FileText className="h-4 w-4 text-blue-500" />
+                                                                            <FileText className="h-4 w-4 text-primary" />
                                                                             <h4 className="text-sm font-bold text-foreground">Official Instruction Sheet</h4>
-                                                                            <Badge variant="outline" className="text-[10px] font-mono">PDF Document</Badge>
+                                                                            <Badge variant="outline" className="text-[11px] font-mono">PDF Document</Badge>
                                                                         </div>
                                                                         <p className="text-xs text-muted-foreground">
                                                                             Official Spoken Tutorial command reference and lab guidelines from IIT Bombay.
@@ -1324,13 +1324,13 @@ export function LearnerPackTracker() {
 
                                                         {/* Sub-tab 4: Installation Sheet (.pdf) */}
                                                         {videoSubTab === 'installation' && tutorialDetail.installationSheetUrl && (
-                                                            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
+                                                            <div className="p-4 sm:p-5 rounded-xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
                                                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
                                                                     <div className="space-y-0.5">
                                                                         <div className="flex items-center gap-2">
-                                                                            <Wrench className="h-4 w-4 text-emerald-500" />
+                                                                            <Wrench className="h-4 w-4 text-primary" />
                                                                             <h4 className="text-sm font-bold text-foreground">Ubuntu & VirtualBox Installation Sheet</h4>
-                                                                            <Badge variant="outline" className="text-[10px] font-mono">PDF Document</Badge>
+                                                                            <Badge variant="outline" className="text-[11px] font-mono">PDF Document</Badge>
                                                                         </div>
                                                                         <p className="text-xs text-muted-foreground">
                                                                             Step-by-step installation instructions for VirtualBox and Ubuntu Linux 24.04 LTS.
@@ -1369,8 +1369,8 @@ export function LearnerPackTracker() {
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="max-w-lg mx-auto text-center space-y-5 p-8 rounded-2xl bg-card border shadow-sm">
-                                                <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-2xs">
+                                            <div className="max-w-lg mx-auto text-center space-y-5 p-8 rounded-xl bg-card border shadow-sm">
+                                                <div className="h-16 w-16 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-2xs">
                                                     <PlayCircle className="h-9 w-9" />
                                                 </div>
                                                 <div className="space-y-2">
@@ -1446,7 +1446,7 @@ export function LearnerPackTracker() {
                                         </div>
 
                                         {/* Completion Banner at bottom of reading */}
-                                        <div className="mt-12 p-6 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="mt-12 p-6 rounded-xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
                                             <div className="space-y-1 text-center sm:text-left">
                                                 <h4 className="font-bold text-foreground text-sm sm:text-base">
                                                     {tutorialDetail.userTutorial.watched === 'yes' ? 'Lesson Reading Complete' : 'Finished this reading?'}
@@ -1454,8 +1454,8 @@ export function LearnerPackTracker() {
                                                 <p className="text-xs text-muted-foreground">
                                                     {tutorialDetail.userTutorial.watched === 'yes'
                                                         ? (isLinux
-                                                            ? (isSetupTutorial ? 'Core lesson completed (+10 XP earned). Move to verify your local lab environment.' : 'Core lesson completed (+10 XP earned). Move directly to hands-on terminal practice.')
-                                                            : 'Core lesson completed (+10 XP earned). Move directly to the notebook activity & reflection.')
+                                                            ? (isSetupTutorial ? 'Core lesson completed. Move to verify your local lab environment.' : 'Core lesson completed. Move directly to hands-on terminal practice.')
+                                                            : 'Core lesson completed. Move directly to the notebook activity & reflection.')
                                                         : (isLinux
                                                             ? (isSetupTutorial ? 'Mark as read to claim +10 XP and set up your lab environment.' : 'Mark as read to claim +10 XP and practice Linux commands.')
                                                             : 'Mark as read to claim +10 XP and move directly to the personal notebook exercise & reflection.')}
@@ -1497,11 +1497,11 @@ export function LearnerPackTracker() {
                                         <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-muted/10 min-h-0">
                                             <div className="max-w-4xl mx-auto space-y-6">
                                                 {/* Header Banner */}
-                                                <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-blue-600/10 via-primary/5 to-emerald-600/10 border border-border/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                <div className="p-5 sm:p-6 rounded-xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-2">
-                                                            <Badge variant="outline" className="text-[11px] font-mono font-bold px-2.5 py-0.5 bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30">
-                                                                🛠️ LAB ENVIRONMENT SETUP
+                                                            <Badge variant="outline" className="text-[11px] font-mono font-bold px-2.5 py-0.5 bg-primary/15 text-primary border-primary/30">
+                                                                Lab environment setup
                                                             </Badge>
                                                             <span className="text-xs text-muted-foreground font-semibold">
                                                                 Tutorial {tutorialDetail.tutorialNumber}
@@ -1516,7 +1516,7 @@ export function LearnerPackTracker() {
                                                     </div>
                                                     <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-1.5 shrink-0 bg-background/80 p-3 rounded-xl border border-border/60">
                                                         <span className="text-[11px] text-muted-foreground font-medium">Completion Award</span>
-                                                        <Badge className="bg-emerald-600 text-white font-bold text-xs px-3 py-1">+15 XP</Badge>
+                                                        <Badge variant="outline" className="bg-muted text-foreground border border-border font-mono font-semibold text-xs px-3 py-1">+15 XP</Badge>
                                                     </div>
                                                 </div>
 
@@ -1556,13 +1556,13 @@ export function LearnerPackTracker() {
                                                 </div>
 
                                                 {/* Main Verification & Proof Area */}
-                                                <div className="p-6 rounded-2xl bg-card border border-border/90 shadow-sm space-y-5">
+                                                <div className="p-6 rounded-xl bg-card border border-border/90 shadow-sm space-y-5">
                                                     {/* If Already Submitted */}
                                                     {tutorialDetail.userReflection?.imageUrl && !screenshotFile ? (
                                                         <div className="space-y-4">
-                                                            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                            <div className="p-4 rounded-xl bg-success/10 border border-success/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                                                 <div className="space-y-0.5">
-                                                                    <div className="flex items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                                                                    <div className="flex items-center gap-2 text-sm font-bold text-success">
                                                                         <CheckCircle2 className="h-4 w-4" />
                                                                         <span>Setup Screenshot Submitted & Recorded</span>
                                                                     </div>
@@ -1570,13 +1570,13 @@ export function LearnerPackTracker() {
                                                                         Submitted on {new Date(tutorialDetail.userReflection.submittedAt).toLocaleDateString()} • Recorded in your student lab portfolio (reviewed during course evaluation)
                                                                     </p>
                                                                 </div>
-                                                                <Badge variant="outline" className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 text-xs font-semibold px-2.5 py-1 shrink-0 self-start sm:self-auto">
-                                                                    ✓ Milestone Complete (+15 XP)
+                                                                <Badge variant="outline" className="bg-success/20 text-success border-success/40 text-xs font-semibold px-2.5 py-1 shrink-0 self-start sm:self-auto">
+                                                                    ✓ Milestone Complete
                                                                 </Badge>
                                                             </div>
 
                                                             {/* Screenshot Preview with clean framing and full-size link */}
-                                                            <div className="rounded-xl overflow-hidden border border-border/80 bg-slate-950/5 dark:bg-black/30 p-3 text-center space-y-2">
+                                                            <div className="rounded-xl overflow-hidden border border-border/80 bg-muted/40 p-3 text-center space-y-2">
                                                                 <a
                                                                     href={resolveMediaUrl(tutorialDetail.userReflection.imageUrl)}
                                                                     target="_blank"
@@ -1589,7 +1589,7 @@ export function LearnerPackTracker() {
                                                                         alt="Setup Verification Screenshot"
                                                                         className="max-h-80 mx-auto rounded-lg object-contain shadow-xs group-hover:opacity-95 transition-opacity"
                                                                     />
-                                                                    <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded-md bg-black/70 text-white text-[10px] font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded-md bg-black/70 text-white text-[11px] font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                         <ExternalLink className="h-3 w-3" />
                                                                         <span>Open full size</span>
                                                                     </div>
@@ -1646,12 +1646,12 @@ export function LearnerPackTracker() {
                                                                             : 'Screenshot of Ubuntu 24.04 desktop running inside your Oracle VirtualBox window.'}
                                                                     </p>
                                                                 </div>
-                                                                <Badge className="bg-emerald-600 text-white font-semibold text-xs">+15 XP</Badge>
+                                                                <Badge variant="outline" className="bg-muted text-foreground border border-border font-mono font-semibold text-xs">+15 XP</Badge>
                                                             </div>
 
                                                             {/* Modern Upload Dropzone */}
                                                             <label className={cn(
-                                                                "border-2 border-dashed rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all",
+                                                                "border border-dashed rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all",
                                                                 screenshotPreview
                                                                     ? "border-primary/50 bg-primary/5"
                                                                     : "border-border/80 hover:border-primary/60 hover:bg-muted/40"
@@ -1681,7 +1681,7 @@ export function LearnerPackTracker() {
                                                                         />
                                                                         <div className="text-xs text-foreground font-semibold flex items-center justify-center gap-2">
                                                                             <span>{screenshotFile?.name}</span>
-                                                                            <Badge variant="outline" className="text-[10px]">
+                                                                            <Badge variant="outline" className="text-[11px]">
                                                                                 {screenshotFile ? (screenshotFile.size / 1024).toFixed(0) + ' KB' : ''}
                                                                             </Badge>
                                                                         </div>
@@ -1689,7 +1689,7 @@ export function LearnerPackTracker() {
                                                                     </div>
                                                                 ) : (
                                                                     <div className="space-y-2.5">
-                                                                        <div className="size-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-2xs">
+                                                                        <div className="size-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-2xs">
                                                                             <UploadCloud className="h-7 w-7" />
                                                                         </div>
                                                                         <div className="text-sm font-semibold text-foreground">
@@ -1758,7 +1758,7 @@ export function LearnerPackTracker() {
                                                 {/* Left Column: Command Instructions */}
                                                 <div className="lg:col-span-5 space-y-4">
                                                     <div className="flex items-center gap-2.5">
-                                                        <div className="p-2.5 rounded-xl bg-slate-900 text-emerald-400 border border-emerald-500/30">
+                                                        <div className="p-2.5 rounded-xl bg-muted text-foreground border border-border/70">
                                                             <Terminal className="h-5 w-5" />
                                                         </div>
                                                         <div>
@@ -1768,8 +1768,8 @@ export function LearnerPackTracker() {
                                                     </div>
 
                                                     {/* Security Notice */}
-                                                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-foreground space-y-1 shadow-2xs">
-                                                        <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
+                                                    <div className="p-3 rounded-xl bg-warning/10 border border-warning/20 text-xs text-foreground space-y-1 shadow-2xs">
+                                                        <div className="flex items-center gap-2 font-bold text-warning">
                                                             <AlertCircle className="h-3.5 w-3.5" />
                                                             <span>Run in your Ubuntu Terminal</span>
                                                         </div>
@@ -1782,10 +1782,10 @@ export function LearnerPackTracker() {
                                                     <div className="space-y-2.5">
                                                         {tryItSteps.map((step, idx) => (
                                                             <div key={idx} className="p-3.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1">
-                                                                <Badge variant="outline" className="text-[10px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground">
+                                                                <Badge variant="outline" className="text-[11px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground">
                                                                     Step {idx + 1}
                                                                 </Badge>
-                                                                <p className="text-xs text-foreground/90 leading-relaxed font-mono text-[11px] pt-1 whitespace-pre-line">
+                                                                <p className="text-xs text-foreground/90 leading-relaxed font-[ui-monospace,SFMono-Regular,Menlo,Consolas,monospace] text-[11px] pt-1 whitespace-pre-line">
                                                                     {step}
                                                                 </p>
                                                             </div>
@@ -1793,50 +1793,40 @@ export function LearnerPackTracker() {
                                                     </div>
                                                 </div>
 
-                                                {/* Right Column: Dark Monospace Terminal Console Box */}
+                                                {/* Right Column: Terminal output box */}
                                                 <div className="lg:col-span-7 space-y-4">
-                                                    <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-xl overflow-hidden flex flex-col">
+                                                    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden flex flex-col">
                                                         {/* Terminal Window Header Bar */}
-                                                        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 select-none">
+                                                        <div className="flex items-center justify-between px-4 py-2.5 bg-muted/60 border-b border-border select-none">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="size-3 rounded-full bg-red-500/80 inline-block" />
-                                                                <span className="size-3 rounded-full bg-amber-500/80 inline-block" />
-                                                                <span className="size-3 rounded-full bg-emerald-500/80 inline-block" />
-                                                                <span className="text-[11px] font-mono text-slate-400 font-semibold ml-2">
+                                                                <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                <span className="text-[11px] font-mono text-muted-foreground font-semibold">
                                                                     ubuntu@spoken-tutorial: ~
                                                                 </span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <Badge variant="outline" className="text-[10px] font-mono text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
-                                                                    bash 80×24
-                                                                </Badge>
-                                                                <Badge className="bg-emerald-600 text-white font-semibold text-[10px]">
-                                                                    +10 XP
-                                                                </Badge>
                                                             </div>
                                                         </div>
 
                                                         {/* Monospace Code Editor Area */}
-                                                        <div className="p-4 bg-slate-950 flex-1 flex flex-col">
+                                                        <div className="p-4 bg-muted/30 flex-1 flex flex-col">
                                                             <Textarea
                                                                 rows={10}
                                                                 value={terminalOutput}
                                                                 onChange={(e) => setTerminalOutput(e.target.value)}
                                                                 placeholder={"$ type exit\nexit is a shell builtin\n$ type cp\ncp is /usr/bin/cp\n$ ls\nDesktop Documents Downloads..."}
-                                                                className="w-full bg-transparent text-emerald-400 font-mono text-xs sm:text-sm leading-relaxed border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 selection:bg-emerald-500/30 placeholder:text-slate-600 min-h-[220px]"
+                                                                className="w-full bg-transparent text-foreground font-[ui-monospace,SFMono-Regular,Menlo,Consolas,monospace] text-xs sm:text-sm leading-relaxed border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 selection:bg-primary/20 placeholder:text-muted-foreground/60 min-h-[220px]"
                                                             />
                                                         </div>
 
                                                         {/* Terminal Footer Bar */}
-                                                        <div className="px-4 py-3 bg-slate-900/90 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                                                            <div className="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
+                                                        <div className="px-4 py-3 bg-muted/60 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                                                            <div className="flex items-center gap-2 text-muted-foreground font-mono text-[11px]">
                                                                 <span className={cn(
-                                                                    isOverLimit ? "text-red-400 font-bold" : charCount > 18000 ? "text-amber-400 font-bold" : "text-slate-400"
+                                                                    isOverLimit ? "text-destructive font-bold" : charCount > 18000 ? "text-warning font-bold" : "text-muted-foreground"
                                                                 )}>
                                                                     {charCount.toLocaleString()} / 20,000 characters
                                                                 </span>
                                                                 {tutorialDetail.userReflection && (
-                                                                    <span className="text-emerald-400 font-semibold">• ✓ Submitted</span>
+                                                                    <span className="text-success font-semibold">• ✓ Submitted</span>
                                                                 )}
                                                             </div>
                                                             <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -1844,7 +1834,7 @@ export function LearnerPackTracker() {
                                                                     size="sm"
                                                                     onClick={handleTerminalSubmit}
                                                                     disabled={isSubmittingLab || !terminalOutput.trim() || isOverLimit}
-                                                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs gap-1.5 flex-1 sm:flex-none cursor-pointer"
+                                                                    className="font-semibold text-xs gap-1.5 flex-1 sm:flex-none cursor-pointer"
                                                                 >
                                                                     {isSubmittingLab ? <Loader2 className="h-3 w-3 animate-spin" /> : <Terminal className="h-3 w-3" />}
                                                                     <span>
@@ -1856,7 +1846,7 @@ export function LearnerPackTracker() {
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() => switchTab('quiz')}
-                                                                        className="text-xs text-slate-200 border-slate-700 hover:bg-slate-800 gap-1 cursor-pointer"
+                                                                        className="text-xs gap-1 cursor-pointer"
                                                                     >
                                                                         <span>Take Quiz</span>
                                                                         <ArrowRight className="h-3 w-3" />
@@ -1941,7 +1931,7 @@ export function LearnerPackTracker() {
                                                                 className="p-3.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1 hover:border-primary/40 transition-colors"
                                                             >
                                                                 <div className="flex items-center gap-2">
-                                                                    <Badge variant="outline" className="text-[10px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground border-border/80">
+                                                                    <Badge variant="outline" className="text-[11px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground border-border/80">
                                                                         Step {idx + 1}
                                                                     </Badge>
                                                                 </div>
@@ -1956,20 +1946,20 @@ export function LearnerPackTracker() {
                                                 {/* Interactive Completion Trigger for Private Exercise */}
                                                 <div className="space-y-3 pt-2">
                                                     <div className={`p-4 rounded-xl border transition-all ${isActivityDone
-                                                        ? 'bg-emerald-500/10 border-emerald-500/30 shadow-2xs'
+                                                        ? 'bg-success/10 border-success/30 shadow-2xs'
                                                         : 'bg-card border-border hover:border-primary/40'
                                                         }`}>
                                                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                                             <div className="space-y-0.5">
                                                                 <div className="flex items-center gap-2">
-                                                                    <CheckCircle2 className={`h-4 w-4 ${isActivityDone ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+                                                                    <CheckCircle2 className={`h-4 w-4 ${isActivityDone ? 'text-success' : 'text-muted-foreground'}`} />
                                                                     <span className="text-xs font-bold text-foreground">
                                                                         {isActivityDone ? 'Completed in Notebook' : 'Mark Exercise as Done'}
                                                                     </span>
                                                                 </div>
                                                                 <p className="text-[11px] text-muted-foreground">
                                                                     {isActivityDone
-                                                                        ? 'Personal notebook exercise verified! +5 XP awarded.'
+                                                                        ? 'Personal notebook exercise verified.'
                                                                         : 'Click when finished writing in your personal notebook. No upload needed.'}
                                                                 </p>
                                                             </div>
@@ -1978,12 +1968,12 @@ export function LearnerPackTracker() {
                                                                 onClick={handleMarkActivityComplete}
                                                                 disabled={isActivityDone || isMarkingActivity}
                                                                 className={`text-xs font-semibold shrink-0 w-full sm:w-auto cursor-pointer ${isActivityDone
-                                                                    ? 'bg-emerald-600 hover:bg-emerald-600 text-white shadow-2xs'
+                                                                    ? 'bg-success/15 text-success border border-success/30 shadow-none'
                                                                     : ''
                                                                     }`}
                                                             >
                                                                 {isActivityDone
-                                                                    ? '✓ Completed (+5 XP)'
+                                                                    ? '✓ Completed'
                                                                     : isMarkingActivity
                                                                         ? 'Saving...'
                                                                         : 'Mark Done (+5 XP)'}
@@ -1995,7 +1985,7 @@ export function LearnerPackTracker() {
 
                                             {/* Right Column (7 cols on lg, full width on mobile): Written Reflection */}
                                             <div className="lg:col-span-7 space-y-4">
-                                                <div className="p-6 rounded-2xl bg-card border shadow-sm space-y-4">
+                                                <div className="p-6 rounded-xl bg-card border shadow-sm space-y-4">
                                                     <div className="space-y-3">
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2.5">
@@ -2007,8 +1997,8 @@ export function LearnerPackTracker() {
                                                                     <h3 className="text-base font-bold text-foreground">Written Reflection</h3>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-1.5 font-sans text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
-                                                                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                                                            <div className="flex items-center gap-1.5 font-sans text-xs text-foreground font-semibold bg-muted/60 border border-border px-2.5 py-1 rounded-full">
+                                                                <Sparkles className="h-3.5 w-3.5 text-xp-gold" />
                                                                 <span>+5 XP</span>
                                                             </div>
                                                         </div>
@@ -2022,7 +2012,7 @@ export function LearnerPackTracker() {
                                                                 <div className="space-y-1.5 pt-1">
                                                                     {promptQuestions.map((q, idx) => (
                                                                         <div key={idx} className="flex items-start gap-2 text-xs text-foreground/90">
-                                                                            <span className="h-4 w-4 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                                                                            <span className="h-4 w-4 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">
                                                                                 {idx + 1}
                                                                             </span>
                                                                             <span className="leading-snug">{q}</span>
@@ -2051,7 +2041,7 @@ export function LearnerPackTracker() {
 
                                                         <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
                                                             <span className="flex items-center gap-1 text-[11px]">
-                                                                <Lock className="h-3.5 w-3.5 text-emerald-600" />
+                                                                <Lock className="h-3.5 w-3.5 text-success" />
                                                                 Visible only to you and academic evaluators
                                                             </span>
                                                             <span className="text-[11px] text-muted-foreground">
@@ -2063,7 +2053,7 @@ export function LearnerPackTracker() {
                                                     {/* Submit Button */}
                                                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t">
                                                         <span className="text-xs text-muted-foreground">
-                                                            {tutorialDetail.userReflection ? 'Reflection recorded in portfolio' : 'Awarded +5 XP upon submission'}
+                                                            {tutorialDetail.userReflection ? 'Reflection recorded in portfolio' : 'Saved to your portfolio on submission'}
                                                         </span>
                                                         <div className="flex items-center gap-2 w-full sm:w-auto">
                                                             <Button
@@ -2114,7 +2104,7 @@ export function LearnerPackTracker() {
                                     <div id="tutorial-modal-body" className="flex-1 overflow-y-auto px-4 py-6 sm:px-10 sm:py-10 bg-background/50 min-h-0">
                                         <div className="max-w-4xl mx-auto space-y-6">
                                             {/* Assignment Body Content */}
-                                            <div className="p-6 sm:p-8 rounded-2xl bg-card border border-border/80 shadow-xs space-y-6">
+                                            <div className="p-6 sm:p-8 rounded-xl bg-card border border-border/80 shadow-xs space-y-6">
                                                 <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/60">
                                                     <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Assignment</h3>
                                                     {tutorialDetail.assignmentUrl && (
@@ -2155,7 +2145,7 @@ export function LearnerPackTracker() {
 
                                                 {/* Helpful Tip */}
                                                 <div className="p-4 rounded-xl bg-muted/60 border border-border/70 text-xs text-foreground/90 flex items-start gap-3 shadow-2xs">
-                                                    <Sparkles className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                                    <Sparkles className="h-4 w-4 text-xp-gold shrink-0 mt-0.5" />
                                                     <div className="space-y-1">
                                                         <p className="font-semibold text-foreground">How to Complete</p>
                                                         <p className="text-muted-foreground leading-relaxed">
@@ -2166,14 +2156,14 @@ export function LearnerPackTracker() {
                                             </div>
 
                                             {/* Completion and Next Action Footer */}
-                                            <div className="p-6 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            <div className="p-6 rounded-xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
                                                 <div className="space-y-1 text-center sm:text-left">
                                                     <h4 className="font-bold text-foreground text-sm sm:text-base">
                                                         {isDone ? 'Assignment Completed' : 'Completed this assignment?'}
                                                     </h4>
                                                     <p className="text-xs text-muted-foreground">
                                                         {isDone
-                                                            ? 'Assignment has been marked as completed (+5 XP earned). Next step: 5-Question Quiz.'
+                                                            ? 'Assignment marked as completed. Next step: 5-Question Quiz.'
                                                             : 'Mark as completed to earn +5 XP toward your course progress.'}
                                                     </p>
                                                 </div>
@@ -2194,15 +2184,15 @@ export function LearnerPackTracker() {
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                                                    <CheckCircle2 className="h-4 w-4 text-success" />
                                                                     <span>Mark Completed (+5 XP)</span>
                                                                 </>
                                                             )}
                                                         </Button>
                                                     ) : (
-                                                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-xs px-3 py-1.5 font-semibold gap-1.5">
+                                                        <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-xs px-3 py-1.5 font-semibold gap-1.5">
                                                             <Check className="h-3.5 w-3.5" />
-                                                            <span>Completed (+5 XP)</span>
+                                                            <span>Completed</span>
                                                         </Badge>
                                                     )}
 
@@ -2229,7 +2219,7 @@ export function LearnerPackTracker() {
                                     <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-6 sm:p-8 bg-muted/10 min-h-0">
                                         <div className="max-w-4xl mx-auto space-y-6">
                                             {/* Quiz Overview Banner */}
-                                            <div className="p-6 rounded-2xl bg-card border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                            <div className="p-6 rounded-xl bg-card border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2">
                                                         <h3 className="text-lg font-bold text-foreground">Tutorial Knowledge Quiz</h3>
@@ -2244,10 +2234,10 @@ export function LearnerPackTracker() {
                                                     <div className={cn(
                                                         "px-4 py-2 rounded-xl border flex flex-col items-center sm:items-end justify-center min-w-[90px]",
                                                         ((tutorialDetail.quiz.score ?? 0) >= 3)
-                                                            ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
-                                                            : 'bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400'
+                                                            ? 'bg-success/10 border-success/25 text-success'
+                                                            : 'bg-warning/10 border-warning/25 text-warning'
                                                     )}>
-                                                        <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                                                        <div className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground">
                                                             Score
                                                         </div>
                                                         <div className="text-xl font-bold font-mono">
@@ -2255,8 +2245,8 @@ export function LearnerPackTracker() {
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex items-center gap-2 text-xs font-mono font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
-                                                        <Sparkles className="h-4 w-4 text-amber-500" />
+                                                    <div className="flex items-center gap-2 text-xs font-mono font-semibold text-foreground bg-muted/60 border border-border px-3 py-1.5 rounded-xl">
+                                                        <Sparkles className="h-4 w-4 text-xp-gold" />
                                                         +10 XP
                                                     </div>
                                                 )}
@@ -2269,7 +2259,7 @@ export function LearnerPackTracker() {
                                                     const isSubmitted = tutorialDetail.quiz.hasAttempted
 
                                                     return (
-                                                        <div key={q.id} className="p-6 rounded-2xl border bg-card shadow-sm space-y-4">
+                                                        <div key={q.id} className="p-6 rounded-xl border bg-card shadow-sm space-y-4">
                                                             <div className="flex items-start gap-3">
                                                                 <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
                                                                     {q.questionNumber}
@@ -2307,7 +2297,7 @@ export function LearnerPackTracker() {
                                                                                 <label
                                                                                     key={opt.id}
                                                                                     className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs sm:text-sm cursor-pointer transition-all ${isCorrect
-                                                                                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-medium'
+                                                                                        ? 'border-success bg-success/10 text-foreground font-medium'
                                                                                         : isWrong
                                                                                             ? 'border-destructive bg-destructive/10 text-destructive font-medium'
                                                                                             : isChosen
@@ -2320,7 +2310,7 @@ export function LearnerPackTracker() {
                                                                                         <strong className="mr-1.5 font-bold uppercase">{opt.id}.</strong>
                                                                                         {opt.text}
                                                                                     </span>
-                                                                                    {isCorrect && <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
+                                                                                    {isCorrect && <Check className="h-4 w-4 text-success shrink-0 mt-0.5" />}
                                                                                 </label>
                                                                             )
                                                                         })}
@@ -2362,14 +2352,14 @@ export function LearnerPackTracker() {
                                             ) : (
                                                 <div className="space-y-4 pt-2 pb-6">
                                                     {/* Prompt to move directly to next tutorial */}
-                                                    <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-card to-primary/5 border-2 border-emerald-500/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
+                                                    <div className="p-6 rounded-xl bg-card border border-success/30 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
                                                         <div className="space-y-1.5 text-center sm:text-left">
                                                             <div className="flex items-center gap-2 justify-center sm:justify-start">
-                                                                <span className="text-xl">🎉</span>
+                                                                <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
                                                                 <h4 className="font-bold text-foreground text-base sm:text-lg">
                                                                     Tutorial {tutorialDetail.tutorialNumber} Completed!
                                                                 </h4>
-                                                                <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-xs font-bold">
+                                                                <Badge variant="outline" className="bg-success/15 text-success border-success/30 text-xs font-bold">
                                                                     +25 XP Total
                                                                 </Badge>
                                                             </div>
@@ -2384,7 +2374,7 @@ export function LearnerPackTracker() {
                                                             <Button
                                                                 size="lg"
                                                                 onClick={() => openTutorialModal(nextTutorial.id)}
-                                                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-md shadow-primary/25 cursor-pointer shrink-0 gap-2 w-full sm:w-auto hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-xs cursor-pointer shrink-0 gap-2 w-full sm:w-auto hover:scale-[1.02] active:scale-[0.98] transition-all"
                                                             >
                                                                 <span>Continue to Tutorial {nextTutorial.number}</span>
                                                                 <ArrowRight className="h-4 w-4" />
@@ -2394,7 +2384,7 @@ export function LearnerPackTracker() {
                                                                 size="lg"
                                                                 variant="outline"
                                                                 onClick={() => setActiveTutorialId(null)}
-                                                                className="font-bold text-xs sm:text-sm px-6 py-3 rounded-xl border-emerald-500/30 text-emerald-600 cursor-pointer"
+                                                                className="font-bold text-xs sm:text-sm px-6 py-3 rounded-xl border-success/30 text-success cursor-pointer"
                                                             >
                                                                 <span>Back to Dashboard</span>
                                                             </Button>

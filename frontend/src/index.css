@@ -14,8 +14,6 @@
   --color-secondary: #0891B2;
   --color-secondary-hover: #0E7490;
 
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
   --color-danger: #EF4444;
   --color-xp-gold: #FBBF24;
 
@@ -61,6 +59,8 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -86,6 +86,9 @@
 
 :root {
   --radius: 0.625rem;
+
+  --success: #059669;
+  --warning: #B45309;
 
   /* Surfaces */
   --background: oklch(0.975 0.008 270);
@@ -159,6 +162,9 @@
    ====================================== */
 
 .dark {
+  --success: #34D399;
+  --warning: #FBBF24;
+
   --background: oklch(0.145 0.04 267);
   /* Very dark indigo */
   --foreground: oklch(0.97 0.005 267);
