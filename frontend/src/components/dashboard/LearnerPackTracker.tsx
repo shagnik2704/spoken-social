@@ -2280,46 +2280,60 @@ export function LearnerPackTracker() {
                                                             </div>
 
                                                             {/* Options */}
-                                                            <RadioGroup
-                                                                value={selected || ''}
-                                                                onValueChange={(val) => setQuizAnswers({ ...quizAnswers, [String(q.questionNumber)]: val })}
-                                                                disabled={isSubmitted}
-                                                                className="space-y-2.5 pt-1 pl-10"
-                                                            >
-                                                                {q.options.map((opt) => {
-                                                                    const isCorrect = isSubmitted && q.correctOption === opt.id
-                                                                    const isChosen = selected === opt.id
-                                                                    const isWrong = isSubmitted && isChosen && !isCorrect
+                                                            {(() => {
+                                                                const rawOptions = q.options as any
+                                                                const optionsList: { id: string; text: string }[] = Array.isArray(rawOptions)
+                                                                    ? rawOptions.map((opt: any) => typeof opt === 'string' ? { id: opt, text: opt } : { id: opt.id || '', text: opt.text || '' })
+                                                                    : (rawOptions && typeof rawOptions === 'object')
+                                                                        ? Object.entries(rawOptions).map(([key, val]) => ({
+                                                                            id: key,
+                                                                            text: typeof val === 'string' ? val : (val as any)?.text || ''
+                                                                        })).sort((a, b) => a.id.localeCompare(b.id))
+                                                                        : []
 
-                                                                    return (
-                                                                        <label
-                                                                            key={opt.id}
-                                                                            className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs sm:text-sm cursor-pointer transition-all ${isCorrect
-                                                                                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-medium'
-                                                                                : isWrong
-                                                                                    ? 'border-destructive bg-destructive/10 text-destructive font-medium'
-                                                                                    : isChosen
-                                                                                        ? 'border-primary bg-primary/5 text-foreground ring-1 ring-primary/20'
-                                                                                        : 'border-border hover:bg-muted/40 text-muted-foreground hover:text-foreground'
-                                                                                }`}
-                                                                        >
-                                                                            <RadioGroupItem value={opt.id} className="mt-0.5" />
-                                                                            <span className="flex-1 leading-relaxed">
-                                                                                <strong className="mr-1.5 font-bold uppercase">{opt.id}.</strong>
-                                                                                {opt.text}
-                                                                            </span>
-                                                                            {isCorrect && <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
-                                                                        </label>
-                                                                    )
-                                                                })}
-                                                            </RadioGroup>
+                                                                return (
+                                                                    <RadioGroup
+                                                                        value={selected || ''}
+                                                                        onValueChange={(val) => setQuizAnswers({ ...quizAnswers, [String(q.questionNumber)]: val })}
+                                                                        disabled={isSubmitted}
+                                                                        className="space-y-2.5 pt-1 pl-10"
+                                                                    >
+                                                                        {optionsList.map((opt) => {
+                                                                            const isCorrect = isSubmitted && q.correctOption === opt.id
+                                                                            const isChosen = selected === opt.id
+                                                                            const isWrong = isSubmitted && isChosen && !isCorrect
+
+                                                                            return (
+                                                                                <label
+                                                                                    key={opt.id}
+                                                                                    className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs sm:text-sm cursor-pointer transition-all ${isCorrect
+                                                                                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-medium'
+                                                                                        : isWrong
+                                                                                            ? 'border-destructive bg-destructive/10 text-destructive font-medium'
+                                                                                            : isChosen
+                                                                                                ? 'border-primary bg-primary/5 text-foreground ring-1 ring-primary/20'
+                                                                                                : 'border-border hover:bg-muted/40 text-muted-foreground hover:text-foreground'
+                                                                                        }`}
+                                                                                >
+                                                                                    <RadioGroupItem value={opt.id} className="mt-0.5" />
+                                                                                    <span className="flex-1 leading-relaxed">
+                                                                                        <strong className="mr-1.5 font-bold uppercase">{opt.id}.</strong>
+                                                                                        {opt.text}
+                                                                                    </span>
+                                                                                    {isCorrect && <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
+                                                                                </label>
+                                                                            )
+                                                                        })}
+                                                                    </RadioGroup>
+                                                                )
+                                                            })()}
 
                                                             {/* Explanation Box */}
                                                             {isSubmitted && q.explanation && (
                                                                 <div className="mt-4 p-4 rounded-xl bg-muted/60 border border-border/80 text-xs sm:text-sm space-y-1.5 ml-10">
                                                                     <span className="font-bold text-primary flex items-center gap-1.5 text-xs uppercase tracking-wider">
                                                                         <Lightbulb className="h-3.5 w-3.5" />
-                                                                        Psychological Rationale & Explanation
+                                                                        {isLinux ? 'Technical Explanation & Solution' : 'Psychological Rationale & Explanation'}
                                                                     </span>
                                                                     <p className="text-foreground/80 leading-relaxed font-sans">
                                                                         {q.explanation}
@@ -2362,7 +2376,7 @@ export function LearnerPackTracker() {
                                                             <p className="text-xs text-muted-foreground">
                                                                 {nextTutorial
                                                                     ? `Ready for the next lesson? Continue directly to Tutorial ${nextTutorial.number}: ${nextTutorial.title}`
-                                                                    : "Outstanding! You have completed all 17 tutorials in this curriculum."}
+                                                                    : `Outstanding! You have completed all ${overview?.tutorials.length || 20} tutorials in this curriculum.`}
                                                             </p>
                                                         </div>
 

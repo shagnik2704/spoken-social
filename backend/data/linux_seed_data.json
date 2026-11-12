@@ -269,9 +269,9 @@
       "tutorial_number": 1,
       "week_number": 1,
       "reading_title": "Reading 1: Installation of VirtualBox on Windows",
-      "reading_markdown": "# Reading 1: Installation of VirtualBox on Windows\n\n\n### What is it?\n\nA virtual machine is a computer made of software. It runs inside your real computer, in its own window, as if it were a separate machine. It has its own operating system, its own files and its own programs.\n\nIn this course, your real Windows computer is the host. Ubuntu Linux, running inside the virtual machine, is the guest. The guest borrows some of the host's memory, disk space and processor. Whatever you do in the guest stays in the guest. If you break something while learning, your Windows files are safe.\n\nVirtualBox is the free program that creates and runs virtual machines. It is made by Oracle and works on Windows, macOS and Linux.\n\nBefore installing VirtualBox, check that virtualization is switched on. This is a feature of your computer's processor that lets virtual machines run at a good speed. To check, open Task Manager (Ctrl + Shift + Esc), go to the Performance tab and click CPU. Look for \"Virtualization: Enabled\".\n\n\n### Steps at a glance\n\n\n| Do this | What happens |\n| --- | --- |\n| Task Manager → Performance → CPU | Shows whether virtualization is enabled |\n| Download VirtualBox for Windows hosts from virtualbox.org | Saves the installer to your computer |\n| Run the installer and accept the default options | Installs VirtualBox and its network drivers |\n| Open Oracle VirtualBox from the Start menu | Opens VirtualBox Manager, where you create and run virtual machines |\n| Help → About VirtualBox | Shows the version you installed |\n\n\n### A real-world example\n\nSuresh works in IT support at a hospital in Nashik. The hospital's patient records system runs on Linux servers, but every computer in his office runs Windows. When he needs to test an update before it goes on the real server, he runs Linux in VirtualBox on his own computer. If the update breaks something, he deletes the virtual machine and starts again, and the hospital's systems are never at risk.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Task Manager shows \"Virtualization: Disabled\" | Virtualization is switched off in the computer's settings | Restart, open the BIOS or UEFI settings (often F2, F10 or Del at start-up) and turn on Intel VT-x or AMD-V (sometimes called SVM). Ask your lab in-charge if you are unsure |\n| The installer asks for Microsoft Visual C++ or Python components | Some versions of VirtualBox need these Windows parts first | Install what it asks for from the link it gives, then run the VirtualBox installer again |\n| Network briefly disconnects during installation | VirtualBox is installing its network drivers | This is normal. It reconnects in a few seconds |\n| Virtual machines later run very slowly | Windows features such as Hyper-V are using virtualization | Ask for help on the forum; Live session 1 covers this |",
+      "reading_markdown": "# Reading 1: Installation of VirtualBox on Windows\n\n\n### What is it?\n\nA virtual machine is a computer made of software. It runs inside your real computer, in its own window, as if it were a separate machine. It has its own operating system, its own files and its own programs.\n\nIn this course, your real Windows computer is the host. Ubuntu Linux, running inside the virtual machine, is the guest. The guest borrows some of the host's memory, disk space and processor. Whatever you do in the guest stays in the guest. If you break something while learning, your Windows files are safe.\n\nVirtualBox is the free program that creates and runs virtual machines. It is made by Oracle and works on Windows, macOS and Linux.\n\nBefore installing VirtualBox, check that virtualization is switched on. This is a feature of your computer's processor that lets virtual machines run at a good speed. To check, open Task Manager (Ctrl + Shift + Esc), go to the Performance tab and click CPU. Look for \"Virtualization: Enabled\".\n\n\n### Steps at a glance\n\n\n| Do this | What happens |\n| --- | --- |\n| Task Manager \u2192 Performance \u2192 CPU | Shows whether virtualization is enabled |\n| Download VirtualBox for Windows hosts from virtualbox.org | Saves the installer to your computer |\n| Run the installer and accept the default options | Installs VirtualBox and its network drivers |\n| Open Oracle VirtualBox from the Start menu | Opens VirtualBox Manager, where you create and run virtual machines |\n| Help \u2192 About VirtualBox | Shows the version you installed |\n\n\n### A real-world example\n\nSuresh works in IT support at a hospital in Nashik. The hospital's patient records system runs on Linux servers, but every computer in his office runs Windows. When he needs to test an update before it goes on the real server, he runs Linux in VirtualBox on his own computer. If the update breaks something, he deletes the virtual machine and starts again, and the hospital's systems are never at risk.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Task Manager shows \"Virtualization: Disabled\" | Virtualization is switched off in the computer's settings | Restart, open the BIOS or UEFI settings (often F2, F10 or Del at start-up) and turn on Intel VT-x or AMD-V (sometimes called SVM). Ask your lab in-charge if you are unsure |\n| The installer asks for Microsoft Visual C++ or Python components | Some versions of VirtualBox need these Windows parts first | Install what it asks for from the link it gives, then run the VirtualBox installer again |\n| Network briefly disconnects during installation | VirtualBox is installing its network drivers | This is normal. It reconnects in a few seconds |\n| Virtual machines later run very slowly | Windows features such as Hyper-V are using virtualization | Ask for help on the forum; Live session 1 covers this |",
       "reading_time_minutes": 15,
-      "try_it_instructions": "This is the practice task for Tutorial 1. Do it on your Windows computer, then submit your work on Spoken Social.\n\nCheck that virtualization is enabled in Task Manager.\n\nInstall VirtualBox.\n\nOpen VirtualBox Manager and choose Help → About VirtualBox.\n\nSubmit: a screenshot of VirtualBox Manager with the About window showing the installed version.",
+      "try_it_instructions": "This is the practice task for Tutorial 1. Do it on your Windows computer, then submit your work on Spoken Social.\n\nCheck that virtualization is enabled in Task Manager.\n\nInstall VirtualBox.\n\nOpen VirtualBox Manager and choose Help \u2192 About VirtualBox.\n\nSubmit: a screenshot of VirtualBox Manager with the About window showing the installed version.",
       "reflection_prompt": "Upload your installation screenshot and describe the setup process you followed on your machine.",
       "reflection_min_sentences": 1,
       "key_terms": [],
@@ -289,7 +289,7 @@
       "tutorial_number": 2,
       "week_number": 1,
       "reading_title": "Reading 2: Installing Ubuntu OS in Oracle VirtualBox",
-      "reading_markdown": "# Reading 2: Installing Ubuntu OS in Oracle VirtualBox\n\n\n### What is it?\n\nLinux is an operating system, like Windows. It is free to use and share, and it runs most of the world's web servers, cloud systems and supercomputers. Android phones are built on it too.\n\nLinux comes in many versions called distributions, or distros. Each one packs Linux together with a desktop, tools and a way to install software. Ubuntu is one of the most widely used. This course uses Ubuntu 24.04, a long-term support (LTS) version, which receives updates for five years.\n\nTo install Ubuntu, you download an ISO image: one large file that holds the whole installer. In VirtualBox you create a new virtual machine, point it to the ISO file, and choose how much memory and disk space the machine gets. VirtualBox's unattended installation then installs Ubuntu for you, using the username and password you type in at the start.\n\n\n### Steps at a glance\n\n\n| Do this | What happens |\n| --- | --- |\n| Download the Ubuntu 24.04 Desktop ISO from ubuntu.com | Saves the installer file (about 6 GB) |\n| VirtualBox Manager → New | Starts creating a virtual machine |\n| Give it a name and choose the ISO file | VirtualBox detects Ubuntu and offers unattended installation |\n| Set a username and password | These become your Ubuntu login. Remember them |\n| Set memory and disk size | Give at least 2048 MB of memory and 25 GB of disk, more if your computer can spare it |\n| Finish, then wait | Ubuntu installs itself and restarts at the login screen |\n\n\n### A real-world example\n\nAnjali has just joined a software company in Pune as a trainee. On her first day, the team lead asks every trainee to set up an Ubuntu virtual machine on their office laptop, because the company's code runs on Ubuntu servers. Anjali has done this before in her college course, so she finishes in an hour and spends the rest of the afternoon helping two other trainees whose installations failed.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Only 32-bit options appear, or the VM will not start | Virtualization is off on the host | Turn it on, as in Reading 1 |\n| Ubuntu is very slow or freezes | The VM has too little memory | Shut down the VM, open Settings → System and give it more memory, staying within the green area of the slider |\n| \"Not enough disk space\" during installation | The virtual disk is too small | Delete the VM and create it again with at least 25 GB of disk |\n| You cannot log in after installation | The password typed during setup is different from what you remember | Watch the keyboard layout and Caps Lock. If you cannot recover it, create the VM again and write the password down |\n| The installation stops partway | The ISO download was incomplete | Download the ISO again and check its size matches the website |",
+      "reading_markdown": "# Reading 2: Installing Ubuntu OS in Oracle VirtualBox\n\n\n### What is it?\n\nLinux is an operating system, like Windows. It is free to use and share, and it runs most of the world's web servers, cloud systems and supercomputers. Android phones are built on it too.\n\nLinux comes in many versions called distributions, or distros. Each one packs Linux together with a desktop, tools and a way to install software. Ubuntu is one of the most widely used. This course uses Ubuntu 24.04, a long-term support (LTS) version, which receives updates for five years.\n\nTo install Ubuntu, you download an ISO image: one large file that holds the whole installer. In VirtualBox you create a new virtual machine, point it to the ISO file, and choose how much memory and disk space the machine gets. VirtualBox's unattended installation then installs Ubuntu for you, using the username and password you type in at the start.\n\n\n### Steps at a glance\n\n\n| Do this | What happens |\n| --- | --- |\n| Download the Ubuntu 24.04 Desktop ISO from ubuntu.com | Saves the installer file (about 6 GB) |\n| VirtualBox Manager \u2192 New | Starts creating a virtual machine |\n| Give it a name and choose the ISO file | VirtualBox detects Ubuntu and offers unattended installation |\n| Set a username and password | These become your Ubuntu login. Remember them |\n| Set memory and disk size | Give at least 2048 MB of memory and 25 GB of disk, more if your computer can spare it |\n| Finish, then wait | Ubuntu installs itself and restarts at the login screen |\n\n\n### A real-world example\n\nAnjali has just joined a software company in Pune as a trainee. On her first day, the team lead asks every trainee to set up an Ubuntu virtual machine on their office laptop, because the company's code runs on Ubuntu servers. Anjali has done this before in her college course, so she finishes in an hour and spends the rest of the afternoon helping two other trainees whose installations failed.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Only 32-bit options appear, or the VM will not start | Virtualization is off on the host | Turn it on, as in Reading 1 |\n| Ubuntu is very slow or freezes | The VM has too little memory | Shut down the VM, open Settings \u2192 System and give it more memory, staying within the green area of the slider |\n| \"Not enough disk space\" during installation | The virtual disk is too small | Delete the VM and create it again with at least 25 GB of disk |\n| You cannot log in after installation | The password typed during setup is different from what you remember | Watch the keyboard layout and Caps Lock. If you cannot recover it, create the VM again and write the password down |\n| The installation stops partway | The ISO download was incomplete | Download the ISO again and check its size matches the website |",
       "reading_time_minutes": 15,
       "try_it_instructions": "This is the practice task for Tutorial 2.\n\nDownload the Ubuntu 24.04 Desktop ISO.\n\nCreate a virtual machine and install Ubuntu in it.\n\nLog in to Ubuntu.\n\nSubmit: a screenshot of the Ubuntu desktop running inside the VirtualBox window.",
       "reflection_prompt": "Upload your installation screenshot and describe the setup process you followed on your machine.",
@@ -310,9 +310,9 @@
       "tutorial_number": 3,
       "week_number": 2,
       "reading_title": "Reading 3: Ubuntu Desktop",
-      "reading_markdown": "# Reading 3: Ubuntu Desktop\n\n\n### What is it?\n\nThe Ubuntu desktop looks different from Windows, but it does the same jobs. Once you know where five or six things are, you can find your way around.\n\n\n| Part | Where it is | What it does |\n| --- | --- | --- |\n| Top panel | Across the top of the screen | Shows the date and time in the middle, and the system menu (network, sound, power, settings) on the right |\n| Activities | Top-left corner, or press the Super key (the Windows key) | Shows all open windows and a search box. Type the name of any app to open it |\n| Dock | Down the left side of the screen | Holds your favourite apps and the apps that are open. Like the Windows taskbar |\n| Show Apps | The grid of dots at the bottom of the Dock | Lists every installed app |\n| Workspaces | Seen in Activities | Separate desktops, so you can keep different work on different screens |\n| Settings | System menu → gear icon | Change the wallpaper, display, sound, network and users |\n| Trash | In the Dock and in the Files app | Holds deleted files until you empty it, like the Windows Recycle Bin |\n\nThe most important app in this course is the Terminal. It is a window where you type commands instead of clicking. Open it by pressing Ctrl + Alt + T, or by searching for \"Terminal\" in Activities. To keep it handy, right-click its icon in the Dock and choose Pin to Dash.\n\nIn the terminal you will see a prompt, such as anjali@ubuntu:~$. It shows your username, the computer's name, and the folder you are in (~ means your home folder). The $ means Linux is waiting for your command.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| apt search Text Editor | Searches the software list for packages whose description mentions both \"Text\" and \"Editor\" |\n| apt list --installed | Lists every package installed on your system |\n| clear | Clears the terminal screen |\n| exit | Closes the terminal |\n\n\n### A real-world example\n\nRamesh runs a small computer training centre in Madurai. He moved his ten lab computers from an old, unsupported version of Windows to Ubuntu, because Ubuntu is free and runs well on older machines. On the first day, his students were lost. He spent fifteen minutes showing them the Dock, Activities search and the Terminal. By the end of the week, most of them preferred searching for apps by name to hunting through a Start menu.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| You cannot find an app | It is not pinned to the Dock | Press the Super key and type its name, or click Show Apps |\n| Apt: command not found | Linux is case-sensitive | Type commands in lower case: apt |\n| The output of apt list --installed scrolls past too fast | The list has over a thousand lines | Scroll up in the terminal with the mouse wheel or Shift + Page Up |\n| A window seems to have disappeared | It is on another workspace | Open Activities to see all workspaces and windows |",
+      "reading_markdown": "# Reading 3: Ubuntu Desktop\n\n\n### What is it?\n\nThe Ubuntu desktop looks different from Windows, but it does the same jobs. Once you know where five or six things are, you can find your way around.\n\n\n| Part | Where it is | What it does |\n| --- | --- | --- |\n| Top panel | Across the top of the screen | Shows the date and time in the middle, and the system menu (network, sound, power, settings) on the right |\n| Activities | Top-left corner, or press the Super key (the Windows key) | Shows all open windows and a search box. Type the name of any app to open it |\n| Dock | Down the left side of the screen | Holds your favourite apps and the apps that are open. Like the Windows taskbar |\n| Show Apps | The grid of dots at the bottom of the Dock | Lists every installed app |\n| Workspaces | Seen in Activities | Separate desktops, so you can keep different work on different screens |\n| Settings | System menu \u2192 gear icon | Change the wallpaper, display, sound, network and users |\n| Trash | In the Dock and in the Files app | Holds deleted files until you empty it, like the Windows Recycle Bin |\n\nThe most important app in this course is the Terminal. It is a window where you type commands instead of clicking. Open it by pressing Ctrl + Alt + T, or by searching for \"Terminal\" in Activities. To keep it handy, right-click its icon in the Dock and choose Pin to Dash.\n\nIn the terminal you will see a prompt, such as anjali@ubuntu:~$. It shows your username, the computer's name, and the folder you are in (~ means your home folder). The $ means Linux is waiting for your command.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| apt search Text Editor | Searches the software list for packages whose description mentions both \"Text\" and \"Editor\" |\n| apt list --installed | Lists every package installed on your system |\n| clear | Clears the terminal screen |\n| exit | Closes the terminal |\n\n\n### A real-world example\n\nRamesh runs a small computer training centre in Madurai. He moved his ten lab computers from an old, unsupported version of Windows to Ubuntu, because Ubuntu is free and runs well on older machines. On the first day, his students were lost. He spent fifteen minutes showing them the Dock, Activities search and the Terminal. By the end of the week, most of them preferred searching for apps by name to hunting through a Start menu.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| You cannot find an app | It is not pinned to the Dock | Press the Super key and type its name, or click Show Apps |\n| Apt: command not found | Linux is case-sensitive | Type commands in lower case: apt |\n| The output of apt list --installed scrolls past too fast | The list has over a thousand lines | Scroll up in the terminal with the mouse wheel or Shift + Page Up |\n| A window seems to have disappeared | It is on another workspace | Open Activities to see all workspaces and windows |",
       "reading_time_minutes": 15,
-      "try_it_instructions": "This is the practice task for Tutorial 3. Do it on Ubuntu, then submit your work on Spoken Social.\n\nOpen the Terminal and pin it to the Dock.\n\nIn the terminal, run:\n\napt search Text Editorapt list --installed\n\nSubmit: both commands and the first 10–15 lines of each output, pasted as text.",
+      "try_it_instructions": "This is the practice task for Tutorial 3. Do it on Ubuntu, then submit your work on Spoken Social.\n\nOpen the Terminal and pin it to the Dock.\n\nIn the terminal, run:\n\napt search Text Editorapt list --installed\n\nSubmit: both commands and the first 10\u201315 lines of each output, pasted as text.",
       "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
       "reflection_min_sentences": 3,
       "key_terms": [],
@@ -372,7 +372,7 @@
       "tutorial_number": 6,
       "week_number": 3,
       "reading_title": "Reading 6: Date and Time Commands in Linux",
-      "reading_markdown": "# Reading 6: Date and Time Commands in Linux\n\n\n### What is it?\n\nThe date command shows the current date and time. On its own, it prints everything in one line. With a format, it prints just the parts you want, in the order you want.\n\nA format starts with + and uses codes that begin with %. For example, date +%d-%m-%Y prints today's date as 05-11-2026. If the format has spaces, put it inside quote marks: date \"+%d %B %Y\".\n\nThe cal command shows a calendar. On Ubuntu, it comes in a package called ncal, which you install once with sudo apt install ncal.\n\nLearning date is not really about dates. It is about learning how options change what a command does. You will use the same idea with every command in this course.\n\n\n### Commands at a glance\n\n\n| Type this | What it shows | Example output |\n| --- | --- | --- |\n| date | Full date and time | Thu Nov 5 16:30:12 IST 2026 |\n| date +%d-%m-%Y | Day-month-year | 05-11-2026 |\n| date +%R | Time in 24-hour hours:minutes | 16:30 |\n| date +%j | Day of the year (001–366) | 309 |\n| date +%U | Week number of the year (weeks starting on Sunday) | 44 |\n| date +%q | Quarter of the year (1–4) | 4 |\n| cal | This month's calendar |  |\n| cal 06 2035 | Calendar for June 2035 |  |\n| cal 2027 | Calendar for the whole of 2027 |  |\n\n\n### A real-world example\n\nShabana is a junior system administrator at an insurance company in Kochi. Every night, a backup of the claims database is saved as a file. She names each file with the date, using date +%Y-%m-%d, so the files are called backup-2026-11-05, backup-2026-11-06 and so on. Because the year comes first, the files sort in date order on their own, and she can find any day's backup in seconds.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| date: invalid date '%j' | The + is missing | Write date +%j |\n| cal: command not found | The ncal package is not installed | Run sudo apt install ncal |\n| date: extra operand | The format has a space and no quote marks | Put the format in quotes: date \"+%d %B %Y\" |\n| The output shows the wrong letter | %M (minutes) and %m (month) are different | Check capital and small letters in the format |",
+      "reading_markdown": "# Reading 6: Date and Time Commands in Linux\n\n\n### What is it?\n\nThe date command shows the current date and time. On its own, it prints everything in one line. With a format, it prints just the parts you want, in the order you want.\n\nA format starts with + and uses codes that begin with %. For example, date +%d-%m-%Y prints today's date as 05-11-2026. If the format has spaces, put it inside quote marks: date \"+%d %B %Y\".\n\nThe cal command shows a calendar. On Ubuntu, it comes in a package called ncal, which you install once with sudo apt install ncal.\n\nLearning date is not really about dates. It is about learning how options change what a command does. You will use the same idea with every command in this course.\n\n\n### Commands at a glance\n\n\n| Type this | What it shows | Example output |\n| --- | --- | --- |\n| date | Full date and time | Thu Nov 5 16:30:12 IST 2026 |\n| date +%d-%m-%Y | Day-month-year | 05-11-2026 |\n| date +%R | Time in 24-hour hours:minutes | 16:30 |\n| date +%j | Day of the year (001\u2013366) | 309 |\n| date +%U | Week number of the year (weeks starting on Sunday) | 44 |\n| date +%q | Quarter of the year (1\u20134) | 4 |\n| cal | This month's calendar |  |\n| cal 06 2035 | Calendar for June 2035 |  |\n| cal 2027 | Calendar for the whole of 2027 |  |\n\n\n### A real-world example\n\nShabana is a junior system administrator at an insurance company in Kochi. Every night, a backup of the claims database is saved as a file. She names each file with the date, using date +%Y-%m-%d, so the files are called backup-2026-11-05, backup-2026-11-06 and so on. Because the year comes first, the files sort in date order on their own, and she can find any day's backup in seconds.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| date: invalid date '%j' | The + is missing | Write date +%j |\n| cal: command not found | The ncal package is not installed | Run sudo apt install ncal |\n| date: extra operand | The format has a space and no quote marks | Put the format in quotes: date \"+%d %B %Y\" |\n| The output shows the wrong letter | %M (minutes) and %m (month) are different | Check capital and small letters in the format |",
       "reading_time_minutes": 15,
       "try_it_instructions": "This is the practice task for Tutorial 6. In the Ubuntu terminal, run:\n\ndate +%Rdate +%Udate +%jdate +%qcal 06 2035\n\nSubmit: the commands and their output, pasted as text.",
       "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
@@ -517,7 +517,7 @@
       "tutorial_number": 13,
       "week_number": 7,
       "reading_title": "Reading 13: The Linux Environment",
-      "reading_markdown": "# Reading 13: The Linux Environment\n\n\n### What is it?\n\nThe shell keeps a set of variables: names that hold values. Some hold facts about you, such as your username and home directory. Others hold settings, such as what your prompt looks like. Variables that the shell passes on to every program it starts are called environment variables. To see a variable's value, put a $ in front of its name: echo $HOME.\n\n\n| Variable | What it holds | Example |\n| --- | --- | --- |\n| HOME | Your home directory | /home/anjali |\n| SHELL | Your login shell | /bin/bash |\n| LOGNAME | Your username | anjali |\n| PATH | The folders searched for commands, separated by colons | /usr/local/bin:/usr/bin:/bin… |\n| PS1 | The look of your prompt | \\u@\\h:\\w$ |\n\nThe shell also remembers every command you type. history lists them with numbers, and the Up arrow brings back the last one. An alias gives a long command a short name, so you type less.\n\nChanges you make to PS1 or aliases in the terminal last only until you close it. To keep them, they can be added to a settings file called .bashrc in your home directory. That is optional for this course.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| env | Lists all environment variables |\n| echo $HOME | Shows your home directory |\n| echo $PATH | Shows the folders where the shell looks for commands |\n| cd ~/mydir | ~ is a shortcut for your home directory |\n| history | Lists the commands you have typed, with numbers |\n| !! | Runs the last command again |\n| !25 | Runs command number 25 from history |\n| alias ll='ls -l' | Creates ll as a short name for ls -l |\n| alias | Lists your aliases |\n| unalias ll | Removes the alias ll |\n| PS1=\"Linux> \" | Changes the prompt to Linux> in this terminal |\n\n\n### A real-world example\n\nSandeep is a DevOps engineer at a fintech start-up in Chennai. He logs in to a dozen servers a day. He used to type the same long commands again and again, and once ran a delete command on the wrong server. Now he has aliases for his everyday commands, and on each server his prompt shows the server's name in large letters. He always knows where he is before he presses Enter.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| echo HOME prints the word HOME | The $ is missing | Write echo $HOME |\n| alias ll = 'ls -l' gives an error | Spaces around the = sign | Write it with no spaces: alias ll='ls -l' |\n| Your new prompt or alias is gone the next day | Changes typed in the terminal last only until it closes | This is normal. Add them to ~/.bashrc if you want to keep them |\n| Every command is \"not found\" after changing PATH | PATH was replaced instead of added to | Close the terminal and open a new one; PATH comes back |",
+      "reading_markdown": "# Reading 13: The Linux Environment\n\n\n### What is it?\n\nThe shell keeps a set of variables: names that hold values. Some hold facts about you, such as your username and home directory. Others hold settings, such as what your prompt looks like. Variables that the shell passes on to every program it starts are called environment variables. To see a variable's value, put a $ in front of its name: echo $HOME.\n\n\n| Variable | What it holds | Example |\n| --- | --- | --- |\n| HOME | Your home directory | /home/anjali |\n| SHELL | Your login shell | /bin/bash |\n| LOGNAME | Your username | anjali |\n| PATH | The folders searched for commands, separated by colons | /usr/local/bin:/usr/bin:/bin\u2026 |\n| PS1 | The look of your prompt | \\u@\\h:\\w$ |\n\nThe shell also remembers every command you type. history lists them with numbers, and the Up arrow brings back the last one. An alias gives a long command a short name, so you type less.\n\nChanges you make to PS1 or aliases in the terminal last only until you close it. To keep them, they can be added to a settings file called .bashrc in your home directory. That is optional for this course.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| env | Lists all environment variables |\n| echo $HOME | Shows your home directory |\n| echo $PATH | Shows the folders where the shell looks for commands |\n| cd ~/mydir | ~ is a shortcut for your home directory |\n| history | Lists the commands you have typed, with numbers |\n| !! | Runs the last command again |\n| !25 | Runs command number 25 from history |\n| alias ll='ls -l' | Creates ll as a short name for ls -l |\n| alias | Lists your aliases |\n| unalias ll | Removes the alias ll |\n| PS1=\"Linux> \" | Changes the prompt to Linux> in this terminal |\n\n\n### A real-world example\n\nSandeep is a DevOps engineer at a fintech start-up in Chennai. He logs in to a dozen servers a day. He used to type the same long commands again and again, and once ran a delete command on the wrong server. Now he has aliases for his everyday commands, and on each server his prompt shows the server's name in large letters. He always knows where he is before he presses Enter.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| echo HOME prints the word HOME | The $ is missing | Write echo $HOME |\n| alias ll = 'ls -l' gives an error | Spaces around the = sign | Write it with no spaces: alias ll='ls -l' |\n| Your new prompt or alias is gone the next day | Changes typed in the terminal last only until it closes | This is normal. Add them to ~/.bashrc if you want to keep them |\n| Every command is \"not found\" after changing PATH | PATH was replaced instead of added to | Close the terminal and open a new one; PATH comes back |",
       "reading_time_minutes": 15,
       "try_it_instructions": "This is the practice task for Tutorial 13. In the Ubuntu terminal:\n\nList all environment variables with env.\n\nShow the values of HOME, SHELL, LOGNAME and PATH with echo.\n\nChange your prompt with PS1, for example to show your name followed by $.\n\nCreate an alias called ll for ls -l, and run it.\n\nRun history and show the last ten lines.\n\nSubmit: the commands and their output, pasted as text.",
       "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
@@ -685,12 +685,24 @@
       "tutorial_number": 3,
       "question_number": 1,
       "question_text": "Priya wants to open the Calculator app, but it is not in the Dock. What is the quickest way?",
-      "options": {
-        "A": "Restart Ubuntu",
-        "B": "Press the Super key and type \"Calculator\"",
-        "C": "Open the Trash",
-        "D": "Open Settings → Display"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Restart Ubuntu"
+        },
+        {
+          "id": "B",
+          "text": "Press the Super key and type \"Calculator\""
+        },
+        {
+          "id": "C",
+          "text": "Open the Trash"
+        },
+        {
+          "id": "D",
+          "text": "Open Settings \u2192 Display"
+        }
+      ],
       "correct_option": "B",
       "explanation": "Activities search finds any installed app by name."
     },
@@ -699,12 +711,24 @@
       "tutorial_number": 3,
       "question_number": 2,
       "question_text": "In Ubuntu, what does the Dock do?",
-      "options": {
-        "A": "Holds favourite and open apps, like the Windows taskbar",
-        "B": "Shows the date and time",
-        "C": "Stores deleted files",
-        "D": "Changes the wallpaper"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Holds favourite and open apps, like the Windows taskbar"
+        },
+        {
+          "id": "B",
+          "text": "Shows the date and time"
+        },
+        {
+          "id": "C",
+          "text": "Stores deleted files"
+        },
+        {
+          "id": "D",
+          "text": "Changes the wallpaper"
+        }
+      ],
       "correct_option": "A",
       "explanation": "The Dock, on the left side of the screen, holds favourite apps and the apps that are open."
     },
@@ -713,12 +737,24 @@
       "tutorial_number": 3,
       "question_number": 3,
       "question_text": "Which keys open a new terminal in Ubuntu?",
-      "options": {
-        "A": "Ctrl + S",
-        "B": "Alt + F4",
-        "C": "Ctrl + Alt + T",
-        "D": "Ctrl + Shift + Esc"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Ctrl + S"
+        },
+        {
+          "id": "B",
+          "text": "Alt + F4"
+        },
+        {
+          "id": "C",
+          "text": "Ctrl + Alt + T"
+        },
+        {
+          "id": "D",
+          "text": "Ctrl + Shift + Esc"
+        }
+      ],
       "correct_option": "C",
       "explanation": "Ctrl + Alt + T opens a terminal. Alt + F4 closes a window."
     },
@@ -727,12 +763,24 @@
       "tutorial_number": 3,
       "question_number": 4,
       "question_text": "Arun types Apt list --installed and sees \"command not found\". Why?",
-      "options": {
-        "A": "apt is not installed on Ubuntu",
-        "B": "He needs an internet connection",
-        "C": "The list is too long to show",
-        "D": "Linux is case-sensitive, so Apt is not the same as apt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "apt is not installed on Ubuntu"
+        },
+        {
+          "id": "B",
+          "text": "He needs an internet connection"
+        },
+        {
+          "id": "C",
+          "text": "The list is too long to show"
+        },
+        {
+          "id": "D",
+          "text": "Linux is case-sensitive, so Apt is not the same as apt"
+        }
+      ],
       "correct_option": "D",
       "explanation": "Linux treats capital and small letters as different. The command is apt, in lower case."
     },
@@ -741,12 +789,24 @@
       "tutorial_number": 3,
       "question_number": 5,
       "question_text": "Fatima deleted a file by mistake a few minutes ago. Where should she look first?",
-      "options": {
-        "A": "In the Trash",
-        "B": "In Settings",
-        "C": "In the top panel",
-        "D": "It is gone for ever"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "In the Trash"
+        },
+        {
+          "id": "B",
+          "text": "In Settings"
+        },
+        {
+          "id": "C",
+          "text": "In the top panel"
+        },
+        {
+          "id": "D",
+          "text": "It is gone for ever"
+        }
+      ],
       "correct_option": "A",
       "explanation": "Files deleted from the Files app go to the Trash, where they can be restored until it is emptied."
     },
@@ -755,12 +815,24 @@
       "tutorial_number": 4,
       "question_number": 1,
       "question_text": "What is a repository in Ubuntu?",
-      "options": {
-        "A": "A folder where you save your documents",
-        "B": "A trusted online store of packages that Ubuntu downloads from",
-        "C": "The Trash",
-        "D": "A backup of your system"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "A folder where you save your documents"
+        },
+        {
+          "id": "B",
+          "text": "A trusted online store of packages that Ubuntu downloads from"
+        },
+        {
+          "id": "C",
+          "text": "The Trash"
+        },
+        {
+          "id": "D",
+          "text": "A backup of your system"
+        }
+      ],
       "correct_option": "B",
       "explanation": "Repositories are online stores of packages. APT and Synaptic download software from them."
     },
@@ -769,12 +841,24 @@
       "tutorial_number": 4,
       "question_number": 2,
       "question_text": "Neha types apt install vlc and sees \"are you root?\". What should she type?",
-      "options": {
-        "A": "apt install vlc --force",
-        "B": "root apt install vlc",
-        "C": "sudo apt install vlc",
-        "D": "apt vlc install"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "apt install vlc --force"
+        },
+        {
+          "id": "B",
+          "text": "root apt install vlc"
+        },
+        {
+          "id": "C",
+          "text": "sudo apt install vlc"
+        },
+        {
+          "id": "D",
+          "text": "apt vlc install"
+        }
+      ],
       "correct_option": "C",
       "explanation": "Installing software needs administrator rights, so the command must start with sudo."
     },
@@ -783,12 +867,24 @@
       "tutorial_number": 4,
       "question_number": 3,
       "question_text": "Why should you run sudo apt update before installing a package?",
-      "options": {
-        "A": "It installs every available package",
-        "B": "It upgrades Ubuntu to a new version",
-        "C": "It deletes old packages",
-        "D": "It downloads the latest list of packages, so apt can find what you ask for"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "It installs every available package"
+        },
+        {
+          "id": "B",
+          "text": "It upgrades Ubuntu to a new version"
+        },
+        {
+          "id": "C",
+          "text": "It deletes old packages"
+        },
+        {
+          "id": "D",
+          "text": "It downloads the latest list of packages, so apt can find what you ask for"
+        }
+      ],
       "correct_option": "D",
       "explanation": "apt update only refreshes the package list. It does not install or upgrade anything."
     },
@@ -797,12 +893,24 @@
       "tutorial_number": 4,
       "question_number": 4,
       "question_text": "Raju runs sudo apt install gimp and sees \"E: Unable to locate package gimp\". What is the most likely fix?",
-      "options": {
-        "A": "Run sudo apt update, then try again",
-        "B": "Restart the computer",
-        "C": "Install gimp from the Trash",
-        "D": "Type the command in capital letters"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Run sudo apt update, then try again"
+        },
+        {
+          "id": "B",
+          "text": "Restart the computer"
+        },
+        {
+          "id": "C",
+          "text": "Install gimp from the Trash"
+        },
+        {
+          "id": "D",
+          "text": "Type the command in capital letters"
+        }
+      ],
       "correct_option": "A",
       "explanation": "This error usually means the package list is out of date, or the name is misspelt."
     },
@@ -811,12 +919,24 @@
       "tutorial_number": 4,
       "question_number": 5,
       "question_text": "In Synaptic, after marking packages for installation, what must you click to install them?",
-      "options": {
-        "A": "Reload",
-        "B": "Search",
-        "C": "Apply",
-        "D": "Properties"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Reload"
+        },
+        {
+          "id": "B",
+          "text": "Search"
+        },
+        {
+          "id": "C",
+          "text": "Apply"
+        },
+        {
+          "id": "D",
+          "text": "Properties"
+        }
+      ],
       "correct_option": "C",
       "explanation": "Marking only selects packages. Nothing is installed until you click Apply."
     },
@@ -825,12 +945,24 @@
       "tutorial_number": 5,
       "question_number": 1,
       "question_text": "What does the shell do?",
-      "options": {
-        "A": "It stores your files",
-        "B": "It connects you to the internet",
-        "C": "It reads the commands you type and runs them",
-        "D": "It installs packages"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "It stores your files"
+        },
+        {
+          "id": "B",
+          "text": "It connects you to the internet"
+        },
+        {
+          "id": "C",
+          "text": "It reads the commands you type and runs them"
+        },
+        {
+          "id": "D",
+          "text": "It installs packages"
+        }
+      ],
       "correct_option": "C",
       "explanation": "The shell reads each command, finds the right program and runs it."
     },
@@ -839,12 +971,24 @@
       "tutorial_number": 5,
       "question_number": 2,
       "question_text": "Meena runs type cd and sees \"cd is a shell builtin\". What does this tell her?",
-      "options": {
-        "A": "cd is an internal command, part of the shell itself",
-        "B": "cd is not installed",
-        "C": "cd is an external program in /usr/bin",
-        "D": "cd needs sudo"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "cd is an internal command, part of the shell itself"
+        },
+        {
+          "id": "B",
+          "text": "cd is not installed"
+        },
+        {
+          "id": "C",
+          "text": "cd is an external program in /usr/bin"
+        },
+        {
+          "id": "D",
+          "text": "cd needs sudo"
+        }
+      ],
       "correct_option": "A",
       "explanation": "A shell builtin is an internal command, built into the shell."
     },
@@ -853,12 +997,24 @@
       "tutorial_number": 5,
       "question_number": 3,
       "question_text": "What is the name of the shell Ubuntu uses by default?",
-      "options": {
-        "A": "cmd",
-        "B": "bash",
-        "C": "PowerShell",
-        "D": "apt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "cmd"
+        },
+        {
+          "id": "B",
+          "text": "bash"
+        },
+        {
+          "id": "C",
+          "text": "PowerShell"
+        },
+        {
+          "id": "D",
+          "text": "apt"
+        }
+      ],
       "correct_option": "B",
       "explanation": "Ubuntu uses bash. echo $SHELL shows /bin/bash."
     },
@@ -867,12 +1023,24 @@
       "tutorial_number": 5,
       "question_number": 4,
       "question_text": "Running type date shows \"date is /usr/bin/date\". What kind of command is date?",
-      "options": {
-        "A": "Internal",
-        "B": "A package manager",
-        "C": "An alias",
-        "D": "External"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Internal"
+        },
+        {
+          "id": "B",
+          "text": "A package manager"
+        },
+        {
+          "id": "C",
+          "text": "An alias"
+        },
+        {
+          "id": "D",
+          "text": "External"
+        }
+      ],
       "correct_option": "D",
       "explanation": "A command stored as a file, such as /usr/bin/date, is external."
     },
@@ -881,12 +1049,24 @@
       "tutorial_number": 5,
       "question_number": 5,
       "question_text": "Which command shows the folder you are in now?",
-      "options": {
-        "A": "ls",
-        "B": "type",
-        "C": "pwd",
-        "D": "echo"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "ls"
+        },
+        {
+          "id": "B",
+          "text": "type"
+        },
+        {
+          "id": "C",
+          "text": "pwd"
+        },
+        {
+          "id": "D",
+          "text": "echo"
+        }
+      ],
       "correct_option": "C",
       "explanation": "pwd prints the working directory, the folder you are in."
     },
@@ -895,12 +1075,24 @@
       "tutorial_number": 6,
       "question_number": 1,
       "question_text": "Which command prints the date as 25-12-2026?",
-      "options": {
-        "A": "date %d-%m-%Y",
-        "B": "date +%Y-%m-%d",
-        "C": "date +%d-%m-%Y",
-        "D": "cal 25 12 2026"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "date %d-%m-%Y"
+        },
+        {
+          "id": "B",
+          "text": "date +%Y-%m-%d"
+        },
+        {
+          "id": "C",
+          "text": "date +%d-%m-%Y"
+        },
+        {
+          "id": "D",
+          "text": "cal 25 12 2026"
+        }
+      ],
       "correct_option": "C",
       "explanation": "A format starts with +. %d is the day, %m the month and %Y the four-digit year."
     },
@@ -909,12 +1101,24 @@
       "tutorial_number": 6,
       "question_number": 2,
       "question_text": "Today is 5 November. What does date +%q print?",
-      "options": {
-        "A": "4",
-        "B": "11",
-        "C": "5",
-        "D": "309"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "4"
+        },
+        {
+          "id": "B",
+          "text": "11"
+        },
+        {
+          "id": "C",
+          "text": "5"
+        },
+        {
+          "id": "D",
+          "text": "309"
+        }
+      ],
       "correct_option": "A",
       "explanation": "%q prints the quarter of the year. November is in the fourth quarter."
     },
@@ -923,12 +1127,24 @@
       "tutorial_number": 6,
       "question_number": 3,
       "question_text": "Rohit types cal and sees \"command not found\". What should he do?",
-      "options": {
-        "A": "Type CAL in capitals",
-        "B": "Install it with sudo apt install ncal",
-        "C": "Restart the terminal",
-        "D": "Use date +cal instead"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Type CAL in capitals"
+        },
+        {
+          "id": "B",
+          "text": "Install it with sudo apt install ncal"
+        },
+        {
+          "id": "C",
+          "text": "Restart the terminal"
+        },
+        {
+          "id": "D",
+          "text": "Use date +cal instead"
+        }
+      ],
       "correct_option": "B",
       "explanation": "On Ubuntu, cal comes in the ncal package, which must be installed first."
     },
@@ -937,12 +1153,24 @@
       "tutorial_number": 6,
       "question_number": 4,
       "question_text": "What does date +%j show?",
-      "options": {
-        "A": "The month name",
-        "B": "The week number",
-        "C": "The time",
-        "D": "The day of the year, from 001 to 366"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The month name"
+        },
+        {
+          "id": "B",
+          "text": "The week number"
+        },
+        {
+          "id": "C",
+          "text": "The time"
+        },
+        {
+          "id": "D",
+          "text": "The day of the year, from 001 to 366"
+        }
+      ],
       "correct_option": "D",
       "explanation": "%j is the day of the year. 5 November 2026 is day 309."
     },
@@ -951,12 +1179,24 @@
       "tutorial_number": 6,
       "question_number": 5,
       "question_text": "Sonal wants the time as 14:05, in 24-hour format. Which command should she use?",
-      "options": {
-        "A": "date +%R",
-        "B": "date +%U",
-        "C": "cal +%R",
-        "D": "date %R"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "date +%R"
+        },
+        {
+          "id": "B",
+          "text": "date +%U"
+        },
+        {
+          "id": "C",
+          "text": "cal +%R"
+        },
+        {
+          "id": "D",
+          "text": "date %R"
+        }
+      ],
       "correct_option": "A",
       "explanation": "%R prints hours and minutes in 24-hour format. The + is required."
     },
@@ -965,12 +1205,24 @@
       "tutorial_number": 7,
       "question_number": 1,
       "question_text": "In the command ls -l /etc, what is /etc?",
-      "options": {
-        "A": "The command name",
-        "B": "An option",
-        "C": "The argument",
-        "D": "The shell"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The command name"
+        },
+        {
+          "id": "B",
+          "text": "An option"
+        },
+        {
+          "id": "C",
+          "text": "The argument"
+        },
+        {
+          "id": "D",
+          "text": "The shell"
+        }
+      ],
       "correct_option": "C",
       "explanation": "/etc is what the command works on, so it is the argument. -l is the option."
     },
@@ -979,12 +1231,24 @@
       "tutorial_number": 7,
       "question_number": 2,
       "question_text": "Which command shows hidden files, whose names start with a dot?",
-      "options": {
-        "A": "ls -l",
-        "B": "ls -a",
-        "C": "ls -s",
-        "D": "ls -h"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "ls -l"
+        },
+        {
+          "id": "B",
+          "text": "ls -a"
+        },
+        {
+          "id": "C",
+          "text": "ls -s"
+        },
+        {
+          "id": "D",
+          "text": "ls -h"
+        }
+      ],
       "correct_option": "B",
       "explanation": "-a shows all files, including hidden ones."
     },
@@ -993,12 +1257,24 @@
       "tutorial_number": 7,
       "question_number": 3,
       "question_text": "Kavya has opened man ls and wants to get back to the prompt. What should she press?",
-      "options": {
-        "A": "q",
-        "B": "Enter",
-        "C": "Ctrl + S",
-        "D": "exit"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "q"
+        },
+        {
+          "id": "B",
+          "text": "Enter"
+        },
+        {
+          "id": "C",
+          "text": "Ctrl + S"
+        },
+        {
+          "id": "D",
+          "text": "exit"
+        }
+      ],
       "correct_option": "A",
       "explanation": "Pressing q quits a man page."
     },
@@ -1007,12 +1283,24 @@
       "tutorial_number": 7,
       "question_number": 4,
       "question_text": "Which command is the same as ls -a -l -h?",
-      "options": {
-        "A": "ls -a, -l, -h",
-        "B": "ls a l h",
-        "C": "ls --alh",
-        "D": "ls -alh"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "ls -a, -l, -h"
+        },
+        {
+          "id": "B",
+          "text": "ls a l h"
+        },
+        {
+          "id": "C",
+          "text": "ls --alh"
+        },
+        {
+          "id": "D",
+          "text": "ls -alh"
+        }
+      ],
       "correct_option": "D",
       "explanation": "Short options can be joined after one dash. Long options use two dashes and full words."
     },
@@ -1021,12 +1309,24 @@
       "tutorial_number": 7,
       "question_number": 5,
       "question_text": "Imran wants to rename files but does not know which command does it. What can he try first?",
-      "options": {
-        "A": "man rename-files",
-        "B": "apropos rename",
-        "C": "ls --rename",
-        "D": "type rename"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "man rename-files"
+        },
+        {
+          "id": "B",
+          "text": "apropos rename"
+        },
+        {
+          "id": "C",
+          "text": "ls --rename"
+        },
+        {
+          "id": "D",
+          "text": "type rename"
+        }
+      ],
       "correct_option": "B",
       "explanation": "apropos searches all manual pages for a word, so it helps when you do not know the command's name."
     },
@@ -1035,12 +1335,24 @@
       "tutorial_number": 8,
       "question_number": 1,
       "question_text": "What does echo -e \"Hi\\nThere\" print?",
-      "options": {
-        "A": "Hi\\nThere",
-        "B": "Hi There, on one line",
-        "C": "Hi and There on two separate lines",
-        "D": "Nothing"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Hi\\nThere"
+        },
+        {
+          "id": "B",
+          "text": "Hi There, on one line"
+        },
+        {
+          "id": "C",
+          "text": "Hi and There on two separate lines"
+        },
+        {
+          "id": "D",
+          "text": "Nothing"
+        }
+      ],
       "correct_option": "C",
       "explanation": "With -e, \\n starts a new line."
     },
@@ -1049,12 +1361,24 @@
       "tutorial_number": 8,
       "question_number": 2,
       "question_text": "Sunil types echo \"A\\tB\" (without -e) and sees A\\tB. Why?",
-      "options": {
-        "A": "Without -e, echo prints the backslash and letter as they are",
-        "B": "\\t is not a real escape sequence",
-        "C": "Tabs cannot be shown in the terminal",
-        "D": "echo needs sudo"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Without -e, echo prints the backslash and letter as they are"
+        },
+        {
+          "id": "B",
+          "text": "\\t is not a real escape sequence"
+        },
+        {
+          "id": "C",
+          "text": "Tabs cannot be shown in the terminal"
+        },
+        {
+          "id": "D",
+          "text": "echo needs sudo"
+        }
+      ],
       "correct_option": "A",
       "explanation": "echo only treats \\t as a tab when you add the -e option."
     },
@@ -1063,12 +1387,24 @@
       "tutorial_number": 8,
       "question_number": 3,
       "question_text": "Which command shows the version of the Linux kernel?",
-      "options": {
-        "A": "who",
-        "B": "date",
-        "C": "lsb_release -a",
-        "D": "uname -r"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "who"
+        },
+        {
+          "id": "B",
+          "text": "date"
+        },
+        {
+          "id": "C",
+          "text": "lsb_release -a"
+        },
+        {
+          "id": "D",
+          "text": "uname -r"
+        }
+      ],
       "correct_option": "D",
       "explanation": "uname -r shows the kernel version. lsb_release -a shows the Ubuntu version."
     },
@@ -1077,12 +1413,24 @@
       "tutorial_number": 8,
       "question_number": 4,
       "question_text": "Which command shows who is logged in and since when?",
-      "options": {
-        "A": "whoami",
-        "B": "who",
-        "C": "passwd",
-        "D": "pwd"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "whoami"
+        },
+        {
+          "id": "B",
+          "text": "who"
+        },
+        {
+          "id": "C",
+          "text": "passwd"
+        },
+        {
+          "id": "D",
+          "text": "pwd"
+        }
+      ],
       "correct_option": "B",
       "explanation": "who lists logged-in users and their login times. whoami shows only your own username."
     },
@@ -1091,12 +1439,24 @@
       "tutorial_number": 8,
       "question_number": 5,
       "question_text": "Lata wants to change her own password. Which command should she use?",
-      "options": {
-        "A": "echo password",
-        "B": "uname -p",
-        "C": "passwd",
-        "D": "sudo apt password"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "echo password"
+        },
+        {
+          "id": "B",
+          "text": "uname -p"
+        },
+        {
+          "id": "C",
+          "text": "passwd"
+        },
+        {
+          "id": "D",
+          "text": "sudo apt password"
+        }
+      ],
       "correct_option": "C",
       "explanation": "passwd asks for the current password, then the new one twice."
     },
@@ -1105,12 +1465,24 @@
       "tutorial_number": 9,
       "question_number": 1,
       "question_text": "What does / mean at the start of a path?",
-      "options": {
-        "A": "Your home directory",
-        "B": "The root directory, the top of the file system",
-        "C": "The folder you are in now",
-        "D": "The folder above"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Your home directory"
+        },
+        {
+          "id": "B",
+          "text": "The root directory, the top of the file system"
+        },
+        {
+          "id": "C",
+          "text": "The folder you are in now"
+        },
+        {
+          "id": "D",
+          "text": "The folder above"
+        }
+      ],
       "correct_option": "B",
       "explanation": "Every absolute path starts from the root directory, /."
     },
@@ -1119,12 +1491,24 @@
       "tutorial_number": 9,
       "question_number": 2,
       "question_text": "Arjun is in /home/arjun/projects. He runs cd .. and then pwd. What does he see?",
-      "options": {
-        "A": "/home/arjun/projects",
-        "B": "/home",
-        "C": "/",
-        "D": "/home/arjun"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "/home/arjun/projects"
+        },
+        {
+          "id": "B",
+          "text": "/home"
+        },
+        {
+          "id": "C",
+          "text": "/"
+        },
+        {
+          "id": "D",
+          "text": "/home/arjun"
+        }
+      ],
       "correct_option": "D",
       "explanation": ".. means the folder above, so he moves up one level."
     },
@@ -1133,12 +1517,24 @@
       "tutorial_number": 9,
       "question_number": 3,
       "question_text": "Sneha runs rmdir reports and sees \"Directory not empty\". What does this mean?",
-      "options": {
-        "A": "rmdir only removes empty folders, so the folder was not removed",
-        "B": "The folder has been removed",
-        "C": "The folder does not exist",
-        "D": "She needs to restart Ubuntu"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "rmdir only removes empty folders, so the folder was not removed"
+        },
+        {
+          "id": "B",
+          "text": "The folder has been removed"
+        },
+        {
+          "id": "C",
+          "text": "The folder does not exist"
+        },
+        {
+          "id": "D",
+          "text": "She needs to restart Ubuntu"
+        }
+      ],
       "correct_option": "A",
       "explanation": "rmdir refuses to remove a folder with something in it. This protects you from deleting files by mistake."
     },
@@ -1147,12 +1543,24 @@
       "tutorial_number": 9,
       "question_number": 4,
       "question_text": "Which command creates a and b inside it in one step, even if a does not exist yet?",
-      "options": {
-        "A": "mkdir a/b",
-        "B": "cd a/b",
-        "C": "mkdir -p a/b",
-        "D": "rmdir a/b"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "mkdir a/b"
+        },
+        {
+          "id": "B",
+          "text": "cd a/b"
+        },
+        {
+          "id": "C",
+          "text": "mkdir -p a/b"
+        },
+        {
+          "id": "D",
+          "text": "rmdir a/b"
+        }
+      ],
       "correct_option": "C",
       "explanation": "The -p option creates any missing parent folders as well."
     },
@@ -1161,12 +1569,24 @@
       "tutorial_number": 9,
       "question_number": 5,
       "question_text": "Which of these is a relative path?",
-      "options": {
-        "A": "reports/june.txt",
-        "B": "/etc/hosts",
-        "C": "/home/ravi/reports",
-        "D": "/"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "reports/june.txt"
+        },
+        {
+          "id": "B",
+          "text": "/etc/hosts"
+        },
+        {
+          "id": "C",
+          "text": "/home/ravi/reports"
+        },
+        {
+          "id": "D",
+          "text": "/"
+        }
+      ],
       "correct_option": "A",
       "explanation": "It does not start with /, so it is read from the folder you are in now."
     },
@@ -1175,12 +1595,24 @@
       "tutorial_number": 10,
       "question_number": 1,
       "question_text": "Ravi runs cp report.txt summary.txt, and summary.txt already exists. What happens?",
-      "options": {
-        "A": "Linux asks him first",
-        "B": "summary.txt is replaced without any warning",
-        "C": "The copy is cancelled",
-        "D": "A file called summary2.txt is made"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Linux asks him first"
+        },
+        {
+          "id": "B",
+          "text": "summary.txt is replaced without any warning"
+        },
+        {
+          "id": "C",
+          "text": "The copy is cancelled"
+        },
+        {
+          "id": "D",
+          "text": "A file called summary2.txt is made"
+        }
+      ],
       "correct_option": "B",
       "explanation": "cp overwrites silently unless you use -i to be asked."
     },
@@ -1189,12 +1621,24 @@
       "tutorial_number": 10,
       "question_number": 2,
       "question_text": "wc notes.txt prints 4 20 110 notes.txt. What is 20?",
-      "options": {
-        "A": "The number of lines",
-        "B": "The number of bytes",
-        "C": "The number of words",
-        "D": "The number of files"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The number of lines"
+        },
+        {
+          "id": "B",
+          "text": "The number of bytes"
+        },
+        {
+          "id": "C",
+          "text": "The number of words"
+        },
+        {
+          "id": "D",
+          "text": "The number of files"
+        }
+      ],
       "correct_option": "C",
       "explanation": "wc prints lines, then words, then bytes, then the file name."
     },
@@ -1203,12 +1647,24 @@
       "tutorial_number": 10,
       "question_number": 3,
       "question_text": "Asha runs cmp a.txt b.txt and nothing is printed. What does this mean?",
-      "options": {
-        "A": "The two files are exactly the same",
-        "B": "The command failed",
-        "C": "Both files are empty",
-        "D": "The files are completely different"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The two files are exactly the same"
+        },
+        {
+          "id": "B",
+          "text": "The command failed"
+        },
+        {
+          "id": "C",
+          "text": "Both files are empty"
+        },
+        {
+          "id": "D",
+          "text": "The files are completely different"
+        }
+      ],
       "correct_option": "A",
       "explanation": "cmp prints nothing when the files match, and reports the first difference when they do not."
     },
@@ -1217,12 +1673,24 @@
       "tutorial_number": 10,
       "question_number": 4,
       "question_text": "Which command renames draft.txt to final.txt?",
-      "options": {
-        "A": "cp draft.txt final.txt",
-        "B": "rm draft.txt final.txt",
-        "C": "rename draft.txt",
-        "D": "mv draft.txt final.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "cp draft.txt final.txt"
+        },
+        {
+          "id": "B",
+          "text": "rm draft.txt final.txt"
+        },
+        {
+          "id": "C",
+          "text": "rename draft.txt"
+        },
+        {
+          "id": "D",
+          "text": "mv draft.txt final.txt"
+        }
+      ],
       "correct_option": "D",
       "explanation": "mv moves or renames. cp would leave the old file in place."
     },
@@ -1231,12 +1699,24 @@
       "tutorial_number": 10,
       "question_number": 5,
       "question_text": "Mohan runs cp -b data.txt old.txt, where old.txt already exists. What happens to the old version of old.txt?",
-      "options": {
-        "A": "It is deleted for ever",
-        "B": "It is saved as old.txt~",
-        "C": "It goes to the Trash",
-        "D": "Nothing; cp refuses to run"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "It is deleted for ever"
+        },
+        {
+          "id": "B",
+          "text": "It is saved as old.txt~"
+        },
+        {
+          "id": "C",
+          "text": "It goes to the Trash"
+        },
+        {
+          "id": "D",
+          "text": "Nothing; cp refuses to run"
+        }
+      ],
       "correct_option": "B",
       "explanation": "-b keeps a backup of the file being replaced, with ~ added to its name."
     },
@@ -1245,12 +1725,24 @@
       "tutorial_number": 11,
       "question_number": 1,
       "question_text": "What is the difference between > and >>?",
-      "options": {
-        "A": "There is no difference",
-        "B": "> adds to a file; >> replaces it",
-        "C": "> replaces the file's contents; >> adds to the end",
-        "D": "> is for errors; >> is for output"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "There is no difference"
+        },
+        {
+          "id": "B",
+          "text": "> adds to a file; >> replaces it"
+        },
+        {
+          "id": "C",
+          "text": "> replaces the file's contents; >> adds to the end"
+        },
+        {
+          "id": "D",
+          "text": "> is for errors; >> is for output"
+        }
+      ],
       "correct_option": "C",
       "explanation": "> overwrites the file. >> appends to it."
     },
@@ -1259,12 +1751,24 @@
       "tutorial_number": 11,
       "question_number": 2,
       "question_text": "Leela wants to save only the error messages from a command in errors.log. What should she add?",
-      "options": {
-        "A": "2> errors.log",
-        "B": "> errors.log",
-        "C": "< errors.log",
-        "D": "| errors.log"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "2> errors.log"
+        },
+        {
+          "id": "B",
+          "text": "> errors.log"
+        },
+        {
+          "id": "C",
+          "text": "< errors.log"
+        },
+        {
+          "id": "D",
+          "text": "| errors.log"
+        }
+      ],
       "correct_option": "A",
       "explanation": "Errors go to stream 2, standard error, so 2> sends them to a file."
     },
@@ -1273,12 +1777,24 @@
       "tutorial_number": 11,
       "question_number": 3,
       "question_text": "What does ls | wc -l print?",
-      "options": {
-        "A": "The names of all files",
-        "B": "The number of entries in the current folder",
-        "C": "The size of each file",
-        "D": "An error, because ls and wc cannot be joined"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The names of all files"
+        },
+        {
+          "id": "B",
+          "text": "The number of entries in the current folder"
+        },
+        {
+          "id": "C",
+          "text": "The size of each file"
+        },
+        {
+          "id": "D",
+          "text": "An error, because ls and wc cannot be joined"
+        }
+      ],
       "correct_option": "B",
       "explanation": "The pipe sends ls's list into wc -l, which counts the lines, one for each entry."
     },
@@ -1287,12 +1803,24 @@
       "tutorial_number": 11,
       "question_number": 4,
       "question_text": "What is the file descriptor number for standard output?",
-      "options": {
-        "A": "0",
-        "B": "2",
-        "C": "3",
-        "D": "1"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "0"
+        },
+        {
+          "id": "B",
+          "text": "2"
+        },
+        {
+          "id": "C",
+          "text": "3"
+        },
+        {
+          "id": "D",
+          "text": "1"
+        }
+      ],
       "correct_option": "D",
       "explanation": "Standard input is 0, standard output is 1 and standard error is 2."
     },
@@ -1301,12 +1829,24 @@
       "tutorial_number": 11,
       "question_number": 5,
       "question_text": "Ajay runs echo Hello > greet.txt and then echo Bye > greet.txt. What is in greet.txt now?",
-      "options": {
-        "A": "Bye",
-        "B": "Hello",
-        "C": "Hello and Bye on two lines",
-        "D": "Nothing"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Bye"
+        },
+        {
+          "id": "B",
+          "text": "Hello"
+        },
+        {
+          "id": "C",
+          "text": "Hello and Bye on two lines"
+        },
+        {
+          "id": "D",
+          "text": "Nothing"
+        }
+      ],
       "correct_option": "A",
       "explanation": "The second > replaced the whole file. To keep both lines he would use >>."
     },
@@ -1315,12 +1855,24 @@
       "tutorial_number": 12,
       "question_number": 1,
       "question_text": "What is a process?",
-      "options": {
-        "A": "A file stored on the disk",
-        "B": "A program that is running",
-        "C": "A folder in /home",
-        "D": "A type of package"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "A file stored on the disk"
+        },
+        {
+          "id": "B",
+          "text": "A program that is running"
+        },
+        {
+          "id": "C",
+          "text": "A folder in /home"
+        },
+        {
+          "id": "D",
+          "text": "A type of package"
+        }
+      ],
       "correct_option": "B",
       "explanation": "A program becomes a process when it starts running."
     },
@@ -1329,12 +1881,24 @@
       "tutorial_number": 12,
       "question_number": 2,
       "question_text": "In the output of ps -ef, what does the PPID column show?",
-      "options": {
-        "A": "The PID of the parent process that started this one",
-        "B": "The user who owns the process",
-        "C": "How much memory the process uses",
-        "D": "The process's password"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The PID of the parent process that started this one"
+        },
+        {
+          "id": "B",
+          "text": "The user who owns the process"
+        },
+        {
+          "id": "C",
+          "text": "How much memory the process uses"
+        },
+        {
+          "id": "D",
+          "text": "The process's password"
+        }
+      ],
       "correct_option": "A",
       "explanation": "PPID is the parent process ID."
     },
@@ -1343,12 +1907,24 @@
       "tutorial_number": 12,
       "question_number": 3,
       "question_text": "Kiran runs ps and sees only two lines: bash and ps. Why?",
-      "options": {
-        "A": "Only two programs are running on the whole computer",
-        "B": "ps is broken",
-        "C": "Plain ps shows only the processes from this terminal",
-        "D": "He needs sudo"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Only two programs are running on the whole computer"
+        },
+        {
+          "id": "B",
+          "text": "ps is broken"
+        },
+        {
+          "id": "C",
+          "text": "Plain ps shows only the processes from this terminal"
+        },
+        {
+          "id": "D",
+          "text": "He needs sudo"
+        }
+      ],
       "correct_option": "C",
       "explanation": "Without options, ps shows only this terminal's processes. ps -ef shows every process."
     },
@@ -1357,12 +1933,24 @@
       "tutorial_number": 12,
       "question_number": 4,
       "question_text": "Pooja types ls in the terminal. Which is the parent process of ls?",
-      "options": {
-        "A": "systemd",
-        "B": "ps",
-        "C": "ls itself",
-        "D": "The shell, bash"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "systemd"
+        },
+        {
+          "id": "B",
+          "text": "ps"
+        },
+        {
+          "id": "C",
+          "text": "ls itself"
+        },
+        {
+          "id": "D",
+          "text": "The shell, bash"
+        }
+      ],
       "correct_option": "D",
       "explanation": "The shell starts each command you type, so bash is the parent and ls is the child."
     },
@@ -1371,12 +1959,24 @@
       "tutorial_number": 12,
       "question_number": 5,
       "question_text": "Which process has PID 1 on Ubuntu?",
-      "options": {
-        "A": "bash",
-        "B": "systemd, the first process started when Linux boots",
-        "C": "ps",
-        "D": "The terminal"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "bash"
+        },
+        {
+          "id": "B",
+          "text": "systemd, the first process started when Linux boots"
+        },
+        {
+          "id": "C",
+          "text": "ps"
+        },
+        {
+          "id": "D",
+          "text": "The terminal"
+        }
+      ],
       "correct_option": "B",
       "explanation": "systemd starts first and every other process descends from it."
     },
@@ -1385,12 +1985,24 @@
       "tutorial_number": 13,
       "question_number": 1,
       "question_text": "Which command shows your home directory?",
-      "options": {
-        "A": "echo HOME",
-        "B": "echo $HOME",
-        "C": "env HOME=",
-        "D": "history HOME"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "echo HOME"
+        },
+        {
+          "id": "B",
+          "text": "echo $HOME"
+        },
+        {
+          "id": "C",
+          "text": "env HOME="
+        },
+        {
+          "id": "D",
+          "text": "history HOME"
+        }
+      ],
       "correct_option": "B",
       "explanation": "The $ tells the shell to use the variable's value."
     },
@@ -1399,12 +2011,24 @@
       "tutorial_number": 13,
       "question_number": 2,
       "question_text": "What does the PATH variable do?",
-      "options": {
-        "A": "It lists the folders the shell searches to find a command",
-        "B": "It stores your password",
-        "C": "It sets the colour of the terminal",
-        "D": "It shows the folder you are in"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "It lists the folders the shell searches to find a command"
+        },
+        {
+          "id": "B",
+          "text": "It stores your password"
+        },
+        {
+          "id": "C",
+          "text": "It sets the colour of the terminal"
+        },
+        {
+          "id": "D",
+          "text": "It shows the folder you are in"
+        }
+      ],
       "correct_option": "A",
       "explanation": "When you type a command, the shell looks for it in each folder listed in PATH."
     },
@@ -1413,12 +2037,24 @@
       "tutorial_number": 13,
       "question_number": 3,
       "question_text": "Which command creates an alias called la for ls -a?",
-      "options": {
-        "A": "alias la = 'ls -a'",
-        "B": "la='ls -a'",
-        "C": "alias la='ls -a'",
-        "D": "alias ls -a la"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "alias la = 'ls -a'"
+        },
+        {
+          "id": "B",
+          "text": "la='ls -a'"
+        },
+        {
+          "id": "C",
+          "text": "alias la='ls -a'"
+        },
+        {
+          "id": "D",
+          "text": "alias ls -a la"
+        }
+      ],
       "correct_option": "C",
       "explanation": "An alias is created with alias name='command', with no spaces around =."
     },
@@ -1427,12 +2063,24 @@
       "tutorial_number": 13,
       "question_number": 4,
       "question_text": "Ritu changed her prompt with PS1 yesterday. Today, in a new terminal, the old prompt is back. Why?",
-      "options": {
-        "A": "Ubuntu was updated overnight",
-        "B": "PS1 can only be changed by the administrator",
-        "C": "She typed it wrongly",
-        "D": "Changes typed in the terminal last only until it is closed"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Ubuntu was updated overnight"
+        },
+        {
+          "id": "B",
+          "text": "PS1 can only be changed by the administrator"
+        },
+        {
+          "id": "C",
+          "text": "She typed it wrongly"
+        },
+        {
+          "id": "D",
+          "text": "Changes typed in the terminal last only until it is closed"
+        }
+      ],
       "correct_option": "D",
       "explanation": "To keep the change, it must be added to ~/.bashrc."
     },
@@ -1441,12 +2089,24 @@
       "tutorial_number": 13,
       "question_number": 5,
       "question_text": "What does !! do?",
-      "options": {
-        "A": "Runs the last command again",
-        "B": "Deletes the history",
-        "C": "Shows the first command in history",
-        "D": "Closes the terminal"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Runs the last command again"
+        },
+        {
+          "id": "B",
+          "text": "Deletes the history"
+        },
+        {
+          "id": "C",
+          "text": "Shows the first command in history"
+        },
+        {
+          "id": "D",
+          "text": "Closes the terminal"
+        }
+      ],
       "correct_option": "A",
       "explanation": "!! repeats the last command."
     },
@@ -1455,12 +2115,24 @@
       "tutorial_number": 14,
       "question_number": 1,
       "question_text": "Which command shows a user's UID and GID?",
-      "options": {
-        "A": "df -h",
-        "B": "who",
-        "C": "id",
-        "D": "du -ch"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "df -h"
+        },
+        {
+          "id": "B",
+          "text": "who"
+        },
+        {
+          "id": "C",
+          "text": "id"
+        },
+        {
+          "id": "D",
+          "text": "du -ch"
+        }
+      ],
       "correct_option": "C",
       "explanation": "id shows the user's UID, GID and groups."
     },
@@ -1469,12 +2141,24 @@
       "tutorial_number": 14,
       "question_number": 2,
       "question_text": "Ganesh wants to know how much free space is left on the disk. Which command should he use?",
-      "options": {
-        "A": "df -h",
-        "B": "du -ch",
-        "C": "ls -l",
-        "D": "free"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "df -h"
+        },
+        {
+          "id": "B",
+          "text": "du -ch"
+        },
+        {
+          "id": "C",
+          "text": "ls -l"
+        },
+        {
+          "id": "D",
+          "text": "free"
+        }
+      ],
       "correct_option": "A",
       "explanation": "df shows free space on each disk. du shows how much space a folder uses."
     },
@@ -1483,12 +2167,24 @@
       "tutorial_number": 14,
       "question_number": 3,
       "question_text": "Rekha runs su - demo and types her own password. She sees \"Authentication failure\". Why?",
-      "options": {
-        "A": "su needs sudo before it",
-        "B": "The user demo does not exist",
-        "C": "su is not installed",
-        "D": "su asks for the password of the user she is switching to"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "su needs sudo before it"
+        },
+        {
+          "id": "B",
+          "text": "The user demo does not exist"
+        },
+        {
+          "id": "C",
+          "text": "su is not installed"
+        },
+        {
+          "id": "D",
+          "text": "su asks for the password of the user she is switching to"
+        }
+      ],
       "correct_option": "D",
       "explanation": "To switch to demo, she needs demo's password."
     },
@@ -1497,12 +2193,24 @@
       "tutorial_number": 14,
       "question_number": 4,
       "question_text": "On a new Ubuntu system, Mahesh creates his first account during installation. What is its UID most likely to be?",
-      "options": {
-        "A": "0",
-        "B": "1000",
-        "C": "1",
-        "D": "500"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "0"
+        },
+        {
+          "id": "B",
+          "text": "1000"
+        },
+        {
+          "id": "C",
+          "text": "1"
+        },
+        {
+          "id": "D",
+          "text": "500"
+        }
+      ],
       "correct_option": "B",
       "explanation": "On Ubuntu, regular user accounts start at UID 1000. UID 0 is the administrator, root."
     },
@@ -1511,12 +2219,24 @@
       "tutorial_number": 14,
       "question_number": 5,
       "question_text": "What does du -ch ~/reports show?",
-      "options": {
-        "A": "Free space on the disk",
-        "B": "The permissions of each file",
-        "C": "The space used by each folder in reports, with a total",
-        "D": "Who owns the reports folder"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Free space on the disk"
+        },
+        {
+          "id": "B",
+          "text": "The permissions of each file"
+        },
+        {
+          "id": "C",
+          "text": "The space used by each folder in reports, with a total"
+        },
+        {
+          "id": "D",
+          "text": "Who owns the reports folder"
+        }
+      ],
       "correct_option": "C",
       "explanation": "du shows space used. -c adds a total and -h shows sizes in K, M and G."
     },
@@ -1525,12 +2245,24 @@
       "tutorial_number": 15,
       "question_number": 1,
       "question_text": "ls -l shows -rw-r----- for report.txt. Who can read the file?",
-      "options": {
-        "A": "Everyone",
-        "B": "Only the owner",
-        "C": "The owner and members of the file's group",
-        "D": "No one"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Everyone"
+        },
+        {
+          "id": "B",
+          "text": "Only the owner"
+        },
+        {
+          "id": "C",
+          "text": "The owner and members of the file's group"
+        },
+        {
+          "id": "D",
+          "text": "No one"
+        }
+      ],
       "correct_option": "C",
       "explanation": "rw- is the owner's set, r-- the group's and --- others'. So the owner and the group can read it."
     },
@@ -1539,12 +2271,24 @@
       "tutorial_number": 15,
       "question_number": 2,
       "question_text": "Which command lets only the owner read and write notes.txt?",
-      "options": {
-        "A": "chmod 600 notes.txt",
-        "B": "chmod 777 notes.txt",
-        "C": "chmod 644 notes.txt",
-        "D": "chown 600 notes.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "chmod 600 notes.txt"
+        },
+        {
+          "id": "B",
+          "text": "chmod 777 notes.txt"
+        },
+        {
+          "id": "C",
+          "text": "chmod 644 notes.txt"
+        },
+        {
+          "id": "D",
+          "text": "chown 600 notes.txt"
+        }
+      ],
       "correct_option": "A",
       "explanation": "6 (rw-) for the owner and 0 (---) for the group and others."
     },
@@ -1553,12 +2297,24 @@
       "tutorial_number": 15,
       "question_number": 3,
       "question_text": "What does chmod 755 script.sh give?",
-      "options": {
-        "A": "rw-rw-rw-",
-        "B": "rwxr-xr-x",
-        "C": "rwx------",
-        "D": "r-xr-xr-x"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "rw-rw-rw-"
+        },
+        {
+          "id": "B",
+          "text": "rwxr-xr-x"
+        },
+        {
+          "id": "C",
+          "text": "rwx------"
+        },
+        {
+          "id": "D",
+          "text": "r-xr-xr-x"
+        }
+      ],
       "correct_option": "B",
       "explanation": "7 = rwx for the owner, and 5 = r-x for the group and for others."
     },
@@ -1567,12 +2323,24 @@
       "tutorial_number": 15,
       "question_number": 4,
       "question_text": "Suresh runs chown demo file.txt and sees \"Operation not permitted\". What should he do?",
-      "options": {
-        "A": "Use chmod instead",
-        "B": "Delete the file and create it again",
-        "C": "Rename the file",
-        "D": "Run sudo chown demo file.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Use chmod instead"
+        },
+        {
+          "id": "B",
+          "text": "Delete the file and create it again"
+        },
+        {
+          "id": "C",
+          "text": "Rename the file"
+        },
+        {
+          "id": "D",
+          "text": "Run sudo chown demo file.txt"
+        }
+      ],
       "correct_option": "D",
       "explanation": "Changing a file's owner needs administrator rights."
     },
@@ -1581,12 +2349,24 @@
       "tutorial_number": 15,
       "question_number": 5,
       "question_text": "Asha creates a symbolic link to notes.txt and then deletes notes.txt. What happens to the link?",
-      "options": {
-        "A": "It still works, with the original contents",
-        "B": "It is deleted automatically",
-        "C": "It breaks, because the name it points to is gone",
-        "D": "It becomes a hard link"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "It still works, with the original contents"
+        },
+        {
+          "id": "B",
+          "text": "It is deleted automatically"
+        },
+        {
+          "id": "C",
+          "text": "It breaks, because the name it points to is gone"
+        },
+        {
+          "id": "D",
+          "text": "It becomes a hard link"
+        }
+      ],
       "correct_option": "C",
       "explanation": "A symbolic link points to a name. A hard link would still work, because it points to the same inode."
     },
@@ -1595,12 +2375,24 @@
       "tutorial_number": 16,
       "question_number": 1,
       "question_text": "Which command shows the first 3 lines of data.txt?",
-      "options": {
-        "A": "tail -n 3 data.txt",
-        "B": "head -n 3 data.txt",
-        "C": "cut -c3 data.txt",
-        "D": "sort -3 data.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "tail -n 3 data.txt"
+        },
+        {
+          "id": "B",
+          "text": "head -n 3 data.txt"
+        },
+        {
+          "id": "C",
+          "text": "cut -c3 data.txt"
+        },
+        {
+          "id": "D",
+          "text": "sort -3 data.txt"
+        }
+      ],
       "correct_option": "B",
       "explanation": "head shows the first lines, and -n 3 sets how many."
     },
@@ -1609,12 +2401,24 @@
       "tutorial_number": 16,
       "question_number": 2,
       "question_text": "A file has three lines: 9, 10 and 100. What does sort print?",
-      "options": {
-        "A": "10, 100, 9",
-        "B": "9, 10, 100",
-        "C": "100, 10, 9",
-        "D": "9, 100, 10"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "10, 100, 9"
+        },
+        {
+          "id": "B",
+          "text": "9, 10, 100"
+        },
+        {
+          "id": "C",
+          "text": "100, 10, 9"
+        },
+        {
+          "id": "D",
+          "text": "9, 100, 10"
+        }
+      ],
       "correct_option": "A",
       "explanation": "Without -n, sort compares character by character, so lines starting with 1 come before 9. sort -n would give 9, 10, 100."
     },
@@ -1623,12 +2427,24 @@
       "tutorial_number": 16,
       "question_number": 3,
       "question_text": "In students.txt the fields are separated by |. Which command shows only the city, the 4th field?",
-      "options": {
-        "A": "cut -c4 students.txt",
-        "B": "cut -f4 students.txt",
-        "C": "cut -d'|' -f4 students.txt",
-        "D": "sort -k4 students.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "cut -c4 students.txt"
+        },
+        {
+          "id": "B",
+          "text": "cut -f4 students.txt"
+        },
+        {
+          "id": "C",
+          "text": "cut -d'|' -f4 students.txt"
+        },
+        {
+          "id": "D",
+          "text": "sort -k4 students.txt"
+        }
+      ],
       "correct_option": "C",
       "explanation": "-d'|' tells cut the separator, and -f4 picks the 4th field."
     },
@@ -1637,12 +2453,24 @@
       "tutorial_number": 16,
       "question_number": 4,
       "question_text": "What does sort -u do?",
-      "options": {
-        "A": "Sorts in reverse",
-        "B": "Sorts upper-case letters first",
-        "C": "Sorts by number value",
-        "D": "Sorts and removes repeated lines"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Sorts in reverse"
+        },
+        {
+          "id": "B",
+          "text": "Sorts upper-case letters first"
+        },
+        {
+          "id": "C",
+          "text": "Sorts by number value"
+        },
+        {
+          "id": "D",
+          "text": "Sorts and removes repeated lines"
+        }
+      ],
       "correct_option": "D",
       "explanation": "-u keeps only one copy of each line."
     },
@@ -1651,12 +2479,24 @@
       "tutorial_number": 16,
       "question_number": 5,
       "question_text": "Kumar has a file of roll numbers and a file of names, in the same order. Which command puts each roll number beside its name?",
-      "options": {
-        "A": "paste rolls.txt names.txt",
-        "B": "cut rolls.txt names.txt",
-        "C": "sort rolls.txt names.txt",
-        "D": "head rolls.txt names.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "paste rolls.txt names.txt"
+        },
+        {
+          "id": "B",
+          "text": "cut rolls.txt names.txt"
+        },
+        {
+          "id": "C",
+          "text": "sort rolls.txt names.txt"
+        },
+        {
+          "id": "D",
+          "text": "head rolls.txt names.txt"
+        }
+      ],
       "correct_option": "A",
       "explanation": "paste joins the files line by line, side by side."
     },
@@ -1665,12 +2505,24 @@
       "tutorial_number": 17,
       "question_number": 1,
       "question_text": "Which command shows every line in log.txt that contains error, whether written as error, Error or ERROR?",
-      "options": {
-        "A": "grep error log.txt",
-        "B": "grep -v error log.txt",
-        "C": "grep -i error log.txt",
-        "D": "grep -c error log.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "grep error log.txt"
+        },
+        {
+          "id": "B",
+          "text": "grep -v error log.txt"
+        },
+        {
+          "id": "C",
+          "text": "grep -i error log.txt"
+        },
+        {
+          "id": "D",
+          "text": "grep -c error log.txt"
+        }
+      ],
       "correct_option": "C",
       "explanation": "-i ignores the difference between capital and small letters."
     },
@@ -1679,12 +2531,24 @@
       "tutorial_number": 17,
       "question_number": 2,
       "question_text": "What does grep -v pass results.txt show?",
-      "options": {
-        "A": "The lines that do not contain pass",
-        "B": "The lines that contain pass",
-        "C": "The number of lines with pass",
-        "D": "The version of grep"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The lines that do not contain pass"
+        },
+        {
+          "id": "B",
+          "text": "The lines that contain pass"
+        },
+        {
+          "id": "C",
+          "text": "The number of lines with pass"
+        },
+        {
+          "id": "D",
+          "text": "The version of grep"
+        }
+      ],
       "correct_option": "A",
       "explanation": "-v shows the lines that do not match."
     },
@@ -1693,12 +2557,24 @@
       "tutorial_number": 17,
       "question_number": 3,
       "question_text": "Sita wants to know only how many lines in students.txt contain computers. Which command should she use?",
-      "options": {
-        "A": "grep -n computers students.txt",
-        "B": "grep -c computers students.txt",
-        "C": "wc computers students.txt",
-        "D": "grep -i computers students.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "grep -n computers students.txt"
+        },
+        {
+          "id": "B",
+          "text": "grep -c computers students.txt"
+        },
+        {
+          "id": "C",
+          "text": "wc computers students.txt"
+        },
+        {
+          "id": "D",
+          "text": "grep -i computers students.txt"
+        }
+      ],
       "correct_option": "B",
       "explanation": "-c prints only the number of matching lines."
     },
@@ -1707,12 +2583,24 @@
       "tutorial_number": 17,
       "question_number": 4,
       "question_text": "Ravi types grep Ravi Kumar students.txt and sees an error about a file called Kumar. Why?",
-      "options": {
-        "A": "grep cannot search for names",
-        "B": "The file is empty",
-        "C": "grep needs -i",
-        "D": "Without quotes, grep reads Kumar as a file name"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "grep cannot search for names"
+        },
+        {
+          "id": "B",
+          "text": "The file is empty"
+        },
+        {
+          "id": "C",
+          "text": "grep needs -i"
+        },
+        {
+          "id": "D",
+          "text": "Without quotes, grep reads Kumar as a file name"
+        }
+      ],
       "correct_option": "D",
       "explanation": "Words with a space must be in quotes: grep \"Ravi Kumar\" students.txt."
     },
@@ -1721,12 +2609,24 @@
       "tutorial_number": 17,
       "question_number": 5,
       "question_text": "Which option shows the line number before each matching line?",
-      "options": {
-        "A": "-n",
-        "B": "-c",
-        "C": "-v",
-        "D": "-l"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "-n"
+        },
+        {
+          "id": "B",
+          "text": "-c"
+        },
+        {
+          "id": "C",
+          "text": "-v"
+        },
+        {
+          "id": "D",
+          "text": "-l"
+        }
+      ],
       "correct_option": "A",
       "explanation": "-n adds the line number."
     },
@@ -1735,12 +2635,24 @@
       "tutorial_number": 18,
       "question_number": 1,
       "question_text": "What does grep '^S' names.txt show?",
-      "options": {
-        "A": "Lines that end with S",
-        "B": "Lines that start with S",
-        "C": "Lines that contain no S",
-        "D": "Lines with S anywhere"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Lines that end with S"
+        },
+        {
+          "id": "B",
+          "text": "Lines that start with S"
+        },
+        {
+          "id": "C",
+          "text": "Lines that contain no S"
+        },
+        {
+          "id": "D",
+          "text": "Lines with S anywhere"
+        }
+      ],
       "correct_option": "B",
       "explanation": "^ means the start of the line."
     },
@@ -1749,12 +2661,24 @@
       "tutorial_number": 18,
       "question_number": 2,
       "question_text": "Which pattern matches lines that end with the word pass?",
-      "options": {
-        "A": "pass$",
-        "B": "^pass",
-        "C": "pass*",
-        "D": "[pass]"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "pass$"
+        },
+        {
+          "id": "B",
+          "text": "^pass"
+        },
+        {
+          "id": "C",
+          "text": "pass*"
+        },
+        {
+          "id": "D",
+          "text": "[pass]"
+        }
+      ],
       "correct_option": "A",
       "explanation": "$ means the end of the line."
     },
@@ -1763,12 +2687,24 @@
       "tutorial_number": 18,
       "question_number": 3,
       "question_text": "What does [0-9] match?",
-      "options": {
-        "A": "The text 0-9",
-        "B": "Only the digit 0 or 9",
-        "C": "Any one digit from 0 to 9",
-        "D": "Any number of digits"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The text 0-9"
+        },
+        {
+          "id": "B",
+          "text": "Only the digit 0 or 9"
+        },
+        {
+          "id": "C",
+          "text": "Any one digit from 0 to 9"
+        },
+        {
+          "id": "D",
+          "text": "Any number of digits"
+        }
+      ],
       "correct_option": "C",
       "explanation": "Square brackets match any one character in the set, and 0-9 is the range of digits."
     },
@@ -1777,12 +2713,24 @@
       "tutorial_number": 18,
       "question_number": 4,
       "question_text": "In the pattern R.m, which of these would match?",
-      "options": {
-        "A": "Rm",
-        "B": "Raam",
-        "C": "rem",
-        "D": "Ram"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Rm"
+        },
+        {
+          "id": "B",
+          "text": "Raam"
+        },
+        {
+          "id": "C",
+          "text": "rem"
+        },
+        {
+          "id": "D",
+          "text": "Ram"
+        }
+      ],
       "correct_option": "D",
       "explanation": ". matches exactly one character, so R.m matches Ram but not Rm or Raam. rem fails because R is a capital letter."
     },
@@ -1791,12 +2739,24 @@
       "tutorial_number": 18,
       "question_number": 5,
       "question_text": "Which command shows lines that contain either Pune or Kochi?",
-      "options": {
-        "A": "grep Pune Kochi file",
-        "B": "grep -v Pune -v Kochi file",
-        "C": "grep -c Pune Kochi file",
-        "D": "grep -e Pune -e Kochi file"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "grep Pune Kochi file"
+        },
+        {
+          "id": "B",
+          "text": "grep -v Pune -v Kochi file"
+        },
+        {
+          "id": "C",
+          "text": "grep -c Pune Kochi file"
+        },
+        {
+          "id": "D",
+          "text": "grep -e Pune -e Kochi file"
+        }
+      ],
       "correct_option": "D",
       "explanation": "Each -e adds a pattern. Without -e, grep would read Kochi as a file name."
     },
@@ -1805,12 +2765,24 @@
       "tutorial_number": 19,
       "question_number": 1,
       "question_text": "Which command prints only lines 2 to 4 of data.txt?",
-      "options": {
-        "A": "sed '2,4p' data.txt",
-        "B": "sed -n '2,4p' data.txt",
-        "C": "sed -n '2p,4p' data.txt",
-        "D": "head -n 4 data.txt"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "sed '2,4p' data.txt"
+        },
+        {
+          "id": "B",
+          "text": "sed -n '2,4p' data.txt"
+        },
+        {
+          "id": "C",
+          "text": "sed -n '2p,4p' data.txt"
+        },
+        {
+          "id": "D",
+          "text": "head -n 4 data.txt"
+        }
+      ],
       "correct_option": "B",
       "explanation": "-n stops sed printing every line, and 2,4p prints only that range."
     },
@@ -1819,12 +2791,24 @@
       "tutorial_number": 19,
       "question_number": 2,
       "question_text": "Neha runs sed '/pass/p' students.txt without -n. What happens?",
-      "options": {
-        "A": "Only the lines with pass are printed",
-        "B": "Nothing is printed",
-        "C": "Every line is printed, and lines with pass are printed twice",
-        "D": "The lines with pass are deleted"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Only the lines with pass are printed"
+        },
+        {
+          "id": "B",
+          "text": "Nothing is printed"
+        },
+        {
+          "id": "C",
+          "text": "Every line is printed, and lines with pass are printed twice"
+        },
+        {
+          "id": "D",
+          "text": "The lines with pass are deleted"
+        }
+      ],
       "correct_option": "C",
       "explanation": "sed prints every line by default, and p prints the matching lines again."
     },
@@ -1833,12 +2817,24 @@
       "tutorial_number": 19,
       "question_number": 3,
       "question_text": "What does $ mean in sed -n '$p' file.txt?",
-      "options": {
-        "A": "The last line",
-        "B": "The first line",
-        "C": "A variable",
-        "D": "Every line"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "The last line"
+        },
+        {
+          "id": "B",
+          "text": "The first line"
+        },
+        {
+          "id": "C",
+          "text": "A variable"
+        },
+        {
+          "id": "D",
+          "text": "Every line"
+        }
+      ],
       "correct_option": "A",
       "explanation": "In a sed address, $ means the last line."
     },
@@ -1847,12 +2843,24 @@
       "tutorial_number": 19,
       "question_number": 4,
       "question_text": "Which command prints the lines that do not contain fail?",
-      "options": {
-        "A": "sed -n '/fail/p' file",
-        "B": "sed -n 'fail!p' file",
-        "C": "sed '/fail/' file",
-        "D": "sed -n '/fail/!p' file"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "sed -n '/fail/p' file"
+        },
+        {
+          "id": "B",
+          "text": "sed -n 'fail!p' file"
+        },
+        {
+          "id": "C",
+          "text": "sed '/fail/' file"
+        },
+        {
+          "id": "D",
+          "text": "sed -n '/fail/!p' file"
+        }
+      ],
       "correct_option": "D",
       "explanation": "! after the address means \"not\", so p prints the lines that do not match."
     },
@@ -1861,12 +2869,24 @@
       "tutorial_number": 19,
       "question_number": 5,
       "question_text": "Arun runs sed -n '1,5p' report.txt. What happens to report.txt?",
-      "options": {
-        "A": "Nothing; sed only prints the lines",
-        "B": "Lines 6 onwards are deleted",
-        "C": "Lines 1 to 5 are deleted",
-        "D": "The file is renamed"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Nothing; sed only prints the lines"
+        },
+        {
+          "id": "B",
+          "text": "Lines 6 onwards are deleted"
+        },
+        {
+          "id": "C",
+          "text": "Lines 1 to 5 are deleted"
+        },
+        {
+          "id": "D",
+          "text": "The file is renamed"
+        }
+      ],
       "correct_option": "A",
       "explanation": "sed does not change the file unless you tell it to with -i or save the output with >."
     },
@@ -1875,12 +2895,24 @@
       "tutorial_number": 20,
       "question_number": 1,
       "question_text": "A line reads \"red car, red bus\". What does sed 's/red/blue/' print?",
-      "options": {
-        "A": "blue car, blue bus",
-        "B": "red car, blue bus",
-        "C": "blue car, red bus",
-        "D": "red car, red bus"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "blue car, blue bus"
+        },
+        {
+          "id": "B",
+          "text": "red car, blue bus"
+        },
+        {
+          "id": "C",
+          "text": "blue car, red bus"
+        },
+        {
+          "id": "D",
+          "text": "red car, red bus"
+        }
+      ],
       "correct_option": "C",
       "explanation": "Without g, only the first match on each line is replaced."
     },
@@ -1889,12 +2921,24 @@
       "tutorial_number": 20,
       "question_number": 2,
       "question_text": "Which command replaces every Mumbai with Bombay on each line?",
-      "options": {
-        "A": "sed 's/Mumbai/Bombay/g' file",
-        "B": "sed 's/Mumbai/Bombay/' file",
-        "C": "sed '/Mumbai/Bombay/' file",
-        "D": "sed -n 's/Mumbai/Bombay/' file"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "sed 's/Mumbai/Bombay/g' file"
+        },
+        {
+          "id": "B",
+          "text": "sed 's/Mumbai/Bombay/' file"
+        },
+        {
+          "id": "C",
+          "text": "sed '/Mumbai/Bombay/' file"
+        },
+        {
+          "id": "D",
+          "text": "sed -n 's/Mumbai/Bombay/' file"
+        }
+      ],
       "correct_option": "A",
       "explanation": "The g flag replaces every match on the line."
     },
@@ -1903,12 +2947,24 @@
       "tutorial_number": 20,
       "question_number": 3,
       "question_text": "Which command deletes all lines that contain test?",
-      "options": {
-        "A": "sed 's/test//' file",
-        "B": "sed -n '/test/p' file",
-        "C": "sed '/test/d' file",
-        "D": "sed '/test/!d' file"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "sed 's/test//' file"
+        },
+        {
+          "id": "B",
+          "text": "sed -n '/test/p' file"
+        },
+        {
+          "id": "C",
+          "text": "sed '/test/d' file"
+        },
+        {
+          "id": "D",
+          "text": "sed '/test/!d' file"
+        }
+      ],
       "correct_option": "C",
       "explanation": "d deletes the lines that match the address. s/test// would only remove the word."
     },
@@ -1917,12 +2973,24 @@
       "tutorial_number": 20,
       "question_number": 4,
       "question_text": "Priya wants to make two different replacements in one sed command. What should she use?",
-      "options": {
-        "A": "Two s commands with -e before each",
-        "B": "The g flag",
-        "C": "The -n option",
-        "D": "The d command"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "Two s commands with -e before each"
+        },
+        {
+          "id": "B",
+          "text": "The g flag"
+        },
+        {
+          "id": "C",
+          "text": "The -n option"
+        },
+        {
+          "id": "D",
+          "text": "The d command"
+        }
+      ],
       "correct_option": "A",
       "explanation": "Each -e adds one more instruction to the same command."
     },
@@ -1931,12 +2999,24 @@
       "tutorial_number": 20,
       "question_number": 5,
       "question_text": "Imran runs sed 's/old/new/' notes.txt and then cat notes.txt. The word old is still there. Why?",
-      "options": {
-        "A": "sed only works on new files",
-        "B": "sed printed the change but did not save it to notes.txt",
-        "C": "The command needs sudo",
-        "D": "old is a reserved word"
-      },
+      "options": [
+        {
+          "id": "A",
+          "text": "sed only works on new files"
+        },
+        {
+          "id": "B",
+          "text": "sed printed the change but did not save it to notes.txt"
+        },
+        {
+          "id": "C",
+          "text": "The command needs sudo"
+        },
+        {
+          "id": "D",
+          "text": "old is a reserved word"
+        }
+      ],
       "correct_option": "B",
       "explanation": "sed prints the result. To save it, redirect to a new file with >, or use -i."
     }

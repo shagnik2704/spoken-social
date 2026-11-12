@@ -70,6 +70,30 @@ class HabitLogCheckinRequest(BaseModel):
 
 
 # ------------------------------------------------------------
+# Helper: Normalize Quiz Options
+# ------------------------------------------------------------
+
+def normalize_quiz_options(raw_options) -> list[dict]:
+    """Ensures options are always returned as [{'id': 'A', 'text': '...'}, ...]."""
+    if not raw_options:
+        return []
+    if isinstance(raw_options, dict):
+        return [{"id": k, "text": str(v)} for k, v in sorted(raw_options.items())]
+    if isinstance(raw_options, list):
+        normalized = []
+        for opt in raw_options:
+            if isinstance(opt, dict) and "id" in opt and "text" in opt:
+                normalized.append(opt)
+            elif isinstance(opt, dict):
+                for k, v in opt.items():
+                    normalized.append({"id": k, "text": str(v)})
+            elif isinstance(opt, str):
+                normalized.append({"id": opt, "text": opt})
+        return normalized
+    return []
+
+
+# ------------------------------------------------------------
 # Helper: Get or Create UserTutorial
 # ------------------------------------------------------------
 
@@ -271,7 +295,7 @@ async def get_tutorial_content(
             "id": str(q.id),
             "questionNumber": q.question_number,
             "questionText": q.question_text,
-            "options": q.options,
+            "options": normalize_quiz_options(q.options),
         }
         if has_attempted_quiz:
             q_data["correctOption"] = q.correct_option
@@ -755,7 +779,7 @@ async def submit_quiz(
             "id": str(q.id),
             "questionNumber": q.question_number,
             "questionText": q.question_text,
-            "options": q.options,
+            "options": normalize_quiz_options(q.options),
             "selectedOption": selected,
             "correctOption": q.correct_option,
             "isCorrect": is_correct,

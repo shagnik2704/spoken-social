@@ -224,18 +224,25 @@ def parse_docx():
         if quiz_els:
             curr_q = None
             q_num_counter = 0
+            def _finalize_q(q):
+                if not q:
+                    return None
+                if isinstance(q.get("options"), dict):
+                    q["options"] = [{"id": k, "text": v} for k, v in sorted(q["options"].items())]
+                return q
+
             for t, d in quiz_els:
                 if t == 'p':
                     # Stop if we hit Lab or Capstone or Revision
                     if re.match(r'^(?:Week\s+\d+:\s*Lab|Weeks\s+\d+|Revision\s+checklist|Module\s+\d+)', d):
                         if curr_q:
-                            quiz_questions_data.append(curr_q)
+                            quiz_questions_data.append(_finalize_q(curr_q))
                             curr_q = None
                         break
                     m_num = re.match(r'^(\d+)\.\s*(.+)$', d)
                     if m_num:
                         if curr_q:
-                            quiz_questions_data.append(curr_q)
+                            quiz_questions_data.append(_finalize_q(curr_q))
                         q_num_counter += 1
                         if q_num_counter > 5:
                             curr_q = None
@@ -260,7 +267,7 @@ def parse_docx():
                         curr_q["explanation"] = m_ans.group(2).strip()
                         continue
             if curr_q:
-                quiz_questions_data.append(curr_q)
+                quiz_questions_data.append(_finalize_q(curr_q))
 
     # Master structure
     seed_payload = {
