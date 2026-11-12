@@ -10,11 +10,14 @@
 # 6. Multi-day Habit Log check-ins (Emotion, Belief, Empathy, Breathing, Portfolio)
 # ============================================================
 
+import os
+import io
 import uuid
 from datetime import datetime, timezone, date
 from typing import Optional, Dict, Any, List
+from PIL import Image
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File, Form
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -43,6 +46,15 @@ router = APIRouter(prefix="/api/learner-pack", tags=["learner_pack"])
 
 class ReflectionSubmitRequest(BaseModel):
     reflection_text: str = Field(..., min_length=1, description="Personal reflection")
+
+
+class TerminalSubmitRequest(BaseModel):
+    commands_output: str = Field(
+        ...,
+        min_length=5,
+        max_length=20000,
+        description="Terminal commands and output pasted as text (max 20,000 characters)"
+    )
 
 
 class QuizSubmitRequest(BaseModel):
@@ -184,13 +196,16 @@ async def get_course_overview(
             }
         })
 
-    # Habit log milestones for SWAYAM Plus
-    habit_milestones = [
-        {"week": 3, "logType": "emotion", "title": "7-Day Emotion Log", "days": 7},
-        {"week": 6, "logType": "belief", "title": "7-Day Belief Log", "days": 7},
-        {"week": 7, "logType": "empathy", "title": "7-Day Empathy Log", "days": 7},
-        {"week": 10, "logType": "breathing", "title": "7-Day Mindful Breathing Log", "days": 7},
-        {"week": 12, "logType": "portfolio", "title": "Personal Growth Portfolio", "days": 1},
+    # Habit log milestones for SWAYAM Plus Personality Development
+    habit_milestones = []
+    if course_id == "personality_dev":
+        habit_milestones = [
+            {"week": 3, "logType": "emotion", "title": "7-Day Emotion Log", "days": 7},
+            {"week": 6, "logType": "belief", "title": "7-Day Belief Log", "days": 7},
+            {"week": 7, "logType": "empathy", "title": "7-Day Empathy Log", "days": 7},
+            {"week": 10, "logType": "breathing", "title": "7-Day Mindful Breathing Log", "days": 7},
+            {"week": 12, "logType": "portfolio", "title": "Personal Growth Portfolio", "days": 1},
+        ]
     ]
 
     return {
@@ -301,6 +316,8 @@ async def get_tutorial_content(
         },
         "userReflection": {
             "reflectionText": user_reflection.reflection_text,
+            "submissionType": getattr(user_reflection, "submission_type", "reflection") or "reflection",
+            "imageUrl": getattr(user_reflection, "image_url", None),
             "wordCount": user_reflection.word_count,
             "submittedAt": user_reflection.submitted_at.isoformat(),
         } if user_reflection else None,
@@ -494,6 +511,203 @@ async def submit_reflection(
         "reflection": {
             "reflectionText": user_ref.reflection_text,
             "wordCount": user_ref.word_count,
+            "submittedAt": user_ref.submitted_at.isoformat(),
+        },
+        "userTutorial": ut.to_api_dict(),
+        "xpGained": xp_gained,
+    }
+
+
+@router.post("/tutorials/{tutorial_id}/terminal-submission")
+async def submit_terminal_output(
+    tutorial_id: str,
+    body: TerminalSubmitRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Saves student's terminal commands and output submission for a hands-on technical lab.
+    Validates maximum 20,000 characters to protect DB storage, marks assignment_done = True,
+    awards XP, and syncs course progress.
+    """
+    try:
+        tut_uuid = uuid.UUID(tutorial_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid tutorial ID")
+
+    raw_text = body.commands_output.strip().replace("\x00", "")
+    if len(raw_text) < 5:
+        raise HTTPException(status_code=400, detail="Please paste your terminal commands and output before submitting.")
+    if len(raw_text) > 20000:
+        raise HTTPException(
+            status_code=400,
+            detail="Terminal submission exceeds the maximum limit of 20,000 characters (approx. 300-400 lines). Please paste only the relevant commands and their output."
+        )
+
+    words = len(raw_text.split())
+
+    # Upsert UserReflection with submission_type='terminal'
+    ref_res = await db.execute(select(UserReflection).filter_by(user_id=user.id, tutorial_id=tut_uuid))
+    user_ref = ref_res.scalars().first()
+    if user_ref:
+        user_ref.reflection_text = raw_text
+        user_ref.submission_type = "terminal"
+        user_ref.image_url = None
+        user_ref.word_count = words
+        user_ref.submitted_at = datetime.now(timezone.utc)
+    else:
+        user_ref = UserReflection(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            tutorial_id=tut_uuid,
+            submission_type="terminal",
+            reflection_text=raw_text,
+            image_url=None,
+            word_count=words,
+            submitted_at=datetime.now(timezone.utc),
+        )
+        db.add(user_ref)
+
+    ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    ut.assignment_done = True
+
+    xp_gained = recompute_tutorial_xp(ut)
+    if xp_gained != 0:
+        user.xp_total += xp_gained
+        db.add(XPEvent(
+            user_id=user.id,
+            source_type="learner_pack_terminal",
+            source_id=str(tut_uuid),
+            xp_delta=xp_gained,
+            course_id=ut.tutorial.course_id if ut.tutorial else None,
+        ))
+        recalc_level(user)
+
+    if ut.tutorial and ut.tutorial.course_id:
+        await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "submission": {
+            "submissionType": "terminal",
+            "reflectionText": user_ref.reflection_text,
+            "wordCount": user_ref.word_count,
+            "submittedAt": user_ref.submitted_at.isoformat(),
+        },
+        "userTutorial": ut.to_api_dict(),
+        "xpGained": xp_gained,
+    }
+
+
+@router.post("/tutorials/{tutorial_id}/screenshot-submission")
+async def submit_screenshot(
+    tutorial_id: str,
+    file: UploadFile = File(...),
+    notes: Optional[str] = Form(None),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Accepts and verifies a screenshot image upload (VirtualBox / Ubuntu installation setup).
+    Strictly validates MIME type (PNG, JPEG, WEBP) and size (max 5 MB).
+    Saves to /uploads/screenshots/{uuid}.{ext} and marks assignment_done = True.
+    """
+    try:
+        tut_uuid = uuid.UUID(tutorial_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid tutorial ID")
+
+    # 1. Validate file extension and MIME type
+    allowed_exts = {".png", ".jpg", ".jpeg", ".webp"}
+    original_ext = os.path.splitext(file.filename or "")[1].lower()
+    if original_ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type '{original_ext}'. Please upload an image (.png, .jpg, .jpeg, or .webp)."
+        )
+
+    # 2. Read bytes and check size (max 5 MB = 5 * 1024 * 1024 bytes)
+    MAX_SIZE = 5 * 1024 * 1024
+    content = await file.read()
+    if len(content) > MAX_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="File size exceeds the 5 MB limit. Please resize or take a standard resolution screenshot."
+        )
+    if len(content) < 100:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty or corrupted.")
+
+    # 3. Verify real image headers with Pillow
+    try:
+        img = Image.open(io.BytesIO(content))
+        img.verify()
+        img_format = (img.format or "").lower()
+        if img_format not in ("png", "jpeg", "webp"):
+            raise ValueError(f"Unsupported format: {img_format}")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid or corrupted image file: {exc}")
+
+    # 4. Save to uploads/screenshots directory
+    uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "screenshots")
+    os.makedirs(uploads_dir, exist_ok=True)
+    filename = f"{uuid.uuid4().hex}{original_ext}"
+    dest_path = os.path.join(uploads_dir, filename)
+    with open(dest_path, "wb") as f:
+        f.write(content)
+
+    image_rel_url = f"/uploads/screenshots/{filename}"
+    caption = (notes or f"Setup screenshot ({file.filename})").strip()[:500]
+
+    # 5. Upsert UserReflection
+    ref_res = await db.execute(select(UserReflection).filter_by(user_id=user.id, tutorial_id=tut_uuid))
+    user_ref = ref_res.scalars().first()
+    if user_ref:
+        user_ref.reflection_text = caption
+        user_ref.submission_type = "screenshot"
+        user_ref.image_url = image_rel_url
+        user_ref.word_count = len(caption.split())
+        user_ref.submitted_at = datetime.now(timezone.utc)
+    else:
+        user_ref = UserReflection(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            tutorial_id=tut_uuid,
+            submission_type="screenshot",
+            reflection_text=caption,
+            image_url=image_rel_url,
+            word_count=len(caption.split()),
+            submitted_at=datetime.now(timezone.utc),
+        )
+        db.add(user_ref)
+
+    ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    ut.assignment_done = True
+
+    xp_gained = recompute_tutorial_xp(ut)
+    if xp_gained != 0:
+        user.xp_total += xp_gained
+        db.add(XPEvent(
+            user_id=user.id,
+            source_type="learner_pack_screenshot",
+            source_id=str(tut_uuid),
+            xp_delta=xp_gained,
+            course_id=ut.tutorial.course_id if ut.tutorial else None,
+        ))
+        recalc_level(user)
+
+    if ut.tutorial and ut.tutorial.course_id:
+        await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "submission": {
+            "submissionType": "screenshot",
+            "imageUrl": image_rel_url,
+            "reflectionText": user_ref.reflection_text,
             "submittedAt": user_ref.submitted_at.isoformat(),
         },
         "userTutorial": ut.to_api_dict(),

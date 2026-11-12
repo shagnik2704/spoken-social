@@ -45,6 +45,8 @@ def seed_swayam_linux():
         # 0. Ensure schema migrations
         session.execute(text("ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS installation_sheet_url TEXT;"))
         session.execute(text("ALTER TABLE tutorial_contents ADD COLUMN IF NOT EXISTS installation_sheet_url TEXT;"))
+        session.execute(text("ALTER TABLE user_reflections ADD COLUMN IF NOT EXISTS submission_type VARCHAR(50) DEFAULT 'reflection';"))
+        session.execute(text("ALTER TABLE user_reflections ADD COLUMN IF NOT EXISTS image_url TEXT;"))
         session.commit()
 
         # 1. Programme: swayam_plus

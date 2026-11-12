@@ -24,3 +24,10 @@ skills-lock.json
 /*.docx
 /*.pptx
 
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/screenshots/
+backend/uploads/screenshots/*
+!backend/uploads/screenshots/.gitkeep
+

@@ -260,6 +260,8 @@ export interface LearnerPackTutorialDetail {
     }
     userReflection: {
         reflectionText: string
+        submissionType?: string | null
+        imageUrl?: string | null
         wordCount: number
         submittedAt: string
     } | null

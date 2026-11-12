@@ -18,7 +18,8 @@ import {
     PlayCircle, HelpCircle, PenTool, Sparkles,
     Heart, Lightbulb, Compass,
     Check, ArrowRight, ExternalLink, FileText, Code2, Loader2,
-    Download, ChevronLeft, ChevronRight, FolderArchive, Terminal, Wrench
+    Download, ChevronLeft, ChevronRight, FolderArchive, Terminal, Wrench,
+    UploadCloud, ImageIcon, AlertCircle
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -101,6 +102,13 @@ export function LearnerPackTracker() {
     const [reflectionText, setReflectionText] = useState('')
     const [isSubmittingReflection, setIsSubmittingReflection] = useState(false)
 
+    // Technical lab submission state (Linux)
+    const [terminalOutput, setTerminalOutput] = useState('')
+    const [screenshotFile, setScreenshotFile] = useState<File | null>(null)
+    const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
+    const [screenshotNotes, setScreenshotNotes] = useState('')
+    const [isSubmittingLab, setIsSubmittingLab] = useState(false)
+
     // Quiz submission state
     const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({})
     const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false)
@@ -119,6 +127,9 @@ export function LearnerPackTracker() {
     const nextTutorial = tutorialDetail && overview?.tutorials
         ? overview.tutorials.find(t => t.number === tutorialDetail.tutorialNumber + 1)
         : null
+
+    const isLinux = overview?.courseId === 'linux'
+    const isSetupTutorial = isLinux && (tutorialDetail?.tutorialNumber === 1 || tutorialDetail?.tutorialNumber === 2)
 
     const fetchOverview = async (isBackground = false) => {
         if (!activeCourseId) return
@@ -190,9 +201,16 @@ export function LearnerPackTracker() {
             const data: LearnerPackTutorialDetail = res.data
             setTutorialDetail(data)
             if (data.userReflection) {
-                setReflectionText(data.userReflection.reflectionText)
+                setReflectionText(data.userReflection.reflectionText || '')
+                setTerminalOutput(data.userReflection.reflectionText || '')
+                setScreenshotPreview(data.userReflection.imageUrl || null)
+                setScreenshotNotes(data.userReflection.reflectionText || '')
             } else {
                 setReflectionText('')
+                setTerminalOutput('')
+                setScreenshotPreview(null)
+                setScreenshotFile(null)
+                setScreenshotNotes('')
             }
         } catch (err) {
             toast.error('Failed to load tutorial content.')
@@ -329,6 +347,76 @@ export function LearnerPackTracker() {
             toast.error('Failed to submit reflection.')
         } finally {
             setIsSubmittingReflection(false)
+        }
+    }
+
+    const handleTerminalSubmit = async () => {
+        if (!activeTutorialId) return
+        const text = terminalOutput.trim()
+        if (!text) {
+            toast.error('Please paste your terminal commands and output before submitting.')
+            return
+        }
+        if (text.length > 20000) {
+            toast.error('Submission exceeds 20,000 characters limit. Please paste only relevant command output.')
+            return
+        }
+        try {
+            setIsSubmittingLab(true)
+            const res = await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/terminal-submission`, {
+                commands_output: text
+            })
+            toast.success('Terminal lab submission verified! +10 XP awarded 💻')
+            addXP(res.data.xpGained || 10)
+            setTutorialDetail(prev => prev ? {
+                ...prev,
+                userReflection: res.data.submission,
+                userTutorial: res.data.userTutorial
+            } : null)
+            fetchOverview(true)
+        } catch (err: any) {
+            const msg = err.response?.data?.detail
+            toast.error(typeof msg === 'string' ? msg : 'Failed to submit terminal output.')
+        } finally {
+            setIsSubmittingLab(false)
+        }
+    }
+
+    const handleScreenshotUpload = async () => {
+        if (!activeTutorialId) return
+        if (!screenshotFile) {
+            toast.error('Please select an image file first.')
+            return
+        }
+        if (screenshotFile.size > 5 * 1024 * 1024) {
+            toast.error('Image file exceeds the 5 MB limit. Please resize or take a standard screenshot.')
+            return
+        }
+        try {
+            setIsSubmittingLab(true)
+            const formData = new FormData()
+            formData.append('file', screenshotFile)
+            if (screenshotNotes.trim()) {
+                formData.append('notes', screenshotNotes.trim())
+            }
+            const res = await api.post(`/api/learner-pack/tutorials/${activeTutorialId}/screenshot-submission`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            toast.success('Installation screenshot verified! +15 XP awarded 🚀')
+            addXP(res.data.xpGained || 15)
+            setScreenshotPreview(res.data.submission?.imageUrl || null)
+            setScreenshotFile(null)
+            setTutorialDetail(prev => prev ? {
+                ...prev,
+                userReflection: res.data.submission,
+                userTutorial: res.data.userTutorial
+            } : null)
+            fetchOverview(true)
+        } catch (err: any) {
+            const msg = err.response?.data?.detail
+            toast.error(typeof msg === 'string' ? msg : 'Failed to upload screenshot.')
+        } finally {
+            setIsSubmittingLab(false)
         }
     }
 
@@ -884,9 +972,21 @@ export function LearnerPackTracker() {
                                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
                                         )}
                                     >
-                                        <PenTool className={cn("h-4 w-4", activeTab === 'activity' ? "text-primary-foreground" : "text-muted-foreground")} />
-                                        <span>3. Activity & Reflection</span>
-                                        {(tutorialDetail.userReflection || tutorialDetail.userTutorial.minitaskOpted === 'yes') && (
+                                        {isLinux ? (
+                                            isSetupTutorial ? (
+                                                <UploadCloud className={cn("h-4 w-4", activeTab === 'activity' ? "text-primary-foreground" : "text-muted-foreground")} />
+                                            ) : (
+                                                <Terminal className={cn("h-4 w-4", activeTab === 'activity' ? "text-primary-foreground" : "text-muted-foreground")} />
+                                            )
+                                        ) : (
+                                            <PenTool className={cn("h-4 w-4", activeTab === 'activity' ? "text-primary-foreground" : "text-muted-foreground")} />
+                                        )}
+                                        <span>
+                                            {isLinux
+                                                ? (isSetupTutorial ? '3. Setup Verification' : '3. Terminal Lab')
+                                                : '3. Activity & Reflection'}
+                                        </span>
+                                        {(tutorialDetail.userReflection || tutorialDetail.userTutorial.assignmentDone === 'yes' || tutorialDetail.userTutorial.minitaskOpted === 'yes') && (
                                             <span className={cn(
                                                 "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
                                                 activeTab === 'activity'
@@ -1372,7 +1472,7 @@ export function LearnerPackTracker() {
                                 </div>
                             )}
 
-                            {/* TAB 3: ACTIVITY & REFLECTION — Responsive Two-Column Studio */}
+                            {/* TAB 3: ACTIVITY / TERMINAL LAB — Dynamic by Course */}
                             {activeTab === 'activity' && (() => {
                                 const rawTryIt = tutorialDetail.content?.tryItInstructions || ''
                                 const stepRegex = /(?:\*\*Step\s+\d+:\*\*|\b\d+\.\s+)/
@@ -1380,11 +1480,357 @@ export function LearnerPackTracker() {
                                 const tryItIntro = tryItParts.length > 1 ? tryItParts[0] : ''
                                 const tryItSteps = tryItParts.length > 1 ? tryItParts.slice(1) : (rawTryIt ? [rawTryIt] : [])
 
+                                // LINUX SETUP LAB: Tutorials 1 & 2 Screenshot Verification
+                                if (isLinux && isSetupTutorial) {
+                                    return (
+                                        <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-muted/10 min-h-0">
+                                            <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                                {/* Left Column: Installation Steps */}
+                                                <div className="lg:col-span-5 space-y-4">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                                                            <Wrench className="h-5 w-5" />
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-primary">Lab Setup</span>
+                                                            <h3 className="text-base font-bold text-foreground">
+                                                                {tutorialDetail.tutorialNumber === 1 ? 'VirtualBox Installation' : 'Ubuntu OS Installation'}
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-foreground space-y-1.5 shadow-2xs">
+                                                        <div className="flex items-center gap-2 font-bold text-blue-600 dark:text-blue-400">
+                                                            <Sparkles className="h-3.5 w-3.5" />
+                                                            <span>Setup Verification Milestone (+15 XP)</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                            Complete the installation on your local machine. Once finished, upload a screenshot to verify your lab environment. No multiple-choice quiz is required for this setup tutorial!
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Numbered Step Cards */}
+                                                    <div className="space-y-2.5">
+                                                        {tryItSteps.map((step, idx) => (
+                                                            <div key={idx} className="p-3.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1">
+                                                                <Badge variant="outline" className="text-[10px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground">
+                                                                    Step {idx + 1}
+                                                                </Badge>
+                                                                <p className="text-xs text-foreground/90 leading-relaxed pt-1">
+                                                                    {step}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Column: Screenshot Upload Studio */}
+                                                <div className="lg:col-span-7 space-y-4">
+                                                    <div className="p-6 rounded-2xl bg-card border shadow-sm space-y-4">
+                                                        <div className="flex items-center justify-between border-b pb-4">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                                                    <ImageIcon className="h-5 w-5" />
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Proof of Setup</span>
+                                                                    <h3 className="text-base font-bold text-foreground">Upload Screenshot</h3>
+                                                                </div>
+                                                            </div>
+                                                            <Badge className="bg-emerald-600 text-white font-semibold text-xs">+15 XP</Badge>
+                                                        </div>
+
+                                                        {/* Previously Submitted Image Preview */}
+                                                        {tutorialDetail.userReflection?.imageUrl && !screenshotFile ? (
+                                                            <div className="space-y-4">
+                                                                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+                                                                    <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                                                        <CheckCircle2 className="h-4 w-4" />
+                                                                        <span>Setup screenshot verified and approved!</span>
+                                                                    </div>
+                                                                    <span className="text-[11px] text-muted-foreground font-mono">
+                                                                        {new Date(tutorialDetail.userReflection.submittedAt).toLocaleDateString()}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="rounded-xl overflow-hidden border border-border/80 bg-black/5 dark:bg-black/20 p-2 text-center">
+                                                                    <img
+                                                                        src={tutorialDetail.userReflection.imageUrl}
+                                                                        alt="Setup Screenshot"
+                                                                        className="max-h-72 mx-auto rounded-lg object-contain shadow-xs"
+                                                                    />
+                                                                    {tutorialDetail.userReflection.reflectionText && (
+                                                                        <p className="text-xs text-muted-foreground pt-2 italic">
+                                                                            "{tutorialDetail.userReflection.reflectionText}"
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center justify-between pt-2">
+                                                                    <label className="text-xs font-semibold text-primary hover:underline cursor-pointer">
+                                                                        <span>Upload a different screenshot</span>
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/png,image/jpeg,image/webp"
+                                                                            className="hidden"
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files?.[0]
+                                                                                if (file) {
+                                                                                    if (file.size > 5 * 1024 * 1024) {
+                                                                                        toast.error('File size exceeds 5 MB limit.')
+                                                                                        return
+                                                                                    }
+                                                                                    setScreenshotFile(file)
+                                                                                    setScreenshotPreview(URL.createObjectURL(file))
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    </label>
+                                                                    {nextTutorial && (
+                                                                        <Button
+                                                                            onClick={() => openTutorialModal(nextTutorial.id)}
+                                                                            className="text-xs font-semibold gap-1.5"
+                                                                        >
+                                                                            <span>Next Tutorial</span>
+                                                                            <ArrowRight className="h-3.5 w-3.5" />
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-4">
+                                                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                    {tutorialDetail.tutorialNumber === 1
+                                                                        ? 'Take a screenshot of VirtualBox Manager with Help → About window open showing the installed version.'
+                                                                        : 'Take a screenshot of the Ubuntu desktop running inside your Oracle VirtualBox window.'}
+                                                                </p>
+
+                                                                {/* Dropzone */}
+                                                                <label className={cn(
+                                                                    "border-2 border-dashed rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all",
+                                                                    screenshotPreview
+                                                                        ? "border-primary/50 bg-primary/5"
+                                                                        : "border-border/80 hover:border-primary/60 hover:bg-muted/40"
+                                                                )}>
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/png,image/jpeg,image/webp"
+                                                                        className="hidden"
+                                                                        onChange={(e) => {
+                                                                            const file = e.target.files?.[0]
+                                                                            if (file) {
+                                                                                if (file.size > 5 * 1024 * 1024) {
+                                                                                    toast.error('File size exceeds 5 MB limit.')
+                                                                                    return
+                                                                                }
+                                                                                setScreenshotFile(file)
+                                                                                setScreenshotPreview(URL.createObjectURL(file))
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    {screenshotPreview ? (
+                                                                        <div className="space-y-3">
+                                                                            <img
+                                                                                src={screenshotPreview}
+                                                                                alt="Preview"
+                                                                                className="max-h-56 mx-auto rounded-xl object-contain shadow-xs border"
+                                                                            />
+                                                                            <div className="text-xs text-foreground font-semibold flex items-center justify-center gap-2">
+                                                                                <span>{screenshotFile?.name}</span>
+                                                                                <Badge variant="outline" className="text-[10px]">
+                                                                                    {screenshotFile ? (screenshotFile.size / 1024).toFixed(0) + ' KB' : ''}
+                                                                                </Badge>
+                                                                            </div>
+                                                                            <span className="text-[11px] text-primary hover:underline">Click to change image</span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="space-y-2">
+                                                                            <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                                                                                <UploadCloud className="h-6 w-6" />
+                                                                            </div>
+                                                                            <div className="text-xs font-semibold text-foreground">
+                                                                                Click to upload or drag and drop screenshot
+                                                                            </div>
+                                                                            <p className="text-[11px] text-muted-foreground">
+                                                                                PNG, JPG, or WEBP (Max 5 MB)
+                                                                            </p>
+                                                                        </div>
+                                                                    )}
+                                                                </label>
+
+                                                                <div className="space-y-1.5">
+                                                                    <label className="text-xs font-semibold text-muted-foreground">
+                                                                        Notes or Machine Details (Optional)
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={screenshotNotes}
+                                                                        onChange={(e) => setScreenshotNotes(e.target.value)}
+                                                                        placeholder="e.g. Windows 11, VirtualBox 7.0 installed cleanly"
+                                                                        className="w-full text-xs p-2.5 rounded-xl border bg-background text-foreground"
+                                                                    />
+                                                                </div>
+
+                                                                <div className="flex items-center justify-between pt-2">
+                                                                    {screenshotFile && (
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            onClick={() => {
+                                                                                setScreenshotFile(null)
+                                                                                setScreenshotPreview(tutorialDetail.userReflection?.imageUrl || null)
+                                                                            }}
+                                                                            className="text-xs text-muted-foreground"
+                                                                        >
+                                                                            Cancel
+                                                                        </Button>
+                                                                    )}
+                                                                    <Button
+                                                                        onClick={handleScreenshotUpload}
+                                                                        disabled={!screenshotFile || isSubmittingLab}
+                                                                        className="font-semibold text-xs ml-auto gap-2 cursor-pointer"
+                                                                    >
+                                                                        {isSubmittingLab ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                                                                        <span>{isSubmittingLab ? 'Uploading...' : 'Verify Setup Screenshot (+15 XP)'}</span>
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                }
+
+                                // LINUX TERMINAL LAB: Tutorials 3 to 20
+                                if (isLinux && !isSetupTutorial) {
+                                    const charCount = terminalOutput.length
+                                    const isOverLimit = charCount > 20000
+
+                                    return (
+                                        <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-muted/10 min-h-0">
+                                            <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                                {/* Left Column: Command Instructions */}
+                                                <div className="lg:col-span-5 space-y-4">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="p-2.5 rounded-xl bg-slate-900 text-emerald-400 border border-emerald-500/30">
+                                                            <Terminal className="h-5 w-5" />
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold text-muted-foreground">Lab Task</span>
+                                                            <h3 className="text-base font-bold text-foreground">Terminal Practice</h3>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Security Notice */}
+                                                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-foreground space-y-1 shadow-2xs">
+                                                        <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
+                                                            <AlertCircle className="h-3.5 w-3.5" />
+                                                            <span>Run in your Ubuntu Terminal</span>
+                                                        </div>
+                                                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                            Execute these commands in your Ubuntu VM. Copy and paste the commands you ran and their terminal output into the console box on the right. <strong>Never paste real passwords.</strong>
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Step Cards */}
+                                                    <div className="space-y-2.5">
+                                                        {tryItSteps.map((step, idx) => (
+                                                            <div key={idx} className="p-3.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-1">
+                                                                <Badge variant="outline" className="text-[10px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground">
+                                                                    Step {idx + 1}
+                                                                </Badge>
+                                                                <p className="text-xs text-foreground/90 leading-relaxed font-mono text-[11px] pt-1 whitespace-pre-line">
+                                                                    {step}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Column: Dark Monospace Terminal Console Box */}
+                                                <div className="lg:col-span-7 space-y-4">
+                                                    <div className="rounded-2xl border border-slate-800 bg-slate-950 shadow-xl overflow-hidden flex flex-col">
+                                                        {/* Terminal Window Header Bar */}
+                                                        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 select-none">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="size-3 rounded-full bg-red-500/80 inline-block" />
+                                                                <span className="size-3 rounded-full bg-amber-500/80 inline-block" />
+                                                                <span className="size-3 rounded-full bg-emerald-500/80 inline-block" />
+                                                                <span className="text-[11px] font-mono text-slate-400 font-semibold ml-2">
+                                                                    ubuntu@spoken-tutorial: ~
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge variant="outline" className="text-[10px] font-mono text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+                                                                    bash 80×24
+                                                                </Badge>
+                                                                <Badge className="bg-emerald-600 text-white font-semibold text-[10px]">
+                                                                    +10 XP
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Monospace Code Editor Area */}
+                                                        <div className="p-4 bg-slate-950 flex-1 flex flex-col">
+                                                            <Textarea
+                                                                rows={10}
+                                                                value={terminalOutput}
+                                                                onChange={(e) => setTerminalOutput(e.target.value)}
+                                                                placeholder={"$ type exit\nexit is a shell builtin\n$ type cp\ncp is /usr/bin/cp\n$ ls\nDesktop Documents Downloads..."}
+                                                                className="w-full bg-transparent text-emerald-400 font-mono text-xs sm:text-sm leading-relaxed border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 selection:bg-emerald-500/30 placeholder:text-slate-600 min-h-[220px]"
+                                                            />
+                                                        </div>
+
+                                                        {/* Terminal Footer Bar */}
+                                                        <div className="px-4 py-3 bg-slate-900/90 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                                                            <div className="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
+                                                                <span className={cn(
+                                                                    isOverLimit ? "text-red-400 font-bold" : charCount > 18000 ? "text-amber-400 font-bold" : "text-slate-400"
+                                                                )}>
+                                                                    {charCount.toLocaleString()} / 20,000 characters
+                                                                </span>
+                                                                {tutorialDetail.userReflection && (
+                                                                    <span className="text-emerald-400 font-semibold">• ✓ Submitted</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={handleTerminalSubmit}
+                                                                    disabled={isSubmittingLab || !terminalOutput.trim() || isOverLimit}
+                                                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs gap-1.5 flex-1 sm:flex-none cursor-pointer"
+                                                                >
+                                                                    {isSubmittingLab ? <Loader2 className="h-3 w-3 animate-spin" /> : <Terminal className="h-3 w-3" />}
+                                                                    <span>
+                                                                        {isSubmittingLab ? 'Submitting...' : tutorialDetail.userReflection ? 'Update Output' : 'Submit Commands (+10 XP)'}
+                                                                    </span>
+                                                                </Button>
+                                                                {tutorialDetail.userReflection && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => switchTab('quiz')}
+                                                                        className="text-xs text-slate-200 border-slate-700 hover:bg-slate-800 gap-1 cursor-pointer"
+                                                                    >
+                                                                        <span>Take Quiz</span>
+                                                                        <ArrowRight className="h-3 w-3" />
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                }
+
+                                // PERSONALITY DEV: Standard Notebook & Reflection Studio
                                 const rawPrompt = tutorialDetail.content?.reflectionPrompt || ''
                                 const promptParts = rawPrompt.split(/(?:\n\*\s*|\n?•\s*)/).map(s => s.trim()).filter(Boolean)
                                 const promptIntro = promptParts.length > 1 ? promptParts[0] : rawPrompt
                                 const promptQuestions = promptParts.length > 1 ? promptParts.slice(1) : []
-
                                 const isActivityDone = (tutorialDetail.userTutorial.minitaskOpted as any) === true || tutorialDetail.userTutorial.minitaskOpted === 'yes'
 
                                 return (

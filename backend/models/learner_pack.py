@@ -80,14 +80,16 @@ class QuizQuestion(Base):
 
 
 class UserReflection(Base):
-    """Stores the student's 3-5 sentence reflection submission for a tutorial."""
+    """Stores student's lab submission (reflection essay, terminal output, or screenshot)."""
     __tablename__ = "user_reflections"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     tutorial_id = Column(PG_UUID(as_uuid=True), ForeignKey("tutorials.id", ondelete="CASCADE"), nullable=False)
     
+    submission_type = Column(String(50), default="reflection", nullable=False) # "reflection" | "terminal" | "screenshot"
     reflection_text = Column(Text, nullable=False)
+    image_url = Column(Text, nullable=True)                                     # Relative URL for uploaded screenshots
     word_count = Column(Integer, default=0)
     submitted_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
