@@ -1,0 +1,1944 @@
+{
+  "course": {
+    "id": "linux",
+    "title": "Linux",
+    "description": "A 2-credit, 12-week online course covering Linux operating system, terminal commands, shell utilities, permissions, process management, and stream text processing with grep and sed.",
+    "forum_category": "Linux",
+    "ui_layout": "learner_pack"
+  },
+  "programme": {
+    "id": "swayam_plus",
+    "name": "SWAYAM Plus",
+    "code": "SWAYAM_PLUS",
+    "description": "Government of India initiative for employability-focused courses."
+  },
+  "batch": {
+    "id": "swayam_linux_batch_1",
+    "name": "SWAYAM Plus 2026 Linux Batch 1",
+    "course_id": "linux",
+    "programme_id": "swayam_plus",
+    "start_date": "2026-02-01",
+    "end_date": "2026-05-31",
+    "status": "active"
+  },
+  "tutorials": [
+    {
+      "id": "linux_tutorial_1",
+      "course_id": "linux",
+      "tutorial_number": 1,
+      "title": "Installation of VirtualBox on Windows",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2160/Installation-of-VirtualBox-on-Windows-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2160/Installation-of-VirtualBox-on-Windows-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_2",
+      "course_id": "linux",
+      "tutorial_number": 2,
+      "title": "Installing Ubuntu OS in Oracle VirtualBox",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2161/Installing-Ubuntu-OS-in-Oracle-VirtualBox-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2161/Installing-Ubuntu-OS-in-Oracle-VirtualBox-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_3",
+      "course_id": "linux",
+      "tutorial_number": 3,
+      "title": "Ubuntu Desktop",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2162/Ubuntu-Desktop-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2162/Ubuntu-Desktop-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_4",
+      "course_id": "linux",
+      "tutorial_number": 4,
+      "title": "Synaptic Package Manager",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2155/Synaptic-Package-Manager-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2155/Synaptic-Package-Manager-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_5",
+      "course_id": "linux",
+      "tutorial_number": 5,
+      "title": "Basic Commands in Linux",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2156/Basic-Commands-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2156/Basic-Commands-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_6",
+      "course_id": "linux",
+      "tutorial_number": 6,
+      "title": "Date and Time Commands in Linux",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2157/Date-and-Time-Commands-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2157/Date-and-Time-Commands-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_7",
+      "course_id": "linux",
+      "tutorial_number": 7,
+      "title": "Structure of Linux Commands",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2158/Structure-of-Linux-Commands-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2158/Structure-of-Linux-Commands-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_8",
+      "course_id": "linux",
+      "tutorial_number": 8,
+      "title": "General Purpose Utilities",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2159/General-Purpose-Utilities-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2159/General-Purpose-Utilities-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_9",
+      "course_id": "linux",
+      "tutorial_number": 9,
+      "title": "File System in Linux",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2163/File-System-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2163/File-System-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_10",
+      "course_id": "linux",
+      "tutorial_number": 10,
+      "title": "Working with Regular Files in Linux",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2164/Working-with-Regular-Files-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2164/Working-with-Regular-Files-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_11",
+      "course_id": "linux",
+      "tutorial_number": 11,
+      "title": "Redirecting Streams and Pipes",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2165/Redirecting-Streams-and-Pipes-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2165/Redirecting-Streams-and-Pipes-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_12",
+      "course_id": "linux",
+      "tutorial_number": 12,
+      "title": "Working with Linux Processes",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2166/Working-with-Linux-Processes-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2166/Working-with-Linux-Processes-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_13",
+      "course_id": "linux",
+      "tutorial_number": 13,
+      "title": "The Linux Environment",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2167/The-Linux-Environment-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2167/The-Linux-Environment-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_14",
+      "course_id": "linux",
+      "tutorial_number": 14,
+      "title": "Basics of System Administration in Linux",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2169/Basics-of-System-Administration-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2169/Basics-of-System-Administration-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_15",
+      "course_id": "linux",
+      "tutorial_number": 15,
+      "title": "Linux File Ownership and Permissions",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2172/Linux-File-Ownership-and-Permissions-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2172/Linux-File-Ownership-and-Permissions-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_16",
+      "course_id": "linux",
+      "tutorial_number": 16,
+      "title": "Simple Filters in Linux",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2168/Simple-Filters-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2168/Simple-Filters-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_17",
+      "course_id": "linux",
+      "tutorial_number": 17,
+      "title": "Introduction to grep command",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2170/Introduction-to-grep-command-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2170/Introduction-to-grep-command-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_18",
+      "course_id": "linux",
+      "tutorial_number": 18,
+      "title": "Mastering grep",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2171/Mastering-grep-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2171/Mastering-grep-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_19",
+      "course_id": "linux",
+      "tutorial_number": 19,
+      "title": "Introduction to the Stream Editor sed",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2173/Introduction-to-the-Stream-Editor-sed-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2173/Introduction-to-the-Stream-Editor-sed-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    },
+    {
+      "id": "linux_tutorial_20",
+      "course_id": "linux",
+      "tutorial_number": 20,
+      "title": "Text Editing using sed",
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2174/Text-Editing-using-sed-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2174/Text-Editing-using-sed-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "xp_reward": 25
+    }
+  ],
+  "tutorial_contents": [
+    {
+      "id": "linux_content_1",
+      "tutorial_number": 1,
+      "week_number": 1,
+      "reading_title": "Reading 1: Installation of VirtualBox on Windows",
+      "reading_markdown": "# Reading 1: Installation of VirtualBox on Windows\n\n\n### What is it?\n\nA virtual machine is a computer made of software. It runs inside your real computer, in its own window, as if it were a separate machine. It has its own operating system, its own files and its own programs.\n\nIn this course, your real Windows computer is the host. Ubuntu Linux, running inside the virtual machine, is the guest. The guest borrows some of the host's memory, disk space and processor. Whatever you do in the guest stays in the guest. If you break something while learning, your Windows files are safe.\n\nVirtualBox is the free program that creates and runs virtual machines. It is made by Oracle and works on Windows, macOS and Linux.\n\nBefore installing VirtualBox, check that virtualization is switched on. This is a feature of your computer's processor that lets virtual machines run at a good speed. To check, open Task Manager (Ctrl + Shift + Esc), go to the Performance tab and click CPU. Look for \"Virtualization: Enabled\".\n\n\n### Steps at a glance\n\n\n| Do this | What happens |\n| --- | --- |\n| Task Manager → Performance → CPU | Shows whether virtualization is enabled |\n| Download VirtualBox for Windows hosts from virtualbox.org | Saves the installer to your computer |\n| Run the installer and accept the default options | Installs VirtualBox and its network drivers |\n| Open Oracle VirtualBox from the Start menu | Opens VirtualBox Manager, where you create and run virtual machines |\n| Help → About VirtualBox | Shows the version you installed |\n\n\n### A real-world example\n\nSuresh works in IT support at a hospital in Nashik. The hospital's patient records system runs on Linux servers, but every computer in his office runs Windows. When he needs to test an update before it goes on the real server, he runs Linux in VirtualBox on his own computer. If the update breaks something, he deletes the virtual machine and starts again, and the hospital's systems are never at risk.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Task Manager shows \"Virtualization: Disabled\" | Virtualization is switched off in the computer's settings | Restart, open the BIOS or UEFI settings (often F2, F10 or Del at start-up) and turn on Intel VT-x or AMD-V (sometimes called SVM). Ask your lab in-charge if you are unsure |\n| The installer asks for Microsoft Visual C++ or Python components | Some versions of VirtualBox need these Windows parts first | Install what it asks for from the link it gives, then run the VirtualBox installer again |\n| Network briefly disconnects during installation | VirtualBox is installing its network drivers | This is normal. It reconnects in a few seconds |\n| Virtual machines later run very slowly | Windows features such as Hyper-V are using virtualization | Ask for help on the forum; Live session 1 covers this |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 1. Do it on your Windows computer, then submit your work on Spoken Social.\n\nCheck that virtualization is enabled in Task Manager.\n\nInstall VirtualBox.\n\nOpen VirtualBox Manager and choose Help → About VirtualBox.\n\nSubmit: a screenshot of VirtualBox Manager with the About window showing the installed version.",
+      "reflection_prompt": "Upload your installation screenshot and describe the setup process you followed on your machine.",
+      "reflection_min_sentences": 1,
+      "key_terms": [],
+      "read_more": [
+        "Oracle, Oracle VirtualBox User Manual, chapters on first steps and installation (free online at virtualbox.org). The official guide to installing VirtualBox and creating your first virtual machine."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2160/Installation-of-VirtualBox-on-Windows-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2160/Installation-of-VirtualBox-on-Windows-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_2",
+      "tutorial_number": 2,
+      "week_number": 1,
+      "reading_title": "Reading 2: Installing Ubuntu OS in Oracle VirtualBox",
+      "reading_markdown": "# Reading 2: Installing Ubuntu OS in Oracle VirtualBox\n\n\n### What is it?\n\nLinux is an operating system, like Windows. It is free to use and share, and it runs most of the world's web servers, cloud systems and supercomputers. Android phones are built on it too.\n\nLinux comes in many versions called distributions, or distros. Each one packs Linux together with a desktop, tools and a way to install software. Ubuntu is one of the most widely used. This course uses Ubuntu 24.04, a long-term support (LTS) version, which receives updates for five years.\n\nTo install Ubuntu, you download an ISO image: one large file that holds the whole installer. In VirtualBox you create a new virtual machine, point it to the ISO file, and choose how much memory and disk space the machine gets. VirtualBox's unattended installation then installs Ubuntu for you, using the username and password you type in at the start.\n\n\n### Steps at a glance\n\n\n| Do this | What happens |\n| --- | --- |\n| Download the Ubuntu 24.04 Desktop ISO from ubuntu.com | Saves the installer file (about 6 GB) |\n| VirtualBox Manager → New | Starts creating a virtual machine |\n| Give it a name and choose the ISO file | VirtualBox detects Ubuntu and offers unattended installation |\n| Set a username and password | These become your Ubuntu login. Remember them |\n| Set memory and disk size | Give at least 2048 MB of memory and 25 GB of disk, more if your computer can spare it |\n| Finish, then wait | Ubuntu installs itself and restarts at the login screen |\n\n\n### A real-world example\n\nAnjali has just joined a software company in Pune as a trainee. On her first day, the team lead asks every trainee to set up an Ubuntu virtual machine on their office laptop, because the company's code runs on Ubuntu servers. Anjali has done this before in her college course, so she finishes in an hour and spends the rest of the afternoon helping two other trainees whose installations failed.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Only 32-bit options appear, or the VM will not start | Virtualization is off on the host | Turn it on, as in Reading 1 |\n| Ubuntu is very slow or freezes | The VM has too little memory | Shut down the VM, open Settings → System and give it more memory, staying within the green area of the slider |\n| \"Not enough disk space\" during installation | The virtual disk is too small | Delete the VM and create it again with at least 25 GB of disk |\n| You cannot log in after installation | The password typed during setup is different from what you remember | Watch the keyboard layout and Caps Lock. If you cannot recover it, create the VM again and write the password down |\n| The installation stops partway | The ISO download was incomplete | Download the ISO again and check its size matches the website |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 2.\n\nDownload the Ubuntu 24.04 Desktop ISO.\n\nCreate a virtual machine and install Ubuntu in it.\n\nLog in to Ubuntu.\n\nSubmit: a screenshot of the Ubuntu desktop running inside the VirtualBox window.",
+      "reflection_prompt": "Upload your installation screenshot and describe the setup process you followed on your machine.",
+      "reflection_min_sentences": 1,
+      "key_terms": [],
+      "read_more": [
+        "Canonical, Ubuntu Desktop documentation (free online at help.ubuntu.com). The official help pages for Ubuntu, starting with what Ubuntu is and how to use it.",
+        "Canonical, Install Ubuntu Desktop tutorial (free online at ubuntu.com/tutorials). A step-by-step guide with pictures, useful if you later install Ubuntu on a real computer."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2161/Installing-Ubuntu-OS-in-Oracle-VirtualBox-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2161/Installing-Ubuntu-OS-in-Oracle-VirtualBox-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_3",
+      "tutorial_number": 3,
+      "week_number": 2,
+      "reading_title": "Reading 3: Ubuntu Desktop",
+      "reading_markdown": "# Reading 3: Ubuntu Desktop\n\n\n### What is it?\n\nThe Ubuntu desktop looks different from Windows, but it does the same jobs. Once you know where five or six things are, you can find your way around.\n\n\n| Part | Where it is | What it does |\n| --- | --- | --- |\n| Top panel | Across the top of the screen | Shows the date and time in the middle, and the system menu (network, sound, power, settings) on the right |\n| Activities | Top-left corner, or press the Super key (the Windows key) | Shows all open windows and a search box. Type the name of any app to open it |\n| Dock | Down the left side of the screen | Holds your favourite apps and the apps that are open. Like the Windows taskbar |\n| Show Apps | The grid of dots at the bottom of the Dock | Lists every installed app |\n| Workspaces | Seen in Activities | Separate desktops, so you can keep different work on different screens |\n| Settings | System menu → gear icon | Change the wallpaper, display, sound, network and users |\n| Trash | In the Dock and in the Files app | Holds deleted files until you empty it, like the Windows Recycle Bin |\n\nThe most important app in this course is the Terminal. It is a window where you type commands instead of clicking. Open it by pressing Ctrl + Alt + T, or by searching for \"Terminal\" in Activities. To keep it handy, right-click its icon in the Dock and choose Pin to Dash.\n\nIn the terminal you will see a prompt, such as anjali@ubuntu:~$. It shows your username, the computer's name, and the folder you are in (~ means your home folder). The $ means Linux is waiting for your command.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| apt search Text Editor | Searches the software list for packages whose description mentions both \"Text\" and \"Editor\" |\n| apt list --installed | Lists every package installed on your system |\n| clear | Clears the terminal screen |\n| exit | Closes the terminal |\n\n\n### A real-world example\n\nRamesh runs a small computer training centre in Madurai. He moved his ten lab computers from an old, unsupported version of Windows to Ubuntu, because Ubuntu is free and runs well on older machines. On the first day, his students were lost. He spent fifteen minutes showing them the Dock, Activities search and the Terminal. By the end of the week, most of them preferred searching for apps by name to hunting through a Start menu.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| You cannot find an app | It is not pinned to the Dock | Press the Super key and type its name, or click Show Apps |\n| Apt: command not found | Linux is case-sensitive | Type commands in lower case: apt |\n| The output of apt list --installed scrolls past too fast | The list has over a thousand lines | Scroll up in the terminal with the mouse wheel or Shift + Page Up |\n| A window seems to have disappeared | It is on another workspace | Open Activities to see all workspaces and windows |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 3. Do it on Ubuntu, then submit your work on Spoken Social.\n\nOpen the Terminal and pin it to the Dock.\n\nIn the terminal, run:\n\napt search Text Editorapt list --installed\n\nSubmit: both commands and the first 10–15 lines of each output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "Canonical, Ubuntu Desktop Guide, sections on the desktop, apps and windows, and workspaces (free online at help.ubuntu.com)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2162/Ubuntu-Desktop-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2162/Ubuntu-Desktop-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_4",
+      "tutorial_number": 4,
+      "week_number": 2,
+      "reading_title": "Reading 4: Synaptic Package Manager",
+      "reading_markdown": "# Reading 4: Synaptic Package Manager\n\n\n### What is it?\n\nOn Windows, you usually install software by downloading a .exe file from a website. Linux works differently. Software comes as packages, and Ubuntu downloads them from repositories: large, trusted online stores run by Ubuntu and others. You ask for a package by name, and Linux downloads it, installs it, and also installs any other packages it needs to work.\n\nThe tool that does this on Ubuntu is APT, the Advanced Package Tool. You can use it in two ways:\n\nBy typing commands in the terminal, such as sudo apt install gedit.\n\nWith a graphical tool such as Synaptic Package Manager, where you search, tick and click Apply.\n\nBoth do the same job. Synaptic is easier for browsing; the apt command is faster once you know the package name, and it is what you will use on servers, which have no desktop.\n\nInstalling software changes the system, so Linux asks for your password. Putting sudo before a command runs it with administrator rights. Use it only when a command needs it.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| sudo apt update | Downloads the latest list of packages from the repositories. Run this before installing |\n| sudo apt install synaptic | Installs Synaptic Package Manager |\n| sudo apt install gedit | Installs the gedit text editor from the terminal |\n| apt list --installed gedit | Shows whether gedit is installed |\n| sudo apt remove gedit | Removes gedit |\n\nIn Synaptic: click Reload to refresh the package list, Search to find a package, right-click it and choose Mark for Installation, then click Apply.\n\n\n### A real-world example\n\nKiran is a lab assistant at a polytechnic college in Hubballi. Before each semester, she has to install the same eight programs on forty Ubuntu computers. On the first computer, she uses Synaptic to find the exact package names. On the rest, she types one apt install command with all eight names. What used to take a full day of clicking now takes an afternoon.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| E: Unable to locate package | The package list is out of date, or the name is misspelt | Run sudo apt update, then check the spelling |\n| Permission denied or are you root? | Installing needs administrator rights | Put sudo before the command |\n| Nothing appears as you type your password | Linux hides passwords, even as stars | Keep typing and press Enter |\n| Could not get lock | Another install or update is already running | Wait a few minutes for it to finish, then try again |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 4.\n\nInstall Synaptic with sudo apt install synaptic, then open it from Show Apps.\n\nUse Synaptic to install gedit and Audacity.\n\nIn the terminal, check both are installed:\n\napt list --installed gedit audacity\n\nSubmit: a screenshot of Synaptic showing both packages marked as installed, or the command above and its output pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "Canonical, Ubuntu Desktop Guide, section on installing software (free online at help.ubuntu.com).",
+        "Linux man pages, apt(8) (free online at man7.org, or type man apt in the terminal). The full list of apt commands."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2155/Synaptic-Package-Manager-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2155/Synaptic-Package-Manager-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_5",
+      "tutorial_number": 5,
+      "week_number": 3,
+      "reading_title": "Reading 5: Basic Commands in Linux",
+      "reading_markdown": "# Reading 5: Basic Commands in Linux\n\n\n### What is it?\n\nWhen you type a command and press Enter, a program called the shell reads it. The shell works out what you asked for, finds the right program, runs it, and shows you the result. Then it gives you a new prompt and waits for the next command. On Ubuntu, the shell is called bash.\n\nCommands come in two kinds:\n\n\n| Kind | What it is | Examples |\n| --- | --- | --- |\n| Internal (built-in) | Part of the shell itself, so it runs instantly | cd, exit, echo, type |\n| External | A separate program file, usually stored in /usr/bin | ls, cp, date, cal |\n\nThe type command tells you which kind a command is. You will rarely need to know this in daily work, but it helps you understand what the shell is doing, and why a command might be \"not found\".\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| ls | Lists the files and folders in the current folder |\n| pwd | Prints the folder you are in now (print working directory) |\n| echo $SHELL | Shows which shell you are using, such as /bin/bash |\n| type exit | Shows: exit is a shell builtin |\n| type cp | Shows: cp is /usr/bin/cp (an external command) |\n| clear | Clears the screen |\n\n\n### A real-world example\n\nVikram works the night shift at a data centre in Navi Mumbai. When an alert comes in, he logs in to the affected server from his desk. The server has no desktop and no mouse, only a prompt. Everything he does, from checking which files are there to restarting a service, he does by typing commands into the shell. The basic commands in this module are the ones he types dozens of times every shift.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Command 'sl' not found, did you mean: ls | A typing mistake | Read the suggestion; Ubuntu often guesses what you meant |\n| LS: command not found | Capital letters | Commands are in lower case |\n| Nothing happens after typing | You did not press Enter | Press Enter to run the command |\n| The prompt changes to > | You opened a quote mark and did not close it | Press Ctrl + C to cancel, then type the command again |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 5. In the Ubuntu terminal, run:\n\ntype exitlstype cp\n\nSubmit: the three commands and their output, pasted as text, and one line saying which of exit and cp is internal and which is external.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, Bash Reference Manual, section 1, \"What is a shell?\" (free online at gnu.org).",
+        "William Shotts, The Linux Command Line, chapter 1, \"What is the shell?\" (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2156/Basic-Commands-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2156/Basic-Commands-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_6",
+      "tutorial_number": 6,
+      "week_number": 3,
+      "reading_title": "Reading 6: Date and Time Commands in Linux",
+      "reading_markdown": "# Reading 6: Date and Time Commands in Linux\n\n\n### What is it?\n\nThe date command shows the current date and time. On its own, it prints everything in one line. With a format, it prints just the parts you want, in the order you want.\n\nA format starts with + and uses codes that begin with %. For example, date +%d-%m-%Y prints today's date as 05-11-2026. If the format has spaces, put it inside quote marks: date \"+%d %B %Y\".\n\nThe cal command shows a calendar. On Ubuntu, it comes in a package called ncal, which you install once with sudo apt install ncal.\n\nLearning date is not really about dates. It is about learning how options change what a command does. You will use the same idea with every command in this course.\n\n\n### Commands at a glance\n\n\n| Type this | What it shows | Example output |\n| --- | --- | --- |\n| date | Full date and time | Thu Nov 5 16:30:12 IST 2026 |\n| date +%d-%m-%Y | Day-month-year | 05-11-2026 |\n| date +%R | Time in 24-hour hours:minutes | 16:30 |\n| date +%j | Day of the year (001–366) | 309 |\n| date +%U | Week number of the year (weeks starting on Sunday) | 44 |\n| date +%q | Quarter of the year (1–4) | 4 |\n| cal | This month's calendar |  |\n| cal 06 2035 | Calendar for June 2035 |  |\n| cal 2027 | Calendar for the whole of 2027 |  |\n\n\n### A real-world example\n\nShabana is a junior system administrator at an insurance company in Kochi. Every night, a backup of the claims database is saved as a file. She names each file with the date, using date +%Y-%m-%d, so the files are called backup-2026-11-05, backup-2026-11-06 and so on. Because the year comes first, the files sort in date order on their own, and she can find any day's backup in seconds.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| date: invalid date '%j' | The + is missing | Write date +%j |\n| cal: command not found | The ncal package is not installed | Run sudo apt install ncal |\n| date: extra operand | The format has a space and no quote marks | Put the format in quotes: date \"+%d %B %Y\" |\n| The output shows the wrong letter | %M (minutes) and %m (month) are different | Check capital and small letters in the format |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 6. In the Ubuntu terminal, run:\n\ndate +%Rdate +%Udate +%jdate +%qcal 06 2035\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU Coreutils manual, section on date: \"Print or set system date and time\" (free online at gnu.org). Lists every format code."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2157/Date-and-Time-Commands-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2157/Date-and-Time-Commands-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_7",
+      "tutorial_number": 7,
+      "week_number": 4,
+      "reading_title": "Reading 7: Structure of Linux Commands",
+      "reading_markdown": "# Reading 7: Structure of Linux Commands\n\n\n### What is it?\n\nAlmost every Linux command follows the same pattern:\n\ncommand  options  arguments\n\n\n| Part | What it is | In ls -l /home |\n| --- | --- | --- |\n| Command name | What to do | ls (list) |\n| Options | How to do it | -l (long listing, with details) |\n| Arguments | What to do it to | /home (the folder to list) |\n\nThe parts are separated by spaces. Short options start with one dash, such as -l. Several short options can be joined: ls -al is the same as ls -a -l. Long options start with two dashes and use a full word, such as --all.\n\nNo one remembers every option. Linux has three built-in ways to find help:\n\n\n| Type this | What it does |\n| --- | --- |\n| man ls | Opens the full manual page for ls. Use the arrow keys to scroll, / to search, and q to quit |\n| ls --help | Prints a shorter summary of the options straight into the terminal |\n| apropos copy | Searches all manual pages for a word, when you know what you want to do but not the command's name |\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| ls -l | Long listing: permissions, owner, size, date and name |\n| ls -a | Shows all files, including hidden ones whose names start with a dot |\n| ls -h | With -l, shows sizes as K, M and G instead of bytes |\n| ls -s | Shows the size of each file in blocks |\n| ls -alh | All three options together |\n\n\n### A real-world example\n\nDeepa, a cloud support engineer in Hyderabad, gets a ticket asking how to copy a folder to a server while keeping file dates unchanged. She has never needed that before. She types apropos copy and sees the command she needs, then man on that command, presses / and searches for \"preserve\". Five minutes later she has the answer, without searching the internet.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| ls: cannot access '-': No such file or directory | A space between the dash and the letter: ls - l | Write the option with no space: ls -l |\n| ls-l: command not found | No space between the command and the option | Put a space after the command: ls -l |\n| Stuck inside a man page | man waits for you to finish reading | Press q to quit |\n| nothing appropriate from apropos | No man page mentions that word | Try a different or simpler word |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 7. In the Ubuntu terminal, run:\n\nls -alhls -alls -s\n\nSubmit: the commands and their output, pasted as text, and two or three lines on what is different between the three outputs.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "Linux man pages, ls(1) and man(1) (free online at man7.org, or type man ls and man man in the terminal).",
+        "William Shotts, The Linux Command Line, chapter 5, \"Working with commands\" (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2158/Structure-of-Linux-Commands-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2158/Structure-of-Linux-Commands-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_8",
+      "tutorial_number": 8,
+      "week_number": 4,
+      "reading_title": "Reading 8: General Purpose Utilities",
+      "reading_markdown": "# Reading 8: General Purpose Utilities\n\n\n### What is it?\n\nThis tutorial covers a handful of small commands that you will use often.\n\necho prints text to the screen. It is used in scripts to show messages. With the -e option, echo understands escape sequences: a backslash and a letter that stand for a special character.\n\n\n| Escape sequence | Meaning |\n| --- | --- |\n| \\n | Start a new line |\n| \\t | Insert a tab (a wide space) |\n| \\c | Stop here and print nothing more, not even the usual new line at the end |\n\nuname shows information about the system. uname -r shows the version of the kernel, the core of Linux. who shows who is logged in, on which terminal, and since when. passwd changes your password.\n\n\n### Commands at a glance\n\n\n| Type this | Output |\n| --- | --- |\n| echo Welcome to Linux | Welcome to Linux |\n| echo -e \"Welcome\\tto\\tLinux\" | Welcome, to and Linux, separated by tabs |\n| echo -e \"Welcome\\nto\\nLinux\" | Each word on its own line |\n| echo -e \"Welcome to Linux\\c\" | Welcome to Linux, with the prompt on the same line straight after it |\n| uname -r | The kernel version, such as 6.8.0-45-generic |\n| who | Each logged-in user, their terminal, and the login date and time |\n| whoami | Your username |\n| passwd | Asks for your current password, then a new one twice |\n\n\n### A real-world example\n\nArif manages a small office network for a chartered accountant's firm in Kolkata. One morning, a shared Linux computer is running slowly. He types who and sees that a user who left the office the night before is still logged in, with a heavy report still running. He contacts the user, the report is stopped properly, and the computer is back to normal.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Welcome\\tto\\tLinux is printed with the letters | The -e option is missing | Write echo -e |\n| Only part of the message appears | You put \\c in the middle of the text | \\c stops everything after it. Put it at the end |\n| passwd: Authentication token manipulation error | The current password was typed wrongly | Type it again carefully |\n| BAD PASSWORD: The password is too short | Ubuntu checks new passwords | Choose a longer password |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 8.\n\nDisplay \"Welcome to Linux\" three times: once using \\c, once using \\t between the words, and once using \\n between the words.\n\nRestart Ubuntu, log in, open the terminal and run who. Note your login time.\n\nSubmit: the commands and their output, pasted as text. Never paste or type a real password in your submission.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU Coreutils manual, sections on echo and uname (free online at gnu.org).",
+        "Linux man pages, who(1) and passwd(1) (free online at man7.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2159/General-Purpose-Utilities-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2159/General-Purpose-Utilities-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_9",
+      "tutorial_number": 9,
+      "week_number": 5,
+      "reading_title": "Reading 9: File System in Linux",
+      "reading_markdown": "# Reading 9: File System in Linux\n\n\n### What is it?\n\nWindows has separate drives, such as C: and D:. Linux has one single tree. It starts at the root directory, written as /, and every file and folder on the computer sits somewhere below it.\n\n\n| Directory | What it holds |\n| --- | --- |\n| / | The top of the tree |\n| /home | One folder for each user, such as /home/anjali |\n| /etc | Settings files for the system and programs |\n| /usr/bin | Most commands, such as ls and cp |\n| /tmp | Temporary files, cleared when the computer restarts |\n\nYour home directory is where you keep your own work. The shortcut ~ always means your home directory.\n\nEvery file has a path, its address in the tree. An absolute path starts from /, such as /home/anjali/mydir. A relative path starts from where you are now. If you are in /home/anjali, then mydir means the same thing. Two special names help you move around: . means \"this folder\" and .. means \"the folder above\".\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| pwd | Shows where you are |\n| cd /etc | Moves to /etc (absolute path) |\n| cd .. | Moves up one folder |\n| cd ~ or just cd | Goes back to your home directory |\n| mkdir mydir | Creates a folder called mydir |\n| mkdir -p mydir/sub1/sub2 | Creates mydir and the folders inside it, all at once |\n| rmdir mydir | Removes mydir, but only if it is empty |\n| cat > myfile | Creates myfile and lets you type into it. Press Ctrl + D on a new line to save |\n| cat myfile | Shows what is in myfile |\n\n\n### A real-world example\n\nPrakash is a web developer at a travel company in Jaipur. The company website is stored on a Linux server under /var/www, and its settings are in /etc. When the website shows an error, Prakash knows where to look without searching: settings in /etc, website files in /var/www, error logs in /var/log. Knowing the shape of the tree saves him time every day.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| rmdir: failed to remove 'mydir': Directory not empty | rmdir only removes empty folders, to keep you safe | Empty the folder first, or check that you really want to delete everything in it |\n| cd: mydir: No such file or directory | You are in a different folder, or the name is misspelt | Run pwd and ls to see where you are and what is there |\n| mkdir: cannot create directory 'a/b': No such file or directory | The folder a does not exist yet | Use mkdir -p a/b |\n| The terminal seems stuck after cat > myfile | cat is waiting for you to type | Type your text, press Enter, then Ctrl + D |\n| cd My Files fails | The space splits the name into two arguments | Use quotes: cd \"My Files\" |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 9. In the Ubuntu terminal:\n\nCreate a file called myfile with cat, type one line into it, and save it with Ctrl + D.\n\nDisplay the file with cat.\n\nCreate a folder called mydir with two sub-folders inside it.\n\nShow the result with ls -R mydir (or tree mydir, if you installed tree in Lab 1).\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "William Shotts, The Linux Command Line, chapters 2 and 3, \"Navigation\" and \"Exploring the system\" (free online at linuxcommand.org).",
+        "Linux man pages, hier(7), a description of the Linux file system layout (free online at man7.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2163/File-System-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2163/File-System-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_10",
+      "tutorial_number": 10,
+      "week_number": 5,
+      "reading_title": "Reading 10: Working with Regular Files in Linux",
+      "reading_markdown": "# Reading 10: Working with Regular Files in Linux\n\n\n### What is it?\n\nThree commands do most of the work with files: cp copies, mv moves or renames, and rm removes. They are quick and quiet. They do not ask \"Are you sure?\" unless you tell them to, and they will overwrite a file that already has the same name.\n\nThat is why the safe options matter:\n\n\n| Option | What it does |\n| --- | --- |\n| -i (interactive) | Asks before overwriting or deleting. Type y for yes or n for no |\n| -b (backup) | With cp or mv, keeps a backup of the file being overwritten, with ~ added to its name |\n| -v (verbose) | Says what it did |\n\nTwo more commands help you check files. cmp compares two files byte by byte. If they are the same, it prints nothing. If they differ, it tells you where the first difference is. wc (word count) counts the lines, words and bytes in a file.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| cp notes.txt notes_copy.txt | Copies notes.txt to a new file |\n| cp -i notes.txt old.txt | Copies, but asks first if old.txt already exists |\n| cp -b notes.txt old.txt | Copies, and saves the old version as old.txt~ |\n| mv draft.txt final.txt | Renames draft.txt to final.txt |\n| mv final.txt mydir/ | Moves final.txt into mydir |\n| rm -i old.txt | Deletes old.txt after asking |\n| cmp a.txt b.txt | Compares two files. No output means they are the same |\n| wc notes.txt | Prints lines, words and bytes, then the file name, such as 3 12 64 notes.txt |\n| wc -l notes.txt | Prints only the number of lines |\n\n\n### A real-world example\n\nMeenakshi is a data entry supervisor at a cooperative bank in Thrissur. Every evening she copies the day's transaction file into a backup folder. Once, she overwrote the previous day's backup by mistake and lost it. Now she always uses cp -i, so Linux asks her before replacing anything, and she uses cmp to check that the copy is exactly the same as the original.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| A file was replaced without warning | cp and mv overwrite silently by default | Use -i to be asked first, or -b to keep a backup |\n| rm: cannot remove 'mydir': Is a directory | rm on its own does not delete folders | Check you really want to delete the folder and everything in it. Ask on the forum before using stronger options |\n| cp: missing destination file operand | Only one file name was given | Give both: where from, and where to |\n| You deleted the wrong file | rm does not use the Trash | Use rm -i while learning. There is no undo |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 10. In the Ubuntu terminal:\n\nCopy myfile (from Tutorial 9) to myfile_copy, and use cmp to check the two are the same.\n\nRun cp -i myfile myfile_copy and answer n when asked.\n\nRun cp -b myfile myfile_copy, then ls to see the backup file ending in ~.\n\nAdd a line to myfile_copy (use cat >> myfile_copy, type a line, then Ctrl + D), then compare the two files again with cmp.\n\nCount the lines, words and bytes in both files with wc.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU Coreutils manual, sections on cp, mv, rm and wc (free online at gnu.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2164/Working-with-Regular-Files-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2164/Working-with-Regular-Files-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_11",
+      "tutorial_number": 11,
+      "week_number": 6,
+      "reading_title": "Reading 11: Redirecting Streams and Pipes",
+      "reading_markdown": "# Reading 11: Redirecting Streams and Pipes\n\n\n### What is it?\n\nEvery command has three streams, each with a number called a file descriptor:\n\n\n| Stream | Number | Normally comes from or goes to |\n| --- | --- | --- |\n| Standard input (stdin) | 0 | The keyboard |\n| Standard output (stdout) | 1 | The screen |\n| Standard error (stderr) | 2 | The screen |\n\nRedirection changes where these streams go. Instead of printing results on the screen, a command can write them into a file. Instead of reading from the keyboard, it can read from a file.\n\nA pipe, written as |, joins two commands. The output of the first command goes straight into the second, as its input. You can join three, four or more commands this way. This is one of the most powerful ideas in Linux: many small commands, each doing one job well, joined together to do something bigger.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| ls > files.txt | Saves the output of ls in files.txt, replacing what was there |\n| ls >> files.txt | Adds the output to the end of files.txt |\n| ls nofile 2> errors.log | Sends the error message to errors.log instead of the screen |\n| wc -l < mydata.txt | wc reads mydata.txt as its input |\n| cat mydata.txt \\| wc -w | Counts the words in mydata.txt using a pipe |\n| ls /usr/bin \\| wc -l | Counts how many commands are in /usr/bin |\n| ls -l /etc \\| more | Shows a long list one screen at a time. Press Space for the next page, q to quit |\n\n\n### A real-world example\n\nNikhil runs nightly reports on a Linux server for a logistics company in Gurugram. His reports used to fill the screen with messages, and he missed the errors among them. Now each report sends its results to one file with > and its errors to another with 2>. Each morning he only opens the error file. If it is empty, everything ran well.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Yesterday's contents of a file are gone | > replaces the whole file | Use >> to add to the end instead |\n| The error still appears on screen | You used > instead of 2> | Errors go to stream 2, so use 2> |\n| bash: wc: No such file or directory after a pipe | A file name was put after the pipe, not a command | After \\| always comes a command, such as wc -l |\n| more waits and nothing happens | It is waiting for you at the end of a page | Press Space to continue or q to quit |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 11. In the Ubuntu terminal:\n\nCreate mydata.txt with cat and type at least eight lines into it, such as the names of your friends and their cities.\n\nCount the lines in mydata.txt and save the result in linecount.txt. Show linecount.txt.\n\nView mydata.txt one screen at a time with more.\n\nRun ls on a file that does not exist, and send the error to errors.log. Show errors.log.\n\nCount the words in mydata.txt using a pipe.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, Bash Reference Manual, section 3.6, \"Redirections\", and section 3.2.3, \"Pipelines\" (free online at gnu.org).",
+        "William Shotts, The Linux Command Line, chapter 6, \"Redirection\" (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2165/Redirecting-Streams-and-Pipes-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2165/Redirecting-Streams-and-Pipes-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_12",
+      "tutorial_number": 12,
+      "week_number": 6,
+      "reading_title": "Reading 12: Working with Linux Processes",
+      "reading_markdown": "# Reading 12: Working with Linux Processes\n\n\n### What is it?\n\nA program stored on the disk is just a file. When it starts running, it becomes a process. Your terminal is a process. The shell inside it is a process. Every command you run starts a new process, which ends when the command finishes.\n\nLinux gives each process a number, its process ID or PID. Every process is started by another process, called its parent. The parent's number is the PPID. When you run ls in the terminal, the shell (bash) is the parent and ls is the child. The very first process, started when Linux boots, has PID 1. On Ubuntu it is called systemd, and every other process descends from it.\n\nThe ps command shows processes. With no options, it shows only the processes started from your terminal. Its options show more:\n\n\n| Type this | What it shows |\n| --- | --- |\n| ps | Processes in this terminal: PID, terminal, CPU time and command |\n| ps -ef | Every process on the system, in full format, including UID (user), PID, PPID and start time |\n| ps -eF | Every process in extra-full format, adding memory use |\n| ps -ely | Every process in long format, with each process's state and priority |\n| ps -c | Processes in this terminal, with their scheduling class and priority |\n| echo $$ | The PID of the shell you are using |\n\n\n### A real-world example\n\nFarida works in IT support at a university in Aligarh. Teachers complain that the exam results server has become very slow. She logs in and runs ps -eF. One report process, started by mistake the night before, is using most of the memory. She checks with the team who started it, they stop it, and the server is fast again. Without ps, she would only have known that something was wrong, not what.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| ps shows only two or three lines | Plain ps shows only this terminal's processes | Use ps -ef to see every process |\n| The output is too long to read | There are hundreds of processes | Pipe it: ps -ef \\| more |\n| ps -ef and ps -eF look almost the same | -F only adds a few columns | Compare the column headings in the first line |\n| You cannot tell parent from child | You are looking at only one number | Match the PPID of one process with the PID of another |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 12. In the Ubuntu terminal, run:\n\nps -efps -eFps -elyps -c\n\nThe first three print hundreds of lines. You can add | head -15 after each to see only the first 15 lines.\n\nSubmit: the commands and the first lines of each output, pasted as text, and two or three lines on how the column headings differ.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "Linux man pages, ps(1) (free online at man7.org, or type man ps). The section \"Standard format specifiers\" explains every column.",
+        "William Shotts, The Linux Command Line, chapter 10, \"Processes\" (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2166/Working-with-Linux-Processes-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2166/Working-with-Linux-Processes-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_13",
+      "tutorial_number": 13,
+      "week_number": 7,
+      "reading_title": "Reading 13: The Linux Environment",
+      "reading_markdown": "# Reading 13: The Linux Environment\n\n\n### What is it?\n\nThe shell keeps a set of variables: names that hold values. Some hold facts about you, such as your username and home directory. Others hold settings, such as what your prompt looks like. Variables that the shell passes on to every program it starts are called environment variables. To see a variable's value, put a $ in front of its name: echo $HOME.\n\n\n| Variable | What it holds | Example |\n| --- | --- | --- |\n| HOME | Your home directory | /home/anjali |\n| SHELL | Your login shell | /bin/bash |\n| LOGNAME | Your username | anjali |\n| PATH | The folders searched for commands, separated by colons | /usr/local/bin:/usr/bin:/bin… |\n| PS1 | The look of your prompt | \\u@\\h:\\w$ |\n\nThe shell also remembers every command you type. history lists them with numbers, and the Up arrow brings back the last one. An alias gives a long command a short name, so you type less.\n\nChanges you make to PS1 or aliases in the terminal last only until you close it. To keep them, they can be added to a settings file called .bashrc in your home directory. That is optional for this course.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| env | Lists all environment variables |\n| echo $HOME | Shows your home directory |\n| echo $PATH | Shows the folders where the shell looks for commands |\n| cd ~/mydir | ~ is a shortcut for your home directory |\n| history | Lists the commands you have typed, with numbers |\n| !! | Runs the last command again |\n| !25 | Runs command number 25 from history |\n| alias ll='ls -l' | Creates ll as a short name for ls -l |\n| alias | Lists your aliases |\n| unalias ll | Removes the alias ll |\n| PS1=\"Linux> \" | Changes the prompt to Linux> in this terminal |\n\n\n### A real-world example\n\nSandeep is a DevOps engineer at a fintech start-up in Chennai. He logs in to a dozen servers a day. He used to type the same long commands again and again, and once ran a delete command on the wrong server. Now he has aliases for his everyday commands, and on each server his prompt shows the server's name in large letters. He always knows where he is before he presses Enter.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| echo HOME prints the word HOME | The $ is missing | Write echo $HOME |\n| alias ll = 'ls -l' gives an error | Spaces around the = sign | Write it with no spaces: alias ll='ls -l' |\n| Your new prompt or alias is gone the next day | Changes typed in the terminal last only until it closes | This is normal. Add them to ~/.bashrc if you want to keep them |\n| Every command is \"not found\" after changing PATH | PATH was replaced instead of added to | Close the terminal and open a new one; PATH comes back |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 13. In the Ubuntu terminal:\n\nList all environment variables with env.\n\nShow the values of HOME, SHELL, LOGNAME and PATH with echo.\n\nChange your prompt with PS1, for example to show your name followed by $.\n\nCreate an alias called ll for ls -l, and run it.\n\nRun history and show the last ten lines.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, Bash Reference Manual, sections on shell variables (5.2), aliases (6.6) and controlling the prompt (6.9) (free online at gnu.org).",
+        "William Shotts, The Linux Command Line, chapter 11, \"The environment\" (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2167/The-Linux-Environment-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2167/The-Linux-Environment-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_14",
+      "tutorial_number": 14,
+      "week_number": 7,
+      "reading_title": "Reading 14: Basics of System Administration in Linux",
+      "reading_markdown": "# Reading 14: Basics of System Administration in Linux\n\n\n### What is it?\n\nLinux is built for many people to share one computer. Each person has a user account: a username, a password and a home directory. Linux knows each user by a number, the UID. Users are also put in groups, each with a number called a GID, so that a group of people can share files. On Ubuntu, the first account you create has UID 1000, and the next ones get 1001, 1002 and so on.\n\nCreating, changing and deleting users is administrator work, so these commands start with sudo. Linux keeps the list of user accounts in a file called /etc/passwd.\n\nAn administrator also watches disk space. When a disk fills up, programs stop working and new files cannot be saved. Two commands help: df shows how much space is free on each disk, and du shows how much space a folder is using.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| sudo adduser demo | Creates a user called demo and asks you to set a password |\n| id demo | Shows demo's UID, GID and groups |\n| su - demo | Switches to the user demo (asks for demo's password). Type exit to come back |\n| sudo usermod -e 2026-12-31 demo | Sets the account to expire on 31 December 2026 |\n| sudo chage -l demo | Shows the account's expiry and password dates |\n| sudo userdel -r demo | Deletes demo and its home directory |\n| df -h | Shows free space on each disk, in K, M and G |\n| du -ch ~/mydir | Shows the space used by each folder in mydir, with a total at the end |\n\n\n### A real-world example\n\nAnita is the system administrator for a small engineering college in Belagavi. At the start of each year, she creates Linux accounts for 300 new students on the lab server, and sets each account to expire when the student's course ends. Every Monday she runs df -h. Last term she noticed the disk was 90% full, used du -ch to find a folder of old project videos taking up most of the space, and moved them before the server stopped working.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| adduser: Only root may add a user or group to the system | sudo is missing | Run sudo adduser demo |\n| su: Authentication failure | You typed your own password, not demo's | su asks for the password of the user you are switching to |\n| You are not sure which user you are | You switched with su and forgot | Run whoami. Type exit to go back |\n| userdel: user demo is currently used by process | demo is still logged in, for example in another terminal | Type exit in demo's terminal first |\n| df shows numbers like 51290112 | The -h option is missing | Use df -h for sizes in K, M and G |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 14. In the Ubuntu terminal:\n\nCreate a user called demo with sudo adduser demo.\n\nSwitch to demo with su - demo, run whoami and pwd, then type exit.\n\nSet demo's account to expire on the last day of next month, and check it with sudo chage -l demo.\n\nShow demo's UID and GID with id demo.\n\nRun df -h and du -ch on a folder of your choice.\n\nSubmit: the commands and their output, pasted as text. Do not include any password you typed.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "Canonical, Ubuntu Server documentation, section on user management (free online at ubuntu.com/server/docs).",
+        "GNU Project, GNU Coreutils manual, sections on df and du (free online at gnu.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2169/Basics-of-System-Administration-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2169/Basics-of-System-Administration-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_15",
+      "tutorial_number": 15,
+      "week_number": 8,
+      "reading_title": "Reading 15: Linux File Ownership and Permissions",
+      "reading_markdown": "# Reading 15: Linux File Ownership and Permissions\n\n\n### What is it?\n\nEvery file in Linux has an owner (a user) and a group. Every file also has permissions that say what three kinds of people can do with it: the owner (u, for user), members of the group (g), and everyone else (o, for others).\n\nThere are three permissions:\n\n\n| Letter | Permission | On a file | On a folder |\n| --- | --- | --- | --- |\n| r | Read | Open and read it | List what is inside |\n| w | Write | Change it | Add or delete files inside |\n| x | Execute | Run it as a program | Enter it with cd |\n\nYou can see them with ls -l:\n\n-rw-r--r-- 1 anjali anjali 120 Nov  5 10:00 sample.txt\n\nThe first character is - for a file or d for a folder. The next nine are three sets of three: rw- for the owner, r-- for the group and r-- for others. A dash means that permission is off. Then come the owner (anjali) and the group (anjali).\n\nPermissions can also be written as numbers: r = 4, w = 2, x = 1. Add them up for each set. So rw- is 6, r-- is 4, and rwx is 7. chmod 600 means rw------- (only the owner can read and write). chmod 755 means rwxr-xr-x.\n\nEach file's details are stored in an inode, which has a number. A hard link is a second name for the same inode, so both names show the same data. A symbolic link is a shortcut that points to a file's name; if the original is deleted, the shortcut breaks.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| ls -l sample.txt | Shows the permissions, owner and group |\n| chmod 600 sample.txt | Only the owner can read and write |\n| chmod u+x script.sh | Adds execute permission for the owner |\n| chmod o-r sample.txt | Removes read permission for others |\n| sudo chown demo sample.txt | Makes demo the owner |\n| sudo chgrp demo sample.txt | Changes the file's group to demo |\n| ls -i sample.txt | Shows the file's inode number |\n| ln sample.txt hard.txt | Creates a hard link (same inode number) |\n| ln -s sample.txt soft.txt | Creates a symbolic link (its own inode number) |\n\n\n### A real-world example\n\nJoseph manages the Linux server of a diagnostic lab chain in Kozhikode. Patient reports are stored in one folder. He sets the permissions so that the reports team can read and write the files, doctors can only read them, and no one else can open them at all. When an auditor visits, Joseph shows the permissions with ls -l, and the auditor can see exactly who has access.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| chown: changing ownership of 'sample.txt': Operation not permitted | Only the administrator can give a file to another user | Use sudo chown |\n| Permission denied when opening a file | Your user does not have r permission | Check with ls -l; ask the owner to change the permissions |\n| chmod 777 makes a problem go away | It gives everyone every permission, which is unsafe | Give only the permissions that are needed, such as 644 or 600 |\n| A symbolic link shows in red and will not open | The original file was moved or deleted | Recreate the link to the new location |\n| ls -l on a folder shows its contents, not the folder | ls lists what is inside | Use ls -ld foldername to see the folder's own permissions |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 15. In the Ubuntu terminal:\n\nCreate a file called sample.txt with one line in it.\n\nShow its permissions with ls -l.\n\nChange the permissions so that only the owner can read and write it. Show the permissions again.\n\nShow its inode number with ls -i.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU Coreutils manual, sections on chmod, chown, chgrp and ln, and \"File permissions\" (free online at gnu.org).",
+        "William Shotts, The Linux Command Line, chapter 9, \"Permissions\" (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2172/Linux-File-Ownership-and-Permissions-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2172/Linux-File-Ownership-and-Permissions-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_16",
+      "tutorial_number": 16,
+      "week_number": 9,
+      "reading_title": "Reading 16: Simple Filters in Linux",
+      "reading_markdown": "# Reading 16: Simple Filters in Linux\n\n\n### What is it?\n\nA filter is a command that takes text in, does one job on it, and passes the result out. Filters print to the screen, but they are most useful joined with pipes, where each one does a small part of a bigger job.\n\n\n| Filter | Job |\n| --- | --- |\n| head | Shows the first lines of a file (10 unless you say otherwise) |\n| tail | Shows the last lines |\n| sort | Puts lines in order |\n| cut | Picks out certain columns or fields from each line |\n| paste | Joins lines from two files side by side |\n\nBy default, sort sorts like a dictionary, character by character. That means 10 comes before 9, because 1 comes before 9. For numbers, use sort -n.\n\nTo work with fields, tell cut and sort which character separates them, with -d for cut and -t for sort. Put the | in quotes, because on its own the shell reads it as a pipe.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| head -n 3 students.txt | Shows the first 3 lines |\n| tail -n 2 students.txt | Shows the last 2 lines |\n| sort students.txt | Sorts the lines in dictionary order |\n| sort -r file | Sorts in reverse order |\n| sort -n numbers.txt | Sorts by number value |\n| sort -u file | Sorts and removes repeated lines |\n| sort -t'\\|' -k6 -n students.txt | Sorts by the 6th field (stipend), as numbers |\n| cut -d'\\|' -f2 students.txt | Shows only the 2nd field (names) |\n| cut -d'\\|' -f2,4 students.txt | Shows names and cities |\n| cut -c1-4 students.txt | Shows characters 1 to 4 of each line (roll numbers) |\n| paste names.txt cities.txt | Joins the two files line by line, with a tab between |\n\n\n### A real-world example\n\nRekha handles monthly payroll data at a garment exporter in Tiruppur. The payroll system exports a long text file with fields separated by |. To check the five highest payments before approving them, she sorts the file by the amount field in reverse number order, keeps the top five lines with head, and cuts out just the names and amounts. One line of commands gives her a list she can read in seconds.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| 100 is sorted before 20 | sort compares characters, not numbers | Use sort -n |\n| cut: you must specify a list of bytes, characters, or fields | -f or -c is missing | Add -f with field numbers, such as -f2 |\n| cut prints whole lines | The delimiter is wrong, so cut finds only one field | Check the separator and use -d'\\|' with quotes |\n| bash: 2: command not found | The \\| was not in quotes, so the shell read it as a pipe | Write -d'\\|' or -t'\\|' |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 16. Use the tutorial's sample files.\n\nShow the first 3 and the last 3 lines of marks.txt with head and tail.\n\nSort numbers.txt in reverse number order, showing each number only once.\n\nUse cut to show only one column of marks.txt, and paste to join two files side by side.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU Coreutils manual, sections on head, tail, sort, cut and paste (free online at gnu.org).",
+        "William Shotts, The Linux Command Line, chapter 20, \"Text processing\" (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2168/Simple-Filters-in-Linux-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2168/Simple-Filters-in-Linux-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_17",
+      "tutorial_number": 17,
+      "week_number": 9,
+      "reading_title": "Reading 17: Introduction to grep command",
+      "reading_markdown": "# Reading 17: Introduction to grep command\n\n\n### What is it?\n\ngrep searches text. You give it a word or pattern and a file, and it prints every line that contains a match. It is one of the most used commands in Linux, because so much of the system is stored as text: settings, logs, data files and code.\n\nOn its own, grep is case-sensitive: searching for civil does not find Civil. Its options change how it searches and what it shows:\n\n\n| Option | What it does |\n| --- | --- |\n| -i | Ignores the difference between capital and small letters |\n| -v | Shows the lines that do not match |\n| -n | Shows the line number before each match |\n| -c | Shows only how many lines match |\n\nLike the filters in Tutorial 16, grep works well with pipes and redirection. You can save its results to a file with >, or pass them on to another command.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| grep civil students.txt | Shows the lines that contain civil |\n| grep -i CIVIL students.txt | The same, ignoring case |\n| grep -v civil students.txt | Shows the lines that do not contain civil |\n| grep -n pass students.txt | Shows the matching lines with their line numbers |\n| grep -c pass students.txt | Shows how many lines contain pass |\n| grep -v civil students.txt > noncivil.txt | Saves the non-civil lines to a file |\n| grep \"Ravi Kumar\" students.txt | Searches for words with a space; use quotes |\n\n\n### A real-world example\n\nAbhishek is a support engineer for an online ticket-booking site in Ahmedabad. A customer says their payment failed at 9:40 that morning. The server's log file has over a million lines. Abhishek runs grep with the customer's booking number on the log, and in a second he has the six lines about that booking, including the exact error from the payment gateway.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| No output, but you know the word is there | Capital and small letters differ | Add -i |\n| grep: Kumar: No such file or directory | The search words have a space and no quotes | Put the words in quotes: grep \"Ravi Kumar\" file |\n| grep seems to hang | No file name was given, so grep waits for typed input | Press Ctrl + C, then add the file name |\n| The count is lower than expected | -c counts lines, not every match on a line | This is normal: a line with two matches counts once |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 17. Use grepdemo.txt from the tutorial's code files.\n\nShow all lines that contain civil.\n\nShow the same lines, ignoring case.\n\nCount how many lines contain civil.\n\nSave all lines that do not contain civil in a file called nonCivil.txt, and show the file with cat.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU grep manual, \"Invoking grep\" (free online at gnu.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2170/Introduction-to-grep-command-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2170/Introduction-to-grep-command-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_18",
+      "tutorial_number": 18,
+      "week_number": 10,
+      "reading_title": "Reading 18: Mastering grep",
+      "reading_markdown": "# Reading 18: Mastering grep\n\n\n### What is it?\n\nSo far, you have searched for fixed words. A regular expression lets you search for a pattern instead: \"any line that starts with A\", \"a digit followed by 5\", \"a word ending in ing\". Regular expressions look strange at first, but you only need a few symbols to do a lot.\n\n\n| Symbol | Meaning | Example | Matches |\n| --- | --- | --- | --- |\n| ^ | Start of the line | ^A10 | Lines that start with A10 |\n| $ | End of the line | 0$ | Lines that end with 0 |\n| . | Any one character | R.vi | Ravi, Rovi, R5vi |\n| * | The character before it, any number of times (including none) | 90* | 9, 90, 900, 9000 |\n| [ ] | Any one of the characters inside | [0-9] | Any digit |\n| [^ ] | Any character not inside | [^0-9] | Any character that is not a digit |\n\nTo search for any of several patterns at once, give each one with -e.\n\nPut patterns in single quotes, such as grep '^A' file. This stops the shell from changing symbols like * and $ before grep sees them.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| grep -e civil -e mechanical students.txt | Lines with civil or mechanical |\n| grep '^A10' students.txt | Lines that start with A10 |\n| grep '^A..5' students.txt | Lines whose roll number ends in 5 (A, any two characters, then 5) |\n| grep '0$' students.txt | Lines that end with 0 |\n| grep '[KP]' students.txt | Lines with a capital K or a capital P |\n| grep -c 'fail' students.txt | How many students failed |\n\n\n### A real-world example\n\nZoya is a security analyst at a bank's technology centre in Bengaluru. Each morning she checks the server logs for failed logins. Searching for the word \"failed\" gives thousands of lines, so she uses a pattern: lines that start with that morning's date and contain \"failed password\". Within minutes she spots one address that tried to log in two hundred times overnight, and blocks it.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| grep '5$' finds nothing | The line ends with a space or another field after the 5 | Check what is really at the end of the line with cat -A |\n| . matches more than you expected | . means any character, not a full stop | To search for a real full stop, write \\. |\n| * gives strange results without quotes | The shell replaced it with file names | Put the pattern in single quotes |\n| grep civil mechanical file gives an error | grep reads mechanical as a file name | Use -e civil -e mechanical |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 18. Use grepdemo.txt from the tutorial's code files. Write a grep command for each:\n\nLines for students in either of two streams of your choice (use -e).\n\nLines whose roll number ends in 5.\n\nLines that start with a particular letter or roll number.\n\nLines that contain any digit from 6 to 9 in a field you choose.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU grep manual, section 3, \"Regular expressions\" (free online at gnu.org).",
+        "William Shotts, The Linux Command Line, chapter 19, \"Regular expressions\" (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2171/Mastering-grep-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2171/Mastering-grep-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_19",
+      "tutorial_number": 19,
+      "week_number": 10,
+      "reading_title": "Reading 19: Introduction to the Stream Editor sed",
+      "reading_markdown": "# Reading 19: Introduction to the Stream Editor sed\n\n\n### What is it?\n\nsed is a stream editor. It reads a file one line at a time, does what you tell it to each line, and prints the result. It does not open the file in a window like a normal editor, and it does not change the file unless you ask it to. This makes it ideal for working with large files, or with the same change on many files.\n\nA sed instruction has two parts: which lines to work on (the address), and what to do with them (the command). An address can be a line number, a range such as 1,5, or a pattern between slashes, such as /pass/.\n\nBy default, sed prints every line. The -n option switches this off, so sed prints only the lines you ask for with p.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| sed -n '1,3p' students.txt | Prints lines 1 to 3 |\n| sed -n '2p' students.txt | Prints only line 2 |\n| sed -n '$p' students.txt | Prints the last line ($ means the last line) |\n| sed '3q' students.txt | Prints lines up to 3, then quits |\n| sed -n '/civil/p' students.txt | Prints lines that contain civil |\n| sed -n '/fail/!p' students.txt | Prints lines that do not contain fail (! means \"not\") |\n| sed -n '/pass/w passed.txt' students.txt | Writes lines with pass to passed.txt |\n\n\n### A real-world example\n\nHarish is a data analyst at an agricultural research station in Ludhiana. He receives a sensor file with 200,000 lines of readings, and he only needs lines 50,000 to 50,100 to check one day's data. Opening the file in a text editor freezes his computer. With sed -n '50000,50100p' he gets exactly those 101 lines in under a second.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Every matching line appears twice | -n is missing, so sed prints all lines and p prints the matches again | Add -n |\n| sed: -e expression #1, char 2: missing command | The command after the address is missing | Add p, d or another command after the address |\n| bash: !p: event not found | The ! was in double quotes, so the shell treated it as a history command | Use single quotes around sed instructions |\n| The file has not changed | sed only prints the result | This is normal. Save with > to a new file |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 19. Use seddemo.txt from the tutorial's code files.\n\nPrint the first five lines of seddemo.txt.\n\nPrint all lines that do not contain the word failed.\n\nSave all lines that contain the word student to a file called student-list.txt, and show the file with cat.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU sed manual, sections 2 and 4, \"Running sed\" and \"Addresses: selecting lines\" (free online at gnu.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2173/Introduction-to-the-Stream-Editor-sed-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2173/Introduction-to-the-Stream-Editor-sed-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    },
+    {
+      "id": "linux_content_20",
+      "tutorial_number": 20,
+      "week_number": 11,
+      "reading_title": "Reading 20: Text Editing using sed",
+      "reading_markdown": "# Reading 20: Text Editing using sed\n\n\n### What is it?\n\nIn Tutorial 19, sed picked out lines. Now it changes them. The most used sed command is s, for substitute:\n\nsed 's/old/new/' file\n\nThis replaces the first match of old with new on each line. To replace every match on a line, not just the first, add g (global) at the end: s/old/new/g.\n\nYou can give sed several instructions in one command with -e before each one. sed can also insert a line before another (i), add a line after it (a), or delete lines (d).\n\nAs before, sed prints the changed text and leaves the file alone. To save the result, redirect it to a new file with >. The -i option changes the file itself, so use it only once you are sure, and use -i.bak to keep a backup copy.\n\n\n### Commands at a glance\n\n\n| Type this | What it does |\n| --- | --- |\n| sed 's/civil/Civil/' students.txt | Replaces the first civil on each line with Civil |\n| sed 's/a/A/g' students.txt | Replaces every a on each line |\n| sed -e 's/civil/CE/' -e 's/computers/CS/' students.txt | Two replacements in one command |\n| sed '/fail/d' students.txt | Deletes the lines that contain fail |\n| sed '2d' students.txt | Deletes line 2 |\n| sed '1i Roll\\|Name\\|Stream\\|City\\|Result\\|Stipend' students.txt | Inserts a heading line before line 1 |\n| sed 's/civil/CE/' students.txt > new.txt | Saves the changed text in a new file |\n| sed -i.bak 's/civil/CE/' students.txt | Changes the file itself and keeps students.txt.bak |\n\n\n### A real-world example\n\nPallavi works for a state skills mission in Bhopal. Every quarter, she receives a training-centre file from 52 districts, but the district names are spelt in different ways: Hoshangabad in some files, Narmadapuram in others. Before she can combine them, she runs one sed command with several -e instructions to make every spelling the same. A job that took two days by hand now takes a few minutes.\n\n\n### Common mistakes\n\n\n| What you see | Why it happens | How to fix it |\n| --- | --- | --- |\n| Only the first match on each line changed | g is missing | Use s/old/new/g |\n| sed: -e expression #1, char 9: unterminated 's' command | A / is missing | Check there are three slashes: s/old/new/ |\n| The file is unchanged | sed prints the result without saving it | Save with > newfile, or use -i once you are sure |\n| A word inside another word was changed, such as \"pass\" in \"passport\" | sed matches text, not whole words | Make the pattern more exact, for example by including the \\| around a field |\n| sed -i changed the wrong lines and the original is lost | -i replaces the file without a backup | Use -i.bak, which keeps a backup |",
+      "reading_time_minutes": 15,
+      "try_it_instructions": "This is the practice task for Tutorial 20. Use seddemo.txt from the tutorial's code files.\n\nReplace two different words in seddemo.txt in a single sed command, using -e.\n\nDelete all lines for the civil department.\n\nSave the result of step 2 to a new file, and show it with cat.\n\nSubmit: the commands and their output, pasted as text.",
+      "reflection_prompt": "What terminal commands did you run, and what did you learn about how Linux behaves?",
+      "reflection_min_sentences": 3,
+      "key_terms": [],
+      "read_more": [
+        "GNU Project, GNU sed manual, section 3, \"sed scripts\", including \"The s command\" (free online at gnu.org).",
+        "William Shotts, The Linux Command Line, chapter 20, section on sed (free online at linuxcommand.org)."
+      ],
+      "video_url": "https://spoken-tutorial.org/media/videos/194/2174/Text-Editing-using-sed-English.webm",
+      "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2174/Text-Editing-using-sed-Big.png",
+      "code_files_url": "/courses/linux/linux-companion-files.zip",
+      "instruction_sheet_url": "/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
+      "installation_sheet_url": "/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+    }
+  ],
+  "quiz_questions": [
+    {
+      "id": "linux_q_3_1",
+      "tutorial_number": 3,
+      "question_number": 1,
+      "question_text": "Priya wants to open the Calculator app, but it is not in the Dock. What is the quickest way?",
+      "options": {
+        "A": "Restart Ubuntu",
+        "B": "Press the Super key and type \"Calculator\"",
+        "C": "Open the Trash",
+        "D": "Open Settings → Display"
+      },
+      "correct_option": "B",
+      "explanation": "Activities search finds any installed app by name."
+    },
+    {
+      "id": "linux_q_3_2",
+      "tutorial_number": 3,
+      "question_number": 2,
+      "question_text": "In Ubuntu, what does the Dock do?",
+      "options": {
+        "A": "Holds favourite and open apps, like the Windows taskbar",
+        "B": "Shows the date and time",
+        "C": "Stores deleted files",
+        "D": "Changes the wallpaper"
+      },
+      "correct_option": "A",
+      "explanation": "The Dock, on the left side of the screen, holds favourite apps and the apps that are open."
+    },
+    {
+      "id": "linux_q_3_3",
+      "tutorial_number": 3,
+      "question_number": 3,
+      "question_text": "Which keys open a new terminal in Ubuntu?",
+      "options": {
+        "A": "Ctrl + S",
+        "B": "Alt + F4",
+        "C": "Ctrl + Alt + T",
+        "D": "Ctrl + Shift + Esc"
+      },
+      "correct_option": "C",
+      "explanation": "Ctrl + Alt + T opens a terminal. Alt + F4 closes a window."
+    },
+    {
+      "id": "linux_q_3_4",
+      "tutorial_number": 3,
+      "question_number": 4,
+      "question_text": "Arun types Apt list --installed and sees \"command not found\". Why?",
+      "options": {
+        "A": "apt is not installed on Ubuntu",
+        "B": "He needs an internet connection",
+        "C": "The list is too long to show",
+        "D": "Linux is case-sensitive, so Apt is not the same as apt"
+      },
+      "correct_option": "D",
+      "explanation": "Linux treats capital and small letters as different. The command is apt, in lower case."
+    },
+    {
+      "id": "linux_q_3_5",
+      "tutorial_number": 3,
+      "question_number": 5,
+      "question_text": "Fatima deleted a file by mistake a few minutes ago. Where should she look first?",
+      "options": {
+        "A": "In the Trash",
+        "B": "In Settings",
+        "C": "In the top panel",
+        "D": "It is gone for ever"
+      },
+      "correct_option": "A",
+      "explanation": "Files deleted from the Files app go to the Trash, where they can be restored until it is emptied."
+    },
+    {
+      "id": "linux_q_4_1",
+      "tutorial_number": 4,
+      "question_number": 1,
+      "question_text": "What is a repository in Ubuntu?",
+      "options": {
+        "A": "A folder where you save your documents",
+        "B": "A trusted online store of packages that Ubuntu downloads from",
+        "C": "The Trash",
+        "D": "A backup of your system"
+      },
+      "correct_option": "B",
+      "explanation": "Repositories are online stores of packages. APT and Synaptic download software from them."
+    },
+    {
+      "id": "linux_q_4_2",
+      "tutorial_number": 4,
+      "question_number": 2,
+      "question_text": "Neha types apt install vlc and sees \"are you root?\". What should she type?",
+      "options": {
+        "A": "apt install vlc --force",
+        "B": "root apt install vlc",
+        "C": "sudo apt install vlc",
+        "D": "apt vlc install"
+      },
+      "correct_option": "C",
+      "explanation": "Installing software needs administrator rights, so the command must start with sudo."
+    },
+    {
+      "id": "linux_q_4_3",
+      "tutorial_number": 4,
+      "question_number": 3,
+      "question_text": "Why should you run sudo apt update before installing a package?",
+      "options": {
+        "A": "It installs every available package",
+        "B": "It upgrades Ubuntu to a new version",
+        "C": "It deletes old packages",
+        "D": "It downloads the latest list of packages, so apt can find what you ask for"
+      },
+      "correct_option": "D",
+      "explanation": "apt update only refreshes the package list. It does not install or upgrade anything."
+    },
+    {
+      "id": "linux_q_4_4",
+      "tutorial_number": 4,
+      "question_number": 4,
+      "question_text": "Raju runs sudo apt install gimp and sees \"E: Unable to locate package gimp\". What is the most likely fix?",
+      "options": {
+        "A": "Run sudo apt update, then try again",
+        "B": "Restart the computer",
+        "C": "Install gimp from the Trash",
+        "D": "Type the command in capital letters"
+      },
+      "correct_option": "A",
+      "explanation": "This error usually means the package list is out of date, or the name is misspelt."
+    },
+    {
+      "id": "linux_q_4_5",
+      "tutorial_number": 4,
+      "question_number": 5,
+      "question_text": "In Synaptic, after marking packages for installation, what must you click to install them?",
+      "options": {
+        "A": "Reload",
+        "B": "Search",
+        "C": "Apply",
+        "D": "Properties"
+      },
+      "correct_option": "C",
+      "explanation": "Marking only selects packages. Nothing is installed until you click Apply."
+    },
+    {
+      "id": "linux_q_5_1",
+      "tutorial_number": 5,
+      "question_number": 1,
+      "question_text": "What does the shell do?",
+      "options": {
+        "A": "It stores your files",
+        "B": "It connects you to the internet",
+        "C": "It reads the commands you type and runs them",
+        "D": "It installs packages"
+      },
+      "correct_option": "C",
+      "explanation": "The shell reads each command, finds the right program and runs it."
+    },
+    {
+      "id": "linux_q_5_2",
+      "tutorial_number": 5,
+      "question_number": 2,
+      "question_text": "Meena runs type cd and sees \"cd is a shell builtin\". What does this tell her?",
+      "options": {
+        "A": "cd is an internal command, part of the shell itself",
+        "B": "cd is not installed",
+        "C": "cd is an external program in /usr/bin",
+        "D": "cd needs sudo"
+      },
+      "correct_option": "A",
+      "explanation": "A shell builtin is an internal command, built into the shell."
+    },
+    {
+      "id": "linux_q_5_3",
+      "tutorial_number": 5,
+      "question_number": 3,
+      "question_text": "What is the name of the shell Ubuntu uses by default?",
+      "options": {
+        "A": "cmd",
+        "B": "bash",
+        "C": "PowerShell",
+        "D": "apt"
+      },
+      "correct_option": "B",
+      "explanation": "Ubuntu uses bash. echo $SHELL shows /bin/bash."
+    },
+    {
+      "id": "linux_q_5_4",
+      "tutorial_number": 5,
+      "question_number": 4,
+      "question_text": "Running type date shows \"date is /usr/bin/date\". What kind of command is date?",
+      "options": {
+        "A": "Internal",
+        "B": "A package manager",
+        "C": "An alias",
+        "D": "External"
+      },
+      "correct_option": "D",
+      "explanation": "A command stored as a file, such as /usr/bin/date, is external."
+    },
+    {
+      "id": "linux_q_5_5",
+      "tutorial_number": 5,
+      "question_number": 5,
+      "question_text": "Which command shows the folder you are in now?",
+      "options": {
+        "A": "ls",
+        "B": "type",
+        "C": "pwd",
+        "D": "echo"
+      },
+      "correct_option": "C",
+      "explanation": "pwd prints the working directory, the folder you are in."
+    },
+    {
+      "id": "linux_q_6_1",
+      "tutorial_number": 6,
+      "question_number": 1,
+      "question_text": "Which command prints the date as 25-12-2026?",
+      "options": {
+        "A": "date %d-%m-%Y",
+        "B": "date +%Y-%m-%d",
+        "C": "date +%d-%m-%Y",
+        "D": "cal 25 12 2026"
+      },
+      "correct_option": "C",
+      "explanation": "A format starts with +. %d is the day, %m the month and %Y the four-digit year."
+    },
+    {
+      "id": "linux_q_6_2",
+      "tutorial_number": 6,
+      "question_number": 2,
+      "question_text": "Today is 5 November. What does date +%q print?",
+      "options": {
+        "A": "4",
+        "B": "11",
+        "C": "5",
+        "D": "309"
+      },
+      "correct_option": "A",
+      "explanation": "%q prints the quarter of the year. November is in the fourth quarter."
+    },
+    {
+      "id": "linux_q_6_3",
+      "tutorial_number": 6,
+      "question_number": 3,
+      "question_text": "Rohit types cal and sees \"command not found\". What should he do?",
+      "options": {
+        "A": "Type CAL in capitals",
+        "B": "Install it with sudo apt install ncal",
+        "C": "Restart the terminal",
+        "D": "Use date +cal instead"
+      },
+      "correct_option": "B",
+      "explanation": "On Ubuntu, cal comes in the ncal package, which must be installed first."
+    },
+    {
+      "id": "linux_q_6_4",
+      "tutorial_number": 6,
+      "question_number": 4,
+      "question_text": "What does date +%j show?",
+      "options": {
+        "A": "The month name",
+        "B": "The week number",
+        "C": "The time",
+        "D": "The day of the year, from 001 to 366"
+      },
+      "correct_option": "D",
+      "explanation": "%j is the day of the year. 5 November 2026 is day 309."
+    },
+    {
+      "id": "linux_q_6_5",
+      "tutorial_number": 6,
+      "question_number": 5,
+      "question_text": "Sonal wants the time as 14:05, in 24-hour format. Which command should she use?",
+      "options": {
+        "A": "date +%R",
+        "B": "date +%U",
+        "C": "cal +%R",
+        "D": "date %R"
+      },
+      "correct_option": "A",
+      "explanation": "%R prints hours and minutes in 24-hour format. The + is required."
+    },
+    {
+      "id": "linux_q_7_1",
+      "tutorial_number": 7,
+      "question_number": 1,
+      "question_text": "In the command ls -l /etc, what is /etc?",
+      "options": {
+        "A": "The command name",
+        "B": "An option",
+        "C": "The argument",
+        "D": "The shell"
+      },
+      "correct_option": "C",
+      "explanation": "/etc is what the command works on, so it is the argument. -l is the option."
+    },
+    {
+      "id": "linux_q_7_2",
+      "tutorial_number": 7,
+      "question_number": 2,
+      "question_text": "Which command shows hidden files, whose names start with a dot?",
+      "options": {
+        "A": "ls -l",
+        "B": "ls -a",
+        "C": "ls -s",
+        "D": "ls -h"
+      },
+      "correct_option": "B",
+      "explanation": "-a shows all files, including hidden ones."
+    },
+    {
+      "id": "linux_q_7_3",
+      "tutorial_number": 7,
+      "question_number": 3,
+      "question_text": "Kavya has opened man ls and wants to get back to the prompt. What should she press?",
+      "options": {
+        "A": "q",
+        "B": "Enter",
+        "C": "Ctrl + S",
+        "D": "exit"
+      },
+      "correct_option": "A",
+      "explanation": "Pressing q quits a man page."
+    },
+    {
+      "id": "linux_q_7_4",
+      "tutorial_number": 7,
+      "question_number": 4,
+      "question_text": "Which command is the same as ls -a -l -h?",
+      "options": {
+        "A": "ls -a, -l, -h",
+        "B": "ls a l h",
+        "C": "ls --alh",
+        "D": "ls -alh"
+      },
+      "correct_option": "D",
+      "explanation": "Short options can be joined after one dash. Long options use two dashes and full words."
+    },
+    {
+      "id": "linux_q_7_5",
+      "tutorial_number": 7,
+      "question_number": 5,
+      "question_text": "Imran wants to rename files but does not know which command does it. What can he try first?",
+      "options": {
+        "A": "man rename-files",
+        "B": "apropos rename",
+        "C": "ls --rename",
+        "D": "type rename"
+      },
+      "correct_option": "B",
+      "explanation": "apropos searches all manual pages for a word, so it helps when you do not know the command's name."
+    },
+    {
+      "id": "linux_q_8_1",
+      "tutorial_number": 8,
+      "question_number": 1,
+      "question_text": "What does echo -e \"Hi\\nThere\" print?",
+      "options": {
+        "A": "Hi\\nThere",
+        "B": "Hi There, on one line",
+        "C": "Hi and There on two separate lines",
+        "D": "Nothing"
+      },
+      "correct_option": "C",
+      "explanation": "With -e, \\n starts a new line."
+    },
+    {
+      "id": "linux_q_8_2",
+      "tutorial_number": 8,
+      "question_number": 2,
+      "question_text": "Sunil types echo \"A\\tB\" (without -e) and sees A\\tB. Why?",
+      "options": {
+        "A": "Without -e, echo prints the backslash and letter as they are",
+        "B": "\\t is not a real escape sequence",
+        "C": "Tabs cannot be shown in the terminal",
+        "D": "echo needs sudo"
+      },
+      "correct_option": "A",
+      "explanation": "echo only treats \\t as a tab when you add the -e option."
+    },
+    {
+      "id": "linux_q_8_3",
+      "tutorial_number": 8,
+      "question_number": 3,
+      "question_text": "Which command shows the version of the Linux kernel?",
+      "options": {
+        "A": "who",
+        "B": "date",
+        "C": "lsb_release -a",
+        "D": "uname -r"
+      },
+      "correct_option": "D",
+      "explanation": "uname -r shows the kernel version. lsb_release -a shows the Ubuntu version."
+    },
+    {
+      "id": "linux_q_8_4",
+      "tutorial_number": 8,
+      "question_number": 4,
+      "question_text": "Which command shows who is logged in and since when?",
+      "options": {
+        "A": "whoami",
+        "B": "who",
+        "C": "passwd",
+        "D": "pwd"
+      },
+      "correct_option": "B",
+      "explanation": "who lists logged-in users and their login times. whoami shows only your own username."
+    },
+    {
+      "id": "linux_q_8_5",
+      "tutorial_number": 8,
+      "question_number": 5,
+      "question_text": "Lata wants to change her own password. Which command should she use?",
+      "options": {
+        "A": "echo password",
+        "B": "uname -p",
+        "C": "passwd",
+        "D": "sudo apt password"
+      },
+      "correct_option": "C",
+      "explanation": "passwd asks for the current password, then the new one twice."
+    },
+    {
+      "id": "linux_q_9_1",
+      "tutorial_number": 9,
+      "question_number": 1,
+      "question_text": "What does / mean at the start of a path?",
+      "options": {
+        "A": "Your home directory",
+        "B": "The root directory, the top of the file system",
+        "C": "The folder you are in now",
+        "D": "The folder above"
+      },
+      "correct_option": "B",
+      "explanation": "Every absolute path starts from the root directory, /."
+    },
+    {
+      "id": "linux_q_9_2",
+      "tutorial_number": 9,
+      "question_number": 2,
+      "question_text": "Arjun is in /home/arjun/projects. He runs cd .. and then pwd. What does he see?",
+      "options": {
+        "A": "/home/arjun/projects",
+        "B": "/home",
+        "C": "/",
+        "D": "/home/arjun"
+      },
+      "correct_option": "D",
+      "explanation": ".. means the folder above, so he moves up one level."
+    },
+    {
+      "id": "linux_q_9_3",
+      "tutorial_number": 9,
+      "question_number": 3,
+      "question_text": "Sneha runs rmdir reports and sees \"Directory not empty\". What does this mean?",
+      "options": {
+        "A": "rmdir only removes empty folders, so the folder was not removed",
+        "B": "The folder has been removed",
+        "C": "The folder does not exist",
+        "D": "She needs to restart Ubuntu"
+      },
+      "correct_option": "A",
+      "explanation": "rmdir refuses to remove a folder with something in it. This protects you from deleting files by mistake."
+    },
+    {
+      "id": "linux_q_9_4",
+      "tutorial_number": 9,
+      "question_number": 4,
+      "question_text": "Which command creates a and b inside it in one step, even if a does not exist yet?",
+      "options": {
+        "A": "mkdir a/b",
+        "B": "cd a/b",
+        "C": "mkdir -p a/b",
+        "D": "rmdir a/b"
+      },
+      "correct_option": "C",
+      "explanation": "The -p option creates any missing parent folders as well."
+    },
+    {
+      "id": "linux_q_9_5",
+      "tutorial_number": 9,
+      "question_number": 5,
+      "question_text": "Which of these is a relative path?",
+      "options": {
+        "A": "reports/june.txt",
+        "B": "/etc/hosts",
+        "C": "/home/ravi/reports",
+        "D": "/"
+      },
+      "correct_option": "A",
+      "explanation": "It does not start with /, so it is read from the folder you are in now."
+    },
+    {
+      "id": "linux_q_10_1",
+      "tutorial_number": 10,
+      "question_number": 1,
+      "question_text": "Ravi runs cp report.txt summary.txt, and summary.txt already exists. What happens?",
+      "options": {
+        "A": "Linux asks him first",
+        "B": "summary.txt is replaced without any warning",
+        "C": "The copy is cancelled",
+        "D": "A file called summary2.txt is made"
+      },
+      "correct_option": "B",
+      "explanation": "cp overwrites silently unless you use -i to be asked."
+    },
+    {
+      "id": "linux_q_10_2",
+      "tutorial_number": 10,
+      "question_number": 2,
+      "question_text": "wc notes.txt prints 4 20 110 notes.txt. What is 20?",
+      "options": {
+        "A": "The number of lines",
+        "B": "The number of bytes",
+        "C": "The number of words",
+        "D": "The number of files"
+      },
+      "correct_option": "C",
+      "explanation": "wc prints lines, then words, then bytes, then the file name."
+    },
+    {
+      "id": "linux_q_10_3",
+      "tutorial_number": 10,
+      "question_number": 3,
+      "question_text": "Asha runs cmp a.txt b.txt and nothing is printed. What does this mean?",
+      "options": {
+        "A": "The two files are exactly the same",
+        "B": "The command failed",
+        "C": "Both files are empty",
+        "D": "The files are completely different"
+      },
+      "correct_option": "A",
+      "explanation": "cmp prints nothing when the files match, and reports the first difference when they do not."
+    },
+    {
+      "id": "linux_q_10_4",
+      "tutorial_number": 10,
+      "question_number": 4,
+      "question_text": "Which command renames draft.txt to final.txt?",
+      "options": {
+        "A": "cp draft.txt final.txt",
+        "B": "rm draft.txt final.txt",
+        "C": "rename draft.txt",
+        "D": "mv draft.txt final.txt"
+      },
+      "correct_option": "D",
+      "explanation": "mv moves or renames. cp would leave the old file in place."
+    },
+    {
+      "id": "linux_q_10_5",
+      "tutorial_number": 10,
+      "question_number": 5,
+      "question_text": "Mohan runs cp -b data.txt old.txt, where old.txt already exists. What happens to the old version of old.txt?",
+      "options": {
+        "A": "It is deleted for ever",
+        "B": "It is saved as old.txt~",
+        "C": "It goes to the Trash",
+        "D": "Nothing; cp refuses to run"
+      },
+      "correct_option": "B",
+      "explanation": "-b keeps a backup of the file being replaced, with ~ added to its name."
+    },
+    {
+      "id": "linux_q_11_1",
+      "tutorial_number": 11,
+      "question_number": 1,
+      "question_text": "What is the difference between > and >>?",
+      "options": {
+        "A": "There is no difference",
+        "B": "> adds to a file; >> replaces it",
+        "C": "> replaces the file's contents; >> adds to the end",
+        "D": "> is for errors; >> is for output"
+      },
+      "correct_option": "C",
+      "explanation": "> overwrites the file. >> appends to it."
+    },
+    {
+      "id": "linux_q_11_2",
+      "tutorial_number": 11,
+      "question_number": 2,
+      "question_text": "Leela wants to save only the error messages from a command in errors.log. What should she add?",
+      "options": {
+        "A": "2> errors.log",
+        "B": "> errors.log",
+        "C": "< errors.log",
+        "D": "| errors.log"
+      },
+      "correct_option": "A",
+      "explanation": "Errors go to stream 2, standard error, so 2> sends them to a file."
+    },
+    {
+      "id": "linux_q_11_3",
+      "tutorial_number": 11,
+      "question_number": 3,
+      "question_text": "What does ls | wc -l print?",
+      "options": {
+        "A": "The names of all files",
+        "B": "The number of entries in the current folder",
+        "C": "The size of each file",
+        "D": "An error, because ls and wc cannot be joined"
+      },
+      "correct_option": "B",
+      "explanation": "The pipe sends ls's list into wc -l, which counts the lines, one for each entry."
+    },
+    {
+      "id": "linux_q_11_4",
+      "tutorial_number": 11,
+      "question_number": 4,
+      "question_text": "What is the file descriptor number for standard output?",
+      "options": {
+        "A": "0",
+        "B": "2",
+        "C": "3",
+        "D": "1"
+      },
+      "correct_option": "D",
+      "explanation": "Standard input is 0, standard output is 1 and standard error is 2."
+    },
+    {
+      "id": "linux_q_11_5",
+      "tutorial_number": 11,
+      "question_number": 5,
+      "question_text": "Ajay runs echo Hello > greet.txt and then echo Bye > greet.txt. What is in greet.txt now?",
+      "options": {
+        "A": "Bye",
+        "B": "Hello",
+        "C": "Hello and Bye on two lines",
+        "D": "Nothing"
+      },
+      "correct_option": "A",
+      "explanation": "The second > replaced the whole file. To keep both lines he would use >>."
+    },
+    {
+      "id": "linux_q_12_1",
+      "tutorial_number": 12,
+      "question_number": 1,
+      "question_text": "What is a process?",
+      "options": {
+        "A": "A file stored on the disk",
+        "B": "A program that is running",
+        "C": "A folder in /home",
+        "D": "A type of package"
+      },
+      "correct_option": "B",
+      "explanation": "A program becomes a process when it starts running."
+    },
+    {
+      "id": "linux_q_12_2",
+      "tutorial_number": 12,
+      "question_number": 2,
+      "question_text": "In the output of ps -ef, what does the PPID column show?",
+      "options": {
+        "A": "The PID of the parent process that started this one",
+        "B": "The user who owns the process",
+        "C": "How much memory the process uses",
+        "D": "The process's password"
+      },
+      "correct_option": "A",
+      "explanation": "PPID is the parent process ID."
+    },
+    {
+      "id": "linux_q_12_3",
+      "tutorial_number": 12,
+      "question_number": 3,
+      "question_text": "Kiran runs ps and sees only two lines: bash and ps. Why?",
+      "options": {
+        "A": "Only two programs are running on the whole computer",
+        "B": "ps is broken",
+        "C": "Plain ps shows only the processes from this terminal",
+        "D": "He needs sudo"
+      },
+      "correct_option": "C",
+      "explanation": "Without options, ps shows only this terminal's processes. ps -ef shows every process."
+    },
+    {
+      "id": "linux_q_12_4",
+      "tutorial_number": 12,
+      "question_number": 4,
+      "question_text": "Pooja types ls in the terminal. Which is the parent process of ls?",
+      "options": {
+        "A": "systemd",
+        "B": "ps",
+        "C": "ls itself",
+        "D": "The shell, bash"
+      },
+      "correct_option": "D",
+      "explanation": "The shell starts each command you type, so bash is the parent and ls is the child."
+    },
+    {
+      "id": "linux_q_12_5",
+      "tutorial_number": 12,
+      "question_number": 5,
+      "question_text": "Which process has PID 1 on Ubuntu?",
+      "options": {
+        "A": "bash",
+        "B": "systemd, the first process started when Linux boots",
+        "C": "ps",
+        "D": "The terminal"
+      },
+      "correct_option": "B",
+      "explanation": "systemd starts first and every other process descends from it."
+    },
+    {
+      "id": "linux_q_13_1",
+      "tutorial_number": 13,
+      "question_number": 1,
+      "question_text": "Which command shows your home directory?",
+      "options": {
+        "A": "echo HOME",
+        "B": "echo $HOME",
+        "C": "env HOME=",
+        "D": "history HOME"
+      },
+      "correct_option": "B",
+      "explanation": "The $ tells the shell to use the variable's value."
+    },
+    {
+      "id": "linux_q_13_2",
+      "tutorial_number": 13,
+      "question_number": 2,
+      "question_text": "What does the PATH variable do?",
+      "options": {
+        "A": "It lists the folders the shell searches to find a command",
+        "B": "It stores your password",
+        "C": "It sets the colour of the terminal",
+        "D": "It shows the folder you are in"
+      },
+      "correct_option": "A",
+      "explanation": "When you type a command, the shell looks for it in each folder listed in PATH."
+    },
+    {
+      "id": "linux_q_13_3",
+      "tutorial_number": 13,
+      "question_number": 3,
+      "question_text": "Which command creates an alias called la for ls -a?",
+      "options": {
+        "A": "alias la = 'ls -a'",
+        "B": "la='ls -a'",
+        "C": "alias la='ls -a'",
+        "D": "alias ls -a la"
+      },
+      "correct_option": "C",
+      "explanation": "An alias is created with alias name='command', with no spaces around =."
+    },
+    {
+      "id": "linux_q_13_4",
+      "tutorial_number": 13,
+      "question_number": 4,
+      "question_text": "Ritu changed her prompt with PS1 yesterday. Today, in a new terminal, the old prompt is back. Why?",
+      "options": {
+        "A": "Ubuntu was updated overnight",
+        "B": "PS1 can only be changed by the administrator",
+        "C": "She typed it wrongly",
+        "D": "Changes typed in the terminal last only until it is closed"
+      },
+      "correct_option": "D",
+      "explanation": "To keep the change, it must be added to ~/.bashrc."
+    },
+    {
+      "id": "linux_q_13_5",
+      "tutorial_number": 13,
+      "question_number": 5,
+      "question_text": "What does !! do?",
+      "options": {
+        "A": "Runs the last command again",
+        "B": "Deletes the history",
+        "C": "Shows the first command in history",
+        "D": "Closes the terminal"
+      },
+      "correct_option": "A",
+      "explanation": "!! repeats the last command."
+    },
+    {
+      "id": "linux_q_14_1",
+      "tutorial_number": 14,
+      "question_number": 1,
+      "question_text": "Which command shows a user's UID and GID?",
+      "options": {
+        "A": "df -h",
+        "B": "who",
+        "C": "id",
+        "D": "du -ch"
+      },
+      "correct_option": "C",
+      "explanation": "id shows the user's UID, GID and groups."
+    },
+    {
+      "id": "linux_q_14_2",
+      "tutorial_number": 14,
+      "question_number": 2,
+      "question_text": "Ganesh wants to know how much free space is left on the disk. Which command should he use?",
+      "options": {
+        "A": "df -h",
+        "B": "du -ch",
+        "C": "ls -l",
+        "D": "free"
+      },
+      "correct_option": "A",
+      "explanation": "df shows free space on each disk. du shows how much space a folder uses."
+    },
+    {
+      "id": "linux_q_14_3",
+      "tutorial_number": 14,
+      "question_number": 3,
+      "question_text": "Rekha runs su - demo and types her own password. She sees \"Authentication failure\". Why?",
+      "options": {
+        "A": "su needs sudo before it",
+        "B": "The user demo does not exist",
+        "C": "su is not installed",
+        "D": "su asks for the password of the user she is switching to"
+      },
+      "correct_option": "D",
+      "explanation": "To switch to demo, she needs demo's password."
+    },
+    {
+      "id": "linux_q_14_4",
+      "tutorial_number": 14,
+      "question_number": 4,
+      "question_text": "On a new Ubuntu system, Mahesh creates his first account during installation. What is its UID most likely to be?",
+      "options": {
+        "A": "0",
+        "B": "1000",
+        "C": "1",
+        "D": "500"
+      },
+      "correct_option": "B",
+      "explanation": "On Ubuntu, regular user accounts start at UID 1000. UID 0 is the administrator, root."
+    },
+    {
+      "id": "linux_q_14_5",
+      "tutorial_number": 14,
+      "question_number": 5,
+      "question_text": "What does du -ch ~/reports show?",
+      "options": {
+        "A": "Free space on the disk",
+        "B": "The permissions of each file",
+        "C": "The space used by each folder in reports, with a total",
+        "D": "Who owns the reports folder"
+      },
+      "correct_option": "C",
+      "explanation": "du shows space used. -c adds a total and -h shows sizes in K, M and G."
+    },
+    {
+      "id": "linux_q_15_1",
+      "tutorial_number": 15,
+      "question_number": 1,
+      "question_text": "ls -l shows -rw-r----- for report.txt. Who can read the file?",
+      "options": {
+        "A": "Everyone",
+        "B": "Only the owner",
+        "C": "The owner and members of the file's group",
+        "D": "No one"
+      },
+      "correct_option": "C",
+      "explanation": "rw- is the owner's set, r-- the group's and --- others'. So the owner and the group can read it."
+    },
+    {
+      "id": "linux_q_15_2",
+      "tutorial_number": 15,
+      "question_number": 2,
+      "question_text": "Which command lets only the owner read and write notes.txt?",
+      "options": {
+        "A": "chmod 600 notes.txt",
+        "B": "chmod 777 notes.txt",
+        "C": "chmod 644 notes.txt",
+        "D": "chown 600 notes.txt"
+      },
+      "correct_option": "A",
+      "explanation": "6 (rw-) for the owner and 0 (---) for the group and others."
+    },
+    {
+      "id": "linux_q_15_3",
+      "tutorial_number": 15,
+      "question_number": 3,
+      "question_text": "What does chmod 755 script.sh give?",
+      "options": {
+        "A": "rw-rw-rw-",
+        "B": "rwxr-xr-x",
+        "C": "rwx------",
+        "D": "r-xr-xr-x"
+      },
+      "correct_option": "B",
+      "explanation": "7 = rwx for the owner, and 5 = r-x for the group and for others."
+    },
+    {
+      "id": "linux_q_15_4",
+      "tutorial_number": 15,
+      "question_number": 4,
+      "question_text": "Suresh runs chown demo file.txt and sees \"Operation not permitted\". What should he do?",
+      "options": {
+        "A": "Use chmod instead",
+        "B": "Delete the file and create it again",
+        "C": "Rename the file",
+        "D": "Run sudo chown demo file.txt"
+      },
+      "correct_option": "D",
+      "explanation": "Changing a file's owner needs administrator rights."
+    },
+    {
+      "id": "linux_q_15_5",
+      "tutorial_number": 15,
+      "question_number": 5,
+      "question_text": "Asha creates a symbolic link to notes.txt and then deletes notes.txt. What happens to the link?",
+      "options": {
+        "A": "It still works, with the original contents",
+        "B": "It is deleted automatically",
+        "C": "It breaks, because the name it points to is gone",
+        "D": "It becomes a hard link"
+      },
+      "correct_option": "C",
+      "explanation": "A symbolic link points to a name. A hard link would still work, because it points to the same inode."
+    },
+    {
+      "id": "linux_q_16_1",
+      "tutorial_number": 16,
+      "question_number": 1,
+      "question_text": "Which command shows the first 3 lines of data.txt?",
+      "options": {
+        "A": "tail -n 3 data.txt",
+        "B": "head -n 3 data.txt",
+        "C": "cut -c3 data.txt",
+        "D": "sort -3 data.txt"
+      },
+      "correct_option": "B",
+      "explanation": "head shows the first lines, and -n 3 sets how many."
+    },
+    {
+      "id": "linux_q_16_2",
+      "tutorial_number": 16,
+      "question_number": 2,
+      "question_text": "A file has three lines: 9, 10 and 100. What does sort print?",
+      "options": {
+        "A": "10, 100, 9",
+        "B": "9, 10, 100",
+        "C": "100, 10, 9",
+        "D": "9, 100, 10"
+      },
+      "correct_option": "A",
+      "explanation": "Without -n, sort compares character by character, so lines starting with 1 come before 9. sort -n would give 9, 10, 100."
+    },
+    {
+      "id": "linux_q_16_3",
+      "tutorial_number": 16,
+      "question_number": 3,
+      "question_text": "In students.txt the fields are separated by |. Which command shows only the city, the 4th field?",
+      "options": {
+        "A": "cut -c4 students.txt",
+        "B": "cut -f4 students.txt",
+        "C": "cut -d'|' -f4 students.txt",
+        "D": "sort -k4 students.txt"
+      },
+      "correct_option": "C",
+      "explanation": "-d'|' tells cut the separator, and -f4 picks the 4th field."
+    },
+    {
+      "id": "linux_q_16_4",
+      "tutorial_number": 16,
+      "question_number": 4,
+      "question_text": "What does sort -u do?",
+      "options": {
+        "A": "Sorts in reverse",
+        "B": "Sorts upper-case letters first",
+        "C": "Sorts by number value",
+        "D": "Sorts and removes repeated lines"
+      },
+      "correct_option": "D",
+      "explanation": "-u keeps only one copy of each line."
+    },
+    {
+      "id": "linux_q_16_5",
+      "tutorial_number": 16,
+      "question_number": 5,
+      "question_text": "Kumar has a file of roll numbers and a file of names, in the same order. Which command puts each roll number beside its name?",
+      "options": {
+        "A": "paste rolls.txt names.txt",
+        "B": "cut rolls.txt names.txt",
+        "C": "sort rolls.txt names.txt",
+        "D": "head rolls.txt names.txt"
+      },
+      "correct_option": "A",
+      "explanation": "paste joins the files line by line, side by side."
+    },
+    {
+      "id": "linux_q_17_1",
+      "tutorial_number": 17,
+      "question_number": 1,
+      "question_text": "Which command shows every line in log.txt that contains error, whether written as error, Error or ERROR?",
+      "options": {
+        "A": "grep error log.txt",
+        "B": "grep -v error log.txt",
+        "C": "grep -i error log.txt",
+        "D": "grep -c error log.txt"
+      },
+      "correct_option": "C",
+      "explanation": "-i ignores the difference between capital and small letters."
+    },
+    {
+      "id": "linux_q_17_2",
+      "tutorial_number": 17,
+      "question_number": 2,
+      "question_text": "What does grep -v pass results.txt show?",
+      "options": {
+        "A": "The lines that do not contain pass",
+        "B": "The lines that contain pass",
+        "C": "The number of lines with pass",
+        "D": "The version of grep"
+      },
+      "correct_option": "A",
+      "explanation": "-v shows the lines that do not match."
+    },
+    {
+      "id": "linux_q_17_3",
+      "tutorial_number": 17,
+      "question_number": 3,
+      "question_text": "Sita wants to know only how many lines in students.txt contain computers. Which command should she use?",
+      "options": {
+        "A": "grep -n computers students.txt",
+        "B": "grep -c computers students.txt",
+        "C": "wc computers students.txt",
+        "D": "grep -i computers students.txt"
+      },
+      "correct_option": "B",
+      "explanation": "-c prints only the number of matching lines."
+    },
+    {
+      "id": "linux_q_17_4",
+      "tutorial_number": 17,
+      "question_number": 4,
+      "question_text": "Ravi types grep Ravi Kumar students.txt and sees an error about a file called Kumar. Why?",
+      "options": {
+        "A": "grep cannot search for names",
+        "B": "The file is empty",
+        "C": "grep needs -i",
+        "D": "Without quotes, grep reads Kumar as a file name"
+      },
+      "correct_option": "D",
+      "explanation": "Words with a space must be in quotes: grep \"Ravi Kumar\" students.txt."
+    },
+    {
+      "id": "linux_q_17_5",
+      "tutorial_number": 17,
+      "question_number": 5,
+      "question_text": "Which option shows the line number before each matching line?",
+      "options": {
+        "A": "-n",
+        "B": "-c",
+        "C": "-v",
+        "D": "-l"
+      },
+      "correct_option": "A",
+      "explanation": "-n adds the line number."
+    },
+    {
+      "id": "linux_q_18_1",
+      "tutorial_number": 18,
+      "question_number": 1,
+      "question_text": "What does grep '^S' names.txt show?",
+      "options": {
+        "A": "Lines that end with S",
+        "B": "Lines that start with S",
+        "C": "Lines that contain no S",
+        "D": "Lines with S anywhere"
+      },
+      "correct_option": "B",
+      "explanation": "^ means the start of the line."
+    },
+    {
+      "id": "linux_q_18_2",
+      "tutorial_number": 18,
+      "question_number": 2,
+      "question_text": "Which pattern matches lines that end with the word pass?",
+      "options": {
+        "A": "pass$",
+        "B": "^pass",
+        "C": "pass*",
+        "D": "[pass]"
+      },
+      "correct_option": "A",
+      "explanation": "$ means the end of the line."
+    },
+    {
+      "id": "linux_q_18_3",
+      "tutorial_number": 18,
+      "question_number": 3,
+      "question_text": "What does [0-9] match?",
+      "options": {
+        "A": "The text 0-9",
+        "B": "Only the digit 0 or 9",
+        "C": "Any one digit from 0 to 9",
+        "D": "Any number of digits"
+      },
+      "correct_option": "C",
+      "explanation": "Square brackets match any one character in the set, and 0-9 is the range of digits."
+    },
+    {
+      "id": "linux_q_18_4",
+      "tutorial_number": 18,
+      "question_number": 4,
+      "question_text": "In the pattern R.m, which of these would match?",
+      "options": {
+        "A": "Rm",
+        "B": "Raam",
+        "C": "rem",
+        "D": "Ram"
+      },
+      "correct_option": "D",
+      "explanation": ". matches exactly one character, so R.m matches Ram but not Rm or Raam. rem fails because R is a capital letter."
+    },
+    {
+      "id": "linux_q_18_5",
+      "tutorial_number": 18,
+      "question_number": 5,
+      "question_text": "Which command shows lines that contain either Pune or Kochi?",
+      "options": {
+        "A": "grep Pune Kochi file",
+        "B": "grep -v Pune -v Kochi file",
+        "C": "grep -c Pune Kochi file",
+        "D": "grep -e Pune -e Kochi file"
+      },
+      "correct_option": "D",
+      "explanation": "Each -e adds a pattern. Without -e, grep would read Kochi as a file name."
+    },
+    {
+      "id": "linux_q_19_1",
+      "tutorial_number": 19,
+      "question_number": 1,
+      "question_text": "Which command prints only lines 2 to 4 of data.txt?",
+      "options": {
+        "A": "sed '2,4p' data.txt",
+        "B": "sed -n '2,4p' data.txt",
+        "C": "sed -n '2p,4p' data.txt",
+        "D": "head -n 4 data.txt"
+      },
+      "correct_option": "B",
+      "explanation": "-n stops sed printing every line, and 2,4p prints only that range."
+    },
+    {
+      "id": "linux_q_19_2",
+      "tutorial_number": 19,
+      "question_number": 2,
+      "question_text": "Neha runs sed '/pass/p' students.txt without -n. What happens?",
+      "options": {
+        "A": "Only the lines with pass are printed",
+        "B": "Nothing is printed",
+        "C": "Every line is printed, and lines with pass are printed twice",
+        "D": "The lines with pass are deleted"
+      },
+      "correct_option": "C",
+      "explanation": "sed prints every line by default, and p prints the matching lines again."
+    },
+    {
+      "id": "linux_q_19_3",
+      "tutorial_number": 19,
+      "question_number": 3,
+      "question_text": "What does $ mean in sed -n '$p' file.txt?",
+      "options": {
+        "A": "The last line",
+        "B": "The first line",
+        "C": "A variable",
+        "D": "Every line"
+      },
+      "correct_option": "A",
+      "explanation": "In a sed address, $ means the last line."
+    },
+    {
+      "id": "linux_q_19_4",
+      "tutorial_number": 19,
+      "question_number": 4,
+      "question_text": "Which command prints the lines that do not contain fail?",
+      "options": {
+        "A": "sed -n '/fail/p' file",
+        "B": "sed -n 'fail!p' file",
+        "C": "sed '/fail/' file",
+        "D": "sed -n '/fail/!p' file"
+      },
+      "correct_option": "D",
+      "explanation": "! after the address means \"not\", so p prints the lines that do not match."
+    },
+    {
+      "id": "linux_q_19_5",
+      "tutorial_number": 19,
+      "question_number": 5,
+      "question_text": "Arun runs sed -n '1,5p' report.txt. What happens to report.txt?",
+      "options": {
+        "A": "Nothing; sed only prints the lines",
+        "B": "Lines 6 onwards are deleted",
+        "C": "Lines 1 to 5 are deleted",
+        "D": "The file is renamed"
+      },
+      "correct_option": "A",
+      "explanation": "sed does not change the file unless you tell it to with -i or save the output with >."
+    },
+    {
+      "id": "linux_q_20_1",
+      "tutorial_number": 20,
+      "question_number": 1,
+      "question_text": "A line reads \"red car, red bus\". What does sed 's/red/blue/' print?",
+      "options": {
+        "A": "blue car, blue bus",
+        "B": "red car, blue bus",
+        "C": "blue car, red bus",
+        "D": "red car, red bus"
+      },
+      "correct_option": "C",
+      "explanation": "Without g, only the first match on each line is replaced."
+    },
+    {
+      "id": "linux_q_20_2",
+      "tutorial_number": 20,
+      "question_number": 2,
+      "question_text": "Which command replaces every Mumbai with Bombay on each line?",
+      "options": {
+        "A": "sed 's/Mumbai/Bombay/g' file",
+        "B": "sed 's/Mumbai/Bombay/' file",
+        "C": "sed '/Mumbai/Bombay/' file",
+        "D": "sed -n 's/Mumbai/Bombay/' file"
+      },
+      "correct_option": "A",
+      "explanation": "The g flag replaces every match on the line."
+    },
+    {
+      "id": "linux_q_20_3",
+      "tutorial_number": 20,
+      "question_number": 3,
+      "question_text": "Which command deletes all lines that contain test?",
+      "options": {
+        "A": "sed 's/test//' file",
+        "B": "sed -n '/test/p' file",
+        "C": "sed '/test/d' file",
+        "D": "sed '/test/!d' file"
+      },
+      "correct_option": "C",
+      "explanation": "d deletes the lines that match the address. s/test// would only remove the word."
+    },
+    {
+      "id": "linux_q_20_4",
+      "tutorial_number": 20,
+      "question_number": 4,
+      "question_text": "Priya wants to make two different replacements in one sed command. What should she use?",
+      "options": {
+        "A": "Two s commands with -e before each",
+        "B": "The g flag",
+        "C": "The -n option",
+        "D": "The d command"
+      },
+      "correct_option": "A",
+      "explanation": "Each -e adds one more instruction to the same command."
+    },
+    {
+      "id": "linux_q_20_5",
+      "tutorial_number": 20,
+      "question_number": 5,
+      "question_text": "Imran runs sed 's/old/new/' notes.txt and then cat notes.txt. The word old is still there. Why?",
+      "options": {
+        "A": "sed only works on new files",
+        "B": "sed printed the change but did not save it to notes.txt",
+        "C": "The command needs sudo",
+        "D": "old is a reserved word"
+      },
+      "correct_option": "B",
+      "explanation": "sed prints the result. To save it, redirect to a new file with >, or use -i."
+    }
+  ]
+}

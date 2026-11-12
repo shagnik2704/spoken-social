@@ -276,6 +276,7 @@ async def get_tutorial_content(
         "videoDurationSeconds": content.video_duration_seconds if content else None,
         "codeFilesUrl": (content.code_files_url if content and content.code_files_url else tutorial.code_files_url),
         "instructionSheetUrl": (content.instruction_sheet_url if content and content.instruction_sheet_url else tutorial.instruction_sheet_url),
+        "installationSheetUrl": (content.installation_sheet_url if content and content.installation_sheet_url else tutorial.installation_sheet_url),
         "assignmentUrl": (content.assignment_url if content and content.assignment_url else tutorial.assignment_url),
         "assignmentInstructions": (content.assignment_instructions if content and content.assignment_instructions else tutorial.assignment_instructions),
         "content": {

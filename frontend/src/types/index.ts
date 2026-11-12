@@ -246,6 +246,7 @@ export interface LearnerPackTutorialDetail {
     videoDurationSeconds?: number | null
     codeFilesUrl?: string | null
     instructionSheetUrl?: string | null
+    installationSheetUrl?: string | null
     assignmentUrl?: string | null
     assignmentInstructions?: string | null
     content: TutorialContentData | null

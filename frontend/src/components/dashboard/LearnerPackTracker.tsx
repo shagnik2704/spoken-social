@@ -18,7 +18,7 @@ import {
     PlayCircle, HelpCircle, PenTool, Sparkles,
     Heart, Lightbulb, Compass,
     Check, ArrowRight, ExternalLink, FileText, Code2, Loader2,
-    Download, ChevronLeft, ChevronRight
+    Download, ChevronLeft, ChevronRight, FolderArchive, Terminal, Wrench
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -42,8 +42,8 @@ import type {
     HabitLogCheckinItem
 } from '@/types'
 
-// Week titles mapping
-const WEEK_TITLES: Record<number, string> = {
+// Week titles mapping per course
+const PERSONALITY_DEV_WEEKS: Record<number, string> = {
     1: 'Week 1: Introduction to Emotions & Understanding Fear',
     2: 'Week 2: Understanding Anger & Sadness',
     3: 'Week 3: Happiness, Guilt & 7-Day Emotion Log',
@@ -58,6 +58,28 @@ const WEEK_TITLES: Record<number, string> = {
     12: 'Week 12: Personal Growth Portfolio & Final Exam Prep'
 }
 
+const LINUX_WEEKS: Record<number, string> = {
+    1: 'Week 1: VirtualBox & Ubuntu Linux Installation (Tutorials 1–2)',
+    2: 'Week 2: Ubuntu Desktop, Synaptic & Lab 1 (Tutorials 3–4)',
+    3: 'Week 3: Basic Commands, Date & Time (Tutorials 5–6)',
+    4: 'Week 4: Command Structure, Utilities & Lab 2 (Tutorials 7–8)',
+    5: 'Week 5: File System & Regular Files (Tutorials 9–10)',
+    6: 'Week 6: Streams, Pipes, Processes & Lab 3 (Tutorials 11–12)',
+    7: 'Week 7: Linux Environment & System Administration (Tutorials 13–14)',
+    8: 'Week 8: Permissions, Ownership & Lab 4 (Tutorial 15)',
+    9: 'Week 9: Simple Filters & Introduction to grep (Tutorials 16–17)',
+    10: 'Week 10: Mastering grep & Introduction to sed (Tutorials 18–19)',
+    11: 'Week 11: sed Text Editing, Lab 5 & Capstone Start (Tutorial 20)',
+    12: 'Week 12: Capstone Project Submission & Final Exam Revision'
+}
+
+const getWeekTitle = (weekNum: number, courseId?: string) => {
+    if (courseId === 'linux') {
+        return LINUX_WEEKS[weekNum] || `Week ${weekNum}`
+    }
+    return PERSONALITY_DEV_WEEKS[weekNum] || `Week ${weekNum}`
+}
+
 export function LearnerPackTracker() {
     const { activeCourseId, addXP } = useUserStore()
     const [overview, setOverview] = useState<LearnerPackOverview | null>(null)
@@ -70,6 +92,7 @@ export function LearnerPackTracker() {
     const [tutorialDetail, setTutorialDetail] = useState<LearnerPackTutorialDetail | null>(null)
     const [isLoadingDetail, setIsLoadingDetail] = useState(false)
     const [activeTab, setActiveTab] = useState<'video' | 'reading' | 'activity' | 'assignment' | 'quiz'>('video')
+    const [videoSubTab, setVideoSubTab] = useState<'stream' | 'code' | 'instruction' | 'installation'>('stream')
 
     // Assignment state
     const [isMarkingAssignment, setIsMarkingAssignment] = useState(false)
@@ -154,6 +177,7 @@ export function LearnerPackTracker() {
         setActiveTutorialId(tutId)
         setIsLoadingDetail(true)
         setActiveTab(initialTab)
+        setVideoSubTab('stream')
         setVideoWatchPercent(0)
         setIsVideoBuffering(false)
         setQuizAnswers({})
@@ -406,7 +430,9 @@ export function LearnerPackTracker() {
 
     // Next incomplete tutorial to guide the student directly
     const nextIncompleteTutorial = overview.tutorials.find(
-        t => !t.userProgress.quizPassed && t.userProgress.status !== 'completed'
+        t => !t.userProgress.quizPassed &&
+             t.userProgress.status !== 'completed' &&
+             !(overview.courseId === 'linux' && t.number <= 2 && t.userProgress.reflectionSubmitted)
     )
     const allCompleted = overview.tutorials.length > 0 && !nextIncompleteTutorial
 
@@ -424,6 +450,9 @@ export function LearnerPackTracker() {
                 tab: tut.hasAssignment ? ('assignment' as const) : ('activity' as const),
                 isStarted: true
             }
+        }
+        if (overview.courseId === 'linux' && tut.number <= 2) {
+            return { stepLabel: 'Setup Complete', tab: 'activity' as const, isStarted: true }
         }
         return { stepLabel: 'Quiz', tab: 'quiz' as const, isStarted: true }
     }
@@ -537,7 +566,7 @@ export function LearnerPackTracker() {
                                             )}
                                             <div>
                                                 <h3 className="text-sm font-semibold text-foreground">
-                                                    {WEEK_TITLES[weekNum] || `Week ${weekNum}`}
+                                                    {getWeekTitle(weekNum, overview.courseId)}
                                                 </h3>
                                                 <p className="text-xs text-muted-foreground">
                                                     {tuts.length > 0 ? `${tuts.length} Tutorials` : 'Special Milestone Week'}
@@ -597,7 +626,7 @@ export function LearnerPackTracker() {
                                     {/* Tutorials in this week */}
                                     {tuts.map((tut) => {
                                         const p = tut.userProgress
-                                        const isCompleted = p.status === 'completed' || p.quizPassed
+                                        const isCompleted = p.status === 'completed' || p.quizPassed || (overview.courseId === 'linux' && tut.number <= 2 && Boolean(p.reflectionSubmitted))
 
                                         return (
                                             <div
@@ -686,18 +715,33 @@ export function LearnerPackTracker() {
                                                                 {p.assignmentDone ? "✓ Assignment" : "Assignment"}
                                                             </Badge>
                                                         )}
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={cn(
-                                                                "text-[10px] px-2 py-0.5 font-medium transition-colors",
-                                                                p.quizPassed 
-                                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
-                                                                    : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
-                                                            )}
-                                                            title="5-Question Automated Quiz"
-                                                        >
-                                                            {p.quizPassed ? `✓ Quiz (${p.quizScore}/5)` : "Quiz"}
-                                                        </Badge>
+                                                        {overview.courseId === 'linux' && tut.number <= 2 ? (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={cn(
+                                                                    "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                    p.reflectionSubmitted
+                                                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                                                        : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
+                                                                )}
+                                                                title="Hands-on installation verification"
+                                                            >
+                                                                {p.reflectionSubmitted ? "✓ Setup Done" : "Setup Task"}
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={cn(
+                                                                    "text-[10px] px-2 py-0.5 font-medium transition-colors",
+                                                                    p.quizPassed 
+                                                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                                                        : "text-muted-foreground/60 border-dashed border-border/80 bg-muted/20"
+                                                                )}
+                                                                title="5-Question Automated Quiz"
+                                                            >
+                                                                {p.quizPassed ? `✓ Quiz (${p.quizScore}/5)` : "Quiz"}
+                                                            </Badge>
+                                                        )}
                                                     </div>
 
                                                     <Button
@@ -771,7 +815,7 @@ export function LearnerPackTracker() {
                                             </div>
 
                                             <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
-                                                • Week {tutorialDetail.content?.weekNumber || 1} • {WEEK_TITLES[tutorialDetail.content?.weekNumber || 1]?.split(':')[1]?.trim() || 'Personality & Human Development'}
+                                                • Week {tutorialDetail.content?.weekNumber || 1} • {getWeekTitle(tutorialDetail.content?.weekNumber || 1, overview?.courseId)?.split(':')[1]?.trim() || tutorialDetail.title}
                                             </span>
                                         </div>
                                         <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans">
@@ -874,27 +918,34 @@ export function LearnerPackTracker() {
                                             )}
                                         </button>
                                     )}
-                                    <button
-                                        id="tab-btn-quiz"
-                                        onClick={() => switchTab('quiz')}
-                                        className={cn(
-                                            "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
-                                            activeTab === 'quiz'
-                                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
-                                        )}
-                                    >
-                                        <HelpCircle className={cn("h-4 w-4", activeTab === 'quiz' ? "text-primary-foreground" : "text-muted-foreground")} />
-                                        <span>{(tutorialDetail.assignmentInstructions || tutorialDetail.assignmentUrl) ? '5. Quiz (5 MCQs)' : '4. Quiz (5 MCQs)'}</span>
-                                        {tutorialDetail.quiz.hasAttempted && (
-                                            <span className={cn(
-                                                "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                    {tutorialDetail.quiz.questions && tutorialDetail.quiz.questions.length > 0 ? (
+                                        <button
+                                            id="tab-btn-quiz"
+                                            onClick={() => switchTab('quiz')}
+                                            className={cn(
+                                                "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
                                                 activeTab === 'quiz'
-                                                    ? "bg-primary-foreground/20 text-primary-foreground"
-                                                    : ((tutorialDetail.quiz.score ?? 0) >= 3) ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
-                                            )}>✓</span>
-                                        )}
-                                    </button>
+                                                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                                                    : "text-muted-foreground hover:text-foreground hover:bg-background/60 font-medium"
+                                            )}
+                                        >
+                                            <HelpCircle className={cn("h-4 w-4", activeTab === 'quiz' ? "text-primary-foreground" : "text-muted-foreground")} />
+                                            <span>{(tutorialDetail.assignmentInstructions || tutorialDetail.assignmentUrl) ? '5. Quiz (5 MCQs)' : '4. Quiz (5 MCQs)'}</span>
+                                            {tutorialDetail.quiz.hasAttempted && (
+                                                <span className={cn(
+                                                    "size-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                                    activeTab === 'quiz'
+                                                        ? "bg-primary-foreground/20 text-primary-foreground"
+                                                        : ((tutorialDetail.quiz.score ?? 0) >= 3) ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600'
+                                                )}>✓</span>
+                                            )}
+                                        </button>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                            <span>Setup Verified (No Quiz)</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -969,6 +1020,248 @@ export function LearnerPackTracker() {
                                                         </Button>
                                                     </div>
                                                 </div>
+
+                                                {/* Companion Resource Sub-Tabs Directly Under Video */}
+                                                {(tutorialDetail.codeFilesUrl || tutorialDetail.instructionSheetUrl || tutorialDetail.installationSheetUrl) && (
+                                                    <div className="space-y-4 pt-1">
+                                                        {/* Sub-tab segmented pill bar */}
+                                                        <div className="flex items-center justify-between gap-2 p-1.5 rounded-2xl bg-card border border-border/80 shadow-2xs">
+                                                            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setVideoSubTab('stream')}
+                                                                    className={cn(
+                                                                        "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer",
+                                                                        videoSubTab === 'stream'
+                                                                            ? "bg-primary text-primary-foreground shadow-xs"
+                                                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                                                    )}
+                                                                >
+                                                                    <PlayCircle className="h-3.5 w-3.5" />
+                                                                    <span>Video Overview</span>
+                                                                </button>
+                                                                {tutorialDetail.codeFilesUrl && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setVideoSubTab('code')}
+                                                                        className={cn(
+                                                                            "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer",
+                                                                            videoSubTab === 'code'
+                                                                                ? "bg-amber-600 text-white shadow-xs dark:bg-amber-500"
+                                                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                                                        )}
+                                                                    >
+                                                                        <FolderArchive className="h-3.5 w-3.5" />
+                                                                        <span>Course Files (.zip)</span>
+                                                                    </button>
+                                                                )}
+                                                                {tutorialDetail.instructionSheetUrl && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setVideoSubTab('instruction')}
+                                                                        className={cn(
+                                                                            "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer",
+                                                                            videoSubTab === 'instruction'
+                                                                                ? "bg-blue-600 text-white shadow-xs dark:bg-blue-500"
+                                                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                                                        )}
+                                                                    >
+                                                                        <FileText className="h-3.5 w-3.5" />
+                                                                        <span>Instruction Sheet (.pdf)</span>
+                                                                    </button>
+                                                                )}
+                                                                {tutorialDetail.installationSheetUrl && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setVideoSubTab('installation')}
+                                                                        className={cn(
+                                                                            "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer",
+                                                                            videoSubTab === 'installation'
+                                                                                ? "bg-emerald-600 text-white shadow-xs dark:bg-emerald-500"
+                                                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                                                        )}
+                                                                    >
+                                                                        <Wrench className="h-3.5 w-3.5" />
+                                                                        <span>Installation Sheet (.pdf)</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Sub-tab 1: Stream overview info */}
+                                                        {videoSubTab === 'stream' && (
+                                                            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                                <div className="space-y-1">
+                                                                    <h4 className="text-sm font-bold text-foreground">Interactive Audiovisual Tutorial</h4>
+                                                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                        Follow along with the terminal demonstration. You can download companion code files and view the official instruction & installation sheets using the sub-tabs above.
+                                                                    </p>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 shrink-0">
+                                                                    <a
+                                                                        href="https://spoken-tutorial.org"
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-background hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-2xs"
+                                                                    >
+                                                                        <span>Spoken Tutorial Library</span>
+                                                                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Sub-tab 2: Course Code Files (.zip) */}
+                                                        {videoSubTab === 'code' && tutorialDetail.codeFilesUrl && (
+                                                            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
+                                                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+                                                                    <div className="space-y-0.5">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <FolderArchive className="h-4 w-4 text-amber-500" />
+                                                                            <h4 className="text-sm font-bold text-foreground">Companion Course Files</h4>
+                                                                            <Badge variant="outline" className="text-[10px] font-mono">.zip archive</Badge>
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground">
+                                                                            Sample datasets, test text files, and demonstration scripts for hands-on terminal commands.
+                                                                        </p>
+                                                                    </div>
+                                                                    <a
+                                                                        href={tutorialDetail.codeFilesUrl}
+                                                                        download
+                                                                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-2xs shrink-0 cursor-pointer"
+                                                                    >
+                                                                        <Download className="h-3.5 w-3.5" />
+                                                                        <span>Download All Files (.zip)</span>
+                                                                    </a>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                                                    <div className="p-2.5 rounded-xl bg-muted/40 border border-border/50 flex items-start gap-2">
+                                                                        <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                                                        <div>
+                                                                            <div className="font-semibold text-foreground font-mono">students.txt</div>
+                                                                            <div className="text-[11px] text-muted-foreground">Pipe-delimited student records for filtering, sorting & capstone.</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="p-2.5 rounded-xl bg-muted/40 border border-border/50 flex items-start gap-2">
+                                                                        <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                                                        <div>
+                                                                            <div className="font-semibold text-foreground font-mono">numbers.txt</div>
+                                                                            <div className="text-[11px] text-muted-foreground">Unsorted numbers for numeric sort & unique deduplication.</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="p-2.5 rounded-xl bg-muted/40 border border-border/50 flex items-start gap-2">
+                                                                        <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                                                        <div>
+                                                                            <div className="font-semibold text-foreground font-mono">grepdemo.txt</div>
+                                                                            <div className="text-[11px] text-muted-foreground">Pattern matching dataset for <code className="font-mono text-primary font-bold">grep</code> tutorials.</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="p-2.5 rounded-xl bg-muted/40 border border-border/50 flex items-start gap-2">
+                                                                        <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                                                        <div>
+                                                                            <div className="font-semibold text-foreground font-mono">seddemo.txt</div>
+                                                                            <div className="text-[11px] text-muted-foreground">Stream editing sample text for <code className="font-mono text-primary font-bold">sed</code> tutorials.</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/60 border border-border/70 text-[11px] text-muted-foreground font-mono">
+                                                                    <Terminal className="h-3.5 w-3.5 text-primary shrink-0" />
+                                                                    <span>Unpack in terminal: <strong className="text-foreground">unzip linux-companion-files.zip -d ~/practice</strong></span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Sub-tab 3: Instruction Sheet (.pdf) */}
+                                                        {videoSubTab === 'instruction' && tutorialDetail.instructionSheetUrl && (
+                                                            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
+                                                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+                                                                    <div className="space-y-0.5">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <FileText className="h-4 w-4 text-blue-500" />
+                                                                            <h4 className="text-sm font-bold text-foreground">Official Instruction Sheet</h4>
+                                                                            <Badge variant="outline" className="text-[10px] font-mono">PDF Document</Badge>
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground">
+                                                                            Official Spoken Tutorial command reference and lab guidelines from IIT Bombay.
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                        <a
+                                                                            href={tutorialDetail.instructionSheetUrl}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-background hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-2xs"
+                                                                        >
+                                                                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                            <span>Open in New Tab</span>
+                                                                        </a>
+                                                                        <a
+                                                                            href={tutorialDetail.instructionSheetUrl}
+                                                                            download
+                                                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-2xs"
+                                                                        >
+                                                                            <Download className="h-3.5 w-3.5" />
+                                                                            <span>Download PDF</span>
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="w-full h-[520px] rounded-xl overflow-hidden border border-border/70 bg-muted/20">
+                                                                    <iframe
+                                                                        src={`${tutorialDetail.instructionSheetUrl}#toolbar=0`}
+                                                                        className="w-full h-full border-0"
+                                                                        title="Instruction Sheet PDF Preview"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Sub-tab 4: Installation Sheet (.pdf) */}
+                                                        {videoSubTab === 'installation' && tutorialDetail.installationSheetUrl && (
+                                                            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
+                                                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+                                                                    <div className="space-y-0.5">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Wrench className="h-4 w-4 text-emerald-500" />
+                                                                            <h4 className="text-sm font-bold text-foreground">Ubuntu & VirtualBox Installation Sheet</h4>
+                                                                            <Badge variant="outline" className="text-[10px] font-mono">PDF Document</Badge>
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground">
+                                                                            Step-by-step installation instructions for VirtualBox and Ubuntu Linux 24.04 LTS.
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                        <a
+                                                                            href={tutorialDetail.installationSheetUrl}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-background hover:bg-muted text-xs font-semibold text-foreground transition-all shadow-2xs"
+                                                                        >
+                                                                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                            <span>Open in New Tab</span>
+                                                                        </a>
+                                                                        <a
+                                                                            href={tutorialDetail.installationSheetUrl}
+                                                                            download
+                                                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-2xs"
+                                                                        >
+                                                                            <Download className="h-3.5 w-3.5" />
+                                                                            <span>Download PDF</span>
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="w-full h-[520px] rounded-xl overflow-hidden border border-border/70 bg-muted/20">
+                                                                    <iframe
+                                                                        src={`${tutorialDetail.installationSheetUrl}#toolbar=0`}
+                                                                        className="w-full h-full border-0"
+                                                                        title="Installation Sheet PDF Preview"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="max-w-lg mx-auto text-center space-y-5 p-8 rounded-2xl bg-card border shadow-sm">

@@ -18,6 +18,7 @@ class Tutorial(Base):
     video_poster_url = Column(Text, nullable=True)
     code_files_url = Column(Text, nullable=True)
     instruction_sheet_url = Column(Text, nullable=True)
+    installation_sheet_url = Column(Text, nullable=True)
     assignment_url = Column(Text, nullable=True)
     assignment_instructions = Column(Text, nullable=True)
     xp_reward = Column(Integer, nullable=False, default=0)
@@ -80,6 +81,7 @@ class UserTutorial(Base):
             "videoPosterUrl": self.tutorial.video_poster_url if self.tutorial else None,
             "codeFilesUrl": self.tutorial.code_files_url if self.tutorial else None,
             "instructionSheetUrl": self.tutorial.instruction_sheet_url if self.tutorial else None,
+            "installationSheetUrl": self.tutorial.installation_sheet_url if self.tutorial else None,
             "assignmentUrl": self.tutorial.assignment_url if self.tutorial else None,
             "assignmentInstructions": self.tutorial.assignment_instructions if self.tutorial else None,
         }

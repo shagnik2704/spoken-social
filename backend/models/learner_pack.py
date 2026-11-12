@@ -33,6 +33,7 @@ class TutorialContent(Base):
     # Companion Resource Files (Course-Specific)
     code_files_url = Column(Text, nullable=True)             # Download URL for code files (.zip / .py)
     instruction_sheet_url = Column(Text, nullable=True)      # URL for instruction sheet (PDF)
+    installation_sheet_url = Column(Text, nullable=True)     # URL for installation sheet (PDF)
     
     # Reading Section
     reading_title = Column(String(255), nullable=False)
