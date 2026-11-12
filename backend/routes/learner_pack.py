@@ -206,7 +206,6 @@ async def get_course_overview(
             {"week": 10, "logType": "breathing", "title": "7-Day Mindful Breathing Log", "days": 7},
             {"week": 12, "logType": "portfolio", "title": "Personal Growth Portfolio", "days": 1},
         ]
-    ]
 
     return {
         "courseId": course.id,
