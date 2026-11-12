@@ -1028,7 +1028,7 @@ export function LearnerPackTracker() {
                                             )}
                                         </button>
                                     )}
-                                    {tutorialDetail.quiz.questions && tutorialDetail.quiz.questions.length > 0 ? (
+                                    {tutorialDetail.quiz.questions && tutorialDetail.quiz.questions.length > 0 && (
                                         <button
                                             id="tab-btn-quiz"
                                             onClick={() => switchTab('quiz')}
@@ -1050,11 +1050,6 @@ export function LearnerPackTracker() {
                                                 )}>✓</span>
                                             )}
                                         </button>
-                                    ) : (
-                                        <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shrink-0">
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
-                                            <span>Setup Verified (No Quiz)</span>
-                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -1458,8 +1453,12 @@ export function LearnerPackTracker() {
                                                 </h4>
                                                 <p className="text-xs text-muted-foreground">
                                                     {tutorialDetail.userTutorial.watched === 'yes'
-                                                        ? 'Core lesson completed (+10 XP earned). Move directly to the notebook activity & reflection.'
-                                                        : 'Mark as read to claim +10 XP and move directly to the personal notebook exercise & reflection.'}
+                                                        ? (isLinux
+                                                            ? (isSetupTutorial ? 'Core lesson completed (+10 XP earned). Move to verify your local lab environment.' : 'Core lesson completed (+10 XP earned). Move directly to hands-on terminal practice.')
+                                                            : 'Core lesson completed (+10 XP earned). Move directly to the notebook activity & reflection.')
+                                                        : (isLinux
+                                                            ? (isSetupTutorial ? 'Mark as read to claim +10 XP and set up your lab environment.' : 'Mark as read to claim +10 XP and practice Linux commands.')
+                                                            : 'Mark as read to claim +10 XP and move directly to the personal notebook exercise & reflection.')}
                                                 </p>
                                             </div>
                                             <Button
@@ -1473,7 +1472,9 @@ export function LearnerPackTracker() {
                                                 className="font-semibold text-xs sm:text-sm shrink-0 gap-1.5 w-full sm:w-auto cursor-pointer"
                                             >
                                                 {tutorialDetail.userTutorial.watched === 'yes'
-                                                    ? 'Proceed to Activity & Reflection'
+                                                    ? (isLinux
+                                                        ? (isSetupTutorial ? 'Proceed to Setup Verification' : 'Proceed to Terminal Lab')
+                                                        : 'Proceed to Activity & Reflection')
                                                     : 'Mark Complete (+10 XP) & Continue'}
                                                 <ArrowRight className="h-4 w-4" />
                                             </Button>
