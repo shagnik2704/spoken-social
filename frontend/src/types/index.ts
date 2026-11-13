@@ -302,6 +302,12 @@ export interface HabitMilestone {
     days: number
 }
 
+export interface CourseMaterialUrls {
+    codeFilesUrl?: string | null
+    instructionSheetUrl?: string | null
+    installationSheetUrl?: string | null
+}
+
 export interface LearnerPackOverview {
     courseId: string
     title: string
@@ -309,6 +315,7 @@ export interface LearnerPackOverview {
     totalWeeks: number
     tutorials: LearnerPackOverviewTutorial[]
     habitMilestones: HabitMilestone[]
+    materials?: CourseMaterialUrls
 }
 
 export interface HabitLogCheckinItem {

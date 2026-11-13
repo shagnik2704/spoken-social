@@ -132,6 +132,27 @@ async def _get_or_create_user_tutorial(db: AsyncSession, user_id: uuid.UUID, tut
 # Endpoints
 # ------------------------------------------------------------
 
+MATERIAL_FIELDS = {
+    "codeFilesUrl": "code_files_url",
+    "instructionSheetUrl": "instruction_sheet_url",
+    "installationSheetUrl": "installation_sheet_url",
+}
+
+
+def _course_wide_materials(tutorials: list[Tutorial]) -> dict[str, str | None]:
+    """A material counts as course-wide only when every tutorial that has one points at the same file."""
+    materials: dict[str, str | None] = {}
+    for key, attr in MATERIAL_FIELDS.items():
+        urls = set()
+        for tut in tutorials:
+            content = tut.learner_pack_content[0] if tut.learner_pack_content else None
+            url = (getattr(content, attr, None) if content else None) or getattr(tut, attr, None)
+            if url:
+                urls.add(url)
+        materials[key] = urls.pop() if len(urls) == 1 else None
+    return materials
+
+
 @router.get("/course/{course_id}/overview")
 async def get_course_overview(
     course_id: str,
@@ -238,6 +259,7 @@ async def get_course_overview(
         "totalWeeks": 12,
         "tutorials": tutorial_list,
         "habitMilestones": habit_milestones,
+        "materials": _course_wide_materials(tutorials),
     }
 
 

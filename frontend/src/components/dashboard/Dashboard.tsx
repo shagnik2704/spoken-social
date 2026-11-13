@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { ActiveCourseTracker } from './ActiveCourseTracker'
 import { LearnerPackTracker } from './LearnerPackTracker'
+import { useSyncActiveCourse } from '@/hooks/useSyncActiveCourse'
 import { useUserStore } from '@/store/userStore'
 import type { UpcomingEvent } from '@/types'
 
@@ -338,7 +339,6 @@ export default function Dashboard() {
 
     const { user, isLoading, courses, activeCourseId } = useUserStore()
     const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
-    const setActiveCourse = useUserStore(state => state.setActiveCourse)
 
     useEffect(() => {
         if (swayamEnrollmentId) {
@@ -346,19 +346,7 @@ export default function Dashboard() {
         }
     }, [swayamEnrollmentId])
 
-    useEffect(() => {
-        if (targetCourseId && courses && courses.length > 0) {
-            const normalized = targetCourseId.trim().toLowerCase().replace('swayam_plus-', '').replace('swayam_', '')
-            const matched = courses.find(c => 
-                c.id.toLowerCase() === targetCourseId.toLowerCase() ||
-                c.id.toLowerCase() === normalized ||
-                c.title.toLowerCase() === targetCourseId.toLowerCase()
-            )
-            if (matched && matched.id !== activeCourseId) {
-                setActiveCourse(matched.id)
-            }
-        }
-    }, [targetCourseId, courses, activeCourseId, setActiveCourse])
+    useSyncActiveCourse(targetCourseId)
 
     const activeCourse = courses.find(c => c.id === activeCourseId)
     const isLearnerPack = activeCourse?.uiLayout === 'learner_pack'

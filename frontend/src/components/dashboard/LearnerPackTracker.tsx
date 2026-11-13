@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Skeleton } from '@/components/ui/skeleton'
 import api from '@/lib/axios'
-import { getNextStep, getWeekTopic, isLinuxCourse, isTutorialCompleted, tutorialPath } from '@/lib/learnerPack'
+import { getNextStep, getWeekTopic, isTutorialCompleted, tutorialPath } from '@/lib/learnerPack'
 import { cn } from '@/lib/utils'
 import { useLearnerPackStore } from '@/store/learnerPackStore'
 import { useUserStore } from '@/store/userStore'
@@ -168,7 +168,7 @@ export const LearnerPackTracker: React.FC = () => {
                 )}
             </Card>
 
-            <CourseMaterialsCard urls={overview.materials} showUnzipHint={isLinuxCourse(courseId)} />
+            <CourseMaterialsCard urls={overview.materials} />
 
             <ol className="space-y-3">
                 {Array.from({ length: overview.totalWeeks }, (_, index) => index + 1).map((weekNum) => {

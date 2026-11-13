@@ -77,6 +77,7 @@ async def test_learner_pack_full_flow():
         assert data["uiLayout"] == "learner_pack"
         assert len(data["tutorials"]) == 17
         assert len(data["habitMilestones"]) == 5
+        assert set(data["materials"]) == {"codeFilesUrl", "instructionSheetUrl", "installationSheetUrl"}
 
         # Step 2: Get Tutorial Content before attempt (answers should be hidden)
         res = await client.get(f"/api/learner-pack/tutorials/{tut1_id}", headers=headers)

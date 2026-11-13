@@ -65,7 +65,7 @@ export const TerminalConsole: React.FC<TerminalConsoleProps> = ({
     }
 
     const barButton =
-        'size-9 inline-flex items-center justify-center rounded-md text-terminal-muted hover:text-terminal-fg hover:bg-terminal-border/60 transition duration-200 ease-in-out cursor-pointer disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-prompt/60'
+        'size-11 sm:size-9 inline-flex items-center justify-center rounded-md text-terminal-muted hover:text-terminal-fg hover:bg-terminal-border/60 transition duration-200 ease-in-out cursor-pointer disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terminal-prompt/60'
 
     return (
         <div
