@@ -67,6 +67,64 @@ export const resolveMediaUrl = (url?: string | null): string => {
     return url
 }
 
+export interface ForumAskUrlOptions {
+    courseId?: string | null
+    forumCategory?: string | null
+    courseTitle?: string | null
+    tutorialTitle?: string | null
+    minuteRange?: string
+    secondRange?: string
+}
+
+export const getForumAskUrl = (options: ForumAskUrlOptions): string => {
+    const {
+        courseId,
+        forumCategory,
+        courseTitle,
+        tutorialTitle,
+        minuteRange = '0-1',
+        secondRange = '0-10',
+    } = options
+
+    let category = forumCategory
+    if (isLinuxCourse(courseId) || forumCategory?.toLowerCase() === 'linux' || courseTitle?.toLowerCase().includes('linux')) {
+        category = 'Linux Ubuntu'
+    } else if (category) {
+        category = category.replace(/-/g, ' ')
+    } else if (courseTitle) {
+        category = courseTitle
+    }
+
+    const parts: string[] = []
+    if (category) {
+        parts.push(`category=${encodeURIComponent(category)}`)
+    }
+    if (tutorialTitle) {
+        parts.push(`tutorial=${encodeURIComponent(tutorialTitle)}`)
+    }
+    if (minuteRange) {
+        parts.push(`minute_range=${encodeURIComponent(minuteRange)}`)
+    }
+    if (secondRange) {
+        parts.push(`second_range=${encodeURIComponent(secondRange)}`)
+    }
+
+    return parts.length > 0
+        ? `https://forums.spoken-tutorial.org/new-question/?${parts.join('&')}`
+        : 'https://forums.spoken-tutorial.org/new-question/'
+}
+
+export const getForumCategoryUrl = (forumCategory?: string | null, courseTitle?: string | null): string => {
+    let category = forumCategory
+    if (!category && courseTitle?.toLowerCase().includes('linux')) {
+        category = 'Linux'
+    }
+    if (category) {
+        return `https://forums.spoken-tutorial.org/filter/${encodeURIComponent(category.replace(/ /g, '-'))}/`
+    }
+    return 'https://forums.spoken-tutorial.org/'
+}
+
 export const coursePath = (courseId: string): string => `/courses/${courseId}`
 
 export const tutorialPath = (courseId: string, tutorialNumber: number, step?: TutorialStepId): string =>

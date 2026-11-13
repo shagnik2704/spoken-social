@@ -256,6 +256,7 @@ async def get_course_overview(
         "courseId": course.id,
         "title": course.title,
         "uiLayout": course.ui_layout,
+        "forumCategory": course.forum_category,
         "totalWeeks": 12,
         "tutorials": tutorial_list,
         "habitMilestones": habit_milestones,
@@ -281,7 +282,11 @@ async def get_tutorial_content(
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
     # Fetch tutorial
-    t_res = await db.execute(select(Tutorial).filter_by(id=tut_uuid))
+    t_res = await db.execute(
+        select(Tutorial)
+        .options(selectinload(Tutorial.course))
+        .filter_by(id=tut_uuid)
+    )
     tutorial = t_res.scalars().first()
     if not tutorial:
         raise HTTPException(status_code=404, detail="Tutorial not found")
@@ -331,6 +336,7 @@ async def get_tutorial_content(
         "tutorialNumber": tutorial.tutorial_number,
         "title": tutorial.title,
         "courseId": tutorial.course_id,
+        "forumCategory": tutorial.course.forum_category if tutorial.course else None,
         "videoUrl": (content.video_url if content and content.video_url else tutorial.video_url),
         "videoPosterUrl": (content.video_poster_url if content and content.video_poster_url else tutorial.video_poster_url),
         "videoDurationSeconds": content.video_duration_seconds if content else None,

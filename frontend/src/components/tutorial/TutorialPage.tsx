@@ -8,6 +8,8 @@ import { useSyncActiveCourse } from '@/hooks/useSyncActiveCourse'
 import {
     coursePath,
     getActivityLabel,
+    getForumAskUrl,
+    getForumCategoryUrl,
     getNextStep,
     getWeekTopic,
     isDone,
@@ -27,6 +29,7 @@ import { ReflectionActivityStep } from './steps/ReflectionActivityStep'
 import { SetupVerificationStep } from './steps/SetupVerificationStep'
 import { TerminalLabStep } from './steps/TerminalLabStep'
 import { VideoStep } from './steps/VideoStep'
+import { TutorialForumCard } from './TutorialForumCard'
 import { TutorialResources } from './TutorialResources'
 import { TutorialStepNav, type TutorialStep } from './TutorialStepNav'
 import type { TutorialNav, TutorialStepProps } from './types'
@@ -101,6 +104,14 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
     const hasQuiz = detail ? detail.quiz.questions.length > 0 : !isSetup
     const isLessonDone = detail ? isDone(detail.userTutorial.watched) : progress.watched
     const codeFilesUrl = detail?.codeFilesUrl
+    const forumCategory = detail?.forumCategory ?? overview.forumCategory
+    const askForumUrl = getForumAskUrl({
+        courseId,
+        forumCategory,
+        courseTitle: overview.title,
+        tutorialTitle: tutorial.title,
+    })
+    const browseForumUrl = getForumCategoryUrl(forumCategory, overview.title)
 
     const steps: TutorialStep[] = [
         { id: 'video', label: 'Watch video', shortLabel: 'Watch', done: isLessonDone },
@@ -185,7 +196,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                                 </a>
                             </Button>
                         )}
-                        <TutorialResources urls={detail} />
+                        <TutorialResources urls={detail} askForumUrl={askForumUrl} browseForumUrl={browseForumUrl} />
                         {prevTutorial ? (
                             <Button asChild variant="outline" size="icon" className={tutorialNavButton}>
                                 <Link to={tutorialPath(courseId, prevTutorial.number)} aria-label={`Previous: Tutorial ${prevTutorial.number}, ${prevTutorial.title}`} title={`Tutorial ${prevTutorial.number}: ${prevTutorial.title}`}>
@@ -248,7 +259,15 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
 
             <div className="max-w-5xl mx-auto pt-5 sm:pt-6">
                 {detail ? (
-                    <StepComponent detail={detail} workspace={workspace} nav={nav} />
+                    <>
+                        <StepComponent detail={detail} workspace={workspace} nav={nav} />
+                        <TutorialForumCard
+                            courseId={courseId}
+                            forumCategory={forumCategory}
+                            courseTitle={overview.title}
+                            tutorialTitle={tutorial.title}
+                        />
+                    </>
                 ) : workspace.loadFailed ? (
                     <PageMessage
                         title="Couldn't load this tutorial"

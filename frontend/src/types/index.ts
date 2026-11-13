@@ -241,6 +241,7 @@ export interface LearnerPackTutorialDetail {
     tutorialNumber: number
     title: string
     courseId: string
+    forumCategory?: string | null
     videoUrl?: string | null
     videoPosterUrl?: string | null
     videoDurationSeconds?: number | null
@@ -312,6 +313,7 @@ export interface LearnerPackOverview {
     courseId: string
     title: string
     uiLayout: string
+    forumCategory?: string | null
     totalWeeks: number
     tutorials: LearnerPackOverviewTutorial[]
     habitMilestones: HabitMilestone[]
