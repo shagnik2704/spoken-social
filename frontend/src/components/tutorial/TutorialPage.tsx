@@ -100,7 +100,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
     const hasAssignment = detail ? Boolean(detail.assignmentInstructions || detail.assignmentUrl) : Boolean(tutorial.hasAssignment)
     const hasQuiz = detail ? detail.quiz.questions.length > 0 : !isSetup
     const isLessonDone = detail ? isDone(detail.userTutorial.watched) : progress.watched
-    const codeFilesUrl = detail?.codeFilesUrl || overview.materials?.codeFilesUrl
+    const codeFilesUrl = detail?.codeFilesUrl
 
     const steps: TutorialStep[] = [
         { id: 'video', label: 'Watch video', shortLabel: 'Watch', done: isLessonDone },

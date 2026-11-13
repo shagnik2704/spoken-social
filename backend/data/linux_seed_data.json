@@ -29,7 +29,7 @@
       "title": "Installation of VirtualBox on Windows",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2160/Installation-of-VirtualBox-on-Windows-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2160/Installation-of-VirtualBox-on-Windows-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
       "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
       "xp_reward": 25
@@ -41,7 +41,7 @@
       "title": "Installing Ubuntu OS in Oracle VirtualBox",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2161/Installing-Ubuntu-OS-in-Oracle-VirtualBox-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2161/Installing-Ubuntu-OS-in-Oracle-VirtualBox-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
       "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
       "xp_reward": 25
@@ -53,9 +53,9 @@
       "title": "Ubuntu Desktop",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2162/Ubuntu-Desktop-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2162/Ubuntu-Desktop-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -65,9 +65,9 @@
       "title": "Synaptic Package Manager",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2155/Synaptic-Package-Manager-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2155/Synaptic-Package-Manager-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -77,9 +77,9 @@
       "title": "Basic Commands in Linux",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2156/Basic-Commands-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2156/Basic-Commands-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -89,9 +89,9 @@
       "title": "Date and Time Commands in Linux",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2157/Date-and-Time-Commands-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2157/Date-and-Time-Commands-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -101,9 +101,9 @@
       "title": "Structure of Linux Commands",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2158/Structure-of-Linux-Commands-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2158/Structure-of-Linux-Commands-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -113,9 +113,9 @@
       "title": "General Purpose Utilities",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2159/General-Purpose-Utilities-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2159/General-Purpose-Utilities-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -125,9 +125,9 @@
       "title": "File System in Linux",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2163/File-System-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2163/File-System-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -137,9 +137,9 @@
       "title": "Working with Regular Files in Linux",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2164/Working-with-Regular-Files-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2164/Working-with-Regular-Files-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -149,9 +149,9 @@
       "title": "Redirecting Streams and Pipes",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2165/Redirecting-Streams-and-Pipes-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2165/Redirecting-Streams-and-Pipes-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -161,9 +161,9 @@
       "title": "Working with Linux Processes",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2166/Working-with-Linux-Processes-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2166/Working-with-Linux-Processes-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -173,9 +173,9 @@
       "title": "The Linux Environment",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2167/The-Linux-Environment-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2167/The-Linux-Environment-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -185,9 +185,9 @@
       "title": "Basics of System Administration in Linux",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2169/Basics-of-System-Administration-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2169/Basics-of-System-Administration-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -197,9 +197,9 @@
       "title": "Linux File Ownership and Permissions",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2172/Linux-File-Ownership-and-Permissions-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2172/Linux-File-Ownership-and-Permissions-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -209,9 +209,9 @@
       "title": "Simple Filters in Linux",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2168/Simple-Filters-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2168/Simple-Filters-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-16-filters.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -221,9 +221,9 @@
       "title": "Introduction to grep command",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2170/Introduction-to-grep-command-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2170/Introduction-to-grep-command-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-17-grep.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -233,9 +233,9 @@
       "title": "Mastering grep",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2171/Mastering-grep-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2171/Mastering-grep-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-18-grep.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -245,9 +245,9 @@
       "title": "Introduction to the Stream Editor sed",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2173/Introduction-to-the-Stream-Editor-sed-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2173/Introduction-to-the-Stream-Editor-sed-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-19-sed.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     },
     {
@@ -257,9 +257,9 @@
       "title": "Text Editing using sed",
       "video_url": "https://spoken-tutorial.org/media/videos/194/2174/Text-Editing-using-sed-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2174/Text-Editing-using-sed-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-20-sed.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf",
+      "installation_sheet_url": null,
       "xp_reward": 25
     }
   ],
@@ -280,7 +280,7 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2160/Installation-of-VirtualBox-on-Windows-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2160/Installation-of-VirtualBox-on-Windows-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
       "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
     },
@@ -301,7 +301,7 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2161/Installing-Ubuntu-OS-in-Oracle-VirtualBox-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2161/Installing-Ubuntu-OS-in-Oracle-VirtualBox-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
       "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
     },
@@ -321,9 +321,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2162/Ubuntu-Desktop-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2162/Ubuntu-Desktop-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_4",
@@ -342,9 +342,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2155/Synaptic-Package-Manager-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2155/Synaptic-Package-Manager-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_5",
@@ -363,9 +363,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2156/Basic-Commands-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2156/Basic-Commands-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_6",
@@ -383,9 +383,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2157/Date-and-Time-Commands-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2157/Date-and-Time-Commands-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_7",
@@ -404,9 +404,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2158/Structure-of-Linux-Commands-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2158/Structure-of-Linux-Commands-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_8",
@@ -425,9 +425,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2159/General-Purpose-Utilities-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2159/General-Purpose-Utilities-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_9",
@@ -446,9 +446,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2163/File-System-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2163/File-System-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_10",
@@ -466,9 +466,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2164/Working-with-Regular-Files-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2164/Working-with-Regular-Files-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_11",
@@ -487,9 +487,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2165/Redirecting-Streams-and-Pipes-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2165/Redirecting-Streams-and-Pipes-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_12",
@@ -508,9 +508,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2166/Working-with-Linux-Processes-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2166/Working-with-Linux-Processes-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_13",
@@ -529,9 +529,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2167/The-Linux-Environment-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2167/The-Linux-Environment-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_14",
@@ -550,9 +550,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2169/Basics-of-System-Administration-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2169/Basics-of-System-Administration-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_15",
@@ -571,9 +571,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2172/Linux-File-Ownership-and-Permissions-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2172/Linux-File-Ownership-and-Permissions-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": null,
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_16",
@@ -592,9 +592,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2168/Simple-Filters-in-Linux-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2168/Simple-Filters-in-Linux-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-16-filters.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_17",
@@ -612,9 +612,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2170/Introduction-to-grep-command-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2170/Introduction-to-grep-command-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-17-grep.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_18",
@@ -633,9 +633,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2171/Mastering-grep-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2171/Mastering-grep-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-18-grep.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_19",
@@ -653,9 +653,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2173/Introduction-to-the-Stream-Editor-sed-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2173/Introduction-to-the-Stream-Editor-sed-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-19-sed.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     },
     {
       "id": "linux_content_20",
@@ -674,9 +674,9 @@
       ],
       "video_url": "https://spoken-tutorial.org/media/videos/194/2174/Text-Editing-using-sed-English.webm",
       "video_poster_url": "https://spoken-tutorial.org/media/videos/194/2174/Text-Editing-using-sed-Big.png",
-      "code_files_url": "/downloads/courses/linux/linux-companion-files.zip",
+      "code_files_url": "/downloads/courses/linux/tutorial-20-sed.zip",
       "instruction_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Instruction-Sheet-English.pdf",
-      "installation_sheet_url": "/downloads/courses/linux/Linux-Ubuntu-Installation-Sheet-English.pdf"
+      "installation_sheet_url": null
     }
   ],
   "quiz_questions": [

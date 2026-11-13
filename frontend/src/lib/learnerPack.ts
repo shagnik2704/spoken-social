@@ -186,11 +186,12 @@ export const buildMaterials = (urls?: CourseMaterialUrls | null): CourseMaterial
     if (!urls) return []
     const materials: CourseMaterial[] = []
     if (urls.codeFilesUrl) {
+        const isTutorialSpecific = urls.codeFilesUrl.includes('tutorial-')
         materials.push({
             key: 'code',
             format: 'ZIP',
-            title: 'Course files',
-            description: 'Practice files used in the labs (.zip)',
+            title: isTutorialSpecific ? 'Lab practice files' : 'Course files',
+            description: isTutorialSpecific ? 'Practice datasets for this tutorial (.zip)' : 'Practice files used in the labs (.zip)',
             url: urls.codeFilesUrl,
             isDownload: true,
             icon: FolderArchive,
