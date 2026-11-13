@@ -221,7 +221,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         try {
             setIsSubmittingLab(true)
             const res = await api.post(`${endpoint}/terminal-submission`, { commands_output: text })
-            toast.success('Terminal lab submission verified! +10 XP awarded')
+            toast.success('Assignment submission verified! +10 XP awarded')
             addXP(res.data.xpGained || 10)
             setJustCompletedStep('activity')
             setDetail(prev => prev && { ...prev, userReflection: res.data.submission, userTutorial: res.data.userTutorial })

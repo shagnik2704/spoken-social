@@ -130,9 +130,9 @@ export const coursePath = (courseId: string): string => `/courses/${courseId}`
 export const tutorialPath = (courseId: string, tutorialNumber: number, step?: TutorialStepId): string =>
     `${coursePath(courseId)}/tutorials/${tutorialNumber}${step ? `/${step}` : ''}`
 
-export const getActivityLabel = (courseId: string | null | undefined, tutorialNumber: number): string => {
-    if (!isLinuxCourse(courseId)) return 'Activity & reflection'
-    return isSetupTutorial(courseId, tutorialNumber) ? 'Setup verification' : 'Terminal lab'
+export const getActivityLabel = (courseId: string | null | undefined, _tutorialNumber?: number): string => {
+    if (isLinuxCourse(courseId)) return 'Assignment'
+    return 'Activity & reflection'
 }
 
 export const isTutorialCompleted = (courseId: string | null | undefined, tutorial: LearnerPackOverviewTutorial): boolean => {
@@ -152,9 +152,9 @@ export interface OverviewStep {
     done: boolean
 }
 
-const getActivityKind = (courseId: string | null | undefined, tutorialNumber: number): OverviewStepKind => {
-    if (!isLinuxCourse(courseId)) return 'activity'
-    return isSetupTutorial(courseId, tutorialNumber) ? 'setup' : 'lab'
+const getActivityKind = (courseId: string | null | undefined, _tutorialNumber?: number): OverviewStepKind => {
+    if (isLinuxCourse(courseId)) return 'assignment'
+    return 'activity'
 }
 
 export const getOverviewSteps = (courseId: string | null | undefined, tutorial: LearnerPackOverviewTutorial): OverviewStep[] => {

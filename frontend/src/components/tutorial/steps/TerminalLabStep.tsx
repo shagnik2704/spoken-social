@@ -19,8 +19,8 @@ export const TerminalLabStep: React.FC<TutorialStepProps> = ({ detail, workspace
                                 <Terminal className="size-4" />
                             </span>
                             <div className="min-w-0">
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-teal">Lab task</p>
-                                <h2 className="text-sm font-bold text-foreground">Run these in your Ubuntu terminal</h2>
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-teal">Lab assignment</p>
+                                <h2 className="text-sm font-bold text-foreground">Run these commands in your Ubuntu terminal</h2>
                             </div>
                         </div>
 

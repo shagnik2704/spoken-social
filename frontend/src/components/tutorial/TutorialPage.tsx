@@ -36,8 +36,7 @@ import { useTutorialWorkspace } from './useTutorialWorkspace'
 
 const ACTIVITY_SHORT_LABELS: Record<string, string> = {
     'Activity & reflection': 'Activity',
-    'Setup verification': 'Setup',
-    'Terminal lab': 'Lab',
+    'Assignment': 'Assignment',
 }
 
 const PageMessage: React.FC<{ title: string; body: string; backTo: string }> = ({ title, body, backTo }) => (

@@ -57,10 +57,10 @@ export const ReadingStep: React.FC<TutorialStepProps> = ({ detail, workspace, na
                         <p className="text-xs text-muted-foreground">
                             {isRead
                                 ? (nav.isLinux
-                                    ? (nav.isSetup ? 'Core lesson completed. Move to verify your local lab environment.' : 'Core lesson completed. Move directly to hands-on terminal practice.')
+                                    ? (nav.isSetup ? 'Core lesson completed. Move to the setup assignment.' : 'Core lesson completed. Move directly to the hands-on terminal assignment.')
                                     : 'Core lesson completed. Move directly to the notebook activity & reflection.')
                                 : (nav.isLinux
-                                    ? (nav.isSetup ? 'Mark as read to claim +10 XP and set up your lab environment.' : 'Mark as read to claim +10 XP and practice Linux commands.')
+                                    ? (nav.isSetup ? 'Mark as read to claim +10 XP and complete the setup assignment.' : 'Mark as read to claim +10 XP and complete the terminal assignment.')
                                     : 'Mark as read to claim +10 XP and move directly to the personal notebook exercise & reflection.')}
                         </p>
                     </div>
@@ -76,7 +76,7 @@ export const ReadingStep: React.FC<TutorialStepProps> = ({ detail, workspace, na
                     >
                         {isRead
                             ? (nav.isLinux
-                                ? (nav.isSetup ? 'Proceed to Setup Verification' : 'Proceed to Terminal Lab')
+                                ? 'Proceed to Assignment'
                                 : 'Proceed to Activity & Reflection')
                             : 'Mark Complete (+10 XP) & Continue'}
                         <ArrowRight className="h-4 w-4" />
