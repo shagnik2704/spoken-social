@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, Zap } from 'lucide-react'
 import { CelebrationModal } from '@/components/dashboard/CelebrationModal'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -100,6 +100,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
     const hasAssignment = detail ? Boolean(detail.assignmentInstructions || detail.assignmentUrl) : Boolean(tutorial.hasAssignment)
     const hasQuiz = detail ? detail.quiz.questions.length > 0 : !isSetup
     const isLessonDone = detail ? isDone(detail.userTutorial.watched) : progress.watched
+    const codeFilesUrl = detail?.codeFilesUrl || overview.materials?.codeFilesUrl
 
     const steps: TutorialStep[] = [
         { id: 'video', label: 'Watch video', shortLabel: 'Watch', done: isLessonDone },
@@ -171,6 +172,19 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                         </Link>
                     </Button>
                     <div className="flex items-center gap-1.5 shrink-0">
+                        {codeFilesUrl && (
+                            <Button
+                                asChild
+                                size="sm"
+                                className="min-h-11 lg:min-h-9 gap-1.5 px-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-xs hover:shadow-sm cursor-pointer transition-all duration-200"
+                            >
+                                <a href={codeFilesUrl} download>
+                                    <Download className="size-3.5" />
+                                    <span className="hidden sm:inline">Code Files</span>
+                                    <span className="sm:hidden">Code</span>
+                                </a>
+                            </Button>
+                        )}
                         <TutorialResources urls={detail} />
                         {prevTutorial ? (
                             <Button asChild variant="outline" size="icon" className={tutorialNavButton}>
