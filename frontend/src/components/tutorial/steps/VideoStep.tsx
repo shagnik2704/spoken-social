@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, ExternalLink, Loader2, MessageSquarePlus, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getForumAskUrl, isDone } from '@/lib/learnerPack'
+import { getForumAskUrl, isDone, withXp } from '@/lib/learnerPack'
 import type { TutorialStepProps } from '../types'
 
 const SPOKEN_TUTORIAL_URL = 'https://spoken-tutorial.org'
@@ -40,7 +40,7 @@ export const VideoStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav 
                         disabled={isWatched}
                         className="min-h-11 cursor-pointer"
                     >
-                        {isWatched ? 'Watched' : 'Mark as watched (+10 XP)'}
+                        {isWatched ? 'Watched' : withXp('Mark as watched', nav.xpFor('watched'))}
                     </Button>
                 </div>
             </div>

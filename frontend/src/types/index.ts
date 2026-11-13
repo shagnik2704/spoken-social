@@ -187,6 +187,7 @@ export interface Tutorial {
     forumAsked: RadioValue
     forumAnswered: RadioValue
     minitaskOpted: RadioValue
+    activityDone?: RadioValue | boolean
     xpEarned: number
 }
 
@@ -289,6 +290,8 @@ export interface LearnerPackOverviewTutorial {
         reflectionSubmitted: boolean
         reflectionWordCount: number
         assignmentDone?: boolean
+        activityDone?: boolean
+        practiced?: boolean
         quizPassed: boolean
         quizScore: number | null
         status: string
@@ -309,11 +312,21 @@ export interface CourseMaterialUrls {
     installationSheetUrl?: string | null
 }
 
+export interface XpRewards {
+    watched: number
+    activityDone: number
+    assignmentDone: number
+    practiced: number
+    forumAsked: number
+    forumAnswered: number
+}
+
 export interface LearnerPackOverview {
     courseId: string
     title: string
     uiLayout: string
     forumCategory?: string | null
+    xpRewards?: XpRewards
     totalWeeks: number
     tutorials: LearnerPackOverviewTutorial[]
     habitMilestones: HabitMilestone[]

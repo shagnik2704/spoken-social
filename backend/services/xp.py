@@ -13,6 +13,7 @@ XP_MAP = {
     "watched": 10,
     "practiced": 10,
     "assignment_done": 5,
+    "activity_done": 5,
     "forum_asked": 5,
     "forum_answered": 10,
 }

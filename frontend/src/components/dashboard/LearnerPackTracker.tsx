@@ -314,6 +314,7 @@ export const LearnerPackTracker: React.FC = () => {
                                             courseId={courseId}
                                             tutorial={tutorial}
                                             isUpNext={tutorial.id === nextIncompleteTutorial?.id}
+                                            xpRewards={overview.xpRewards}
                                         />
                                     ))}
                                 </CollapsibleContent>

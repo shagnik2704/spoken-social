@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Check } from 'lucide-react'
+import { Check, Zap } from 'lucide-react'
 import type { TutorialStepId } from '@/lib/learnerPack'
 import { cn } from '@/lib/utils'
 
@@ -9,6 +9,7 @@ export interface TutorialStep {
     shortLabel: string
     done: boolean
     needsAttention?: boolean
+    xp?: number
 }
 
 interface TutorialStepNavProps {
@@ -78,6 +79,12 @@ export const TutorialStepNav: React.FC<TutorialStepNavProps> = ({ steps, activeS
                                 <span className="sm:hidden">{step.shortLabel}</span>
                                 <span className="hidden sm:inline">{step.label}</span>
                             </span>
+                            {!step.done && step.xp ? (
+                                <span className="inline-flex items-center gap-0.5 font-mono text-[10px] leading-none font-semibold text-foreground/75">
+                                    <Zap className="size-2.5 text-xp-gold fill-xp-gold" aria-hidden="true" />
+                                    +{step.xp} XP
+                                </span>
+                            ) : null}
                         </Link>
                     </li>
                 )

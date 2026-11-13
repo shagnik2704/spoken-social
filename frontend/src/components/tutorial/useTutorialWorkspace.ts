@@ -65,6 +65,12 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
     const addXP = useUserStore(state => state.addXP)
     const fetchOverview = useLearnerPackStore(state => state.fetchOverview)
 
+    const announceXp = (message: string, xpGained?: number): void => {
+        const xp = xpGained ?? 0
+        toast.success(xp > 0 ? `${message} +${xp} XP` : message)
+        if (xp > 0) addXP(xp)
+    }
+
     const [detail, setDetail] = useState<LearnerPackTutorialDetail | null>(null)
     const [loadFailed, setLoadFailed] = useState(false)
     const [justCompletedStep, setJustCompletedStep] = useState<TutorialStepId | null>(null)
@@ -121,11 +127,10 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         if (!detail || isDone(detail.userTutorial.watched) || watchRequestedRef.current) return
         watchRequestedRef.current = true
         try {
-            await api.post(`${endpoint}/video-watched`)
-            toast.success('Video watched! +10 XP awarded')
-            addXP(10)
+            const res = await api.post(`${endpoint}/video-watched`)
+            announceXp('Video watched!', res.data.xpGained)
             setJustCompletedStep('video')
-            setDetail(prev => prev && { ...prev, userTutorial: { ...prev.userTutorial, watched: 'yes' } })
+            setDetail(prev => prev && { ...prev, userTutorial: res.data.userTutorial })
             refreshOverview()
         } catch {
             watchRequestedRef.current = false
@@ -141,11 +146,10 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
     const markReadingComplete = async (): Promise<void> => {
         if (!detail || isDone(detail.userTutorial.watched)) return
         try {
-            await api.post(`${endpoint}/reading-complete`)
-            toast.success('Reading completed! +10 XP awarded')
-            addXP(10)
+            const res = await api.post(`${endpoint}/reading-complete`)
+            announceXp('Reading completed!', res.data.xpGained)
             setJustCompletedStep('reading')
-            setDetail(prev => prev && { ...prev, userTutorial: { ...prev.userTutorial, watched: 'yes' } })
+            setDetail(prev => prev && { ...prev, userTutorial: res.data.userTutorial })
             refreshOverview()
         } catch {
             toast.error('Failed to update reading status.')
@@ -155,11 +159,10 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
     const markActivityComplete = async (): Promise<void> => {
         try {
             setIsMarkingActivity(true)
-            await api.post(`${endpoint}/activity-complete`)
-            toast.success('Private notebook exercise completed! +5 XP awarded')
-            addXP(5)
+            const res = await api.post(`${endpoint}/activity-complete`)
+            announceXp('Private notebook exercise completed!', res.data.xpGained)
             setJustCompletedStep('activity')
-            setDetail(prev => prev && { ...prev, userTutorial: { ...prev.userTutorial, minitaskOpted: 'yes' } })
+            setDetail(prev => prev && { ...prev, userTutorial: res.data.userTutorial })
             refreshOverview()
         } catch {
             toast.error('Failed to mark exercise status.')
@@ -171,11 +174,10 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
     const markAssignmentComplete = async (): Promise<void> => {
         try {
             setIsMarkingAssignment(true)
-            await api.post(`${endpoint}/assignment-complete`)
-            toast.success('Official assignment marked completed! +5 XP awarded')
-            addXP(5)
+            const res = await api.post(`${endpoint}/assignment-complete`)
+            announceXp('Assignment marked completed!', res.data.xpGained)
             setJustCompletedStep('assignment')
-            setDetail(prev => prev && { ...prev, userTutorial: { ...prev.userTutorial, assignmentDone: 'yes' } })
+            setDetail(prev => prev && { ...prev, userTutorial: res.data.userTutorial })
             refreshOverview()
         } catch {
             toast.error('Failed to update assignment status.')
@@ -192,13 +194,12 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         try {
             setIsSubmittingReflection(true)
             const res = await api.post(`${endpoint}/reflection`, { reflection_text: reflectionText })
-            toast.success('Reflection submitted! +5 XP awarded')
-            addXP(5)
+            announceXp('Reflection submitted!', res.data.xpGained)
             setJustCompletedStep('activity')
             setDetail(prev => prev && {
                 ...prev,
                 userReflection: res.data.reflection,
-                userTutorial: { ...prev.userTutorial, assignmentDone: 'yes' },
+                userTutorial: res.data.userTutorial,
             })
             refreshOverview()
         } catch {
@@ -221,8 +222,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         try {
             setIsSubmittingLab(true)
             const res = await api.post(`${endpoint}/terminal-submission`, { commands_output: text })
-            toast.success('Assignment submission verified! +10 XP awarded')
-            addXP(res.data.xpGained || 10)
+            announceXp('Assignment submission saved!', res.data.xpGained)
             setJustCompletedStep('activity')
             setDetail(prev => prev && { ...prev, userReflection: res.data.submission, userTutorial: res.data.userTutorial })
             refreshOverview()
@@ -263,9 +263,8 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
             const res = await api.post(`${endpoint}/screenshot-submission`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             })
-            const xpGained: number = res.data.xpGained || 15
-            toast.success('Installation screenshot verified! +15 XP awarded')
-            addXP(xpGained)
+            const xpGained: number = res.data.xpGained ?? 0
+            announceXp('Installation screenshot saved!', xpGained)
             setJustCompletedStep('activity')
             if (!detail?.userReflection) setCelebration({ xpEarned: xpGained })
             setScreenshotPreview(res.data.submission?.imageUrl || null)
@@ -294,8 +293,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
             setIsSubmittingQuiz(true)
             const res = await api.post(`${endpoint}/quiz`, { answers: quizAnswers })
             const { score, totalQuestions, passed, results, xpGained } = res.data
-            toast.success(`Quiz completed! Scored ${score}/${totalQuestions}${xpGained > 0 ? ` (+${xpGained} XP)` : ''}`)
-            if (xpGained > 0) addXP(xpGained)
+            announceXp(`Quiz completed! Scored ${score}/${totalQuestions}.`, xpGained)
             setJustCompletedStep('quiz')
             if (passed && !detail.quiz.passed) setCelebration({ xpEarned: xpGained })
             setDetail(prev => prev && {
@@ -308,7 +306,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
                     submittedAt: new Date().toISOString(),
                     questions: results,
                 },
-                userTutorial: { ...prev.userTutorial, practiced: 'yes', completed: true },
+                userTutorial: res.data.userTutorial ?? { ...prev.userTutorial, practiced: 'yes', completed: true },
             })
             refreshOverview()
         } catch {

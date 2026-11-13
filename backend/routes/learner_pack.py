@@ -34,7 +34,7 @@ from models.learner_pack import (
     UserHabitLogCheckin,
 )
 from models.xp_event import XPEvent
-from services.xp import recompute_tutorial_xp, recalc_level
+from services.xp import XP_MAP, recompute_tutorial_xp, recalc_level
 from services.swayam import sync_course_progress_and_swayam
 
 router = APIRouter(prefix="/api/learner-pack", tags=["learner_pack"])
@@ -138,6 +138,15 @@ MATERIAL_FIELDS = {
     "installationSheetUrl": "installation_sheet_url",
 }
 
+XP_REWARD_API_KEYS = {
+    "watched": "watched",
+    "activity_done": "activityDone",
+    "assignment_done": "assignmentDone",
+    "practiced": "practiced",
+    "forum_asked": "forumAsked",
+    "forum_answered": "forumAnswered",
+}
+
 
 def _course_wide_materials(tutorials: list[Tutorial]) -> dict[str, str | None]:
     """A material counts as course-wide only when every tutorial that has one points at the same file."""
@@ -231,9 +240,11 @@ async def get_course_overview(
             "userProgress": {
                 "watched": ut.watched if ut else False,
                 "readingCompleted": ut.watched if ut else False,
-                "reflectionSubmitted": ref is not None or (ut.minitask_opted if ut else False),
+                "reflectionSubmitted": ref is not None or (ut.activity_done if ut else False),
                 "reflectionWordCount": ref.word_count if ref else 0,
                 "assignmentDone": bool(ut.assignment_done) if ut else False,
+                "activityDone": bool(ut.activity_done) if ut else False,
+                "practiced": bool(ut.practiced) if ut else False,
                 "quizPassed": quiz.passed if quiz else (ut.practiced if ut else False),
                 "quizScore": quiz.score if quiz else None,
                 "status": ut.status if ut else "not_started",
@@ -257,6 +268,7 @@ async def get_course_overview(
         "title": course.title,
         "uiLayout": course.ui_layout,
         "forumCategory": course.forum_category,
+        "xpRewards": {api_key: XP_MAP[column] for column, api_key in XP_REWARD_API_KEYS.items()},
         "totalWeeks": 12,
         "tutorials": tutorial_list,
         "habitMilestones": habit_milestones,
@@ -403,6 +415,7 @@ async def mark_reading_complete(
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    xp_gained = 0
     if not ut.watched:
         ut.watched = True
         xp_gained = recompute_tutorial_xp(ut)
@@ -420,7 +433,7 @@ async def mark_reading_complete(
             await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()
 
-    return {"success": True, "userTutorial": ut.to_api_dict()}
+    return {"success": True, "userTutorial": ut.to_api_dict(), "xpGained": xp_gained}
 
 
 @router.post("/tutorials/{tutorial_id}/activity-complete")
@@ -430,8 +443,8 @@ async def mark_activity_complete(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Marks the private notebook exercise as completed (minitask_opted = True)
-    and awards 5 XP if not already awarded.
+    Marks the private notebook exercise as completed (activity_done = True)
+    and awards its XP if not already awarded.
     """
     try:
         tut_uuid = uuid.UUID(tutorial_id)
@@ -439,22 +452,25 @@ async def mark_activity_complete(
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
-    if not ut.minitask_opted:
-        ut.minitask_opted = True
-        user.xp_total += 5
-        db.add(XPEvent(
-            user_id=user.id,
-            source_type="activity_completion",
-            source_id=str(tut_uuid),
-            xp_delta=5,
-            course_id=ut.tutorial.course_id if ut.tutorial else None,
-        ))
-        recalc_level(user)
+    xp_gained = 0
+    if not ut.activity_done:
+        ut.activity_done = True
+        xp_gained = recompute_tutorial_xp(ut)
+        if xp_gained != 0:
+            user.xp_total += xp_gained
+            db.add(XPEvent(
+                user_id=user.id,
+                source_type="activity_completion",
+                source_id=str(tut_uuid),
+                xp_delta=xp_gained,
+                course_id=ut.tutorial.course_id if ut.tutorial else None,
+            ))
+            recalc_level(user)
         if ut.tutorial and ut.tutorial.course_id:
             await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()
 
-    return {"success": True, "userTutorial": ut.to_api_dict()}
+    return {"success": True, "userTutorial": ut.to_api_dict(), "xpGained": xp_gained}
 
 
 @router.post("/tutorials/{tutorial_id}/assignment-complete")
@@ -473,6 +489,7 @@ async def mark_assignment_complete(
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    xp_gained = 0
     if not ut.assignment_done:
         ut.assignment_done = True
         xp_gained = recompute_tutorial_xp(ut)
@@ -490,7 +507,7 @@ async def mark_assignment_complete(
             await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()
 
-    return {"success": True, "userTutorial": ut.to_api_dict()}
+    return {"success": True, "userTutorial": ut.to_api_dict(), "xpGained": xp_gained}
 
 
 @router.post("/tutorials/{tutorial_id}/reflection")

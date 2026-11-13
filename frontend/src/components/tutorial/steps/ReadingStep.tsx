@@ -2,7 +2,7 @@ import { ArrowRight, BookOpen } from 'lucide-react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Button } from '@/components/ui/button'
-import { isDone } from '@/lib/learnerPack'
+import { isDone, withXp } from '@/lib/learnerPack'
 import type { TutorialStepProps } from '../types'
 
 const READING_COMPONENTS: Components = {
@@ -28,6 +28,8 @@ const READING_COMPONENTS: Components = {
 
 export const ReadingStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }) => {
     const isRead = isDone(detail.userTutorial.watched)
+    const readingXp = nav.xpFor('watched')
+    const markAsRead = readingXp > 0 ? `Mark as read to claim +${readingXp} XP` : 'Mark as read'
     const readingMinutes = detail.content?.readingTimeMinutes ?? 0
 
     return (
@@ -60,8 +62,8 @@ export const ReadingStep: React.FC<TutorialStepProps> = ({ detail, workspace, na
                                     ? (nav.isSetup ? 'Core lesson completed. Move to the setup assignment.' : 'Core lesson completed. Move directly to the hands-on terminal assignment.')
                                     : 'Core lesson completed. Move directly to the notebook activity & reflection.')
                                 : (nav.isLinux
-                                    ? (nav.isSetup ? 'Mark as read to claim +10 XP and complete the setup assignment.' : 'Mark as read to claim +10 XP and complete the terminal assignment.')
-                                    : 'Mark as read to claim +10 XP and move directly to the personal notebook exercise & reflection.')}
+                                    ? (nav.isSetup ? `${markAsRead} and complete the setup assignment.` : `${markAsRead} and complete the terminal assignment.`)
+                                    : `${markAsRead} and move directly to the personal notebook exercise & reflection.`)}
                         </p>
                     </div>
                     <Button
@@ -78,7 +80,7 @@ export const ReadingStep: React.FC<TutorialStepProps> = ({ detail, workspace, na
                             ? (nav.isLinux
                                 ? 'Proceed to Assignment'
                                 : 'Proceed to Activity & Reflection')
-                            : 'Mark Complete (+10 XP) & Continue'}
+                            : `${withXp('Mark Complete', readingXp)} & Continue`}
                         <ArrowRight className="h-4 w-4" />
                     </Button>
                 </div>

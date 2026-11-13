@@ -112,7 +112,7 @@ async def test_learner_pack_full_flow():
         assert res.status_code == 200, res.text
         act_res = res.json()
         assert act_res["success"] is True
-        assert act_res["userTutorial"]["minitaskOpted"] is True
+        assert act_res["userTutorial"]["activityDone"] is True
 
         # Step 5: Submit Quiz
         # Tutorial 1 answers in seed script: 1: A, 2: D, 3: C, 4: B, 5: D

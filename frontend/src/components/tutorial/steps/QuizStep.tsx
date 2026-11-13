@@ -2,7 +2,7 @@ import { ArrowRight, Check, CheckCircle2, Lightbulb, Sparkles } from 'lucide-rea
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { normalizeQuizOptions, QUIZ_PASS_SCORE } from '@/lib/learnerPack'
+import { normalizeQuizOptions, QUIZ_PASS_SCORE, withXp } from '@/lib/learnerPack'
 import { cn } from '@/lib/utils'
 import type { TutorialStepProps } from '../types'
 
@@ -38,12 +38,12 @@ export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }
                                 {detail.quiz.score} / {detail.quiz.totalQuestions}
                             </div>
                         </div>
-                    ) : (
+                    ) : nav.xpFor('practiced') > 0 ? (
                         <div className="flex items-center gap-2 text-xs font-mono font-semibold text-foreground bg-muted/60 border border-border px-3 py-1.5 rounded-xl">
                             <Sparkles className="h-4 w-4 text-xp-gold" />
-                            +10 XP
+                            +{nav.xpFor('practiced')} XP
                         </div>
-                    )}
+                    ) : null}
                 </div>
 
                 {/* Questions */}
@@ -126,7 +126,7 @@ export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }
                         >
                             {workspace.isSubmittingQuiz
                                 ? 'Evaluating Answers...'
-                                : 'Submit Answers (+10 XP)'}
+                                : withXp('Submit Answers', nav.xpFor('practiced'))}
                         </Button>
                     </div>
                 ) : (
@@ -139,9 +139,11 @@ export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }
                                     <h4 className="font-bold text-foreground text-base sm:text-lg">
                                         Tutorial {detail.tutorialNumber} Completed!
                                     </h4>
-                                    <Badge variant="outline" className="bg-success/15 text-success border-success/30 text-xs font-bold">
-                                        +25 XP Total
-                                    </Badge>
+                                    {nav.tutorialXp && (
+                                        <Badge variant="outline" className="bg-success/15 text-success border-success/30 text-xs font-mono font-bold">
+                                            {nav.tutorialXp.earned} / {nav.tutorialXp.total} XP
+                                        </Badge>
+                                    )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                     {nextTutorial

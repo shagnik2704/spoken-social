@@ -2,7 +2,7 @@ import { ArrowRight, CheckCircle2, Code2, Lightbulb, Lock, PenTool, Sparkles } f
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { isDone, parseTryItInstructions } from '@/lib/learnerPack'
+import { isDone, parseTryItInstructions, withXp } from '@/lib/learnerPack'
 import type { TutorialStepProps } from '../types'
 
 export const ReflectionActivityStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }) => {
@@ -122,7 +122,7 @@ export const ReflectionActivityStep: React.FC<TutorialStepProps> = ({ detail, wo
                                         ? '✓ Completed'
                                         : workspace.isMarkingActivity
                                             ? 'Saving...'
-                                            : 'Mark Done (+5 XP)'}
+                                            : withXp('Mark Done', nav.xpFor('activityDone'))}
                                 </Button>
                             </div>
                         </div>
@@ -143,10 +143,12 @@ export const ReflectionActivityStep: React.FC<TutorialStepProps> = ({ detail, wo
                                         <h3 className="text-base font-bold text-foreground">Written Reflection</h3>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 font-sans text-xs text-foreground font-semibold bg-muted/60 border border-border px-2.5 py-1 rounded-full">
-                                    <Sparkles className="h-3.5 w-3.5 text-xp-gold" />
-                                    <span>+5 XP</span>
-                                </div>
+                                {nav.xpFor('assignmentDone') > 0 && (
+                                    <div className="flex items-center gap-1.5 font-mono text-xs text-foreground font-semibold bg-muted/60 border border-border px-2.5 py-1 rounded-full">
+                                        <Sparkles className="h-3.5 w-3.5 text-xp-gold" />
+                                        <span>+{nav.xpFor('assignmentDone')} XP</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Formatted Reflection Prompt */}
@@ -207,7 +209,7 @@ export const ReflectionActivityStep: React.FC<TutorialStepProps> = ({ detail, wo
                                     disabled={workspace.isSubmittingReflection || !workspace.reflectionText.trim()}
                                     className="min-h-11 sm:min-h-9 font-semibold text-xs flex-1 sm:flex-none cursor-pointer"
                                 >
-                                    {workspace.isSubmittingReflection ? 'Saving...' : detail.userReflection ? 'Update Reflection' : 'Submit Reflection (+5 XP)'}
+                                    {workspace.isSubmittingReflection ? 'Saving...' : detail.userReflection ? 'Update Reflection' : withXp('Submit Reflection', nav.xpFor('assignmentDone'))}
                                 </Button>
                                 {detail.userReflection && (
                                     <Button

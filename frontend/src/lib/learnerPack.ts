@@ -1,5 +1,5 @@
 import { FileText, FolderArchive, Wrench, type LucideIcon } from 'lucide-react'
-import type { CourseMaterialUrls, LearnerPackOverviewTutorial, QuizOption, RadioValue } from '@/types'
+import type { CourseMaterialUrls, LearnerPackOverviewTutorial, QuizOption, RadioValue, XpRewards } from '@/types'
 
 export type TutorialStepId = 'video' | 'reading' | 'activity' | 'assignment' | 'quiz'
 
@@ -171,6 +171,81 @@ export const getOverviewSteps = (courseId: string | null | undefined, tutorial: 
     }
     return steps
 }
+
+export type XpFlag = 'watched' | 'activityDone' | 'assignmentDone' | 'practiced'
+export type XpFlags = Record<XpFlag, boolean>
+
+const STEP_XP_FLAGS: Record<TutorialStepId, XpFlag[]> = {
+    video: ['watched'],
+    reading: ['watched'],
+    activity: ['activityDone', 'assignmentDone'],
+    assignment: ['assignmentDone'],
+    quiz: ['practiced'],
+}
+
+export interface TutorialXp {
+    earned: number
+    total: number
+    forumBonus: number
+    available: XpFlag[]
+}
+
+export const getTutorialXpFlags = (courseId: string | null | undefined, hasQuiz: boolean): XpFlag[] => {
+    const flags: XpFlag[] = ['watched']
+    if (!isLinuxCourse(courseId)) flags.push('activityDone')
+    flags.push('assignmentDone')
+    if (hasQuiz) flags.push('practiced')
+    return flags
+}
+
+export const getTutorialXp = (rewards: XpRewards, available: XpFlag[], earned: XpFlags, serverXp: number): TutorialXp => {
+    const coreEarned = available.reduce((sum, flag) => sum + (earned[flag] ? rewards[flag] : 0), 0)
+    return {
+        earned: coreEarned,
+        total: available.reduce((sum, flag) => sum + rewards[flag], 0),
+        forumBonus: Math.max(0, serverXp - coreEarned),
+        available,
+    }
+}
+
+export const getOverviewTutorialXp = (
+    courseId: string | null | undefined,
+    tutorial: LearnerPackOverviewTutorial,
+    rewards: XpRewards,
+): TutorialXp => {
+    const progress = tutorial.userProgress
+    return getTutorialXp(
+        rewards,
+        getTutorialXpFlags(courseId, !isSetupTutorial(courseId, tutorial.number)),
+        {
+            watched: progress.watched,
+            activityDone: Boolean(progress.activityDone),
+            assignmentDone: Boolean(progress.assignmentDone),
+            practiced: Boolean(progress.practiced),
+        },
+        progress.xpEarned,
+    )
+}
+
+export const getStepXp = (
+    stepIds: TutorialStepId[],
+    available: XpFlag[],
+    earned: XpFlags,
+    rewards: XpRewards,
+): Partial<Record<TutorialStepId, number>> => {
+    const result: Partial<Record<TutorialStepId, number>> = {}
+    const claimed = new Set<XpFlag>()
+    for (const stepId of stepIds) {
+        for (const flag of STEP_XP_FLAGS[stepId]) {
+            if (!available.includes(flag) || earned[flag] || claimed.has(flag)) continue
+            claimed.add(flag)
+            result[stepId] = (result[stepId] ?? 0) + rewards[flag]
+        }
+    }
+    return result
+}
+
+export const withXp = (label: string, xp: number): string => (xp > 0 ? `${label} (+${xp} XP)` : label)
 
 export interface NextStepInfo {
     stepLabel: string

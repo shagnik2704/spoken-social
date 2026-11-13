@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, CheckCircle2, FileText, HelpCircle, MonitorCheck, PenLine, PlayCircle, Terminal, type LucideIcon } from 'lucide-react'
+import { ArrowRight, Check, CheckCircle2, FileText, HelpCircle, MonitorCheck, PenLine, PlayCircle, Terminal, Zap, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getNextStep, getOverviewSteps, isTutorialCompleted, tutorialPath, type OverviewStepKind } from '@/lib/learnerPack'
+import { getNextStep, getOverviewSteps, getOverviewTutorialXp, isTutorialCompleted, tutorialPath, type OverviewStepKind } from '@/lib/learnerPack'
 import { cn } from '@/lib/utils'
-import type { LearnerPackOverviewTutorial } from '@/types'
+import type { LearnerPackOverviewTutorial, XpRewards } from '@/types'
 
 const STEP_ICONS: Record<OverviewStepKind, LucideIcon> = {
     lesson: PlayCircle,
@@ -18,9 +18,10 @@ interface TutorialRowProps {
     courseId: string
     tutorial: LearnerPackOverviewTutorial
     isUpNext: boolean
+    xpRewards?: XpRewards
 }
 
-export const TutorialRow: React.FC<TutorialRowProps> = ({ courseId, tutorial, isUpNext }) => {
+export const TutorialRow: React.FC<TutorialRowProps> = ({ courseId, tutorial, isUpNext, xpRewards }) => {
     const steps = getOverviewSteps(courseId, tutorial)
     const doneCount = steps.filter(step => step.done).length
     const isCompleted = isTutorialCompleted(courseId, tutorial)
@@ -29,6 +30,7 @@ export const TutorialRow: React.FC<TutorialRowProps> = ({ courseId, tutorial, is
     const quizScore = tutorial.userProgress.quizScore
     const actionLabel = isCompleted ? 'Review' : isInProgress ? 'Continue' : isUpNext ? 'Start' : 'Open'
     const stepSummary = `${doneCount} of ${steps.length} steps done`
+    const xp = xpRewards ? getOverviewTutorialXp(courseId, tutorial, xpRewards) : null
 
     return (
         <div
@@ -54,7 +56,22 @@ export const TutorialRow: React.FC<TutorialRowProps> = ({ courseId, tutorial, is
                 >
                     {isCompleted ? <Check className="size-4" aria-label="Completed" /> : tutorial.number}
                 </div>
-                <h4 className="min-w-0 text-sm font-semibold text-foreground line-clamp-2 sm:line-clamp-1">{tutorial.title}</h4>
+                <div className="min-w-0">
+                    <h4 className="text-sm font-semibold text-foreground line-clamp-2 sm:line-clamp-1">{tutorial.title}</h4>
+                    {xp && (
+                        <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <Zap className="size-3 text-xp-gold fill-xp-gold" aria-hidden="true" />
+                            {xp.earned > 0 ? (
+                                <span>
+                                    <span className="font-mono font-semibold text-foreground">{xp.earned}</span>
+                                    <span className="font-mono"> / {xp.total}</span> XP
+                                </span>
+                            ) : (
+                                <span><span className="font-mono font-semibold text-foreground">{xp.total}</span> XP to earn</span>
+                            )}
+                        </p>
+                    )}
+                </div>
                 {isUpNext && (
                     <span className="shrink-0 text-[11px] font-semibold text-primary bg-primary/10 border border-primary/25 rounded-full px-2 py-0.5">
                         Up next

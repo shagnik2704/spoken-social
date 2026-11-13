@@ -1,7 +1,7 @@
 import { ArrowRight, CheckCircle2, ExternalLink, Loader2, UploadCloud } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { resolveMediaUrl } from '@/lib/learnerPack'
+import { resolveMediaUrl, withXp } from '@/lib/learnerPack'
 import { cn } from '@/lib/utils'
 import type { TutorialStepProps } from '../types'
 
@@ -15,7 +15,11 @@ export const SetupVerificationStep: React.FC<TutorialStepProps> = ({ detail, wor
                     <p className="text-sm text-muted-foreground">
                         Set up your virtual machine, then upload a screenshot to complete this tutorial. Setup tutorials have no quiz.
                     </p>
-                    <Badge variant="outline" className="shrink-0 bg-muted text-foreground border border-border font-mono font-semibold text-xs px-3 py-1">+15 XP</Badge>
+                    {nav.tutorialXp && (
+                        <Badge variant="outline" className="shrink-0 bg-muted text-foreground border border-border font-mono font-semibold text-xs px-3 py-1">
+                            {nav.tutorialXp.earned} / {nav.tutorialXp.total} XP
+                        </Badge>
+                    )}
                 </div>
 
                 {/* 3 Step Flow Cards */}
@@ -134,7 +138,9 @@ export const SetupVerificationStep: React.FC<TutorialStepProps> = ({ detail, wor
                                             : 'Screenshot of Ubuntu 24.04 desktop running inside your Oracle VirtualBox window.'}
                                     </p>
                                 </div>
-                                <Badge variant="outline" className="bg-muted text-foreground border border-border font-mono font-semibold text-xs">+15 XP</Badge>
+                                {nav.xpFor('assignmentDone') > 0 && (
+                                    <Badge variant="outline" className="bg-muted text-foreground border border-border font-mono font-semibold text-xs">+{nav.xpFor('assignmentDone')} XP</Badge>
+                                )}
                             </div>
 
                             {/* Modern Upload Dropzone */}
@@ -211,7 +217,7 @@ export const SetupVerificationStep: React.FC<TutorialStepProps> = ({ detail, wor
                                     className="min-h-11 sm:min-h-9 font-semibold text-xs ml-auto gap-2 cursor-pointer"
                                 >
                                     {workspace.isSubmittingLab ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
-                                    <span>{workspace.isSubmittingLab ? 'Uploading...' : 'Submit Setup Screenshot (+15 XP)'}</span>
+                                    <span>{workspace.isSubmittingLab ? 'Uploading...' : withXp('Submit Setup Screenshot', nav.xpFor('assignmentDone'))}</span>
                                 </Button>
                             </div>
                         </div>

@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { isDone } from '@/lib/learnerPack'
+import { isDone, withXp } from '@/lib/learnerPack'
 import type { TutorialStepProps } from '../types'
 
 const BOILERPLATE_LINE = /^(Personality and Human Development.*Assignment|as an assignment)/i
@@ -85,7 +85,9 @@ export const AssignmentStep: React.FC<TutorialStepProps> = ({ detail, workspace,
                         <p className="text-xs text-muted-foreground">
                             {isAssignmentDone
                                 ? 'Assignment marked as completed. Next step: 5-Question Quiz.'
-                                : 'Mark as completed to earn +5 XP toward your course progress.'}
+                                : nav.xpFor('assignmentDone') > 0
+                                    ? `Mark as completed to earn +${nav.xpFor('assignmentDone')} XP toward your course progress.`
+                                    : 'Mark as completed to track your course progress.'}
                         </p>
                     </div>
 
@@ -106,7 +108,7 @@ export const AssignmentStep: React.FC<TutorialStepProps> = ({ detail, workspace,
                                 ) : (
                                     <>
                                         <CheckCircle2 className="h-4 w-4 text-success" />
-                                        <span>Mark Completed (+5 XP)</span>
+                                        <span>{withXp('Mark Completed', nav.xpFor('assignmentDone'))}</span>
                                     </>
                                 )}
                             </Button>

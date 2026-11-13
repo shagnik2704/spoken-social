@@ -1,7 +1,7 @@
 import { AlertCircle, ArrowRight, ClipboardCheck, Download, FolderArchive, Loader2, Terminal } from 'lucide-react'
 import { TerminalConsole } from '@/components/dashboard/TerminalConsole'
 import { Button } from '@/components/ui/button'
-import { parseLabTask, TERMINAL_MAX_CHARS } from '@/lib/learnerPack'
+import { parseLabTask, TERMINAL_MAX_CHARS, withXp } from '@/lib/learnerPack'
 import { CommandChip } from '../CommandChip'
 import type { TutorialStepProps } from '../types'
 
@@ -114,7 +114,7 @@ export const TerminalLabStep: React.FC<TutorialStepProps> = ({ detail, workspace
                             >
                                 {workspace.isSubmittingLab ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Terminal className="h-3.5 w-3.5" />}
                                 <span>
-                                    {workspace.isSubmittingLab ? 'Submitting...' : detail.userReflection ? 'Update Output' : 'Submit Commands (+10 XP)'}
+                                    {workspace.isSubmittingLab ? 'Submitting...' : detail.userReflection ? 'Update Output' : withXp('Submit Commands', nav.xpFor('assignmentDone'))}
                                 </span>
                             </Button>
                         </div>

@@ -15,9 +15,10 @@ interface TutorialResourcesProps {
     urls?: CourseMaterialUrls | null
     askForumUrl?: string | null
     browseForumUrl?: string | null
+    forumXp?: { ask: number; answer: number }
 }
 
-export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askForumUrl, browseForumUrl }) => {
+export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askForumUrl, browseForumUrl, forumXp }) => {
     const materials = buildMaterials(urls)
     const hasForum = Boolean(askForumUrl || browseForumUrl)
     if (materials.length === 0 && !hasForum) return null
@@ -70,7 +71,10 @@ export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askF
                                     <MessageSquarePlus className="size-4 text-primary" />
                                     <span className="flex-1 min-w-0">
                                         <span className="block text-sm font-medium text-foreground">Have doubts? Ask on forum</span>
-                                        <span className="block text-[11px] text-muted-foreground truncate">Pre-filled for this tutorial</span>
+                                        <span className="block text-[11px] text-muted-foreground truncate">
+                                            Pre-filled for this tutorial
+                                            {forumXp && forumXp.ask > 0 && <span className="font-mono font-semibold text-foreground"> · +{forumXp.ask} XP</span>}
+                                        </span>
                                     </span>
                                     <ExternalLink className="size-3.5 text-muted-foreground" />
                                 </a>
@@ -82,7 +86,10 @@ export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askF
                                     <MessageSquare className="size-4 text-primary" />
                                     <span className="flex-1 min-w-0">
                                         <span className="block text-sm font-medium text-foreground">Browse Forum</span>
-                                        <span className="block text-[11px] text-muted-foreground truncate">Explore questions by peers</span>
+                                        <span className="block text-[11px] text-muted-foreground truncate">
+                                            Answer a peer's question
+                                            {forumXp && forumXp.answer > 0 && <span className="font-mono font-semibold text-foreground"> · +{forumXp.answer} XP</span>}
+                                        </span>
                                     </span>
                                     <ExternalLink className="size-3.5 text-muted-foreground" />
                                 </a>
