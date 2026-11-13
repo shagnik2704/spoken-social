@@ -16,8 +16,7 @@ import { useState, useEffect } from 'react'
 import {
     CheckCircle2, ChevronDown, Lock, BookOpen,
     PlayCircle, HelpCircle, PenTool, Sparkles,
-    Heart, Lightbulb, Compass,
-    Check, ArrowRight, ExternalLink, FileText, Code2, Loader2,
+    Heart, Lightbulb, Check, ArrowRight, ExternalLink, FileText, Code2, Loader2,
     Download, ChevronLeft, ChevronRight, FolderArchive, Terminal, Wrench,
     UploadCloud, AlertCircle
 } from 'lucide-react'
@@ -27,7 +26,6 @@ import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
@@ -35,6 +33,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { toast } from 'sonner'
 import api from '@/lib/axios'
 import { useUserStore } from '@/store/userStore'
+import { TerminalConsole } from './TerminalConsole'
+import { ProgressRing } from './ProgressRing'
 import type {
     LearnerPackOverview,
     LearnerPackOverviewTutorial,
@@ -559,82 +559,68 @@ export function LearnerPackTracker() {
 
     return (
         <div className="space-y-6">
-            {/* Header Card */}
-            <Card className="border border-border/80 bg-card shadow-xs overflow-hidden">
-                <CardContent className="p-6 sm:p-7">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="space-y-1.5">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
-                                    <Compass className="h-6 w-6 text-primary" />
-                                </div>
-                                <div>
-                                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans">
-                                        {overview.title}
-                                    </h2>
-                                    <p className="text-xs sm:text-sm text-muted-foreground">
-                                        12-Week Interactive Curriculum & Learning Workspace
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <Badge variant="outline" className="px-3.5 py-1.5 font-mono text-xs font-semibold border-border bg-muted/60 text-foreground shadow-2xs">
-                            {completedTuts} / {totalTuts} Completed ({progressPercent}%)
-                        </Badge>
-                    </div>
-
-                    <div className="mt-5 space-y-2">
-                        <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                            <span>Curriculum Progress</span>
-                            <span className="font-mono text-foreground font-semibold">{progressPercent}%</span>
-                        </div>
-                        <Progress value={progressPercent} className="h-2.5 bg-muted/80 rounded-full" />
+            {/* Course hero: progress + next action */}
+            <Card className="border border-border/80 bg-card shadow-xs overflow-hidden py-0 gap-0">
+                <div className="h-1 bg-gradient-to-r from-primary via-primary-light to-primary/20" aria-hidden="true" />
+                <CardContent className="p-5 sm:p-7 flex items-center gap-4 sm:gap-6">
+                    <ProgressRing
+                        percent={progressPercent}
+                        label={`${completedTuts} of ${totalTuts} tutorials completed`}
+                    />
+                    <div className="min-w-0 space-y-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Your course
+                        </p>
+                        <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans truncate">
+                            {overview.title}
+                        </h2>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                            <span className="font-mono font-semibold text-foreground">{completedTuts}</span> of{' '}
+                            <span className="font-mono font-semibold text-foreground">{totalTuts}</span> tutorials completed
+                            <span className="hidden sm:inline"> · 12-week curriculum</span>
+                        </p>
                     </div>
                 </CardContent>
-            </Card>
 
-            {/* Minimal Next-Action Card */}
-            {nextIncompleteTutorial && nextStep && (
-                <Card className="border border-primary/25 bg-primary/[0.03] shadow-2xs hover:shadow-xs transition-all">
-                    <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {nextIncompleteTutorial && nextStep && (
+                    <div className="border-t border-border/80 bg-primary/[0.04] px-5 sm:px-7 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="space-y-1 min-w-0">
                             <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium flex-wrap">
-                                <span className="font-semibold text-primary">Up Next</span>
-                                <span>•</span>
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-primary">
+                                    <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
+                                    Up next
+                                </span>
+                                <span aria-hidden="true">·</span>
                                 <span>Week {nextIncompleteTutorial.week}</span>
-                                <span>•</span>
-                                <span className="text-foreground/90 font-medium">{nextStep.stepLabel}</span>
+                                <span aria-hidden="true">·</span>
+                                <span className="text-foreground/90">{nextStep.stepLabel}</span>
                             </div>
                             <h3 className="text-base sm:text-lg font-bold text-foreground truncate">
-                                #{nextIncompleteTutorial.number}. {nextIncompleteTutorial.title}
+                                <span className="font-mono text-muted-foreground mr-1.5">#{nextIncompleteTutorial.number}</span>
+                                {nextIncompleteTutorial.title}
                             </h3>
                         </div>
                         <Button
+                            size="lg"
                             onClick={() => openTutorialModal(nextIncompleteTutorial.id, nextStep.tab)}
-                            className="font-semibold text-xs sm:text-sm gap-2 shrink-0 w-full sm:w-auto shadow-2xs hover:shadow-xs cursor-pointer"
+                            className="font-semibold text-sm gap-2 shrink-0 w-full sm:w-auto min-h-11 cursor-pointer transition duration-200 ease-in-out"
                         >
                             <span>{nextStep.isStarted ? 'Continue' : 'Start Lesson'}</span>
                             <ArrowRight className="h-4 w-4" />
                         </Button>
-                    </CardContent>
-                </Card>
-            )}
+                    </div>
+                )}
 
-            {allCompleted && (
-                <Card className="border border-success/25 bg-success/[0.03] shadow-2xs">
-                    <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-success/10 text-success flex items-center justify-center font-bold text-sm shrink-0">
-                                ✓
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-bold text-foreground">All Tutorials Completed!</h3>
-                                <p className="text-xs text-muted-foreground">You have finished the entire 17-tutorial curriculum.</p>
-                            </div>
+                {allCompleted && (
+                    <div className="border-t border-success/25 bg-success/[0.05] px-5 sm:px-7 py-4 flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                        <div>
+                            <h3 className="text-sm font-bold text-foreground">All tutorials completed</h3>
+                            <p className="text-xs text-muted-foreground">You have finished all {totalTuts} tutorials in this course.</p>
                         </div>
-                    </CardContent>
-                </Card>
-            )}
+                    </div>
+                )}
+            </Card>
 
             {/* 12-Week Collapsible Accordion */}
             <div className="space-y-3">
@@ -643,6 +629,7 @@ export function LearnerPackTracker() {
                     const milestone = milestonesByWeek[weekNum]
                     const isWeekOpen = openWeeks[weekNum] ?? false
                     const weekCompleted = tuts.length > 0 && tuts.every(t => t.userProgress.quizPassed)
+                    const isCurrentWeek = nextIncompleteTutorial?.week === weekNum
 
                     return (
                         <Card key={weekNum} className={`border transition-colors ${weekCompleted ? 'border-success/30 bg-success/[0.02]' : 'border-border'}`}>
@@ -668,10 +655,16 @@ export function LearnerPackTracker() {
                                                 </h3>
                                                 <p className="text-xs text-muted-foreground">
                                                     {tuts.length > 0 ? `${tuts.length} Tutorials` : 'Special Milestone Week'}
+                                                    {isCurrentWeek && <span className="sm:hidden text-primary font-semibold"> · Current week</span>}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
+                                            {isCurrentWeek && (
+                                                <Badge variant="outline" className="hidden sm:inline-flex text-[11px] font-semibold bg-primary/10 text-primary border-primary/25">
+                                                    Current week
+                                                </Badge>
+                                            )}
                                             {milestone && (
                                                 <Badge variant="secondary" className="text-[11px] bg-warning/10 text-warning border border-warning/20">
                                                     {milestone.title}
@@ -725,6 +718,9 @@ export function LearnerPackTracker() {
                                     {tuts.map((tut) => {
                                         const p = tut.userProgress
                                         const isCompleted = p.status === 'completed' || p.quizPassed || (overview.courseId === 'linux' && tut.number <= 2 && Boolean(p.reflectionSubmitted))
+                                        const isInProgress = !isCompleted && Boolean(p.watched || p.reflectionSubmitted)
+                                        const isUpNext = tut.id === nextIncompleteTutorial?.id
+                                        const isHighlighted = isUpNext || isInProgress
 
                                         return (
                                             <div
@@ -733,26 +729,33 @@ export function LearnerPackTracker() {
                                                     "group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border transition-all gap-4",
                                                     isCompleted 
                                                         ? "bg-card/60 border-success/25 hover:border-success/40 hover:shadow-xs" 
-                                                        : (p.watched || p.reflectionSubmitted)
-                                                            ? "bg-card border-primary/30 hover:border-primary/50 shadow-2xs"
+                                                        : isHighlighted
+                                                            ? "bg-primary/[0.03] border-primary/40 hover:border-primary/60 shadow-2xs"
                                                             : "bg-card border-border/70 hover:border-primary/30 hover:shadow-2xs"
                                                 )}
                                             >
-                                                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                                                <div className="flex items-start sm:items-center gap-3 min-w-0 w-full sm:w-auto">
                                                     <div className={cn(
                                                         "h-8 w-8 rounded-lg font-mono text-xs font-bold flex items-center justify-center shrink-0 border transition-colors",
                                                         isCompleted
                                                             ? "bg-success/10 text-success border-success/25"
-                                                            : (p.watched || p.reflectionSubmitted)
+                                                            : isHighlighted
                                                                 ? "bg-primary/10 text-primary border-primary/25"
                                                                 : "bg-muted text-muted-foreground border-border/60"
                                                     )}>
                                                         {isCompleted ? "✓" : `#${tut.number}`}
                                                     </div>
-                                                    <div className="space-y-1 min-w-0">
-                                                        <h4 className="text-sm font-semibold truncate text-foreground group-hover:text-primary transition-colors">
-                                                            {tut.title}
-                                                        </h4>
+                                                    <div className="space-y-1 min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <h4 className="text-sm font-semibold truncate text-foreground group-hover:text-primary transition-colors">
+                                                                {tut.title}
+                                                            </h4>
+                                                            {isUpNext && (
+                                                                <span className="shrink-0 text-[11px] font-semibold text-primary bg-primary/10 border border-primary/25 rounded-full px-2 py-0.5">
+                                                                    Up next
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {(tut.hasCodeFiles || tut.hasInstructionSheet) && (
                                                             <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                                                                 {tut.hasCodeFiles && (
@@ -844,14 +847,14 @@ export function LearnerPackTracker() {
 
                                                     <Button
                                                         size="sm"
-                                                        variant={isCompleted ? "outline" : "default"}
+                                                        variant={isHighlighted ? "default" : "outline"}
                                                         onClick={() => openTutorialModal(tut.id, isCompleted ? 'video' : getNextStepInfo(tut).tab)}
                                                         className={cn(
-                                                            "text-xs font-semibold h-8.5 px-3.5 transition-all shadow-2xs hover:shadow-xs",
-                                                            !isCompleted && "bg-primary text-primary-foreground hover:bg-primary/90"
+                                                            "text-xs font-semibold h-9 px-3.5 transition-all shadow-2xs hover:shadow-xs cursor-pointer",
+                                                            isHighlighted && "bg-primary text-primary-foreground hover:bg-primary/90"
                                                         )}
                                                     >
-                                                        <span>{isCompleted ? 'Review' : (p.watched || p.reflectionSubmitted) ? 'Continue' : 'Open Tutorial'}</span>
+                                                        <span>{isCompleted ? 'Review' : isInProgress ? 'Continue' : isUpNext ? 'Start' : 'Open'}</span>
                                                         <ArrowRight className="h-3.5 w-3.5 ml-1.5 group-hover:translate-x-0.5 transition-transform" />
                                                     </Button>
                                                 </div>
@@ -1749,8 +1752,7 @@ export function LearnerPackTracker() {
 
                                 // LINUX TERMINAL LAB: Tutorials 3 to 20
                                 if (isLinux && !isSetupTutorial) {
-                                    const charCount = terminalOutput.length
-                                    const isOverLimit = charCount > 20000
+                                    const isOverLimit = terminalOutput.length > 20000
 
                                     return (
                                         <div id="tutorial-modal-body" className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-muted/10 min-h-0">
@@ -1785,7 +1787,7 @@ export function LearnerPackTracker() {
                                                                 <Badge variant="outline" className="text-[11px] font-mono font-bold px-2 py-0.5 bg-muted text-foreground">
                                                                     Step {idx + 1}
                                                                 </Badge>
-                                                                <p className="text-xs text-foreground/90 leading-relaxed font-[ui-monospace,SFMono-Regular,Menlo,Consolas,monospace] text-[11px] pt-1 whitespace-pre-line">
+                                                                <p className="text-xs text-foreground/90 leading-relaxed font-terminal text-[11px] pt-1 whitespace-pre-line">
                                                                     {step}
                                                                 </p>
                                                             </div>
@@ -1793,66 +1795,40 @@ export function LearnerPackTracker() {
                                                     </div>
                                                 </div>
 
-                                                {/* Right Column: Terminal output box */}
-                                                <div className="lg:col-span-7 space-y-4">
-                                                    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden flex flex-col">
-                                                        {/* Terminal Window Header Bar */}
-                                                        <div className="flex items-center justify-between px-4 py-2.5 bg-muted/60 border-b border-border select-none">
-                                                            <div className="flex items-center gap-2">
-                                                                <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
-                                                                <span className="text-[11px] font-mono text-muted-foreground font-semibold">
-                                                                    ubuntu@spoken-tutorial: ~
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Monospace Code Editor Area */}
-                                                        <div className="p-4 bg-muted/30 flex-1 flex flex-col">
-                                                            <Textarea
-                                                                rows={10}
-                                                                value={terminalOutput}
-                                                                onChange={(e) => setTerminalOutput(e.target.value)}
-                                                                placeholder={"$ type exit\nexit is a shell builtin\n$ type cp\ncp is /usr/bin/cp\n$ ls\nDesktop Documents Downloads..."}
-                                                                className="w-full bg-transparent text-foreground font-[ui-monospace,SFMono-Regular,Menlo,Consolas,monospace] text-xs sm:text-sm leading-relaxed border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 selection:bg-primary/20 placeholder:text-muted-foreground/60 min-h-[220px]"
-                                                            />
-                                                        </div>
-
-                                                        {/* Terminal Footer Bar */}
-                                                        <div className="px-4 py-3 bg-muted/60 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                                                            <div className="flex items-center gap-2 text-muted-foreground font-mono text-[11px]">
-                                                                <span className={cn(
-                                                                    isOverLimit ? "text-destructive font-bold" : charCount > 18000 ? "text-warning font-bold" : "text-muted-foreground"
-                                                                )}>
-                                                                    {charCount.toLocaleString()} / 20,000 characters
-                                                                </span>
-                                                                {tutorialDetail.userReflection && (
-                                                                    <span className="text-success font-semibold">• ✓ Submitted</span>
-                                                                )}
-                                                            </div>
-                                                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                {/* Right Column: Terminal */}
+                                                <div className="lg:col-span-7 space-y-3">
+                                                    <TerminalConsole
+                                                        value={terminalOutput}
+                                                        onChange={setTerminalOutput}
+                                                        maxChars={20000}
+                                                        isSubmitted={Boolean(tutorialDetail.userReflection)}
+                                                        placeholder={"$ type exit\nexit is a shell builtin\n$ type cp\ncp is /usr/bin/cp\n$ ls\nDesktop  Documents  Downloads"}
+                                                    />
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Paste the commands you ran with their output. Lines starting with <code className="font-terminal text-foreground">$</code> are highlighted as commands.
+                                                        </p>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            {tutorialDetail.userReflection && (
                                                                 <Button
-                                                                    size="sm"
-                                                                    onClick={handleTerminalSubmit}
-                                                                    disabled={isSubmittingLab || !terminalOutput.trim() || isOverLimit}
-                                                                    className="font-semibold text-xs gap-1.5 flex-1 sm:flex-none cursor-pointer"
+                                                                    variant="outline"
+                                                                    onClick={() => switchTab('quiz')}
+                                                                    className="text-xs gap-1.5 flex-1 sm:flex-none min-h-11 sm:min-h-9 cursor-pointer"
                                                                 >
-                                                                    {isSubmittingLab ? <Loader2 className="h-3 w-3 animate-spin" /> : <Terminal className="h-3 w-3" />}
-                                                                    <span>
-                                                                        {isSubmittingLab ? 'Submitting...' : tutorialDetail.userReflection ? 'Update Output' : 'Submit Commands (+10 XP)'}
-                                                                    </span>
+                                                                    <span>Take Quiz</span>
+                                                                    <ArrowRight className="h-3.5 w-3.5" />
                                                                 </Button>
-                                                                {tutorialDetail.userReflection && (
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() => switchTab('quiz')}
-                                                                        className="text-xs gap-1 cursor-pointer"
-                                                                    >
-                                                                        <span>Take Quiz</span>
-                                                                        <ArrowRight className="h-3 w-3" />
-                                                                    </Button>
-                                                                )}
-                                                            </div>
+                                                            )}
+                                                            <Button
+                                                                onClick={handleTerminalSubmit}
+                                                                disabled={isSubmittingLab || !terminalOutput.trim() || isOverLimit}
+                                                                className="font-semibold text-xs gap-1.5 flex-1 sm:flex-none min-h-11 sm:min-h-9 cursor-pointer"
+                                                            >
+                                                                {isSubmittingLab ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Terminal className="h-3.5 w-3.5" />}
+                                                                <span>
+                                                                    {isSubmittingLab ? 'Submitting...' : tutorialDetail.userReflection ? 'Update Output' : 'Submit Commands (+10 XP)'}
+                                                                </span>
+                                                            </Button>
                                                         </div>
                                                     </div>
                                                 </div>
