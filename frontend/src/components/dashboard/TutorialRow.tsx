@@ -62,9 +62,9 @@ export const TutorialRow: React.FC<TutorialRowProps> = ({ courseId, tutorial, is
                 )}
             </div>
 
-            <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pl-11 sm:pl-0">
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 min-w-0 sm:shrink-0 pl-11 sm:pl-0">
                 {isCompleted ? (
-                    <p className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
+                    <p className="inline-flex flex-wrap items-center gap-x-1.5 min-w-0 text-xs font-medium text-success">
                         <CheckCircle2 className="size-3.5" />
                         Completed
                         {quizScore !== null && (
@@ -83,7 +83,7 @@ export const TutorialRow: React.FC<TutorialRowProps> = ({ courseId, tutorial, is
                                         'size-7 rounded-full border flex items-center justify-center transition-colors duration-200 ease-in-out',
                                         step.done
                                             ? 'bg-success/15 text-success border-success/30'
-                                            : 'bg-muted/60 text-muted-foreground/70 border-border/70'
+                                            : 'bg-muted text-foreground/70 border-foreground/20'
                                     )}
                                 >
                                     <StepIcon className="size-3.5" />
@@ -97,7 +97,7 @@ export const TutorialRow: React.FC<TutorialRowProps> = ({ courseId, tutorial, is
                     asChild
                     size="sm"
                     variant={isHighlighted ? 'default' : 'outline'}
-                    className="min-h-11 sm:min-h-9 px-3.5 text-xs font-semibold transition-all duration-200 ease-in-out"
+                    className="min-h-11 sm:min-h-9 shrink-0 px-3.5 text-xs font-semibold transition-all duration-200 ease-in-out"
                 >
                     <Link to={tutorialPath(courseId, tutorial.number, getNextStep(courseId, tutorial).step)}>
                         {actionLabel}

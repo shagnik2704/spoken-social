@@ -65,7 +65,7 @@ export const TerminalLabStep: React.FC<TutorialStepProps> = ({ detail, workspace
                                     <span className="text-[11px] text-muted-foreground">Practice datasets (.zip)</span>
                                 </div>
                             </div>
-                            <Button asChild size="sm" variant="outline" className="min-h-8 text-xs gap-1.5 shrink-0 cursor-pointer">
+                            <Button asChild size="sm" variant="outline" className="min-h-11 sm:min-h-8 text-xs gap-1.5 shrink-0 cursor-pointer">
                                 <a href={detail.codeFilesUrl} download>
                                     <Download className="size-3.5" />
                                     <span>Download</span>

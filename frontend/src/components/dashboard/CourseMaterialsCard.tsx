@@ -1,7 +1,14 @@
 import { Download, ExternalLink } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { buildMaterials } from '@/lib/learnerPack'
+import { cn } from '@/lib/utils'
 import type { CourseMaterialUrls } from '@/types'
+
+const GRID_COLUMNS: Record<number, string> = {
+    1: 'sm:grid-cols-1',
+    2: 'sm:grid-cols-2',
+    3: 'sm:grid-cols-3',
+}
 
 interface CourseMaterialsCardProps {
     urls?: CourseMaterialUrls | null
@@ -17,7 +24,7 @@ export const CourseMaterialsCard: React.FC<CourseMaterialsCardProps> = ({ urls }
                 <h3 className="text-sm font-semibold text-foreground">Course materials</h3>
                 <p className="text-xs text-muted-foreground">Used across all tutorials</p>
             </div>
-            <div className="p-3 sm:p-4 grid gap-2 sm:grid-cols-3">
+            <div className={cn('p-3 sm:p-4 grid gap-2', GRID_COLUMNS[materials.length] ?? 'sm:grid-cols-3')}>
                 {materials.map((material) => {
                     const ActionIcon = material.isDownload ? Download : ExternalLink
                     return (

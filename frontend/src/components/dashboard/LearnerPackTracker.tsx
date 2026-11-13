@@ -32,6 +32,7 @@ export const LearnerPackTracker: React.FC = () => {
 
     const [habitLogs, setHabitLogs] = useState<HabitLogs>({})
     const [openWeeks, setOpenWeeks] = useState<Record<number, boolean>>({})
+    const [opensAllWeeks] = useState(() => window.matchMedia('(min-width: 640px)').matches)
     const [isCheckingIn, setIsCheckingIn] = useState(false)
 
     const loadHabitLogs = useCallback(async (courseId: string): Promise<HabitLogs> => {
@@ -177,7 +178,7 @@ export const LearnerPackTracker: React.FC = () => {
                     const completedInWeek = tutorials.filter(tutorial => isTutorialCompleted(courseId, tutorial)).length
                     const isWeekCompleted = tutorials.length > 0 && completedInWeek === tutorials.length
                     const isCurrentWeek = nextIncompleteTutorial?.week === weekNum
-                    const isWeekOpen = openWeeks[weekNum] ?? true
+                    const isWeekOpen = openWeeks[weekNum] ?? (opensAllWeeks || isCurrentWeek)
                     const isUpcoming = currentWeek !== undefined && weekNum > currentWeek && !isWeekCompleted
                     const weekPercent = tutorials.length > 0 ? Math.round((completedInWeek / tutorials.length) * 100) : 0
 

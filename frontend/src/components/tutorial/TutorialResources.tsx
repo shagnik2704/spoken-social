@@ -25,9 +25,9 @@ export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askF
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="min-h-11 lg:min-h-9 gap-1.5 text-xs font-semibold cursor-pointer transition duration-200 ease-in-out">
+                <Button variant="outline" aria-label="Resources" className="min-h-11 lg:min-h-9 gap-1.5 text-xs font-semibold cursor-pointer transition duration-200 ease-in-out">
                     <FolderOpen className="size-4" />
-                    <span>Resources</span>
+                    <span className="hidden sm:inline">Resources</span>
                     <ChevronDown className="size-3.5 text-muted-foreground" />
                 </Button>
             </DropdownMenuTrigger>

@@ -48,7 +48,7 @@ export const VideoStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav 
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-4">
+        <div className="max-w-4xl lg:max-w-[min(56rem,max(30rem,calc((100dvh-26rem)*16/9)))] mx-auto space-y-4">
             <div className="relative aspect-video w-full rounded-xl bg-black border border-border overflow-hidden shadow-sm">
                 <video
                     key={videoUrl}

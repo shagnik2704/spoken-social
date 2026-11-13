@@ -174,14 +174,14 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
             <div ref={topRef} className="scroll-mt-4 lg:scroll-mt-6" />
             <header className="max-w-5xl mx-auto mb-2 overflow-hidden rounded-xl border border-primary/15 bg-gradient-to-br from-primary/[0.09] via-card to-teal/[0.08] shadow-xs">
                 <div className="px-3 sm:px-5 pt-2.5 pb-4 sm:pb-5 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                    <Button asChild variant="ghost" className="-ml-2 min-h-11 lg:min-h-9 min-w-0 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-primary/10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+                    <Button asChild variant="ghost" className="-ml-2 self-start max-w-full min-h-11 lg:min-h-9 min-w-0 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-primary/10">
                         <Link to={coursePath(courseId)}>
                             <ArrowLeft className="size-4 shrink-0" />
                             <span className="truncate">{overview.title}</span>
                         </Link>
                     </Button>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 sm:shrink-0">
                         {codeFilesUrl && (
                             <Button
                                 asChild
@@ -199,17 +199,17 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                             asChild
                             variant="outline"
                             size="sm"
-                            className="min-h-11 lg:min-h-9 gap-1.5 px-3 border-primary/30 hover:bg-primary/10 text-primary font-semibold text-xs cursor-pointer transition-all duration-200"
+                            className="min-h-11 min-w-11 sm:min-w-0 lg:min-h-9 gap-1.5 px-3 border-primary/30 hover:bg-primary/10 text-primary font-semibold text-xs cursor-pointer transition-all duration-200"
                         >
-                            <a href={askForumUrl} target="_blank" rel="noopener noreferrer">
-                                <MessageSquarePlus className="size-3.5" />
+                            <a href={askForumUrl} target="_blank" rel="noopener noreferrer" aria-label="Have doubts? Ask on forum">
+                                <MessageSquarePlus className="size-4 sm:size-3.5" />
                                 <span className="hidden md:inline">Have doubts? Ask on forum</span>
                                 <span className="md:hidden hidden sm:inline">Ask on forum</span>
-                                <span className="sm:hidden">Forum</span>
-                                <ExternalLink className="size-3 opacity-70" />
+                                <ExternalLink className="hidden sm:block size-3 opacity-70" />
                             </a>
                         </Button>
                         <TutorialResources urls={detail} askForumUrl={askForumUrl} browseForumUrl={browseForumUrl} />
+                        <div className="ml-auto sm:ml-0 flex items-center gap-1.5">
                         {prevTutorial ? (
                             <Button asChild variant="outline" size="icon" className={tutorialNavButton}>
                                 <Link to={tutorialPath(courseId, prevTutorial.number)} aria-label={`Previous: Tutorial ${prevTutorial.number}, ${prevTutorial.title}`} title={`Tutorial ${prevTutorial.number}: ${prevTutorial.title}`}>
@@ -232,6 +232,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                                 <ChevronRight className="size-4" />
                             </Button>
                         )}
+                        </div>
                     </div>
                 </div>
                 <div className="px-1 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
