@@ -69,8 +69,8 @@ export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askF
                                 <a href={askForumUrl} target="_blank" rel="noopener noreferrer">
                                     <MessageSquarePlus className="size-4 text-primary" />
                                     <span className="flex-1 min-w-0">
-                                        <span className="block text-sm font-medium text-foreground">Ask Question on Forum</span>
-                                        <span className="block text-[11px] text-muted-foreground truncate">Pre-filled for this tutorial · +5 XP</span>
+                                        <span className="block text-sm font-medium text-foreground">Have doubts? Ask on forum</span>
+                                        <span className="block text-[11px] text-muted-foreground truncate">Pre-filled for this tutorial</span>
                                     </span>
                                     <ExternalLink className="size-3.5 text-muted-foreground" />
                                 </a>

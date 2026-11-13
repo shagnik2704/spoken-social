@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download, ExternalLink, MessageSquarePlus, Zap } from 'lucide-react'
 import { CelebrationModal } from '@/components/dashboard/CelebrationModal'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -29,7 +29,6 @@ import { ReflectionActivityStep } from './steps/ReflectionActivityStep'
 import { SetupVerificationStep } from './steps/SetupVerificationStep'
 import { TerminalLabStep } from './steps/TerminalLabStep'
 import { VideoStep } from './steps/VideoStep'
-import { TutorialForumCard } from './TutorialForumCard'
 import { TutorialResources } from './TutorialResources'
 import { TutorialStepNav, type TutorialStep } from './TutorialStepNav'
 import type { TutorialNav, TutorialStepProps } from './types'
@@ -196,6 +195,20 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                                 </a>
                             </Button>
                         )}
+                        <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="min-h-11 lg:min-h-9 gap-1.5 px-3 border-primary/30 hover:bg-primary/10 text-primary font-semibold text-xs cursor-pointer transition-all duration-200"
+                        >
+                            <a href={askForumUrl} target="_blank" rel="noopener noreferrer">
+                                <MessageSquarePlus className="size-3.5" />
+                                <span className="hidden md:inline">Have doubts? Ask on forum</span>
+                                <span className="md:hidden hidden sm:inline">Ask on forum</span>
+                                <span className="sm:hidden">Forum</span>
+                                <ExternalLink className="size-3 opacity-70" />
+                            </a>
+                        </Button>
                         <TutorialResources urls={detail} askForumUrl={askForumUrl} browseForumUrl={browseForumUrl} />
                         {prevTutorial ? (
                             <Button asChild variant="outline" size="icon" className={tutorialNavButton}>
@@ -259,15 +272,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
 
             <div className="max-w-5xl mx-auto pt-5 sm:pt-6">
                 {detail ? (
-                    <>
-                        <StepComponent detail={detail} workspace={workspace} nav={nav} />
-                        <TutorialForumCard
-                            courseId={courseId}
-                            forumCategory={forumCategory}
-                            courseTitle={overview.title}
-                            tutorialTitle={tutorial.title}
-                        />
-                    </>
+                    <StepComponent detail={detail} workspace={workspace} nav={nav} />
                 ) : workspace.loadFailed ? (
                     <PageMessage
                         title="Couldn't load this tutorial"
