@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
 import api from '@/lib/axios'
-import { isDone, SCREENSHOT_MAX_BYTES, TERMINAL_MAX_CHARS, type TutorialStepId } from '@/lib/learnerPack'
+import { FORUM_SECOND_BUCKET, isDone, SCREENSHOT_MAX_BYTES, TERMINAL_MAX_CHARS, type TutorialStepId } from '@/lib/learnerPack'
 import { useLearnerPackStore } from '@/store/learnerPackStore'
 import { useUserStore } from '@/store/userStore'
 import type { LearnerPackTutorialDetail } from '@/types'
@@ -27,6 +27,8 @@ export interface TutorialWorkspace {
     dismissCelebration: () => void
 
     videoWatchPercent: number
+    videoPositionSeconds: number
+    reportVideoPosition: (seconds: number) => void
     isVideoBuffering: boolean
     setIsVideoBuffering: (isBuffering: boolean) => void
     reportVideoProgress: (percent: number) => void
@@ -77,6 +79,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
     const [celebration, setCelebration] = useState<TutorialCelebration | null>(null)
 
     const [videoWatchPercent, setVideoWatchPercent] = useState(0)
+    const [videoPositionSeconds, setVideoPositionSeconds] = useState(0)
     const [isVideoBuffering, setIsVideoBuffering] = useState(false)
     const watchRequestedRef = useRef(false)
 
@@ -136,6 +139,10 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
             watchRequestedRef.current = false
             toast.error('Failed to update video progress.')
         }
+    }
+
+    const reportVideoPosition = (seconds: number): void => {
+        setVideoPositionSeconds(Math.floor(seconds / FORUM_SECOND_BUCKET) * FORUM_SECOND_BUCKET)
     }
 
     const reportVideoProgress = (percent: number): void => {
@@ -328,6 +335,8 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         celebration,
         dismissCelebration: () => setCelebration(null),
         videoWatchPercent,
+        videoPositionSeconds,
+        reportVideoPosition,
         isVideoBuffering,
         setIsVideoBuffering,
         reportVideoProgress,

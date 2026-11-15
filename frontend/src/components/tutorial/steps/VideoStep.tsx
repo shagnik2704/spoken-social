@@ -13,6 +13,7 @@ export const VideoStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav 
         courseId: detail.courseId,
         forumCategory: detail.forumCategory,
         tutorialTitle: detail.title,
+        videoPositionSeconds: workspace.videoPositionSeconds,
     })
 
     if (!videoUrl) {
@@ -62,6 +63,7 @@ export const VideoStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav 
                     onCanPlay={() => workspace.setIsVideoBuffering(false)}
                     onTimeUpdate={(e) => {
                         const video = e.currentTarget
+                        workspace.reportVideoPosition(video.currentTime)
                         if (video.duration > 0) {
                             workspace.reportVideoProgress(Math.round((video.currentTime / video.duration) * 100))
                         }

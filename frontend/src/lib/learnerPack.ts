@@ -8,7 +8,7 @@ const TUTORIAL_STEP_IDS: readonly TutorialStepId[] = ['video', 'reading', 'activ
 export const isTutorialStepId = (value?: string): value is TutorialStepId =>
     TUTORIAL_STEP_IDS.includes(value as TutorialStepId)
 
-const LINUX_COURSE_ID = 'linux'
+export const LINUX_COURSE_ID = 'linux'
 const SETUP_TUTORIAL_COUNT = 2
 
 export const QUIZ_PASS_SCORE = 3
@@ -72,8 +72,20 @@ export interface ForumAskUrlOptions {
     forumCategory?: string | null
     courseTitle?: string | null
     tutorialTitle?: string | null
-    minuteRange?: string
-    secondRange?: string
+    videoPositionSeconds?: number
+}
+
+export const FORUM_SECOND_BUCKET = 10
+
+const FORUM_TUTORIAL_NAMES: Record<string, string> = {
+    'Date and Time Commands in Linux': 'Date and Time Commands',
+}
+
+const forumTimeRanges = (positionSeconds: number): { minuteRange: string; secondRange: string } => {
+    const total = Math.max(0, Math.floor(positionSeconds))
+    const minute = Math.floor(total / 60)
+    const second = Math.floor((total % 60) / FORUM_SECOND_BUCKET) * FORUM_SECOND_BUCKET
+    return { minuteRange: `${minute}-${minute + 1}`, secondRange: `${second}-${second + FORUM_SECOND_BUCKET}` }
 }
 
 export const getForumAskUrl = (options: ForumAskUrlOptions): string => {
@@ -82,9 +94,9 @@ export const getForumAskUrl = (options: ForumAskUrlOptions): string => {
         forumCategory,
         courseTitle,
         tutorialTitle,
-        minuteRange = '0-1',
-        secondRange = '0-10',
+        videoPositionSeconds = 0,
     } = options
+    const { minuteRange, secondRange } = forumTimeRanges(videoPositionSeconds)
 
     let category = forumCategory
     if (isLinuxCourse(courseId) || forumCategory?.toLowerCase() === 'linux' || courseTitle?.toLowerCase().includes('linux')) {
@@ -100,14 +112,10 @@ export const getForumAskUrl = (options: ForumAskUrlOptions): string => {
         parts.push(`category=${encodeURIComponent(category)}`)
     }
     if (tutorialTitle) {
-        parts.push(`tutorial=${encodeURIComponent(tutorialTitle)}`)
+        parts.push(`tutorial=${encodeURIComponent(FORUM_TUTORIAL_NAMES[tutorialTitle] ?? tutorialTitle)}`)
     }
-    if (minuteRange) {
-        parts.push(`minute_range=${encodeURIComponent(minuteRange)}`)
-    }
-    if (secondRange) {
-        parts.push(`second_range=${encodeURIComponent(secondRange)}`)
-    }
+    parts.push(`minute_range=${encodeURIComponent(minuteRange)}`)
+    parts.push(`second_range=${encodeURIComponent(secondRange)}`)
 
     return parts.length > 0
         ? `https://forums.spoken-tutorial.org/new-question/?${parts.join('&')}`

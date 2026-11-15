@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { ActiveCourseTracker } from './ActiveCourseTracker'
 import { LearnerPackTracker } from './LearnerPackTracker'
+import { CourseWalkthrough } from './CourseWalkthrough'
 import { useSyncActiveCourse } from '@/hooks/useSyncActiveCourse'
 import { useUserStore } from '@/store/userStore'
 import type { UpcomingEvent } from '@/types'
@@ -375,7 +376,10 @@ export default function Dashboard() {
                     </Link>
                 </div>
             )}
-            <GreetingHeader />
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-6">
+                <GreetingHeader />
+                <CourseWalkthrough courseId={activeCourseId} courseTitle={activeCourse?.title} />
+            </div>
             <XPLevelCard />
 
             {/* Section 3: Active Course Tracker or SWAYAM Plus Learner Pack */}

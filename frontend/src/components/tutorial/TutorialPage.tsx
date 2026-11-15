@@ -113,6 +113,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
         forumCategory,
         courseTitle: overview.title,
         tutorialTitle: tutorial.title,
+        videoPositionSeconds: workspace.videoPositionSeconds,
     })
     const browseForumUrl = getForumCategoryUrl(forumCategory, overview.title)
 
