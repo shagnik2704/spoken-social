@@ -55,6 +55,9 @@ const navItems = [
 ]
 
 
+const isNavItemActive = (itemPath: string, pathname: string): boolean =>
+    pathname === itemPath || (itemPath === '/dashboard' && pathname.startsWith('/courses/'))
+
 export function TopBar() {
     const { theme, toggleTheme } = useTheme()
     const [searchOpen, setSearchOpen] = useState(false)
@@ -248,7 +251,7 @@ export function DesktopSidebar() {
                     <nav className="flex flex-col gap-1.5 px-2 py-3 flex-1">
                         {navItems
                             .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
-                                const isActive = location.pathname === item.path
+                                const isActive = isNavItemActive(item.path, location.pathname)
 
                                 // Post / Feed disabled buttons with Tooltips
                                 if (item.label === 'Post' || item.label === 'Feed') {
@@ -385,7 +388,7 @@ export function MobileBottomNav() {
             <div className="flex items-center justify-around h-16 px-2">
                 {navItems
                     .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
-                        const isActive = location.pathname === item.path
+                        const isActive = isNavItemActive(item.path, location.pathname)
 
                         // Post button opens the compose modal
                         if (item.label === 'Post') {

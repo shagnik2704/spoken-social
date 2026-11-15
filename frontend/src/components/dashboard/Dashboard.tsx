@@ -11,6 +11,8 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { ActiveCourseTracker } from './ActiveCourseTracker'
 import { LearnerPackTracker } from './LearnerPackTracker'
+import { CourseWalkthrough } from './CourseWalkthrough'
+import { useSyncActiveCourse } from '@/hooks/useSyncActiveCourse'
 import { useUserStore } from '@/store/userStore'
 import type { UpcomingEvent } from '@/types'
 
@@ -22,13 +24,13 @@ const UPCOMING: UpcomingEvent[] = []
 
 const courseIconMap: Record<string, React.ReactNode> = {
     'Python': <Code className="h-6 w-6 text-primary" />,
-    'Linux': <Terminal className="h-6 w-6 text-green-500" />,
-    'Scilab': <BarChart3 className="h-6 w-6 text-blue-500" />,
-    'C/C++': <Settings className="h-6 w-6 text-orange-500" />,
-    'LibreOffice': <FileText className="h-6 w-6 text-emerald-500" />,
-    'PostgreSQL': <Database className="h-6 w-6 text-sky-500" />,
-    'AI': <Brain className="h-6 w-6 text-purple-500" />,
-    'PHD': <FlaskConical className="h-6 w-6 text-amber-500" />,
+    'Linux': <Terminal className="h-6 w-6 text-primary" />,
+    'Scilab': <BarChart3 className="h-6 w-6 text-primary" />,
+    'C/C++': <Settings className="h-6 w-6 text-primary" />,
+    'LibreOffice': <FileText className="h-6 w-6 text-primary" />,
+    'PostgreSQL': <Database className="h-6 w-6 text-primary" />,
+    'AI': <Brain className="h-6 w-6 text-primary" />,
+    'PHD': <FlaskConical className="h-6 w-6 text-primary" />,
     'Personality and Human Development': <Compass className="h-6 w-6 text-primary" />,
 }
 
@@ -49,73 +51,71 @@ function getGreeting(): string {
 }
 
 
-function GreetingBanner() {
+function GreetingHeader() {
     const userName = useUserStore(state => state.user?.displayName)
     const firstName = userName?.split(' ')[0]
+    const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })
 
     return (
-        <Card className="border-border/80 bg-card shadow-xs">
-            <CardContent className="p-5 sm:p-6 flex flex-col justify-center h-full">
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xl">👋</span>
-                        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
-                            {getGreeting()}, {firstName || 'there'}!
-                        </h1>
-                    </div>
-                    <p className="text-muted-foreground text-xs sm:text-sm">
-                        Welcome back to your learning workspace.
-                    </p>
-                </div>
-            </CardContent>
-        </Card>
+        <header className="space-y-1 pt-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{today}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                {getGreeting()}, {firstName || 'there'}
+            </h1>
+            <p className="text-sm text-muted-foreground">Pick up where you left off.</p>
+        </header>
     )
 }
+
+
+interface StatCellProps {
+    label: string
+    value: string
+    hint: string
+    icon?: React.ReactNode
+}
+
+const StatCell: React.FC<StatCellProps> = ({ label, value, hint, icon }) => (
+    <div className="px-4 sm:px-5 py-4 space-y-1 min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            {icon}
+            {label}
+        </p>
+        <p className="font-mono text-2xl font-bold text-foreground leading-tight">{value}</p>
+        <p className="text-xs text-muted-foreground truncate">{hint}</p>
+    </div>
+)
 
 
 function XPLevelCard() {
     const user = useUserStore(state => state.user)
     if (!user) return null
 
-    const xpPercent = Math.round((user.xpTotal / user.xpForNextLevel) * 100)
+    const xpPercent = Math.min(100, Math.round((user.xpTotal / user.xpForNextLevel) * 100))
+    const xpRemaining = Math.max(0, user.xpForNextLevel - user.xpTotal)
 
     return (
-        <Card className="border-border/80 bg-card shadow-xs">
-            <CardContent className="p-5 sm:p-6 flex flex-col justify-between h-full">
-                <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 shrink-0">
-                                <Zap className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                                <span className="text-sm font-bold text-foreground">Level {user.level}</span>
-                                <span className="text-xs text-muted-foreground ml-1.5 font-medium">— {user.levelTitle}</span>
-                            </div>
-                        </div>
-                        <Badge variant="outline" className="bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-mono font-semibold shrink-0">
-                            {user.xpTotal.toLocaleString()} XP
-                        </Badge>
-                    </div>
-                    <div className="space-y-1.5">
-                        <Progress value={xpPercent} className="h-2 bg-muted rounded-full" />
-                        <div className="flex justify-between text-[11px] font-medium text-muted-foreground">
-                            <span>{user.xpTotal.toLocaleString()} / {user.xpForNextLevel.toLocaleString()} XP</span>
-                            <span className="font-mono">{xpPercent}%</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5 font-medium">
-                        <span className="size-2 rounded-full bg-emerald-500" />
-                        +{user.xpToday} XP today
+        <Card className="border-border/80 bg-card shadow-xs py-0 gap-0 overflow-hidden transition-all duration-300 hover:border-primary/30">
+            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border/70 [&>*:nth-child(-n+2)]:border-t-0 [&>*:nth-child(odd)]:border-l-0 sm:[&>*:nth-child(odd)]:border-l sm:[&>*:first-child]:border-l-0">
+                <StatCell label="Level" value={String(user.level)} hint={user.levelTitle} />
+                <StatCell
+                    label="Total XP"
+                    value={user.xpTotal.toLocaleString()}
+                    hint="All courses"
+                    icon={<Zap className="h-3 w-3 text-xp-gold" />}
+                />
+                <StatCell label="This week" value={`+${user.xpThisWeek.toLocaleString()}`} hint="XP earned" />
+                <StatCell label="Today" value={`+${user.xpToday.toLocaleString()}`} hint="XP earned" />
+            </div>
+            <div className="border-t border-border/70 px-4 sm:px-5 py-3 space-y-1.5 bg-muted/30">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>
+                        <span className="font-mono font-semibold text-foreground">{xpRemaining.toLocaleString()} XP</span> to Level {user.level + 1}
                     </span>
-                    <span className="flex items-center gap-1.5 font-medium">
-                        <span className="size-2 rounded-full bg-primary" />
-                        +{user.xpThisWeek} XP this week
-                    </span>
+                    <span className="font-mono font-semibold text-foreground">{xpPercent}%</span>
                 </div>
-            </CardContent>
+                <Progress value={xpPercent} className="h-1.5 bg-muted rounded-full" />
+            </div>
         </Card>
     )
 }
@@ -233,8 +233,16 @@ function AchievementsPreview() {
                 </div>
 
                 {/* Earned badges */}
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-3">Recently Earned</p>
-                <div className="flex gap-3 mb-5">
+                {earnedBadges.length > 0 && (
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-3">Recently Earned</p>
+                )}
+                {earnedBadges.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-4 text-center text-muted-foreground/60">
+                        <Trophy className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                        <p className="text-sm">No badges yet. Complete tutorials to earn your first.</p>
+                    </div>
+                )}
+                <div className={earnedBadges.length > 0 ? "flex gap-3 mb-5" : "hidden"}>
                     {earnedBadges.slice(0, 3).map((badge) => (
                         <div
                             key={badge.id}
@@ -292,7 +300,7 @@ function UpcomingDeadlines() {
                 {UPCOMING.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground/60">
                         <CalendarClock className="h-8 w-8 text-muted-foreground/40 mb-2" />
-                        <p className="text-sm">No upcoming events. You're all clear! 🎉</p>
+                        <p className="text-sm">No upcoming events. You're all clear.</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
@@ -332,7 +340,6 @@ export default function Dashboard() {
 
     const { user, isLoading, courses, activeCourseId } = useUserStore()
     const activeBatchIsActive = useUserStore(state => state.activeBatchIsActive)
-    const setActiveCourse = useUserStore(state => state.setActiveCourse)
 
     useEffect(() => {
         if (swayamEnrollmentId) {
@@ -340,19 +347,7 @@ export default function Dashboard() {
         }
     }, [swayamEnrollmentId])
 
-    useEffect(() => {
-        if (targetCourseId && courses && courses.length > 0) {
-            const normalized = targetCourseId.trim().toLowerCase().replace('swayam_plus-', '').replace('swayam_', '')
-            const matched = courses.find(c => 
-                c.id.toLowerCase() === targetCourseId.toLowerCase() ||
-                c.id.toLowerCase() === normalized ||
-                c.title.toLowerCase() === targetCourseId.toLowerCase()
-            )
-            if (matched && matched.id !== activeCourseId) {
-                setActiveCourse(matched.id)
-            }
-        }
-    }, [targetCourseId, courses, activeCourseId, setActiveCourse])
+    useSyncActiveCourse(targetCourseId)
 
     const activeCourse = courses.find(c => c.id === activeCourseId)
     const isLearnerPack = activeCourse?.uiLayout === 'learner_pack'
@@ -381,11 +376,11 @@ export default function Dashboard() {
                     </Link>
                 </div>
             )}
-            {/* Section 1 & 2: Greeting + XP side by side on desktop */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <GreetingBanner />
-                <XPLevelCard />
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-6">
+                <GreetingHeader />
+                <CourseWalkthrough courseId={activeCourseId} courseTitle={activeCourse?.title} />
             </div>
+            <XPLevelCard />
 
             {/* Section 3: Active Course Tracker or SWAYAM Plus Learner Pack */}
             {isLearnerPack ? (

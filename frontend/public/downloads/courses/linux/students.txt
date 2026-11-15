@@ -1,0 +1,10 @@
+A101|Ravi Kumar|civil|Pune|pass|8000
+A102|Sana Shaikh|computers|Indore|pass|9500
+A103|Arun Das|mechanical|Kolkata|fail|0
+A104|Meera Nair|civil|Kochi|pass|7000
+A105|Tarun Rao|computers|Hyderabad|pass|9000
+A106|Deepa Patel|electrical|Ahmedabad|pass|8500
+A107|John Joseph|computers|Chennai|pass|9500
+A108|Neha Sharma|mechanical|Jaipur|pass|8000
+A109|Pooja Verma|civil|Bhopal|fail|0
+A110|Kiran Desai|electrical|Surat|pass|7500

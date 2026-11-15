@@ -14,10 +14,18 @@
   --color-secondary: #0891B2;
   --color-secondary-hover: #0E7490;
 
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
   --color-danger: #EF4444;
   --color-xp-gold: #FBBF24;
+
+  --animate-step-pop: celebration-icon-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  /* Terminal widget — dark in both modes, tinted to the indigo brand */
+  --color-terminal: #0D1024;
+  --color-terminal-bar: #161A36;
+  --color-terminal-border: #2B3058;
+  --color-terminal-fg: #E6E8F7;
+  --color-terminal-muted: #8E94BC;
+  --color-terminal-prompt: #34D399;
 
   /* Light mode surfaces */
   --color-bg-primary: #F5F6FD;
@@ -36,6 +44,7 @@
   /* ===== Fonts ===== */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'Space Grotesk', monospace;
+  --font-terminal: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
 @theme inline {
@@ -61,6 +70,9 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-teal: var(--teal);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -86,6 +98,10 @@
 
 :root {
   --radius: 0.625rem;
+
+  --success: #059669;
+  --warning: #B45309;
+  --teal: #0E7490;
 
   /* Surfaces */
   --background: oklch(0.975 0.008 270);
@@ -159,6 +175,10 @@
    ====================================== */
 
 .dark {
+  --success: #34D399;
+  --warning: #FBBF24;
+  --teal: #22D3EE;
+
   --background: oklch(0.145 0.04 267);
   /* Very dark indigo */
   --foreground: oklch(0.97 0.005 267);

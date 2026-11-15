@@ -29,7 +29,7 @@ To avoid generic "AI-templated" designs, all frontend components must strictly a
 
 ### 1. Unified Theme & Design Tokens
 Always use custom design variables configured in `frontend/src/index.css` rather than ad-hoc Tailwind values or raw hex codes.
-- **Brand Colors:** Use `--color-primary` (Deep Indigo), `--color-secondary` (Teal), and semantic highlights (`--color-success`, `--color-warning`, `--color-danger`, `--color-xp-gold`).
+- **Brand Colors:** Use `--color-primary` (Deep Indigo), `--color-teal` (Teal accent for learning content; `--color-secondary` is the neutral shadcn surface, not teal), and semantic highlights (`--color-success`, `--color-warning`, `--color-danger`, `--color-xp-gold`).
 - **Typography:** Use `--font-sans` (`Inter` font family) for body text and navigation, and `--font-mono` (`Space Grotesk`) for XP numbers, scores, and headings.
 - **Surfaces:** Use Tailwind classes corresponding to theme surfaces: `bg-background` for application body, `bg-card` for cards, and border classes matching `--color-border`.
 

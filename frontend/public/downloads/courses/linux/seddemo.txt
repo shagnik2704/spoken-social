@@ -1,0 +1,10 @@
+Linux is an open-source operating system.
+It is widely used in servers, desktops, and embedded systems.
+The Linux kernel was created by Linus Torvalds.
+This student passed the examination with flying colours.
+This student failed the examination and needs to re-attempt.
+Many developers love using Linux for development work.
+Linux provides powerful command-line utilities.
+civil engineering students also learn Linux tools.
+The stream editor sed allows powerful stream processing.
+sed reads input line by line and applies editing commands.

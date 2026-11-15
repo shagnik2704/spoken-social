@@ -15,7 +15,10 @@ import io
 import uuid
 from datetime import datetime, timezone, date
 from typing import Optional, Dict, Any, List
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File, Form
 from pydantic import BaseModel, Field
@@ -34,7 +37,7 @@ from models.learner_pack import (
     UserHabitLogCheckin,
 )
 from models.xp_event import XPEvent
-from services.xp import recompute_tutorial_xp, recalc_level
+from services.xp import XP_MAP, recompute_tutorial_xp, recalc_level
 from services.swayam import sync_course_progress_and_swayam
 
 router = APIRouter(prefix="/api/learner-pack", tags=["learner_pack"])
@@ -132,6 +135,36 @@ async def _get_or_create_user_tutorial(db: AsyncSession, user_id: uuid.UUID, tut
 # Endpoints
 # ------------------------------------------------------------
 
+MATERIAL_FIELDS = {
+    "codeFilesUrl": "code_files_url",
+    "instructionSheetUrl": "instruction_sheet_url",
+    "installationSheetUrl": "installation_sheet_url",
+}
+
+XP_REWARD_API_KEYS = {
+    "watched": "watched",
+    "activity_done": "activityDone",
+    "assignment_done": "assignmentDone",
+    "practiced": "practiced",
+    "forum_asked": "forumAsked",
+    "forum_answered": "forumAnswered",
+}
+
+
+def _course_wide_materials(tutorials: list[Tutorial]) -> dict[str, str | None]:
+    """A material counts as course-wide only when every tutorial that has one points at the same file."""
+    materials: dict[str, str | None] = {}
+    for key, attr in MATERIAL_FIELDS.items():
+        urls = set()
+        for tut in tutorials:
+            content = tut.learner_pack_content[0] if tut.learner_pack_content else None
+            url = (getattr(content, attr, None) if content else None) or getattr(tut, attr, None)
+            if url:
+                urls.add(url)
+        materials[key] = urls.pop() if len(urls) == 1 else None
+    return materials
+
+
 @router.get("/course/{course_id}/overview")
 async def get_course_overview(
     course_id: str,
@@ -210,9 +243,11 @@ async def get_course_overview(
             "userProgress": {
                 "watched": ut.watched if ut else False,
                 "readingCompleted": ut.watched if ut else False,
-                "reflectionSubmitted": ref is not None or (ut.minitask_opted if ut else False),
+                "reflectionSubmitted": ref is not None or (ut.activity_done if ut else False),
                 "reflectionWordCount": ref.word_count if ref else 0,
                 "assignmentDone": bool(ut.assignment_done) if ut else False,
+                "activityDone": bool(ut.activity_done) if ut else False,
+                "practiced": bool(ut.practiced) if ut else False,
                 "quizPassed": quiz.passed if quiz else (ut.practiced if ut else False),
                 "quizScore": quiz.score if quiz else None,
                 "status": ut.status if ut else "not_started",
@@ -235,9 +270,12 @@ async def get_course_overview(
         "courseId": course.id,
         "title": course.title,
         "uiLayout": course.ui_layout,
+        "forumCategory": course.forum_category,
+        "xpRewards": {api_key: XP_MAP[column] for column, api_key in XP_REWARD_API_KEYS.items()},
         "totalWeeks": 12,
         "tutorials": tutorial_list,
         "habitMilestones": habit_milestones,
+        "materials": _course_wide_materials(tutorials),
     }
 
 
@@ -259,7 +297,11 @@ async def get_tutorial_content(
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
     # Fetch tutorial
-    t_res = await db.execute(select(Tutorial).filter_by(id=tut_uuid))
+    t_res = await db.execute(
+        select(Tutorial)
+        .options(selectinload(Tutorial.course))
+        .filter_by(id=tut_uuid)
+    )
     tutorial = t_res.scalars().first()
     if not tutorial:
         raise HTTPException(status_code=404, detail="Tutorial not found")
@@ -309,6 +351,7 @@ async def get_tutorial_content(
         "tutorialNumber": tutorial.tutorial_number,
         "title": tutorial.title,
         "courseId": tutorial.course_id,
+        "forumCategory": tutorial.course.forum_category if tutorial.course else None,
         "videoUrl": (content.video_url if content and content.video_url else tutorial.video_url),
         "videoPosterUrl": (content.video_poster_url if content and content.video_poster_url else tutorial.video_poster_url),
         "videoDurationSeconds": content.video_duration_seconds if content else None,
@@ -375,6 +418,7 @@ async def mark_reading_complete(
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    xp_gained = 0
     if not ut.watched:
         ut.watched = True
         xp_gained = recompute_tutorial_xp(ut)
@@ -392,7 +436,7 @@ async def mark_reading_complete(
             await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()
 
-    return {"success": True, "userTutorial": ut.to_api_dict()}
+    return {"success": True, "userTutorial": ut.to_api_dict(), "xpGained": xp_gained}
 
 
 @router.post("/tutorials/{tutorial_id}/activity-complete")
@@ -402,8 +446,8 @@ async def mark_activity_complete(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Marks the private notebook exercise as completed (minitask_opted = True)
-    and awards 5 XP if not already awarded.
+    Marks the private notebook exercise as completed (activity_done = True)
+    and awards its XP if not already awarded.
     """
     try:
         tut_uuid = uuid.UUID(tutorial_id)
@@ -411,22 +455,25 @@ async def mark_activity_complete(
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
-    if not ut.minitask_opted:
-        ut.minitask_opted = True
-        user.xp_total += 5
-        db.add(XPEvent(
-            user_id=user.id,
-            source_type="activity_completion",
-            source_id=str(tut_uuid),
-            xp_delta=5,
-            course_id=ut.tutorial.course_id if ut.tutorial else None,
-        ))
-        recalc_level(user)
+    xp_gained = 0
+    if not ut.activity_done:
+        ut.activity_done = True
+        xp_gained = recompute_tutorial_xp(ut)
+        if xp_gained != 0:
+            user.xp_total += xp_gained
+            db.add(XPEvent(
+                user_id=user.id,
+                source_type="activity_completion",
+                source_id=str(tut_uuid),
+                xp_delta=xp_gained,
+                course_id=ut.tutorial.course_id if ut.tutorial else None,
+            ))
+            recalc_level(user)
         if ut.tutorial and ut.tutorial.course_id:
             await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()
 
-    return {"success": True, "userTutorial": ut.to_api_dict()}
+    return {"success": True, "userTutorial": ut.to_api_dict(), "xpGained": xp_gained}
 
 
 @router.post("/tutorials/{tutorial_id}/assignment-complete")
@@ -445,6 +492,7 @@ async def mark_assignment_complete(
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    xp_gained = 0
     if not ut.assignment_done:
         ut.assignment_done = True
         xp_gained = recompute_tutorial_xp(ut)
@@ -462,7 +510,7 @@ async def mark_assignment_complete(
             await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()
 
-    return {"success": True, "userTutorial": ut.to_api_dict()}
+    return {"success": True, "userTutorial": ut.to_api_dict(), "xpGained": xp_gained}
 
 
 @router.post("/tutorials/{tutorial_id}/reflection")
@@ -662,15 +710,22 @@ async def submit_screenshot(
     if len(content) < 100:
         raise HTTPException(status_code=400, detail="Uploaded file is empty or corrupted.")
 
-    # 3. Verify real image headers with Pillow
-    try:
-        img = Image.open(io.BytesIO(content))
-        img.verify()
-        img_format = (img.format or "").lower()
-        if img_format not in ("png", "jpeg", "webp"):
-            raise ValueError(f"Unsupported format: {img_format}")
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Invalid or corrupted image file: {exc}")
+    # 3. Verify real image headers with Pillow if available, otherwise check magic bytes
+    if Image is not None:
+        try:
+            img = Image.open(io.BytesIO(content))
+            img.verify()
+            img_format = (img.format or "").lower()
+            if img_format not in ("png", "jpeg", "webp"):
+                raise ValueError(f"Unsupported format: {img_format}")
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid or corrupted image file: {exc}")
+    else:
+        is_png = content.startswith(b'\x89PNG\r\n\x1a\n')
+        is_jpeg = content.startswith(b'\xff\xd8\xff')
+        is_webp = content.startswith(b'RIFF') and b'WEBP' in content[:16]
+        if not (is_png or is_jpeg or is_webp):
+            raise HTTPException(status_code=400, detail="Invalid or unsupported image file format.")
 
     # 4. Save to uploads/screenshots directory
     uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "screenshots")
