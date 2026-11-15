@@ -15,7 +15,10 @@ import io
 import uuid
 from datetime import datetime, timezone, date
 from typing import Optional, Dict, Any, List
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File, Form
 from pydantic import BaseModel, Field
@@ -707,15 +710,22 @@ async def submit_screenshot(
     if len(content) < 100:
         raise HTTPException(status_code=400, detail="Uploaded file is empty or corrupted.")
 
-    # 3. Verify real image headers with Pillow
-    try:
-        img = Image.open(io.BytesIO(content))
-        img.verify()
-        img_format = (img.format or "").lower()
-        if img_format not in ("png", "jpeg", "webp"):
-            raise ValueError(f"Unsupported format: {img_format}")
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Invalid or corrupted image file: {exc}")
+    # 3. Verify real image headers with Pillow if available, otherwise check magic bytes
+    if Image is not None:
+        try:
+            img = Image.open(io.BytesIO(content))
+            img.verify()
+            img_format = (img.format or "").lower()
+            if img_format not in ("png", "jpeg", "webp"):
+                raise ValueError(f"Unsupported format: {img_format}")
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid or corrupted image file: {exc}")
+    else:
+        is_png = content.startswith(b'\x89PNG\r\n\x1a\n')
+        is_jpeg = content.startswith(b'\xff\xd8\xff')
+        is_webp = content.startswith(b'RIFF') and b'WEBP' in content[:16]
+        if not (is_png or is_jpeg or is_webp):
+            raise HTTPException(status_code=400, detail="Invalid or unsupported image file format.")
 
     # 4. Save to uploads/screenshots directory
     uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "screenshots")
