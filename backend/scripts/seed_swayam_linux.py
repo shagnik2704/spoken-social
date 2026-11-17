@@ -98,7 +98,7 @@ def seed_swayam_linux():
         else:
             print(f"  ✓ Course '{course.id}' already linked to Programme '{prog.id}'")
 
-        # 4. Default Batch: swayam_linux_batch_1
+        # 4. Active Batch (e.g. linux-swayam-2026-nov)
         batch_data = data["batch"]
         batch = session.query(Batch).filter_by(id=batch_data["id"]).first()
         start_d = date.fromisoformat(batch_data["start_date"])
@@ -114,7 +114,8 @@ def seed_swayam_linux():
                 status=batch_data.get("status", "active"),
             )
             session.add(batch)
-            print(f"  ✓ Created Batch: {batch.name}")
+            session.flush()
+            print(f"  ✓ Created Batch: {batch.name} ({batch.id})")
         else:
             batch.name = batch_data["name"]
             batch.course_id = course.id
@@ -122,8 +123,18 @@ def seed_swayam_linux():
             batch.start_date = start_d
             batch.end_date = end_d
             batch.status = batch_data.get("status", "active")
-            print(f"  ✓ Updated Batch: {batch.name}")
-        session.flush()
+            session.flush()
+            print(f"  ✓ Updated Batch: {batch.name} ({batch.id})")
+
+        # Automatically migrate any enrollments from legacy 'swayam_linux_batch_1'
+        old_batch = session.query(Batch).filter_by(id="swayam_linux_batch_1").first()
+        if old_batch and old_batch.id != batch.id:
+            migrated_count = session.query(UserCourse).filter_by(batch_id=old_batch.id).update(
+                {"batch_id": batch.id}
+            )
+            session.delete(old_batch)
+            session.flush()
+            print(f"  ✓ Migrated {migrated_count} enrollment(s) from 'swayam_linux_batch_1' to '{batch.id}' and removed legacy batch")
 
         # 5. Tutorials (20 items)
         tutorial_map = {}

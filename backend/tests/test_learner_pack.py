@@ -199,6 +199,7 @@ async def test_sso_exchange_flow():
         "first_name": "Swayam",
         "last_name": "Learner",
         "swayam_sub": "swayam-uid-987654",
+        "courses": ["personality_dev"],
         "exp": datetime.now(timezone.utc) + timedelta(seconds=60),
     }
     handoff_token = jwt.encode(handoff_payload, secret, algorithm="HS256")

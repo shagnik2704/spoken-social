@@ -285,12 +285,12 @@ def parse_docx():
             "description": "Government of India initiative for employability-focused courses."
         },
         "batch": {
-            "id": "swayam_linux_batch_1",
-            "name": "SWAYAM Plus 2026 Linux Batch 1",
+            "id": "linux-swayam-2026-nov",
+            "name": "SWAYAM Plus 2026–27 (Batch 2)",
             "course_id": "linux",
             "programme_id": "swayam_plus",
-            "start_date": "2026-02-01",
-            "end_date": "2026-05-31",
+            "start_date": "2026-11-01",
+            "end_date": "2027-05-31",
             "status": "active"
         },
         "tutorials": tutorials_data,
