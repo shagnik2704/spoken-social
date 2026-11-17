@@ -363,6 +363,25 @@ export const buildMaterials = (urls?: CourseMaterialUrls | null): CourseMaterial
     return materials
 }
 
+export interface MethodVideo {
+    title: string
+    description: string
+    durationLabel: string
+    url: string
+    thumbnailUrl: string
+}
+
+const SIDE_BY_SIDE_VIDEO: MethodVideo = {
+    title: 'Side-by-Side Method',
+    description: 'How to learn with Spoken Tutorials',
+    durationLabel: '11:37',
+    url: 'https://spoken-tutorial.org/watch/Spoken+Tutorial+Technology/Side+by+Side+Method/English/',
+    thumbnailUrl: 'https://spoken-tutorial.org/media/videos/32/714/Side-by-Side-Method-Big.png',
+}
+
+export const getMethodVideo = (courseId?: string | null): MethodVideo | null =>
+    isLinuxCourse(courseId) ? SIDE_BY_SIDE_VIDEO : null
+
 export interface LabTaskItem {
     text: string
     commands: string[]

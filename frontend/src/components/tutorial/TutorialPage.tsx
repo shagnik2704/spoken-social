@@ -242,7 +242,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                                 <ExternalLink className="hidden sm:block size-3 opacity-70" />
                             </a>
                         </Button>
-                        <TutorialResources urls={detail} askForumUrl={askForumUrl} browseForumUrl={browseForumUrl} forumXp={forumXp} />
+                        <TutorialResources courseId={courseId} urls={detail} askForumUrl={askForumUrl} browseForumUrl={browseForumUrl} forumXp={forumXp} />
                         <div className="ml-auto sm:ml-0 flex items-center gap-1.5">
                         {prevTutorial ? (
                             <Button asChild variant="outline" size="icon" className={tutorialNavButton}>

@@ -169,7 +169,7 @@ export const LearnerPackTracker: React.FC = () => {
                 )}
             </Card>
 
-            <CourseMaterialsCard urls={overview.materials} />
+            <CourseMaterialsCard courseId={courseId} urls={overview.materials} />
 
             <ol className="space-y-3">
                 {Array.from({ length: overview.totalWeeks }, (_, index) => index + 1).map((weekNum) => {
