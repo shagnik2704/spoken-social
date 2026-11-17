@@ -286,7 +286,7 @@ def parse_docx():
         },
         "batch": {
             "id": "linux-swayam-2026-nov",
-            "name": "SWAYAM Plus 2026–27 (Batch 2)",
+            "name": "SWAYAM Plus 2026–27",
             "course_id": "linux",
             "programme_id": "swayam_plus",
             "start_date": "2026-11-01",
