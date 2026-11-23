@@ -1,4 +1,4 @@
-import { ChevronDown, Download, ExternalLink, FolderOpen, MessageSquare, MessageSquarePlus } from 'lucide-react'
+import { ChevronDown, Download, ExternalLink, FolderOpen, MessageSquare, MessageSquarePlus, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -8,20 +8,23 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { buildMaterials } from '@/lib/learnerPack'
+import { buildMaterials, getGuideVideos } from '@/lib/learnerPack'
 import type { CourseMaterialUrls } from '@/types'
 
 interface TutorialResourcesProps {
+    courseId?: string | null
     urls?: CourseMaterialUrls | null
     askForumUrl?: string | null
     browseForumUrl?: string | null
     forumXp?: { ask: number; answer: number }
 }
 
-export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askForumUrl, browseForumUrl, forumXp }) => {
+export const TutorialResources: React.FC<TutorialResourcesProps> = ({ courseId, urls, askForumUrl, browseForumUrl, forumXp }) => {
     const materials = buildMaterials(urls)
+    const guideVideos = getGuideVideos(courseId)
+    const hasMaterials = materials.length > 0 || guideVideos.length > 0
     const hasForum = Boolean(askForumUrl || browseForumUrl)
-    if (materials.length === 0 && !hasForum) return null
+    if (!hasMaterials && !hasForum) return null
 
     return (
         <DropdownMenu>
@@ -33,11 +36,25 @@ export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askF
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
-                {materials.length > 0 && (
+                {hasMaterials && (
                     <>
                         <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             Course materials
                         </DropdownMenuLabel>
+                        {guideVideos.map((video) => (
+                            <DropdownMenuItem key={video.key} asChild className="min-h-11 cursor-pointer">
+                                <a href={video.url} target="_blank" rel="noopener noreferrer">
+                                    <PlayCircle className="size-4 text-primary" />
+                                    <span className="flex-1 min-w-0">
+                                        <span className="block text-sm font-medium text-foreground">{video.title}</span>
+                                        <span className="block text-[11px] text-muted-foreground truncate">
+                                            {video.description} · <span className="font-mono">{video.durationLabel}</span>
+                                        </span>
+                                    </span>
+                                    <ExternalLink className="size-3.5 text-muted-foreground" />
+                                </a>
+                            </DropdownMenuItem>
+                        ))}
                         {materials.map((material) => {
                             const ActionIcon = material.isDownload ? Download : ExternalLink
                             return (
@@ -61,7 +78,7 @@ export const TutorialResources: React.FC<TutorialResourcesProps> = ({ urls, askF
 
                 {hasForum && (
                     <>
-                        {materials.length > 0 && <DropdownMenuSeparator />}
+                        {hasMaterials && <DropdownMenuSeparator />}
                         <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             Discussion Forum
                         </DropdownMenuLabel>
