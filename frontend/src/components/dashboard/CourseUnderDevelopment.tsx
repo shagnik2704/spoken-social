@@ -84,8 +84,8 @@ export const CourseUnderDevelopment: React.FC<CourseUnderDevelopmentProps> = ({
 
                         {/* Content */}
                         <div className="flex-1 text-center md:text-left space-y-3">
-                            <div className="text-sm font-semibold text-muted-foreground flex items-center justify-center md:justify-start gap-1.5">
-                                <span>👋 Namaste!</span>
+                            <div className="text-sm font-semibold text-primary flex items-center justify-center md:justify-start gap-1.5">
+                                <span>👋 Namaste & Welcome!</span>
                             </div>
 
                             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
@@ -93,11 +93,12 @@ export const CourseUnderDevelopment: React.FC<CourseUnderDevelopmentProps> = ({
                             </h1>
 
                             <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                                Welcome to our platform! Our team at{' '}
                                 <span className="font-bold">
                                     <span className="text-[#1e40af] dark:text-[#60a5fa]">Edu</span>
                                     <span className="text-[#ea580c] dark:text-[#f97316]">Pyramids</span>
                                 </span>{' '}
-                                is putting the finishing touches on this course for the upcoming SWAYAM Plus session. Interactive content and assignments will be uploaded here shortly.
+                                is currently putting the finishing touches on this course to get everything ready for you. Interactive screencasts, hands-on practice, and quizzes will be uploaded right here shortly. We are thrilled to have you here — stay tuned!
                             </p>
 
                             <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
