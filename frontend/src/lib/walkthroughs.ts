@@ -13,9 +13,9 @@ const WALKTHROUGHS: Record<string, CourseWalkthrough> = {
     [LINUX_COURSE_ID]: {
         videoUrl: '/walkthroughs/linux.mp4',
         posterUrl: '/walkthroughs/linux-poster.svg',
-        durationLabel: '3:40',
+        durationLabel: '4:39',
         summary: 'Weeks, steps, XP and the forum',
-        published: false,
+        published: true,
     },
 }
 
