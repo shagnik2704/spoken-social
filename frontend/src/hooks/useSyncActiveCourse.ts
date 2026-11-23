@@ -12,7 +12,18 @@ export const useSyncActiveCourse = (targetCourseId?: string | null): string | nu
         const normalized = target.replace('swayam_plus-', '').replace('swayam_', '')
         const matched = courses.find(course => {
             const id = course.id.toLowerCase()
-            return id === target || id === normalized || course.title.toLowerCase() === target
+            const idNorm = id.replace(/_/g, '-')
+            const targetNorm = target.replace(/_/g, '-')
+            const normNorm = normalized.replace(/_/g, '-')
+            return (
+                id === target ||
+                idNorm === targetNorm ||
+                id === normalized ||
+                idNorm === normNorm ||
+                course.title.toLowerCase() === target ||
+                (targetNorm.includes('empathy') && id.includes('personality_dev')) ||
+                (targetNorm.includes('personality') && id.includes('empathy'))
+            )
         })
         return matched?.id ?? null
     }, [targetCourseId, courses])

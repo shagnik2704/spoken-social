@@ -220,16 +220,46 @@ async def get_or_create_swayam_student(
         db.add(user)
         await db.flush()
 
-    # 4. Determine target course from target_link_uri or default to personality_dev
-    target_course_id = "personality_dev"
+    # 4. Determine target course from target_link_uri or default to linux
+    target_course_id = "linux"
     if target_link_uri:
         uri_lower = target_link_uri.lower()
-        # Check if any course slug matches path
+        # Aliases mapping
+        alias_map = {
+            "empathy": "empathy-growth-mindset",
+            "mindset": "empathy-growth-mindset",
+            "personality": "empathy-growth-mindset",
+            "personality_dev": "empathy-growth-mindset",
+            "creative": "being-creative-with-ai",
+            "deep-learning": "deep-learning-frameworks",
+            "deep_learning": "deep-learning-frameworks",
+            "pytorch": "deep-learning-frameworks",
+            "tensorflow": "deep-learning-frameworks",
+            "interactive": "interactive-ai-tools",
+            "jupyter": "interactive-ai-tools",
+            "vscode": "interactive-ai-tools",
+            "linux": "linux",
+        }
+        matched = False
         all_courses = (await db.execute(select(Course.id))).scalars().all()
         for cid in all_courses:
-            if f"/courses/{cid.lower()}" in uri_lower or f"course={cid.lower()}" in uri_lower:
+            cid_hyphen = cid.lower().replace("_", "-")
+            cid_underscore = cid.lower().replace("-", "_")
+            if (
+                f"/courses/{cid.lower()}" in uri_lower
+                or f"/courses/{cid_hyphen}" in uri_lower
+                or f"/courses/{cid_underscore}" in uri_lower
+                or f"course={cid.lower()}" in uri_lower
+                or f"course={cid_hyphen}" in uri_lower
+            ):
                 target_course_id = cid
+                matched = True
                 break
+        if not matched:
+            for key, target in alias_map.items():
+                if key in uri_lower and target in all_courses:
+                    target_course_id = target
+                    break
 
     # 5. Enroll in active batch of target course
     b_res = await db.execute(

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { ActiveCourseTracker } from './ActiveCourseTracker'
 import { LearnerPackTracker } from './LearnerPackTracker'
 import { CourseWalkthrough } from './CourseWalkthrough'
+import { CourseUnderDevelopment, KNOWN_SWAYAM_COURSES } from './CourseUnderDevelopment'
 import { useSyncActiveCourse } from '@/hooks/useSyncActiveCourse'
 import { useUserStore } from '@/store/userStore'
 import type { UpcomingEvent } from '@/types'
@@ -352,6 +353,11 @@ export default function Dashboard() {
     const activeCourse = courses.find(c => c.id === activeCourseId)
     const isLearnerPack = activeCourse?.uiLayout === 'learner_pack'
 
+    const targetSlug = (targetCourseId || activeCourseId || '').toLowerCase().replace(/_/g, '-')
+    const isUnderDevelopment =
+        activeCourse?.uiLayout === 'under_development' ||
+        (targetSlug in KNOWN_SWAYAM_COURSES && targetSlug !== 'linux' && (!activeCourse || activeCourse.uiLayout === 'under_development'))
+
     if (isLoading) {
         return (
             <div className="max-w-3xl mx-auto space-y-6">
@@ -378,12 +384,19 @@ export default function Dashboard() {
             )}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-6">
                 <GreetingHeader />
-                <CourseWalkthrough courseId={activeCourseId} courseTitle={activeCourse?.title} />
+                {!isUnderDevelopment && (
+                    <CourseWalkthrough courseId={activeCourseId} courseTitle={activeCourse?.title} />
+                )}
             </div>
             <XPLevelCard />
 
-            {/* Section 3: Active Course Tracker or SWAYAM Plus Learner Pack */}
-            {isLearnerPack ? (
+            {/* Section 3: Active Course Tracker, SWAYAM Plus Learner Pack, or Under Development Placeholder */}
+            {isUnderDevelopment ? (
+                <CourseUnderDevelopment
+                    courseId={targetCourseId || activeCourseId}
+                    courseTitle={activeCourse?.title}
+                />
+            ) : isLearnerPack ? (
                 <LearnerPackTracker />
             ) : (
                 <ActiveCourseTracker />

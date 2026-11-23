@@ -560,7 +560,11 @@ async def verify_sso_token(token: str, db: AsyncSession) -> dict | None:
                 # Find course by id or title
                 c_res = await db.execute(
                     select(Course).filter(
-                        (Course.id == raw) | (Course.id == clean) | (Course.title.ilike(item.strip()))
+                        (Course.id == raw)
+                        | (Course.id == clean)
+                        | (Course.id == clean.replace("_", "-"))
+                        | (Course.id == clean.replace("-", "_"))
+                        | (Course.title.ilike(item.strip()))
                     )
                 )
                 c_match = c_res.scalars().first()
