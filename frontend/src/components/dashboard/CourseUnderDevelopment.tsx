@@ -95,8 +95,8 @@ export const CourseUnderDevelopment: React.FC<CourseUnderDevelopmentProps> = ({
                             <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                                 Welcome to our platform! Our team at{' '}
                                 <span className="font-bold">
-                                    <span className="text-[#1e40af] dark:text-[#60a5fa]">Edu</span>
-                                    <span className="text-[#ea580c] dark:text-[#f97316]">Pyramids</span>
+                                    <span className="text-[#F26C25]">Edu</span>
+                                    <span className="text-[#1A237E] dark:text-[#60a5fa]">Pyramids</span>
                                 </span>{' '}
                                 is currently putting the finishing touches on this course to get everything ready for you. Interactive screencasts, hands-on practice, and quizzes will be uploaded right here shortly. We are thrilled to have you here — stay tuned!
                             </p>
