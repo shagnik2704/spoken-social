@@ -1,4 +1,4 @@
-import { FileText, FolderArchive, Wrench, type LucideIcon } from 'lucide-react'
+import { BookOpen, FileText, FolderArchive, Wrench, type LucideIcon } from 'lucide-react'
 import type { CourseMaterialUrls, LearnerPackOverviewTutorial, QuizOption, RadioValue, XpRewards } from '@/types'
 
 export type TutorialStepId = 'video' | 'reading' | 'activity' | 'assignment' | 'quiz'
@@ -314,7 +314,7 @@ export const parseTryItInstructions = (raw: string): TryItInstructions => {
 }
 
 export interface CourseMaterial {
-    key: 'code' | 'instruction' | 'installation'
+    key: 'course-document' | 'code' | 'instruction' | 'installation'
     title: string
     format: 'ZIP' | 'PDF'
     description: string
@@ -363,7 +363,37 @@ export const buildMaterials = (urls?: CourseMaterialUrls | null): CourseMaterial
     return materials
 }
 
-export interface MethodVideo {
+export const COURSE_CONTENT_PAGE_ENABLED = true
+
+export const hasCourseContentPage = (courseId?: string | null): boolean =>
+    COURSE_CONTENT_PAGE_ENABLED && isLinuxCourse(courseId)
+
+export const courseContentPath = (courseId: string): string => `${coursePath(courseId)}/content`
+
+const LINUX_COURSE_DOCUMENT: CourseMaterial = {
+    key: 'course-document',
+    format: 'PDF',
+    title: 'Full course content',
+    description: 'All 20 tutorials: readings, practice tasks, labs and quizzes (PDF)',
+    url: '/downloads/courses/linux/Linux-Full-Course-Content.pdf',
+    isDownload: false,
+    icon: BookOpen,
+}
+
+export const buildCourseDocuments = (courseId: string | null | undefined, urls?: CourseMaterialUrls | null): CourseMaterial[] =>
+    isLinuxCourse(courseId) ? [LINUX_COURSE_DOCUMENT, ...buildMaterials(urls)] : buildMaterials(urls)
+
+const SPOKEN_TUTORIAL_FOSS: Record<string, string> = { '194': 'Linux+Ubuntu' }
+
+export const spokenTutorialWatchUrl = (videoUrl?: string | null): string | null => {
+    const match = videoUrl?.match(/^https:\/\/spoken-tutorial\.org\/media\/videos\/(\d+)\/\d+\/(.+)-English\.webm$/)
+    const foss = match && SPOKEN_TUTORIAL_FOSS[match[1]]
+    return foss ? `https://spoken-tutorial.org/watch/${foss}/${match[2].replace(/-/g, '+')}/English/` : null
+}
+
+export interface GuideVideo {
+    key: string
+    label: string
     title: string
     description: string
     durationLabel: string
@@ -371,16 +401,29 @@ export interface MethodVideo {
     thumbnailUrl: string
 }
 
-const SIDE_BY_SIDE_VIDEO: MethodVideo = {
-    title: 'Side-by-Side Method',
-    description: 'How to learn with Spoken Tutorials',
-    durationLabel: '11:37',
-    url: 'https://spoken-tutorial.org/watch/Spoken+Tutorial+Technology/Side+by+Side+Method/English/',
-    thumbnailUrl: 'https://spoken-tutorial.org/media/videos/32/714/Side-by-Side-Method-Big.png',
-}
+const GUIDE_VIDEOS: GuideVideo[] = [
+    {
+        key: 'side-by-side',
+        label: 'Watch first',
+        title: 'Side-by-Side Method',
+        description: 'How to learn with Spoken Tutorials',
+        durationLabel: '11:37',
+        url: 'https://spoken-tutorial.org/watch/Spoken+Tutorial+Technology/Side+by+Side+Method/English/',
+        thumbnailUrl: 'https://spoken-tutorial.org/media/videos/32/714/Side-by-Side-Method-Big.png',
+    },
+    {
+        key: 'forums',
+        label: 'Have doubts?',
+        title: 'Spoken Tutorial Forums',
+        description: 'How to use the forum',
+        durationLabel: '12:48',
+        url: 'https://spoken-tutorial.org/watch/Spoken+Tutorial+Technology/Spoken+Tutorial+Forums/English/',
+        thumbnailUrl: 'https://spoken-tutorial.org/media/videos/32/1450/Spoken-Tutorial-Forums-Big.png',
+    },
+]
 
-export const getMethodVideo = (courseId?: string | null): MethodVideo | null =>
-    isLinuxCourse(courseId) ? SIDE_BY_SIDE_VIDEO : null
+export const getGuideVideos = (courseId?: string | null): GuideVideo[] =>
+    isLinuxCourse(courseId) ? GUIDE_VIDEOS : []
 
 export interface LabTaskItem {
     text: string

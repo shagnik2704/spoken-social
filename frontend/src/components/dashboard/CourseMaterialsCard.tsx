@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Download, ExternalLink, PlayCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { buildMaterials, getMethodVideo, type MethodVideo } from '@/lib/learnerPack'
+import { buildMaterials, getGuideVideos, type CourseMaterial, type GuideVideo } from '@/lib/learnerPack'
 import { cn } from '@/lib/utils'
 import type { CourseMaterialUrls } from '@/types'
 
@@ -11,11 +11,11 @@ const GRID_COLUMNS: Record<number, string> = {
     3: 'sm:grid-cols-3',
 }
 
-interface MethodVideoLinkProps {
-    video: MethodVideo
+interface GuideVideoLinkProps {
+    video: GuideVideo
 }
 
-const MethodVideoLink: React.FC<MethodVideoLinkProps> = ({ video }) => {
+export const GuideVideoLink: React.FC<GuideVideoLinkProps> = ({ video }) => {
     const [thumbnailFailed, setThumbnailFailed] = useState(false)
 
     return (
@@ -44,13 +44,39 @@ const MethodVideoLink: React.FC<MethodVideoLinkProps> = ({ video }) => {
                 </span>
             </span>
             <span className="min-w-0 flex-1">
-                <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Watch first</span>
-                <span className="block text-sm font-medium text-foreground">{video.title}</span>
-                <span className="block text-[11px] text-muted-foreground">
-                    {video.description} · Opens in a new tab
-                </span>
+                <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{video.label}</span>
+                <span className="block text-sm font-medium text-foreground truncate">{video.title}</span>
+                <span className="block text-[11px] text-muted-foreground">{video.description}</span>
             </span>
             <ExternalLink className="size-4 shrink-0 text-muted-foreground group-hover:text-primary transition-colors duration-200 ease-in-out" />
+        </a>
+    )
+}
+
+interface MaterialLinkProps {
+    material: CourseMaterial
+}
+
+export const MaterialLink: React.FC<MaterialLinkProps> = ({ material }) => {
+    const ActionIcon = material.isDownload ? Download : ExternalLink
+    return (
+        <a
+            href={material.url}
+            title={material.description}
+            {...(material.isDownload ? { download: true } : { target: '_blank', rel: 'noopener noreferrer' })}
+            className="group flex items-center gap-3 min-h-14 p-3 rounded-lg border border-border/70 bg-card hover:border-primary/40 hover:bg-primary/[0.03] transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+            <span className="size-9 shrink-0 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <material.icon className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-foreground truncate">{material.title}</span>
+                <span className="block text-[11px] text-muted-foreground">
+                    <span className="font-mono">{material.format}</span>
+                    {material.isDownload ? ' · Download' : ' · Opens in a new tab'}
+                </span>
+            </span>
+            <ActionIcon className="size-4 shrink-0 text-muted-foreground group-hover:text-primary transition-colors duration-200 ease-in-out" />
         </a>
     )
 }
@@ -62,8 +88,8 @@ interface CourseMaterialsCardProps {
 
 export const CourseMaterialsCard: React.FC<CourseMaterialsCardProps> = ({ courseId, urls }) => {
     const materials = buildMaterials(urls)
-    const methodVideo = getMethodVideo(courseId)
-    if (materials.length === 0 && !methodVideo) return null
+    const guideVideos = getGuideVideos(courseId)
+    if (materials.length === 0 && guideVideos.length === 0) return null
 
     return (
         <Card className="border border-border/80 bg-card shadow-xs py-0 gap-0">
@@ -72,33 +98,14 @@ export const CourseMaterialsCard: React.FC<CourseMaterialsCardProps> = ({ course
                 <p className="text-xs text-muted-foreground">Used across all tutorials</p>
             </div>
             <div className="p-3 sm:p-4 grid gap-2">
-                {methodVideo && <MethodVideoLink video={methodVideo} />}
+                {guideVideos.length > 0 && (
+                    <div className={cn('grid gap-2', GRID_COLUMNS[guideVideos.length] ?? 'sm:grid-cols-2')}>
+                        {guideVideos.map((video) => <GuideVideoLink key={video.key} video={video} />)}
+                    </div>
+                )}
                 {materials.length > 0 && (
                     <div className={cn('grid gap-2', GRID_COLUMNS[materials.length] ?? 'sm:grid-cols-3')}>
-                        {materials.map((material) => {
-                            const ActionIcon = material.isDownload ? Download : ExternalLink
-                            return (
-                                <a
-                                    key={material.key}
-                                    href={material.url}
-                                    title={material.description}
-                                    {...(material.isDownload ? { download: true } : { target: '_blank', rel: 'noopener noreferrer' })}
-                                    className="group flex items-center gap-3 min-h-14 p-3 rounded-lg border border-border/70 bg-card hover:border-primary/40 hover:bg-primary/[0.03] transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                >
-                                    <span className="size-9 shrink-0 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                                        <material.icon className="size-4" />
-                                    </span>
-                                    <span className="min-w-0 flex-1">
-                                        <span className="block text-sm font-medium text-foreground truncate">{material.title}</span>
-                                        <span className="block text-[11px] text-muted-foreground">
-                                            <span className="font-mono">{material.format}</span>
-                                            {material.isDownload ? ' · Download' : ' · Opens in a new tab'}
-                                        </span>
-                                    </span>
-                                    <ActionIcon className="size-4 shrink-0 text-muted-foreground group-hover:text-primary transition-colors duration-200 ease-in-out" />
-                                </a>
-                            )
-                        })}
+                        {materials.map((material) => <MaterialLink key={material.key} material={material} />)}
                     </div>
                 )}
             </div>

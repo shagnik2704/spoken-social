@@ -8,7 +8,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { buildMaterials, getMethodVideo } from '@/lib/learnerPack'
+import { buildMaterials, getGuideVideos } from '@/lib/learnerPack'
 import type { CourseMaterialUrls } from '@/types'
 
 interface TutorialResourcesProps {
@@ -21,8 +21,8 @@ interface TutorialResourcesProps {
 
 export const TutorialResources: React.FC<TutorialResourcesProps> = ({ courseId, urls, askForumUrl, browseForumUrl, forumXp }) => {
     const materials = buildMaterials(urls)
-    const methodVideo = getMethodVideo(courseId)
-    const hasMaterials = materials.length > 0 || Boolean(methodVideo)
+    const guideVideos = getGuideVideos(courseId)
+    const hasMaterials = materials.length > 0 || guideVideos.length > 0
     const hasForum = Boolean(askForumUrl || browseForumUrl)
     if (!hasMaterials && !hasForum) return null
 
@@ -41,20 +41,20 @@ export const TutorialResources: React.FC<TutorialResourcesProps> = ({ courseId, 
                         <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             Course materials
                         </DropdownMenuLabel>
-                        {methodVideo && (
-                            <DropdownMenuItem asChild className="min-h-11 cursor-pointer">
-                                <a href={methodVideo.url} target="_blank" rel="noopener noreferrer">
+                        {guideVideos.map((video) => (
+                            <DropdownMenuItem key={video.key} asChild className="min-h-11 cursor-pointer">
+                                <a href={video.url} target="_blank" rel="noopener noreferrer">
                                     <PlayCircle className="size-4 text-primary" />
                                     <span className="flex-1 min-w-0">
-                                        <span className="block text-sm font-medium text-foreground">{methodVideo.title}</span>
+                                        <span className="block text-sm font-medium text-foreground">{video.title}</span>
                                         <span className="block text-[11px] text-muted-foreground truncate">
-                                            {methodVideo.description} · <span className="font-mono">{methodVideo.durationLabel}</span>
+                                            {video.description} · <span className="font-mono">{video.durationLabel}</span>
                                         </span>
                                     </span>
                                     <ExternalLink className="size-3.5 text-muted-foreground" />
                                 </a>
                             </DropdownMenuItem>
-                        )}
+                        ))}
                         {materials.map((material) => {
                             const ActionIcon = material.isDownload ? Download : ExternalLink
                             return (

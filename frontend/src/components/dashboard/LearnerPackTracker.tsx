@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, CheckCircle2, ChevronDown, Heart } from 'lucide-react'
+import { ArrowRight, Check, CheckCircle2, ChevronDown, Heart, LayoutList } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Skeleton } from '@/components/ui/skeleton'
 import api from '@/lib/axios'
-import { getNextStep, getWeekTopic, isTutorialCompleted, tutorialPath } from '@/lib/learnerPack'
+import { courseContentPath, getNextStep, getWeekTopic, hasCourseContentPage, isTutorialCompleted, tutorialPath } from '@/lib/learnerPack'
 import { cn } from '@/lib/utils'
 import { useLearnerPackStore } from '@/store/learnerPackStore'
 import { useUserStore } from '@/store/userStore'
@@ -107,7 +107,7 @@ export const LearnerPackTracker: React.FC = () => {
         <div className="space-y-6">
             <Card className="border border-border/80 bg-card shadow-xs overflow-hidden py-0 gap-0">
                 <div className="h-1 bg-gradient-to-r from-primary via-primary-light to-primary/20" aria-hidden="true" />
-                <CardContent className="p-5 sm:p-7 flex items-center gap-4 sm:gap-6">
+                <CardContent className="p-5 sm:p-7 flex flex-wrap items-center gap-4 sm:gap-6">
                     <ProgressRing
                         percent={progressPercent}
                         label={`${completedTuts} of ${totalTuts} tutorials completed`}
@@ -125,6 +125,19 @@ export const LearnerPackTracker: React.FC = () => {
                             <span className="hidden sm:inline"> · {overview.totalWeeks}-week curriculum</span>
                         </p>
                     </div>
+                    {hasCourseContentPage(courseId) && (
+                        <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto sm:ml-auto min-h-11 sm:min-h-9 gap-1.5 px-3 text-xs font-semibold cursor-pointer transition duration-200 ease-in-out"
+                        >
+                            <Link to={courseContentPath(courseId)}>
+                                <LayoutList className="size-4 text-primary" />
+                                See all course content
+                            </Link>
+                        </Button>
+                    )}
                 </CardContent>
 
                 {nextIncompleteTutorial && nextStep && (
