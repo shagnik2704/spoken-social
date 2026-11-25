@@ -269,6 +269,9 @@ export const getNextStep = (courseId: string | null | undefined, tutorial: Learn
     if (!progress.watched) {
         return { stepLabel: 'Watch video', step: 'video', isStarted: false }
     }
+    if (!progress.readingCompleted) {
+        return { stepLabel: 'Reading notes', step: 'reading', isStarted: true }
+    }
     if (!progress.reflectionSubmitted) {
         return { stepLabel: getActivityLabel(courseId, tutorial.number), step: 'activity', isStarted: true }
     }

@@ -188,6 +188,7 @@ export interface Tutorial {
     forumAnswered: RadioValue
     minitaskOpted: RadioValue
     activityDone?: RadioValue | boolean
+    readingDone?: RadioValue | boolean
     xpEarned: number
 }
 

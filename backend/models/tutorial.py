@@ -48,6 +48,7 @@ class UserTutorial(Base):
     forum_answered = Column(Boolean, default=False)
     minitask_opted = Column(Boolean, default=False)
     activity_done = Column(Boolean, default=False)
+    reading_done = Column(Boolean, default=False)
     xp_earned = Column(Integer, default=0)
     completed_at = Column(DateTime(timezone=True))
 
@@ -78,6 +79,7 @@ class UserTutorial(Base):
             "forumAnswered": self.forum_answered,
             "minitaskOpted": self.minitask_opted,
             "activityDone": self.activity_done,
+            "readingDone": bool(self.reading_done),
             "xpEarned": self.xp_earned,
             "videoUrl": self.tutorial.video_url if self.tutorial else None,
             "videoPosterUrl": self.tutorial.video_poster_url if self.tutorial else None,

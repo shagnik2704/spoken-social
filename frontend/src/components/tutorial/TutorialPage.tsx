@@ -105,7 +105,8 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
     const activityLabel = getActivityLabel(courseId, tutorial.number)
     const hasAssignment = detail ? Boolean(detail.assignmentInstructions || detail.assignmentUrl) : Boolean(tutorial.hasAssignment)
     const hasQuiz = detail ? detail.quiz.questions.length > 0 : !isSetup
-    const isLessonDone = detail ? isDone(detail.userTutorial.watched) : progress.watched
+    const isVideoDone = detail ? isDone(detail.userTutorial.watched) : progress.watched
+    const isReadingDone = detail ? isDone(detail.userTutorial.readingDone) : progress.readingCompleted
     const codeFilesUrl = detail?.codeFilesUrl
     const forumCategory = detail?.forumCategory ?? overview.forumCategory
     const askForumUrl = getForumAskUrl({
@@ -118,8 +119,8 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
     const browseForumUrl = getForumCategoryUrl(forumCategory, overview.title)
 
     const steps: TutorialStep[] = [
-        { id: 'video', label: 'Watch video', shortLabel: 'Watch', done: isLessonDone },
-        { id: 'reading', label: 'Reading notes', shortLabel: 'Read', done: isLessonDone },
+        { id: 'video', label: 'Watch video', shortLabel: 'Watch', done: isVideoDone },
+        { id: 'reading', label: 'Reading notes', shortLabel: 'Read', done: isReadingDone },
         {
             id: 'activity',
             label: activityLabel,

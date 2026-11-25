@@ -151,7 +151,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
     }
 
     const markReadingComplete = async (): Promise<void> => {
-        if (!detail || isDone(detail.userTutorial.watched)) return
+        if (!detail || isDone(detail.userTutorial.readingDone)) return
         try {
             const res = await api.post(`${endpoint}/reading-complete`)
             announceXp('Reading completed!', res.data.xpGained)

@@ -91,10 +91,16 @@ async def test_learner_pack_full_flow():
             assert "correctOption" not in q or q.get("correctOption") is None
             assert "explanation" not in q or q.get("explanation") is None
 
-        # Step 3: Complete Reading
-        res = await client.post(f"/api/learner-pack/tutorials/{tut1_id}/reading-complete", headers=headers)
+        # Step 3a: Watch Video -> marks watched=True without auto-completing readingDone
+        res = await client.post(f"/api/learner-pack/tutorials/{tut1_id}/video-watched", headers=headers)
         assert res.status_code == 200, res.text
         assert res.json()["userTutorial"]["watched"] is True
+        assert res.json()["userTutorial"]["readingDone"] is False
+
+        # Step 3b: Complete Reading -> marks readingDone=True independently
+        res = await client.post(f"/api/learner-pack/tutorials/{tut1_id}/reading-complete", headers=headers)
+        assert res.status_code == 200, res.text
+        assert res.json()["userTutorial"]["readingDone"] is True
 
         # Step 4: Submit Reflection
         reflection_payload = {

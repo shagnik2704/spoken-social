@@ -117,6 +117,7 @@ async def _get_or_create_user_tutorial(db: AsyncSession, user_id: uuid.UUID, tut
             assignment_done=False,
             forum_asked=False,
             forum_answered=False,
+            reading_done=False,
             xp_earned=0,
         )
         db.add(ut)
@@ -254,7 +255,7 @@ async def get_course_overview(
             "hasAssignment": bool((content and (content.assignment_url or content.assignment_instructions)) or tut.assignment_url or tut.assignment_instructions),
             "userProgress": {
                 "watched": ut.watched if ut else False,
-                "readingCompleted": ut.watched if ut else False,
+                "readingCompleted": bool(ut.reading_done) if ut else False,
                 "reflectionSubmitted": ref is not None or (ut.activity_done if ut else False),
                 "reflectionWordCount": ref.word_count if ref else 0,
                 "assignmentDone": bool(ut.assignment_done) if ut else False,
@@ -410,19 +411,8 @@ async def mark_video_watched(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Marks the in-app video as watched (watched=True) and awards 10 XP.
-    """
-    return await mark_reading_complete(tutorial_id, user, db)
-
-
-@router.post("/tutorials/{tutorial_id}/reading-complete")
-async def mark_reading_complete(
-    tutorial_id: str,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Marks the reading/video portion as completed (watched=True) and awards 10 XP.
+    Marks the in-app video as watched (`watched=True`) and awards 10 XP.
+    Leaves `reading_done` untouched so watching the video does not auto-complete Reading notes.
     """
     try:
         tut_uuid = uuid.UUID(tutorial_id)
@@ -444,6 +434,56 @@ async def mark_reading_complete(
                 course_id=ut.tutorial.course_id if ut.tutorial else None,
             ))
             recalc_level(user)
+        if ut.tutorial and ut.tutorial.course_id:
+            await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
+        await db.commit()
+
+    return {"success": True, "userTutorial": ut.to_api_dict(), "xpGained": xp_gained}
+
+
+@router.post("/tutorials/{tutorial_id}/reading-complete")
+async def mark_reading_complete(
+    tutorial_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Marks the reading notes as completed (`reading_done=True`).
+    For courses without an embedded video (e.g. Personality Dev), also marks `watched=True`
+    to award the 10 lesson XP. For courses with video (e.g. Linux), keeps `watched` independent.
+    """
+    try:
+        tut_uuid = uuid.UUID(tutorial_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid tutorial ID")
+
+    ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    content = (await db.execute(select(TutorialContent).filter_by(tutorial_id=tut_uuid))).scalars().first()
+    has_embedded_video = bool(
+        (content and content.video_url) or (ut.tutorial and ut.tutorial.video_url)
+    )
+
+    xp_gained = 0
+    changed = False
+    if not ut.reading_done:
+        ut.reading_done = True
+        changed = True
+    if not has_embedded_video and not ut.watched:
+        ut.watched = True
+        changed = True
+        xp_gained = recompute_tutorial_xp(ut)
+        if xp_gained != 0:
+            user.xp_total += xp_gained
+            db.add(XPEvent(
+                user_id=user.id,
+                source_type="tutorial_completion",
+                source_id=str(tut_uuid),
+                xp_delta=xp_gained,
+                course_id=ut.tutorial.course_id if ut.tutorial else None,
+            ))
+            recalc_level(user)
+
+    if changed:
         if ut.tutorial and ut.tutorial.course_id:
             await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
         await db.commit()

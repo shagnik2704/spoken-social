@@ -527,3 +527,58 @@ async def test_swayam_link_enrollment_fallback(client, db):
     assert uc.swayam_enrollment_id == "ENR_FALLBACK_99"
 
 
+async def test_video_watched_does_not_complete_reading(client, db):
+    """Watching video must set watched=True without auto-completing reading_done."""
+    from services.jwt import create_access_token
+
+    user = User(
+        id=uuid.uuid4(),
+        username="video_read_user",
+        email="video_read@test.com",
+        role="student",
+        xp_total=0,
+        level=1,
+    )
+    db.add(user)
+    course = Course(id="linux_vid_read_test", title="Linux Video Read Test", ui_layout="learner_pack")
+    db.add(course)
+    await db.flush()
+
+    tut = Tutorial(
+        id=uuid.uuid4(),
+        course_id="linux_vid_read_test",
+        tutorial_number=3,
+        title="Ubuntu Desktop",
+        video_url="https://example.com/ubuntu.webm",
+        xp_reward=25,
+    )
+    db.add(tut)
+    await db.commit()
+
+    tok = create_access_token(user_id=str(user.id), effective_role="student")
+    headers = {"Authorization": f"Bearer {tok}"}
+
+    # 1. Watch video -> watched=True (+10 XP), readingDone MUST remain False
+    res1 = await client.post(f"/api/learner-pack/tutorials/{tut.id}/video-watched", headers=headers)
+    assert res1.status_code == 200, res1.text
+    body1 = res1.json()
+    assert body1["xpGained"] == 10
+    assert body1["userTutorial"]["watched"] is True
+    assert body1["userTutorial"]["readingDone"] is False
+
+    # 2. Overview reflects watched=True, readingCompleted=False
+    ov = await client.get("/api/learner-pack/course/linux_vid_read_test/overview", headers=headers)
+    assert ov.status_code == 200
+    prog = ov.json()["tutorials"][0]["userProgress"]
+    assert prog["watched"] is True
+    assert prog["readingCompleted"] is False
+
+    # 3. Mark reading complete -> readingDone=True, 0 extra XP
+    res2 = await client.post(f"/api/learner-pack/tutorials/{tut.id}/reading-complete", headers=headers)
+    assert res2.status_code == 200, res2.text
+    body2 = res2.json()
+    assert body2["xpGained"] == 0
+    assert body2["userTutorial"]["readingDone"] is True
+
+
+

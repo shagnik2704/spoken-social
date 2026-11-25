@@ -27,8 +27,8 @@ const READING_COMPONENTS: Components = {
 }
 
 export const ReadingStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }) => {
-    const isRead = isDone(detail.userTutorial.watched)
-    const readingXp = nav.xpFor('watched')
+    const isRead = isDone(detail.userTutorial.readingDone)
+    const readingXp = !detail.videoUrl ? nav.xpFor('watched') : 0
     const markAsRead = readingXp > 0 ? `Mark as read to claim +${readingXp} XP` : 'Mark as read'
     const readingMinutes = detail.content?.readingTimeMinutes ?? 0
 
