@@ -71,16 +71,20 @@ export const useUserStore = create<UserState>((set, get) => ({
             let effectiveProgrammeName = get().activeProgrammeName
 
             if (!programmeIsValid && fetchedProgrammes.length > 0) {
-                // Auto-select first programme and re-fetch courses for it
+                // Auto-select first programme and re-fetch courses scoped to it
                 effectiveProgrammeId = fetchedProgrammes[0].id
                 effectiveProgrammeName = fetchedProgrammes[0].name
                 localStorage.setItem('activeProgrammeId', effectiveProgrammeId)
                 localStorage.setItem('activeProgrammeName', effectiveProgrammeName)
             }
 
+            const effectiveMeData = (!activeProgrammeId && effectiveProgrammeId)
+                ? (await api.get(`/api/me?programme_id=${effectiveProgrammeId}`)).data
+                : meRes.data
+
             // Restore saved courseId if it's still valid, otherwise fall back to first course
             const savedCourseId = get().activeCourseId || localStorage.getItem('activeCourseId') || ''
-            const fetchedCourses = meRes.data.courses || []
+            const fetchedCourses = effectiveMeData.courses || []
             const restoredCourse = fetchedCourses.find((c: any) => c.id === savedCourseId)
             const effectiveCourse = restoredCourse || fetchedCourses[0]
             const effectiveCourseId = effectiveCourse?.id || ''

@@ -13,6 +13,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     display_name = Column(String(100))
     email = Column(String(255), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=True)  # Optional local hash (e.g. reviewer/mock accounts when external auth is unavailable)
     bio = Column(Text)
     department_year = Column(String(128))
     location = Column(String(100))

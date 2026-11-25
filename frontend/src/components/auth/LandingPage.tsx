@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '@/store/userStore'
 import api from '@/lib/axios'
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, BookOpen, Calendar, ArrowRight, CheckCircle2, Lock } from 'lucide-react'
@@ -29,6 +28,7 @@ export function LandingPage() {
     const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null)
     
     const user = useUserStore(state => state.user)
+    const programmes = useUserStore(state => state.programmes)
     const setActiveCourse = useUserStore(state => state.setActiveCourse)
     const setActiveBatch = useUserStore(state => state.setActiveBatch)
     const activeProgrammeId = useUserStore(state => state.activeProgrammeId)
@@ -36,27 +36,48 @@ export function LandingPage() {
     const setActiveProgramme = useUserStore(state => state.setActiveProgramme)
     const navigate = useNavigate()
 
+    const enterDashboard = useCallback((course: Course, batch?: Batch | null, replace = false) => {
+        setActiveCourse(course.id)
+        setActiveBatch(batch?.id ?? null, batch?.is_active ?? true)
+
+        if (user?.role === 'admin') navigate('/admin', { replace })
+        else if (user?.role === 'coordinator') navigate('/coordinator', { replace })
+        else navigate('/dashboard', { replace })
+    }, [navigate, setActiveBatch, setActiveCourse, user?.role])
+
     useEffect(() => {
-        const endpoint = activeProgrammeId ? `/api/courses/me?programme_id=${activeProgrammeId}` : '/api/courses/me';
-        console.log('DEBUG LANDING: user role =', user?.role, 'fetching endpoint =', endpoint);
+        let active = true
+        const endpoint = activeProgrammeId ? `/api/courses/me?programme_id=${activeProgrammeId}` : '/api/courses/me'
         api.get(endpoint)
             .then(res => {
-                console.log('DEBUG LANDING: fetched courses length =', res.data?.length, 'data =', res.data);
-                setCourses(res.data)
-                
+                if (!active) return
+                const fetched: Course[] = res.data || []
+
+                // Single-course users (at most 1 batch) skip the selector and enter the dashboard directly
+                if (fetched.length === 1 && (fetched[0].batches?.length ?? 0) <= 1) {
+                    enterDashboard(fetched[0], fetched[0].batches?.[0] ?? null, true)
+                    return
+                }
+
+                setCourses(fetched)
+
                 // Default to Linux if present, otherwise select the first available course
-                const defaultCourse = res.data.find((c: any) => c.id === 'linux' || c.id === 'swayam_plus-linux') || res.data[0]
+                const defaultCourse = fetched.find((c: Course) => c.id === 'linux' || c.id === 'swayam_plus-linux') || fetched[0]
                 if (defaultCourse) {
-                    console.log('DEBUG LANDING: setting defaultCourse =', defaultCourse.id);
                     setSelectedCourse(defaultCourse)
                 }
                 setIsLoading(false)
             })
             .catch(err => {
+                if (!active) return
                 console.error('Failed to fetch courses', err)
                 setIsLoading(false)
             })
-    }, [user, activeProgrammeId])
+
+        return () => {
+            active = false
+        }
+    }, [user, activeProgrammeId, enterDashboard])
 
     useEffect(() => {
         // Auto-select batch if there is exactly 1 batch available
@@ -70,26 +91,20 @@ export function LandingPage() {
     const handleProceed = () => {
         if (selectedCourse && selectedBatchId) {
             const batch = selectedCourse.batches.find(b => b.id === selectedBatchId)
-            setActiveCourse(selectedCourse.id)
-            setActiveBatch(selectedBatchId, batch?.is_active)
-            
-            // Redirect based on role
-            if (user?.role === 'admin') navigate('/admin')
-            else if (user?.role === 'coordinator') navigate('/coordinator')
-            else navigate('/dashboard')
+            enterDashboard(selectedCourse, batch)
         }
     }
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="min-h-full bg-background flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background flex flex-col items-center justify-center p-4 lg:p-8">
+        <div className="min-h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background flex flex-col items-center justify-start md:justify-center p-4 py-6 lg:p-8 lg:py-10">
             <div className="w-full max-w-5xl space-y-8 animate-in fade-in zoom-in duration-500">
                 
                 {/* Header Section */}
@@ -101,21 +116,26 @@ export function LandingPage() {
                         <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 font-bold px-3 py-1 text-xs">
                             {activeProgrammeName}
                         </Badge>
-                        <Button 
-                            variant="link" 
-                            size="sm" 
-                            className="h-auto p-0 text-xs font-bold text-muted-foreground hover:text-foreground transition-all"
-                            onClick={() => {
-                                setActiveProgramme('', '')
-                                navigate('/programmes')
-                            }}
-                        >
-                            (Change Programme)
-                        </Button>
+                        {programmes.length > 1 && (
+                            <Button 
+                                variant="link" 
+                                size="sm" 
+                                className="h-auto p-0 text-xs font-bold text-muted-foreground hover:text-foreground transition-all"
+                                onClick={() => {
+                                    setActiveProgramme('', '')
+                                    navigate('/programmes')
+                                }}
+                            >
+                                (Change Programme)
+                            </Button>
+                        )}
                     </div>
-                    <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
                         Choose Your Course & Batch
                     </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Click any course or batch card to jump straight into its dashboard.
+                    </p>
                 </div>
 
                 <div className="grid lg:grid-cols-3 gap-8">
@@ -130,9 +150,13 @@ export function LandingPage() {
                                 <button
                                     key={course.id}
                                     onClick={() => {
-                                        setSelectedCourse(course)
+                                        if (course.batches?.length === 1) {
+                                            enterDashboard(course, course.batches[0])
+                                        } else {
+                                            setSelectedCourse(course)
+                                        }
                                     }}
-                                    className={`w-full text-left p-4 rounded-xl border transition-all duration-300 group
+                                    className={`w-full text-left p-4 rounded-xl border transition-all duration-300 group cursor-pointer
                                         ${selectedCourse?.id === course.id 
                                             ? 'bg-primary/5 border-primary shadow-[0_0_20px_rgba(var(--primary),0.1)] ring-1 ring-primary' 
                                             : 'bg-card border-border hover:border-primary/50 hover:bg-muted/50'
@@ -157,7 +181,7 @@ export function LandingPage() {
                                                 })()}
                                             </div>
                                         </div>
-                                        <ArrowRight className={`w-4 h-4 transition-all duration-300 ${selectedCourse?.id === course.id ? 'translate-x-1 text-primary' : 'opacity-0 -translate-x-2'}`} />
+                                        <ArrowRight className={`w-4 h-4 transition-all duration-300 ${selectedCourse?.id === course.id ? 'translate-x-1 text-primary' : 'opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 text-primary'}`} />
                                     </div>
                                 </button>
                             ))}
@@ -177,8 +201,8 @@ export function LandingPage() {
                                     selectedCourse.batches.map(batch => (
                                         <button
                                             key={batch.id}
-                                            onClick={() => setSelectedBatchId(batch.id)}
-                                            className={`p-5 rounded-2xl border text-left transition-all duration-300 flex flex-col h-full relative overflow-hidden group
+                                            onClick={() => enterDashboard(selectedCourse, batch)}
+                                            className={`p-5 rounded-2xl border text-left transition-all duration-300 flex flex-col h-full relative overflow-hidden group cursor-pointer
                                                 ${selectedBatchId === batch.id 
                                                     ? 'bg-card border-primary ring-1 ring-primary shadow-xl scale-[1.02]' 
                                                     : 'bg-card/50 border-border/50 hover:border-primary/30 hover:bg-card hover:scale-[1.01]'

@@ -581,4 +581,43 @@ async def test_video_watched_does_not_complete_reading(client, db):
     assert body2["userTutorial"]["readingDone"] is True
 
 
+async def test_local_password_hash_login_works_with_dev_bypass_disabled(client, db, monkeypatch):
+    """Reviewer accounts with local scrypt password_hash log in even when DEV_BYPASS_ENABLED=False."""
+    import services.auth as auth_svc
+
+    monkeypatch.setattr(auth_svc, "DEV_BYPASS_ENABLED", False)
+
+    reviewer = User(
+        id=uuid.uuid4(),
+        username="@reviewer_hash_test",
+        display_name="Reviewer Hash Test",
+        email="reviewer.hash@swayam.test",
+        role="student",
+        is_test_account=True,
+        password_hash=auth_svc.hash_password("ReviewPass#2026"),
+        xp_total=0,
+        level=1,
+    )
+    db.add(reviewer)
+    await db.commit()
+
+    # Wrong password rejected with 401
+    bad_res = await client.post(
+        "/api/auth/login",
+        json={"email": "reviewer.hash@swayam.test", "password": "wrong-password"},
+    )
+    assert bad_res.status_code == 401
+
+    # Valid password succeeds (case-insensitive email) without calling Spoken Tutorial API
+    ok_res = await client.post(
+        "/api/auth/login",
+        json={"email": "Reviewer.Hash@swayam.test", "password": "ReviewPass#2026"},
+    )
+    assert ok_res.status_code == 200, ok_res.text
+    body = ok_res.json()
+    assert body["access_token"]
+    assert body["user"]["email"] == "reviewer.hash@swayam.test"
+
+
+
 

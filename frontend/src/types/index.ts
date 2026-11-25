@@ -47,6 +47,14 @@ export interface Course {
     batchId?: string | null
     batchName?: string | null
     batchStatus?: string
+    batches?: Array<{
+        id: string
+        name?: string
+        status?: string
+        is_active?: boolean
+        startDate?: string
+        endDate?: string
+    }>
     uiLayout?: 'standard_tracker' | 'learner_pack' | string
 }
 

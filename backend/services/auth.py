@@ -9,10 +9,13 @@
 # environment variables.
 # ============================================================
 
+import hashlib
+import hmac
 import os
+import secrets
 import uuid
 import httpx
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.user import User
 from models.college import College
@@ -29,6 +32,49 @@ SPOKEN_TUTORIAL_VERIFY_URL = os.environ.get(
 
 # ── Dev bypass toggle (set to "true" ONLY in local/dev environments) ──
 DEV_BYPASS_ENABLED = os.getenv("DEV_BYPASS_ENABLED", "false").lower() == "true"
+
+SCRYPT_N = 2 ** 14
+SCRYPT_R = 8
+SCRYPT_P = 1
+SCRYPT_DKLEN = 32
+
+
+def hash_password(password: str) -> str:
+    """Hash a password with per-user salt using stdlib scrypt."""
+    salt = secrets.token_bytes(16)
+    digest = hashlib.scrypt(
+        password.encode("utf-8"),
+        salt=salt,
+        n=SCRYPT_N,
+        r=SCRYPT_R,
+        p=SCRYPT_P,
+        dklen=SCRYPT_DKLEN,
+    )
+    return f"scrypt${salt.hex()}${digest.hex()}"
+
+
+def verify_password(password: str, stored_hash: str | None) -> bool:
+    """Constant-time verification against a `scrypt$<salt>$<digest>` hash."""
+    if not stored_hash:
+        return False
+    try:
+        scheme, salt_hex, digest_hex = stored_hash.split("$", 2)
+        if scheme != "scrypt":
+            return False
+        salt = bytes.fromhex(salt_hex)
+        expected = bytes.fromhex(digest_hex)
+    except (ValueError, TypeError):
+        return False
+
+    derived = hashlib.scrypt(
+        password.encode("utf-8"),
+        salt=salt,
+        n=SCRYPT_N,
+        r=SCRYPT_R,
+        p=SCRYPT_P,
+        dklen=len(expected),
+    )
+    return hmac.compare_digest(derived, expected)
 
 
 async def _create_dynamic_admin(db: AsyncSession, email: str) -> User:
@@ -79,8 +125,19 @@ async def verify_credentials(
     5. Return user info dict for JWT creation
     """
 
+    # ── Local Password Hash Check (works in all environments, e.g. SWAYAM reviewer accounts) ──
+    local_res = await db.execute(select(User).where(func.lower(User.email) == func.lower(email)))
+    local_user = local_res.scalars().first()
+    user = None
+    if local_user and local_user.password_hash:
+        if not verify_password(password, local_user.password_hash):
+            return None
+        user = local_user
+
     # ── Dev Bypass Suite (disabled on production) ──
-    if DEV_BYPASS_ENABLED and email == "admin@tutorial.org" and password == "admin123":
+    if user is not None:
+        pass
+    elif DEV_BYPASS_ENABLED and email == "admin@tutorial.org" and password == "admin123":
         user_info = await _upsert_user(db, api_username="admin", api_email=email, api_role="admin", display_name="Admin User", college_name=None)
         res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
         user = res.scalars().first()
@@ -93,7 +150,6 @@ async def verify_credentials(
         res = await db.execute(select(User).filter_by(id=uuid.UUID(user_info["user_id"])))
         user = res.scalars().first()
     elif DEV_BYPASS_ENABLED and password in ("password123", "Student@123", "Trainin@123", "Testing*123"):
-        from sqlalchemy import func
         result = await db.execute(select(User).where(func.lower(User.email) == func.lower(email)))
         user = result.scalars().first()
         if not user:
@@ -128,7 +184,6 @@ async def verify_credentials(
             return None
             
         # ── Step 2: Verify user exists in our DB ──
-        from sqlalchemy import func
         result = await db.execute(select(User).where(func.lower(User.email) == func.lower(email)))
         user = result.scalars().first()
         

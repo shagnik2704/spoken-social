@@ -69,6 +69,7 @@ export function TopBar() {
     // 🧠 ZUSTAND: Select only the slices you need.
     // This component only re-renders when these specific values change.
     const user = useUserStore(state => state.user)
+    const programmes = useUserStore(state => state.programmes)
     const activeProgrammeName = useUserStore(state => state.activeProgrammeName)
     const setActiveProgramme = useUserStore(state => state.setActiveProgramme)
 
@@ -180,17 +181,21 @@ export function TopBar() {
                                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                                 {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="cursor-pointer gap-2"
-                                onClick={() => {
-                                    setActiveProgramme('', '')
-                                    navigate('/programmes')
-                                }}
-                            >
-                                <BookOpen className="h-4 w-4" />
-                                Switch Programme
-                            </DropdownMenuItem>
+                            {programmes.length > 1 && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        className="cursor-pointer gap-2"
+                                        onClick={() => {
+                                            setActiveProgramme('', '')
+                                            navigate('/programmes')
+                                        }}
+                                    >
+                                        <BookOpen className="h-4 w-4" />
+                                        Switch Programme
+                                    </DropdownMenuItem>
+                                </>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer gap-2"
                                 onClick={() => { logout(); navigate('/') }}>
@@ -224,6 +229,8 @@ export function TopBar() {
 export function DesktopSidebar() {
     const location = useLocation()
     const user = useUserStore(state => state.user)
+    const courses = useUserStore(state => state.courses)
+    const hasSingleCourseOnly = (user?.role || 'student') === 'student' && courses.length <= 1 && (courses[0]?.batches?.length ?? 0) <= 1
     const [isCollapsed, setIsCollapsed] = useState(() => {
         return localStorage.getItem('spoken_sidebar_collapsed') === 'true'
     })
@@ -250,7 +257,9 @@ export function DesktopSidebar() {
                 )}>
                     <nav className="flex flex-col gap-1.5 px-2 py-3 flex-1">
                         {navItems
-                            .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
+                            .filter(item => item.roles.includes(user?.role || 'student'))
+                            .filter(item => !(hasSingleCourseOnly && item.label === 'Switch Batch'))
+                            .map((item) => {
                                 const isActive = isNavItemActive(item.path, location.pathname)
 
                                 // Post / Feed disabled buttons with Tooltips
@@ -381,13 +390,17 @@ export function MobileBottomNav() {
     const location = useLocation()
     const { open: openCompose } = useComposeModal()
     const user = useUserStore(state => state.user)
+    const courses = useUserStore(state => state.courses)
+    const hasSingleCourseOnly = (user?.role || 'student') === 'student' && courses.length <= 1 && (courses[0]?.batches?.length ?? 0) <= 1
 
 
     return (
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl">
             <div className="flex items-center justify-around h-16 px-2">
                 {navItems
-                    .filter(item => item.roles.includes(user?.role || 'student')).map((item) => {
+                    .filter(item => item.roles.includes(user?.role || 'student'))
+                    .filter(item => !(hasSingleCourseOnly && item.label === 'Switch Batch'))
+                    .map((item) => {
                         const isActive = isNavItemActive(item.path, location.pathname)
 
                         // Post button opens the compose modal
