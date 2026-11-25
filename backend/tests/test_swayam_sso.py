@@ -312,3 +312,95 @@ async def test_sync_course_progress_and_swayam_helper(db):
         assert uc.progress_percent == 100
         assert uc.status == "completed"
         assert uc.completed_at is not None
+
+
+async def test_sync_progress_setup_and_quiz_tutorials(db):
+    """Verify progress tracking works for setup tutorials (no quiz, assignment_done) and quiz tutorials."""
+    from models.learner_pack import QuizQuestion, UserQuizAttempt
+
+    user = User(
+        id=uuid.uuid4(),
+        username="setup_test_user",
+        email="setup_test@test.com",
+        role="student",
+        swayam_sub="sub_setup_999",
+        xp_total=0,
+        level=1,
+    )
+    db.add(user)
+
+    course = Course(id="linux_prog_test", title="Linux Progress Test", ui_layout="learner_pack")
+    db.add(course)
+    await db.flush()
+
+    # Tutorial 1: Setup tutorial without quiz (like VirtualBox setup)
+    tut1 = Tutorial(id=uuid.uuid4(), course_id="linux_prog_test", tutorial_number=1, title="VirtualBox Setup", xp_reward=25)
+    # Tutorial 2: Regular tutorial with quiz (like Linux Commands)
+    tut2 = Tutorial(id=uuid.uuid4(), course_id="linux_prog_test", tutorial_number=2, title="Linux Commands", xp_reward=25)
+    db.add_all([tut1, tut2])
+    await db.flush()
+
+    # Add 1 quiz question to Tutorial 2 (so tut2 is recognized as having a quiz)
+    qq = QuizQuestion(
+        id=uuid.uuid4(),
+        tutorial_id=tut2.id,
+        question_number=1,
+        question_text="What is root?",
+        options=[{"id": "A", "text": "Superuser"}],
+        correct_option="A",
+        explanation="Root is superuser",
+    )
+    db.add(qq)
+
+    uc = UserCourse(
+        user_id=user.id,
+        course_id="linux_prog_test",
+        swayam_enrollment_id="ENR_LINUX_SETUP_1",
+        status="in_progress",
+        progress_percent=0,
+    )
+    db.add(uc)
+    await db.commit()
+
+    # Initial progress = 0%
+    percent = await sync_course_progress_and_swayam(db, user.id, "linux_prog_test")
+    assert percent == 0.0
+
+    # User completes setup tutorial 1 by submitting assignment/terminal output
+    ut1 = UserTutorial(
+        user_id=user.id,
+        tutorial_id=tut1.id,
+        watched=True,
+        assignment_done=True,
+    )
+    db.add(ut1)
+    await db.commit()
+
+    with patch("services.swayam.SwayamM2MClient.push_progress", new_callable=AsyncMock) as mock_push:
+        mock_push.return_value = True
+        percent = await sync_course_progress_and_swayam(db, user.id, "linux_prog_test")
+        assert percent == 50.0
+        assert uc.progress_percent == 50
+
+    # User passes quiz on tutorial 2
+    qa = UserQuizAttempt(
+        id=uuid.uuid4(),
+        user_id=user.id,
+        tutorial_id=tut2.id,
+        score=5,
+        total_questions=5,
+        submitted_answers={"1": "A"},
+        passed=True,
+    )
+    db.add(qa)
+    await db.commit()
+
+    with patch("services.swayam.SwayamM2MClient.push_progress", new_callable=AsyncMock) as mock_push, \
+         patch("services.swayam.SwayamM2MClient.confirm_completion", new_callable=AsyncMock) as mock_complete:
+        mock_push.return_value = True
+        mock_complete.return_value = True
+        percent = await sync_course_progress_and_swayam(db, user.id, "linux_prog_test")
+        assert percent == 100.0
+        assert uc.progress_percent == 100
+        assert uc.status == "completed"
+

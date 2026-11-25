@@ -324,13 +324,24 @@ async def sync_course_progress_and_swayam(
     if total_tutorials == 0:
         return 0.0
 
+    from models.learner_pack import QuizQuestion, UserQuizAttempt
+
+    quiz_tut_subquery = select(QuizQuestion.tutorial_id).distinct()
+
     completed_res = await db.execute(
-        select(func.count(UserTutorial.tutorial_id))
-        .join(Tutorial, UserTutorial.tutorial_id == Tutorial.id)
+        select(func.count(Tutorial.id.distinct()))
+        .outerjoin(UserTutorial, (UserTutorial.tutorial_id == Tutorial.id) & (UserTutorial.user_id == user_id))
+        .outerjoin(UserQuizAttempt, (UserQuizAttempt.tutorial_id == Tutorial.id) & (UserQuizAttempt.user_id == user_id))
         .filter(
-            UserTutorial.user_id == user_id,
             Tutorial.course_id == course_id,
-            or_(UserTutorial.status == "completed", UserTutorial.practiced == True),
+            or_(
+                UserTutorial.status == "completed",
+                UserTutorial.practiced == True,
+                UserQuizAttempt.score > 0,
+                UserQuizAttempt.passed == True,
+                # For tutorials without quiz questions (e.g. Linux setup Tutorials 1 & 2):
+                (~Tutorial.id.in_(quiz_tut_subquery)) & (UserTutorial.assignment_done == True),
+            ),
         )
     )
     completed_tutorials = completed_res.scalar() or 0

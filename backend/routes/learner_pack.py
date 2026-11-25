@@ -23,7 +23,7 @@ except ImportError:
 from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File, Form
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.orm import selectinload
 
 from database import get_db
@@ -129,6 +129,16 @@ async def _get_or_create_user_tutorial(db: AsyncSession, user_id: uuid.UUID, tut
         )
         ut = result.scalars().first()
     return ut
+
+
+async def _check_and_mark_tutorial_completed_if_no_quiz(db: AsyncSession, ut: UserTutorial, tut_uuid: uuid.UUID) -> None:
+    """If a tutorial has no quiz questions (e.g. Linux setup Tutorials 1 & 2),
+    completing its assignment or lab reflection marks the tutorial completed."""
+    q_res = await db.execute(select(func.count(QuizQuestion.id)).filter_by(tutorial_id=tut_uuid))
+    has_quiz = (q_res.scalar() or 0) > 0
+    if not has_quiz:
+        ut.practiced = True
+        ut.status = "completed"
 
 
 # ------------------------------------------------------------
@@ -495,6 +505,7 @@ async def mark_assignment_complete(
     xp_gained = 0
     if not ut.assignment_done:
         ut.assignment_done = True
+        await _check_and_mark_tutorial_completed_if_no_quiz(db, ut, tut_uuid)
         xp_gained = recompute_tutorial_xp(ut)
         if xp_gained != 0:
             user.xp_total += xp_gained
@@ -558,6 +569,7 @@ async def submit_reflection(
     # 2. Update UserTutorial -> assignment_done = True
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
     ut.assignment_done = True
+    await _check_and_mark_tutorial_completed_if_no_quiz(db, ut, tut_uuid)
 
     # Recompute XP
     xp_gained = recompute_tutorial_xp(ut)
@@ -641,6 +653,7 @@ async def submit_terminal_output(
 
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
     ut.assignment_done = True
+    await _check_and_mark_tutorial_completed_if_no_quiz(db, ut, tut_uuid)
 
     xp_gained = recompute_tutorial_xp(ut)
     if xp_gained != 0:
@@ -762,6 +775,7 @@ async def submit_screenshot(
 
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
     ut.assignment_done = True
+    await _check_and_mark_tutorial_completed_if_no_quiz(db, ut, tut_uuid)
 
     xp_gained = recompute_tutorial_xp(ut)
     if xp_gained != 0:
