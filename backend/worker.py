@@ -93,6 +93,16 @@ async def check_xp_invariants(ctx):
     return result
 
 
+async def reconcile_swayam_sync(ctx):
+    """Periodic reconciliation sweep against SWAYAM Plus roster (Section 8 Checklist)."""
+    from services.swayam import reconcile_swayam_progress
+
+    async with SessionLocal() as db:
+        result = await reconcile_swayam_progress(db)
+        logger.info("SWAYAM reconciliation complete: %s", json.dumps(result))
+        return result
+
+
 class WorkerSettings:
     # Use the official ARQ object to point to the Redis container
     redis_settings = RedisSettings(host="redis", port=6379)
@@ -101,5 +111,7 @@ class WorkerSettings:
         cron(check_pending_xp, minute={0, 15, 30, 45}),
         # 02:00 IST — after the day's activity, before anyone looks in the morning.
         cron(check_xp_invariants, hour={2}, minute={0}),
+        # Reconcile missed real-time SWAYAM progress/completion events against the partner roster.
+        cron(reconcile_swayam_sync, hour={2, 8, 14, 20}, minute={30}),
     ]
 

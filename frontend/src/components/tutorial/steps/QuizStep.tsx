@@ -132,23 +132,35 @@ export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }
                 ) : (
                     <div className="space-y-4 pt-2 pb-6">
                         {/* Prompt to move directly to next tutorial */}
-                        <div className="p-6 rounded-xl bg-card border border-success/30 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
+                        <div className={cn(
+                            "p-6 rounded-xl bg-card border shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300",
+                            (detail.quiz.score ?? 0) > 0 ? "border-success/30" : "border-warning/30"
+                        )}>
                             <div className="space-y-1.5 text-center sm:text-left">
                                 <div className="flex items-center gap-2 justify-center sm:justify-start">
-                                    <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                                    <CheckCircle2 className={cn("h-5 w-5 shrink-0", (detail.quiz.score ?? 0) > 0 ? "text-success" : "text-warning")} />
                                     <h4 className="font-bold text-foreground text-base sm:text-lg">
-                                        Tutorial {detail.tutorialNumber} Completed!
+                                        {(detail.quiz.score ?? 0) > 0
+                                            ? `Tutorial ${detail.tutorialNumber} Completed!`
+                                            : `Quiz Submitted (${detail.quiz.score ?? 0}/${detail.quiz.totalQuestions})`}
                                     </h4>
                                     {nav.tutorialXp && (
-                                        <Badge variant="outline" className="bg-success/15 text-success border-success/30 text-xs font-mono font-bold">
+                                        <Badge variant="outline" className={cn(
+                                            "text-xs font-mono font-bold",
+                                            (detail.quiz.score ?? 0) > 0
+                                                ? "bg-success/15 text-success border-success/30"
+                                                : "bg-warning/15 text-warning border-warning/30"
+                                        )}>
                                             {nav.tutorialXp.earned} / {nav.tutorialXp.total} XP
                                         </Badge>
                                     )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    {nextTutorial
-                                        ? `Ready for the next lesson? Continue directly to Tutorial ${nextTutorial.number}: ${nextTutorial.title}`
-                                        : `Outstanding! You have completed all ${nav.totalTutorials} tutorials in this curriculum.`}
+                                    {(detail.quiz.score ?? 0) === 0
+                                        ? 'Review the explanations above and retake the quiz to complete this tutorial.'
+                                        : nextTutorial
+                                            ? `Ready for the next lesson? Continue directly to Tutorial ${nextTutorial.number}: ${nextTutorial.title}`
+                                            : `Outstanding! You have completed all ${nav.totalTutorials} tutorials in this curriculum.`}
                                 </p>
                             </div>
 

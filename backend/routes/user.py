@@ -224,6 +224,9 @@ async def update_tutorial(
     # Auto-complete if practiced
     if body.field == "practiced" and body.value is True:
         ut.status = "completed"
+        if not ut.completed_at:
+            from datetime import datetime, timezone
+            ut.completed_at = datetime.now(timezone.utc)
 
     # Recompute xp_earned from the flags (single source of truth — see services/xp.py).
     from services.xp import recompute_tutorial_xp, recalc_level

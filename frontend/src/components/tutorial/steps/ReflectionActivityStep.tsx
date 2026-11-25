@@ -11,7 +11,7 @@ export const ReflectionActivityStep: React.FC<TutorialStepProps> = ({ detail, wo
     const promptParts = rawPrompt.split(/(?:\n\*\s*|\n?•\s*)/).map(part => part.trim()).filter(Boolean)
     const promptIntro = promptParts.length > 1 ? promptParts[0] : rawPrompt
     const promptQuestions = promptParts.length > 1 ? promptParts.slice(1) : []
-    const isActivityDone = isDone(detail.userTutorial.minitaskOpted)
+    const isActivityDone = isDone(detail.userTutorial.activityDone) || isDone(detail.userTutorial.minitaskOpted)
     const hasAssignment = nav.hasAssignment
 
     return (

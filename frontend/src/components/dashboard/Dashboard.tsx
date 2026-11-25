@@ -14,6 +14,7 @@ import { LearnerPackTracker } from './LearnerPackTracker'
 import { CourseWalkthrough } from './CourseWalkthrough'
 import { CourseUnderDevelopment, KNOWN_SWAYAM_COURSES } from './CourseUnderDevelopment'
 import { useSyncActiveCourse } from '@/hooks/useSyncActiveCourse'
+import api from '@/lib/axios'
 import { useUserStore } from '@/store/userStore'
 import type { UpcomingEvent } from '@/types'
 
@@ -345,8 +346,17 @@ export default function Dashboard() {
     useEffect(() => {
         if (swayamEnrollmentId) {
             localStorage.setItem('swayamEnrollmentId', swayamEnrollmentId)
+            const cid = targetCourseId || activeCourseId
+            if (cid && user?.role === 'student') {
+                void api.post('/api/auth/swayam/link-enrollment', {
+                    course_id: cid,
+                    enrollment_id: swayamEnrollmentId,
+                }).catch(() => {
+                    // Best-effort enrollment linking for already-signed-in fallback launches
+                })
+            }
         }
-    }, [swayamEnrollmentId])
+    }, [swayamEnrollmentId, targetCourseId, activeCourseId, user?.role])
 
     useSyncActiveCourse(targetCourseId)
 

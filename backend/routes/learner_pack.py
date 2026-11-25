@@ -133,12 +133,14 @@ async def _get_or_create_user_tutorial(db: AsyncSession, user_id: uuid.UUID, tut
 
 async def _check_and_mark_tutorial_completed_if_no_quiz(db: AsyncSession, ut: UserTutorial, tut_uuid: uuid.UUID) -> None:
     """If a tutorial has no quiz questions (e.g. Linux setup Tutorials 1 & 2),
-    completing its assignment or lab reflection marks the tutorial completed."""
+    completing its assignment or lab reflection marks the tutorial completed
+    without setting `practiced=True` (which is reserved for quiz/practice XP)."""
     q_res = await db.execute(select(func.count(QuizQuestion.id)).filter_by(tutorial_id=tut_uuid))
     has_quiz = (q_res.scalar() or 0) > 0
     if not has_quiz:
-        ut.practiced = True
         ut.status = "completed"
+        if not ut.completed_at:
+            ut.completed_at = datetime.now(timezone.utc)
 
 
 # ------------------------------------------------------------
@@ -553,6 +555,8 @@ async def submit_reflection(
     user_ref = ref_res.scalars().first()
     if user_ref:
         user_ref.reflection_text = text
+        user_ref.submission_type = "reflection"
+        user_ref.image_url = None
         user_ref.word_count = words
         user_ref.submitted_at = datetime.now(timezone.utc)
     else:
@@ -884,6 +888,8 @@ async def submit_quiz(
     if passed or attempt.score > 0:
         ut.practiced = True
         ut.status = "completed"
+        if not ut.completed_at:
+            ut.completed_at = datetime.now(timezone.utc)
 
     xp_gained = recompute_tutorial_xp(ut)
     if xp_gained != 0:

@@ -404,3 +404,126 @@ async def test_sync_progress_setup_and_quiz_tutorials(db):
         assert uc.progress_percent == 100
         assert uc.status == "completed"
 
+
+async def test_setup_tutorial_submission_xp_and_completion(client, db):
+    """Setup tutorials (no quiz) must mark status='completed' without awarding extra practiced XP."""
+    from routes.learner_pack import _check_and_mark_tutorial_completed_if_no_quiz
+    from services.xp import recompute_tutorial_xp
+
+    user = User(
+        id=uuid.uuid4(),
+        username="setup_xp_user",
+        email="setup_xp@test.com",
+        role="student",
+        xp_total=0,
+        level=1,
+    )
+    db.add(user)
+    course = Course(id="linux_xp_test", title="Linux XP Test", ui_layout="learner_pack")
+    db.add(course)
+    await db.flush()
+
+    tut_setup = Tutorial(id=uuid.uuid4(), course_id="linux_xp_test", tutorial_number=1, title="VirtualBox", xp_reward=25)
+    db.add(tut_setup)
+    await db.flush()
+
+    ut = UserTutorial(user_id=user.id, tutorial_id=tut_setup.id, watched=True, assignment_done=True)
+    db.add(ut)
+    await db.flush()
+
+    await _check_and_mark_tutorial_completed_if_no_quiz(db, ut, tut_setup.id)
+    assert ut.status == "completed"
+    assert ut.practiced is False
+    assert ut.completed_at is not None
+
+    xp = recompute_tutorial_xp(ut)
+    assert xp == 15  # 10 watched + 5 assignment_done (no +10 practiced XP!)
+
+
+async def test_swayam_roster_pagination_and_reconcile(db):
+    """Verify M2M paginated roster fetch and reconcile_swayam_progress pushing missed updates."""
+    from services.swayam import reconcile_swayam_progress
+
+    user = User(
+        id=uuid.uuid4(),
+        username="reconcile_user",
+        email="reconcile@test.com",
+        role="student",
+        swayam_sub="sub_reconcile_1",
+        xp_total=0,
+        level=1,
+    )
+    db.add(user)
+    course = Course(id="reconcile_course", title="Reconcile Course", ui_layout="learner_pack")
+    db.add(course)
+    await db.flush()
+
+    t1 = Tutorial(id=uuid.uuid4(), course_id="reconcile_course", tutorial_number=1, title="T1", xp_reward=25)
+    db.add(t1)
+    await db.flush()
+    db.add(UserTutorial(user_id=user.id, tutorial_id=t1.id, status="completed", assignment_done=True))
+
+    uc = UserCourse(
+        user_id=user.id,
+        course_id="reconcile_course",
+        swayam_enrollment_id="ENR_RECON_100",
+        status="in_progress",
+        progress_percent=0,  # Intentionally stale in DB too
+    )
+    db.add(uc)
+    await db.commit()
+
+    page1 = MagicMock(status_code=200)
+    page1.json.return_value = {
+        "enrollments": [
+            {"enrollmentId": "ENR_RECON_100", "status": "IN_PROGRESS", "progressPercent": 0}
+        ]
+    }
+    token_resp = MagicMock(status_code=200)
+    token_resp.json.return_value = {"access_token": "tok_reconcile", "expires_in": 600}
+
+    with patch("services.swayam.SWAYAM_M2M_CLIENT_ID", "m2m_id"), \
+         patch("services.swayam.SWAYAM_M2M_CLIENT_SECRET", "m2m_sec"), \
+         patch("httpx.AsyncClient.post", new_callable=AsyncMock, return_value=token_resp), \
+         patch("httpx.AsyncClient.get", new_callable=AsyncMock, return_value=page1), \
+         patch("services.swayam.SwayamM2MClient.push_progress", new_callable=AsyncMock, return_value=True) as mock_push, \
+         patch("services.swayam.SwayamM2MClient.confirm_completion", new_callable=AsyncMock, return_value=True) as mock_comp:
+        res = await reconcile_swayam_progress(db)
+        assert res["checked"] >= 1
+        assert res["pushed"] >= 1
+        assert res["completed"] >= 1
+        mock_push.assert_awaited_once_with("ENR_RECON_100", 100)
+        mock_comp.assert_awaited_once_with("ENR_RECON_100")
+
+
+async def test_swayam_link_enrollment_fallback(client, db):
+    """Verify POST /api/auth/swayam/link-enrollment links enrollmentId for returning learners."""
+    from services.jwt import create_access_token
+
+    user = User(
+        id=uuid.uuid4(),
+        username="fallback_link_user",
+        email="fallback_link@test.com",
+        role="student",
+        xp_total=0,
+        level=1,
+    )
+    db.add(user)
+    course = Course(id="fallback_course", title="Fallback Course", ui_layout="learner_pack")
+    db.add(course)
+    await db.commit()
+
+    tok = create_access_token(user_id=str(user.id), effective_role="student")
+    res = await client.post(
+        "/api/auth/swayam/link-enrollment",
+        json={"course_id": "fallback_course", "enrollment_id": "ENR_FALLBACK_99"},
+        headers={"Authorization": f"Bearer {tok}"},
+    )
+    assert res.status_code == 200, res.text
+    assert res.json()["enrollmentId"] == "ENR_FALLBACK_99"
+
+    uc = (await db.execute(select(UserCourse).filter_by(user_id=user.id, course_id="fallback_course"))).scalars().first()
+    assert uc is not None
+    assert uc.swayam_enrollment_id == "ENR_FALLBACK_99"
+
+

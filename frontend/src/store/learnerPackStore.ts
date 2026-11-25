@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import api from '@/lib/axios'
+import { isTutorialCompleted } from '@/lib/learnerPack'
+import { useUserStore } from '@/store/userStore'
 import type { LearnerPackOverview } from '@/types'
 
 interface LearnerPackState {
@@ -21,6 +23,11 @@ export const useLearnerPackStore = create<LearnerPackState>((set, get) => ({
         try {
             const res = await api.get<LearnerPackOverview>(`/api/learner-pack/course/${courseId}/overview`)
             if (get().overviewCourseId !== courseId) return true
+            const total = res.data.tutorials.length
+            if (total > 0) {
+                const completed = res.data.tutorials.filter(t => isTutorialCompleted(res.data.courseId, t)).length
+                useUserStore.getState().setCourseProgress(res.data.courseId, Math.round((completed / total) * 100))
+            }
             set({ overview: res.data, isLoadingOverview: false })
             return true
         } catch {

@@ -1,12 +1,17 @@
 import logging
+import os
 from urllib.parse import urlencode, urlparse
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
+from dependencies import get_current_user
 from models.swayam import SwayamOIDCState
 from models.activity import Activity
+from models.course import UserCourse
+from models.user import User
 from services.jwt import create_access_token
 from services.swayam import (
     SWAYAM_BASE_URL,
@@ -19,6 +24,7 @@ from services.swayam import (
     verify_id_token,
     fetch_userinfo,
     get_or_create_swayam_student,
+    sync_course_progress_and_swayam,
 )
 
 logger = logging.getLogger("spoken_social.swayam_routes")
@@ -29,7 +35,7 @@ router = APIRouter(prefix="/api/auth/swayam", tags=["swayam"])
 def _clean_local_target(target: str | None) -> str:
     """Ensure target URL is safe, stays on our local application, and has no trailing slash."""
     if not target:
-        return "/courses/personality_dev"
+        return "/courses/linux"
 
     parsed = urlparse(target)
     # If absolute URL matching our domain or local dev
@@ -40,7 +46,7 @@ def _clean_local_target(target: str | None) -> str:
             if parsed.query:
                 path = f"{path}?{parsed.query}"
             return path
-        return "/courses/personality_dev"
+        return "/courses/linux"
 
     if target.startswith("/") and not target.startswith("//"):
         # Handle query if present in relative target
@@ -50,7 +56,7 @@ def _clean_local_target(target: str | None) -> str:
             path = f"{path}?{sub_parsed.query}"
         return path
 
-    return "/courses/personality_dev"
+    return "/courses/linux"
 
 
 @router.get("/start")
@@ -243,3 +249,66 @@ async def swayam_login_callback(
     except Exception as exc:
         logger.exception("SWAYAM SSO callback processing failed: %s", exc)
         return RedirectResponse(url="/sso?error=auth_failed", status_code=status.HTTP_302_FOUND)
+
+
+class SwayamLinkRequest(BaseModel):
+    course_id: str
+    enrollment_id: str
+
+
+@router.post("/link-enrollment")
+async def link_swayam_enrollment(
+    body: SwayamLinkRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Link a SWAYAM enrollmentId when an already-logged-in learner lands on a course via fallback URL."""
+    eid = body.enrollment_id.strip()
+    cid = body.course_id.strip()
+    if not eid or not cid:
+        raise HTTPException(status_code=400, detail="course_id and enrollment_id are required")
+
+    from models.course import Course
+    from sqlalchemy import or_
+    c_obj = (
+        await db.execute(
+            select(Course).filter(
+                or_(
+                    Course.id == cid,
+                    Course.id == cid.replace("_", "-"),
+                    Course.id == cid.replace("-", "_"),
+                )
+            )
+        )
+    ).scalars().first()
+    if not c_obj:
+        raise HTTPException(status_code=404, detail="Course not found")
+    cid = c_obj.id
+
+    uc_res = await db.execute(
+        select(UserCourse).filter_by(user_id=user.id, course_id=cid)
+    )
+    uc = uc_res.scalars().first()
+    if not uc:
+        # Resolve active batch and auto-enroll
+        from models.batch import Batch
+        from services.auth import _sync_enrollments
+
+        batch = (
+            await db.execute(
+                select(Batch).filter(
+                    Batch.course_id == cid,
+                    Batch.programme_id == "swayam_plus",
+                    Batch.status == "active",
+                ).order_by(Batch.start_date.desc())
+            )
+        ).scalars().first()
+        await _sync_enrollments(db, user, [{"course_id": cid, "batch_id": batch.id if batch else None}], college_id=None)
+        uc = (await db.execute(select(UserCourse).filter_by(user_id=user.id, course_id=cid))).scalars().first()
+
+    if uc and uc.swayam_enrollment_id != eid:
+        uc.swayam_enrollment_id = eid
+
+    await sync_course_progress_and_swayam(db, user.id, cid)
+    await db.commit()
+    return {"success": True, "courseId": cid, "enrollmentId": eid}

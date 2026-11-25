@@ -31,6 +31,7 @@ interface UserState {
     addXP: (amount: number) => void
     setActiveCourse: (courseId: string) => void
     setActiveBatch: (batchId: string | null, isActive?: boolean) => void
+    setCourseProgress: (courseId: string, progressPercent: number) => void
     setActiveProgramme: (id: string, name: string) => void
     switchProgramme: (id: string, name: string) => Promise<any[]>
 }
@@ -143,17 +144,24 @@ export const useUserStore = create<UserState>((set, get) => ({
 
         const boolValue = value === 'yes' ? true : value === 'no' ? false : null
 
-        set({
-            tutorials: get().tutorials.map(t => {
-                if (t.id !== tutorialId) return t
-                const updated = { ...t, [field]: value }
-                if (field === 'practiced' && value === 'yes') updated.completed = true
+        const updatedTutorials = get().tutorials.map(t => {
+            if (t.id !== tutorialId) return t
+            const updated = { ...t, [field]: value }
+            if (field === 'practiced') updated.completed = value === 'yes'
 
-                const XP: Record<string, number> = { watched: 10, practiced: 10, assignmentDone: 5, forumAsked: 5, forumAnswered: 10 }
-                updated.xpEarned = Object.entries(XP).reduce((sum, [f, pts]) => sum + (updated[f as TutorialField] === 'yes' ? pts : 0), 0)
-                return updated
-            })
+            const XP: Record<string, number> = { watched: 10, practiced: 10, assignmentDone: 5, forumAsked: 5, forumAnswered: 10 }
+            updated.xpEarned = Object.entries(XP).reduce((sum, [f, pts]) => sum + (updated[f as TutorialField] === 'yes' ? pts : 0), 0)
+            return updated
         })
+        set({ tutorials: updatedTutorials })
+
+        if (field === 'practiced' && updatedTutorials.length > 0) {
+            const completedCount = updatedTutorials.filter(t => t.completed || t.practiced === 'yes').length
+            const existing = get().courses.find(c => c.id === courseId)
+            const nextPct = Math.round((completedCount / updatedTutorials.length) * 100)
+            // Backend progress is monotonic
+            get().setCourseProgress(courseId, Math.max(existing?.progressPercent ?? 0, nextPct))
+        }
 
         api.put(`/api/me/courses/${courseId}/tutorials/${tutorialId}`, { field, value: boolValue }).then(()=>{
             queryClient.invalidateQueries({queryKey:['leaderboard']})
@@ -217,6 +225,22 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     setActiveBatch: (batchId, isActive = true) => {
         set({ activeBatchId: batchId, activeBatchIsActive: isActive })
+    },
+
+    setCourseProgress: (courseId, progressPercent) => {
+        const { courses } = get()
+        if (!courses.some(c => c.id === courseId)) return
+        set({
+            courses: courses.map(c =>
+                c.id === courseId
+                    ? {
+                        ...c,
+                        progressPercent,
+                        status: progressPercent >= 100 ? 'completed' : progressPercent > 0 && c.status === 'not_started' ? 'in_progress' : c.status,
+                    }
+                    : c
+            ),
+        })
     },
 
     setActiveProgramme: (id, name) => {

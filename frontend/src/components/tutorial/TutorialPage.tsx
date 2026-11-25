@@ -124,7 +124,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
             id: 'activity',
             label: activityLabel,
             shortLabel: ACTIVITY_SHORT_LABELS[activityLabel] ?? activityLabel,
-            done: detail ? Boolean(detail.userReflection) || isDone(detail.userTutorial.minitaskOpted) : progress.reflectionSubmitted,
+            done: detail ? Boolean(detail.userReflection) || isDone(detail.userTutorial.activityDone) || isDone(detail.userTutorial.minitaskOpted) : progress.reflectionSubmitted,
         },
     ]
     if (hasAssignment) {
