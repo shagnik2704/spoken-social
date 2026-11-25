@@ -604,11 +604,16 @@ async def verify_sso_token(token: str, db: AsyncSession) -> dict | None:
                 api_courses = [{"course_id": batch.course_id, "batch_id": batch.id}]
 
         if not api_courses:
-            # Fall back to personality_dev if exists
-            b_res = await db.execute(select(Batch).filter_by(course_id="personality_dev", status="active"))
+            # Fall back to empathy-growth-mindset (or legacy personality_dev) if exists
+            b_res = await db.execute(
+                select(Batch).filter(
+                    Batch.course_id.in_(["empathy-growth-mindset", "personality_dev"]),
+                    Batch.status == "active",
+                )
+            )
             batch = b_res.scalars().first()
             if batch:
-                api_courses = [{"course_id": "personality_dev", "batch_id": batch.id}]
+                api_courses = [{"course_id": batch.course_id, "batch_id": batch.id}]
 
     await _sync_enrollments(db, user, api_courses, college_id or user.college_id)
     await db.commit()

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { isDone, withXp } from '@/lib/learnerPack'
 import type { TutorialStepProps } from '../types'
 
-const BOILERPLATE_LINE = /^(Personality and Human Development.*Assignment|as an assignment)/i
+const BOILERPLATE_LINE = /^((?:Personality and Human Development|Developing Empathy and Growth Mindset).*Assignment|as an assignment)/i
 
 const cleanAssignmentText = (raw: string): string =>
     raw

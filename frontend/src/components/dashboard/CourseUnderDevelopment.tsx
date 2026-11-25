@@ -11,11 +11,6 @@ export interface CoursePreviewMeta {
 }
 
 export const KNOWN_SWAYAM_COURSES: Record<string, CoursePreviewMeta> = {
-    'empathy-growth-mindset': {
-        id: 'empathy-growth-mindset',
-        title: 'Developing Empathy and Growth Mindset',
-        forumCategory: 'Developing Empathy and Growth Mindset',
-    },
     'being-creative-with-ai': {
         id: 'being-creative-with-ai',
         title: 'Being Creative with AI',

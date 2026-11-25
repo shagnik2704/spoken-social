@@ -33,6 +33,7 @@ const courseIconMap: Record<string, React.ReactNode> = {
     'PostgreSQL': <Database className="h-6 w-6 text-primary" />,
     'AI': <Brain className="h-6 w-6 text-primary" />,
     'PHD': <FlaskConical className="h-6 w-6 text-primary" />,
+    'Developing Empathy and Growth Mindset': <Compass className="h-6 w-6 text-primary" />,
     'Personality and Human Development': <Compass className="h-6 w-6 text-primary" />,
 }
 
@@ -366,7 +367,7 @@ export default function Dashboard() {
     const targetSlug = (targetCourseId || activeCourseId || '').toLowerCase().replace(/_/g, '-')
     const isUnderDevelopment =
         activeCourse?.uiLayout === 'under_development' ||
-        (targetSlug in KNOWN_SWAYAM_COURSES && targetSlug !== 'linux' && (!activeCourse || activeCourse.uiLayout === 'under_development'))
+        (targetSlug in KNOWN_SWAYAM_COURSES && (!activeCourse || activeCourse.uiLayout === 'under_development'))
 
     if (isLoading) {
         return (

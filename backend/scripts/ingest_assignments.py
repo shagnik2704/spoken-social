@@ -85,7 +85,10 @@ def run_ingestion():
                     raw_content = resp.read().decode('utf-8', errors='ignore')
                     assignment_text = clean_assignment_text(raw_content)
                     
-                    tut = session.query(Tutorial).filter_by(course_id="personality_dev", tutorial_number=num).first()
+                    tut = session.query(Tutorial).filter(
+                        Tutorial.course_id.in_(["empathy-growth-mindset", "personality_dev"]),
+                        Tutorial.tutorial_number == num,
+                    ).first()
                     if tut:
                         tut.assignment_instructions = assignment_text
                         tut.assignment_url = url

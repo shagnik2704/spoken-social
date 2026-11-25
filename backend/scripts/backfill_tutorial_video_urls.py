@@ -42,7 +42,10 @@ def run_backfill():
             video_url = f"{base_media}/{vid_id}/{slug}-English.webm"
             poster_url = f"{base_media}/{vid_id}/{slug}-Big.png"
             
-            tut = session.query(Tutorial).filter_by(course_id="personality_dev", tutorial_number=num).first()
+            tut = session.query(Tutorial).filter(
+                Tutorial.course_id.in_(["empathy-growth-mindset", "personality_dev"]),
+                Tutorial.tutorial_number == num,
+            ).first()
             if tut:
                 tut.video_url = video_url
                 tut.video_poster_url = poster_url

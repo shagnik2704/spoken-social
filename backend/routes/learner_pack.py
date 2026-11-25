@@ -268,9 +268,9 @@ async def get_course_overview(
             }
         })
 
-    # Habit log milestones for SWAYAM Plus Personality Development
+    # Habit log milestones for SWAYAM Plus Developing Empathy and Growth Mindset
     habit_milestones = []
-    if course_id == "personality_dev":
+    if course_id in ("empathy-growth-mindset", "personality_dev"):
         habit_milestones = [
             {"week": 3, "logType": "emotion", "title": "7-Day Emotion Log", "days": 7},
             {"week": 6, "logType": "belief", "title": "7-Day Belief Log", "days": 7},

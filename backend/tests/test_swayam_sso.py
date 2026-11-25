@@ -63,7 +63,7 @@ async def test_swayam_login_start_endpoint(client, db):
 
     # 2. Valid start request
     valid_iss = f"{SWAYAM_BASE_URL}/oidc"
-    target_link = "https://beta.social.edupyramids.org/courses/personality_dev?swayamEnrollmentId=ENR999"
+    target_link = "https://beta.social.edupyramids.org/courses/empathy-growth-mindset?swayamEnrollmentId=ENR999"
     res = await client.get(
         f"/api/auth/swayam/start?iss={valid_iss}&login_hint=user123&target_link_uri={target_link}&lti_message_hint=ENR999",
         follow_redirects=False,
@@ -124,7 +124,7 @@ async def test_swayam_callback_success_flow(client, db):
     test_state_key = f"test_state_{uuid.uuid4().hex[:8]}"
     test_verifier = "test_code_verifier_1234567890_abcdefghij"
     test_enrollment_id = "ENR_TEST_CALLBACK_01"
-    target_link = "https://beta.social.edupyramids.org/courses/personality_dev?swayamEnrollmentId=" + test_enrollment_id
+    target_link = "https://beta.social.edupyramids.org/courses/empathy-growth-mindset?swayamEnrollmentId=" + test_enrollment_id
 
     # Pre-seed state row
     state_record = SwayamOIDCState(
@@ -143,18 +143,18 @@ async def test_swayam_callback_success_flow(client, db):
     if not p_res.scalars().first():
         db.add(Programme(id="swayam_plus", name="SWAYAM Plus"))
 
-    c_res = await db.execute(select(Course).filter_by(id="personality_dev"))
+    c_res = await db.execute(select(Course).filter_by(id="empathy-growth-mindset"))
     course = c_res.scalars().first()
     if not course:
-        course = Course(id="personality_dev", title="Personality Development", ui_layout="learner_pack")
+        course = Course(id="empathy-growth-mindset", title="Developing Empathy and Growth Mindset", ui_layout="learner_pack")
         db.add(course)
 
-    b_res = await db.execute(select(Batch).filter_by(course_id="personality_dev", programme_id="swayam_plus"))
+    b_res = await db.execute(select(Batch).filter_by(course_id="empathy-growth-mindset", programme_id="swayam_plus"))
     batch = b_res.scalars().first()
     if not batch:
         batch = Batch(
             id="batch_swayam_test",
-            course_id="personality_dev",
+            course_id="empathy-growth-mindset",
             name="SWAYAM Plus Active Batch",
             programme_id="swayam_plus",
             start_date=date(2026, 1, 1),
@@ -192,7 +192,7 @@ async def test_swayam_callback_success_flow(client, db):
         )
         assert res.status_code == 302
         location = res.headers["location"]
-        assert location.startswith("/courses/personality_dev")
+        assert location.startswith("/courses/empathy-growth-mindset")
         assert f"swayamEnrollmentId={test_enrollment_id}" in location
         assert "token=" in location
 
@@ -207,7 +207,7 @@ async def test_swayam_callback_success_flow(client, db):
     assert user.role == "student"
 
     # Check UserCourse enrollment
-    uc_check = await db.execute(select(UserCourse).filter_by(user_id=user.id, course_id="personality_dev"))
+    uc_check = await db.execute(select(UserCourse).filter_by(user_id=user.id, course_id="empathy-growth-mindset"))
     uc = uc_check.scalars().first()
     assert uc is not None
     assert uc.swayam_enrollment_id == test_enrollment_id

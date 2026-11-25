@@ -44,19 +44,19 @@ async def test_learner_pack_full_flow():
         user.level = 1
         sync_db.commit()
 
-        # Enroll user in personality_dev if not enrolled
-        uc = sync_db.query(UserCourse).filter_by(user_id=user.id, course_id="personality_dev").first()
+        # Enroll user in empathy-growth-mindset if not enrolled
+        uc = sync_db.query(UserCourse).filter_by(user_id=user.id, course_id="empathy-growth-mindset").first()
         if not uc:
             sync_db.add(UserCourse(
                 user_id=user.id,
-                course_id="personality_dev",
-                batch_id="swayam_personality_batch_1"
+                course_id="empathy-growth-mindset",
+                batch_id="empathy-swayam-2026-nov"
             ))
             sync_db.commit()
 
         # Get Tutorial 1
-        tut1 = sync_db.query(Tutorial).filter_by(course_id="personality_dev", tutorial_number=1).first()
-        assert tut1 is not None, "Tutorial 1 for personality_dev must be seeded"
+        tut1 = sync_db.query(Tutorial).filter_by(course_id="empathy-growth-mindset", tutorial_number=1).first()
+        assert tut1 is not None, "Tutorial 1 for empathy-growth-mindset must be seeded"
         tut1_id = str(tut1.id)
         user_id_str = str(user.id)
 
@@ -70,10 +70,10 @@ async def test_learner_pack_full_flow():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         # Step 1: Course Overview
-        res = await client.get("/api/learner-pack/course/personality_dev/overview", headers=headers)
+        res = await client.get("/api/learner-pack/course/empathy-growth-mindset/overview", headers=headers)
         assert res.status_code == 200, res.text
         data = res.json()
-        assert data["courseId"] == "personality_dev"
+        assert data["courseId"] == "empathy-growth-mindset"
         assert data["uiLayout"] == "learner_pack"
         assert len(data["tutorials"]) == 17
         assert len(data["habitMilestones"]) == 5
@@ -156,7 +156,7 @@ async def test_learner_pack_full_flow():
         # Step 7: Habit Log Checkin
         today_str = date.today().isoformat()
         checkin_payload = {
-            "course_id": "personality_dev",
+            "course_id": "empathy-growth-mindset",
             "log_type": "emotion",
             "day_number": 1,
             "checkin_date": today_str,
@@ -168,7 +168,7 @@ async def test_learner_pack_full_flow():
         assert res.json()["checkin"]["logType"] == "emotion"
 
         # Step 8: Get Habit Logs
-        res = await client.get("/api/learner-pack/habit-logs/personality_dev", headers=headers)
+        res = await client.get("/api/learner-pack/habit-logs/empathy-growth-mindset", headers=headers)
         assert res.status_code == 200, res.text
         logs_data = res.json()
         assert len(logs_data["logs"]["emotion"]) >= 1
@@ -205,7 +205,7 @@ async def test_sso_exchange_flow():
         "first_name": "Swayam",
         "last_name": "Learner",
         "swayam_sub": "swayam-uid-987654",
-        "courses": ["personality_dev"],
+        "courses": ["empathy-growth-mindset"],
         "exp": datetime.now(timezone.utc) + timedelta(seconds=60),
     }
     handoff_token = jwt.encode(handoff_payload, secret, algorithm="HS256")
@@ -226,7 +226,7 @@ async def test_sso_exchange_flow():
         assert me_res.status_code == 200, me_res.text
         me_data = me_res.json()
         assert me_data["user"]["email"] == "swayam_new_student@test.com"
-        # Verify enrollment in personality_dev
+        # Verify enrollment in empathy-growth-mindset
         course_ids = [c["id"] for c in me_data["courses"]]
-        assert "personality_dev" in course_ids
+        assert "empathy-growth-mindset" in course_ids
 

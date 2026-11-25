@@ -40,7 +40,7 @@ SWAYAM_COURSES = [
         "title": "Developing Empathy and Growth Mindset",
         "description": "A 2-credit life-skills course covering emotional intelligence, self-awareness, active empathy, and building a growth mindset.",
         "forum_category": "Developing Empathy and Growth Mindset",
-        "ui_layout": "under_development",
+        "ui_layout": "learner_pack",
         "batch_id": "empathy-swayam-2026-nov",
         "credits": 2,
     },

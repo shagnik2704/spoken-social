@@ -9,137 +9,137 @@
     "display_order": 2
   },
   "course": {
-    "id": "personality_dev",
-    "title": "Personality and Human Development",
-    "description": "A 2-credit, 12-week life-skills course covering emotional intelligence, self-awareness, and growth mindset.",
-    "forum_category": "Personality-Development",
+    "id": "empathy-growth-mindset",
+    "title": "Developing Empathy and Growth Mindset",
+    "description": "A 2-credit life-skills course covering emotional intelligence, self-awareness, active empathy, and building a growth mindset.",
+    "forum_category": "Developing Empathy and Growth Mindset",
     "ui_layout": "learner_pack"
   },
   "batch": {
-    "id": "swayam_personality_batch_1",
-    "name": "SWAYAM Plus 2026 Batch 1",
-    "course_id": "personality_dev",
+    "id": "empathy-swayam-2026-nov",
+    "name": "SWAYAM Plus 2026–27",
+    "course_id": "empathy-growth-mindset",
     "programme_id": "swayam_plus",
-    "start_date": "2026-02-01",
-    "end_date": "2026-05-31",
+    "start_date": "2026-11-01",
+    "end_date": "2027-05-31",
     "status": "active"
   },
   "tutorials": [
     {
       "id": "0b056510-2822-4df6-90d3-e5befb3898da",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 1,
       "title": "Origin of Emotions",
       "xp_reward": 25
     },
     {
       "id": "b897c4ec-ec47-4cd5-b3d7-fb9ced018fa6",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 2,
       "title": "Understanding Fear",
       "xp_reward": 25
     },
     {
       "id": "9ffef77b-edf6-4739-86be-fcbd9ede93c8",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 3,
       "title": "Understanding Anger",
       "xp_reward": 25
     },
     {
       "id": "113a544a-5759-4ef4-aedc-ba314337b3b6",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 4,
       "title": "Understanding Sadness",
       "xp_reward": 25
     },
     {
       "id": "d3ac6820-cf03-492d-8805-152b20902158",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 5,
       "title": "Understanding Happiness",
       "xp_reward": 25
     },
     {
       "id": "1cb144bd-6432-4df3-bb66-fec4f3fa7fdd",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 6,
       "title": "Understanding Guilt",
       "xp_reward": 25
     },
     {
       "id": "f7b657bf-1d9e-48db-b2ff-66d5dbb30530",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 7,
       "title": "Jealousy and Admiration",
       "xp_reward": 25
     },
     {
       "id": "0e422384-abfe-4149-be06-1892afa89383",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 8,
       "title": "Reality and Interpretations",
       "xp_reward": 25
     },
     {
       "id": "44bb7e7f-39b4-4540-8add-cb57e9e28676",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 9,
       "title": "Understanding Beliefs",
       "xp_reward": 25
     },
     {
       "id": "9d08ecb8-86c8-4833-995a-a062856c7f9d",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 10,
       "title": "How to Change Beliefs",
       "xp_reward": 25
     },
     {
       "id": "cbc973c9-5c8e-499f-804c-83ed874c9807",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 11,
       "title": "Judgment and Feedback",
       "xp_reward": 25
     },
     {
       "id": "aa589fe8-5dfb-4037-b777-64dc8736caab",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 12,
       "title": "Empathy",
       "xp_reward": 25
     },
     {
       "id": "74ec44ab-b368-4424-b8f9-f2215430a1d5",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 13,
       "title": "How the Brain Learns New Things",
       "xp_reward": 25
     },
     {
       "id": "5d7bd23e-d597-49ef-b0a8-4121f322f7db",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 14,
       "title": "The Magic of Failures",
       "xp_reward": 25
     },
     {
       "id": "ccbd3c22-953a-46e9-a692-8bb35d2674c2",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 15,
       "title": "The Power of the Word Yet",
       "xp_reward": 25
     },
     {
       "id": "cc7d489e-b3a0-4884-8ac6-58a6a8166e44",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 16,
       "title": "What Happens in Our Brain When We Calm Down",
       "xp_reward": 25
     },
     {
       "id": "b989e7d1-5f93-4e81-a2a5-f258c70e5e79",
-      "course_id": "personality_dev",
+      "course_id": "empathy-growth-mindset",
       "tutorial_number": 17,
       "title": "Practising Growth Mindset",
       "xp_reward": 25
