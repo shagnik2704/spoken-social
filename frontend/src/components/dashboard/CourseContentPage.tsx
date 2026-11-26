@@ -139,7 +139,7 @@ const CourseContentPage: React.FC = () => {
                             <section key={week} aria-labelledby={`week-${week}`} className="space-y-3">
                                 <h3 id={`week-${week}`} className="flex items-baseline gap-2 border-b border-border/70 pb-2 text-xs">
                                     <span className="font-mono font-semibold uppercase tracking-wider text-primary">Week {week}</span>
-                                    <span className="text-muted-foreground">{getWeekTopic(week, courseId)}</span>
+                                    <span className="text-muted-foreground">{getWeekTopic(week, courseId, overview.guide)}</span>
                                 </h3>
                                 <ul className="divide-y divide-border/50">
                                     {tutorials.map((tutorial) => (

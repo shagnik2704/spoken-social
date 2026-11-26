@@ -16,6 +16,7 @@ class Tutorial(Base):
     content = Column(Text)
     video_url = Column(Text, nullable=True)
     video_poster_url = Column(Text, nullable=True)
+    video_page_url = Column(Text, nullable=True)
     code_files_url = Column(Text, nullable=True)
     instruction_sheet_url = Column(Text, nullable=True)
     installation_sheet_url = Column(Text, nullable=True)

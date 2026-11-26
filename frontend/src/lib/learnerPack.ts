@@ -1,5 +1,5 @@
 import { BookOpen, FileText, FolderArchive, Wrench, type LucideIcon } from 'lucide-react'
-import type { CourseMaterialUrls, LearnerPackOverviewTutorial, QuizOption, RadioValue, XpRewards } from '@/types'
+import type { AssessmentSummary, CourseGuide, CourseGuideWeek, CourseMaterialUrls, LearnerPackOverview, LearnerPackOverviewTutorial, QuizOption, RadioValue, XpRewards } from '@/types'
 
 export type TutorialStepId = 'video' | 'reading' | 'activity' | 'assignment' | 'quiz'
 
@@ -54,30 +54,41 @@ const LINUX_WEEK_TOPICS: Record<number, string> = {
     12: 'Capstone Project Submission & Final Exam Revision',
 }
 
-const CREATIVE_AI_WEEK_TOPICS: Record<number, string> = {
-    1: 'Foundations of AI, GenAI & Lab 1',
-    2: 'Prompting Fundamentals & The 3 Cs',
-    3: 'Persona, Examples & Structured Prompting',
-    4: 'Image Prompting & Lab 2',
-    5: 'Critical Thinking in AI, Lab 3 & Live Session 1',
-    6: 'Python in Google Colab & Functions',
-    7: 'Data Structures in Python & Practice',
-    8: 'Gemini API Key, Colab & Lab 4',
-    9: 'Introduction to RAG & Pipeline',
-    10: 'RAG Environment, Basic RAG & Live Session 2',
-    11: 'Lab 5: Semantic Retrieval System',
-    12: 'Capstone Project Submission & Final Exam Prep',
-}
+export const getGuideWeek = (guide: CourseGuide | null | undefined, weekNumber: number): CourseGuideWeek | undefined =>
+    guide?.weeks.find(week => week.week === weekNumber)
 
-export const getWeekTopic = (weekNumber: number, courseId?: string | null): string => {
+export const getWeekTopic = (weekNumber: number, courseId?: string | null, guide?: CourseGuide | null): string => {
+    const guideTopic = getGuideWeek(guide, weekNumber)?.topic
+    if (guideTopic) return guideTopic
     if (isLinuxCourse(courseId)) {
         return LINUX_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
     }
-    if (courseId === 'being-creative-with-ai') {
-        return CREATIVE_AI_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
-    }
     return PERSONALITY_DEV_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
 }
+
+export const moduleLabel = (modules: number[]): string => {
+    if (modules.length === 0) return ''
+    if (modules.length === 1) return `Module ${modules[0]}`
+    return `Modules ${modules[0]}–${modules[modules.length - 1]}`
+}
+
+/** The batch's calendar week, for courses whose guide sets out a week-by-week plan. */
+export const getCalendarWeek = (overview: Pick<LearnerPackOverview, 'guide' | 'schedule'> | null | undefined): number | null => {
+    if (!overview?.guide?.weeks.length || !overview.schedule) return null
+    return overview.schedule.currentWeek
+}
+
+const SUBMISSION_NOTE = /^Submit (?:Lab \d+|the capstone project)$/i
+
+/** Schedule notes for a week that the week's own rows don't already show (lab and capstone submissions do). */
+export const getWeekNotes = (guide: CourseGuide | null | undefined, weekNumber: number): string[] =>
+    (getGuideWeek(guide, weekNumber)?.alsoThisWeek ?? '')
+        .split(/\.\s+/)
+        .map(note => note.replace(/\.$/, '').trim())
+        .filter(note => note && !SUBMISSION_NOTE.test(note) && !/^Live session \d+$/i.test(note))
+
+export const getWeekLiveSessions = (guide: CourseGuide | null | undefined, weekNumber: number): CourseGuide['liveSessions'] =>
+    guide?.liveSessions.filter(session => session.week === weekNumber) ?? []
 
 export const resolveMediaUrl = (url?: string | null): string => {
     if (!url) return ''
@@ -344,8 +355,10 @@ export const parseTryItInstructions = (raw: string): TryItInstructions => {
         submit = submitMatch[1].replace(/^\*\*\s*/, '').trim()
         body = raw.slice(0, submitMatch.index).trim()
     }
-    const parts = body.split(/(?:\*\*Step\s+\d+:\*\*|\b\d+\.\s+)/).map(part => part.trim()).filter(Boolean)
-    if (parts.length > 1) return { intro: parts[0], steps: parts.slice(1), submit }
+    const stepMarker = /(?:\*\*Step\s+\d+:\*\*|\b\d+\.\s+)/
+    const firstStep = body.search(stepMarker)
+    const steps = firstStep === -1 ? [] : body.slice(firstStep).split(stepMarker).map(part => part.trim()).filter(Boolean)
+    if (steps.length > 0) return { intro: body.slice(0, firstStep).trim(), steps, submit }
     return { intro: '', steps: body ? [body] : [], submit }
 }
 
@@ -502,3 +515,25 @@ export const parseLabTask = (raw: string): LabTask => {
     })
     return task
 }
+
+export const normalizeReadMore = (raw: unknown[] | null | undefined): string[] =>
+    (raw ?? [])
+        .map((item) => {
+            if (typeof item === 'string') return item
+            if (item && typeof item === 'object') {
+                const record = item as Record<string, unknown>
+                if (typeof record.text === 'string') return record.text
+                const parts = [record.title, record.author, record.desc].filter((part): part is string => typeof part === 'string' && part.length > 0)
+                return parts.join(' — ')
+            }
+            return ''
+        })
+        .map(text => text.trim())
+        .filter(Boolean)
+
+export const assessmentPath = (courseId: string, key: string): string => `${coursePath(courseId)}/assessments/${key}`
+
+export const assessmentLabel = (assessment: Pick<AssessmentSummary, 'kind' | 'number'>): string =>
+    assessment.kind === 'lab' && assessment.number ? `Lab ${assessment.number}` : 'Capstone project'
+
+export const GEMINI_KEY_PATTERN = /AIza[0-9A-Za-z_-]{35}/

@@ -140,3 +140,47 @@ class UserHabitLogCheckin(Base):
         UniqueConstraint("user_id", "course_id", "log_type", "day_number", name="uq_user_habit_day"),
         Index("idx_user_habit_checkins", "user_id", "course_id", "log_type"),
     )
+
+
+class CourseAssessment(Base):
+    """A course-level graded task (lab or capstone) that spans several tutorials and is due in a given week."""
+    __tablename__ = "course_assessments"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    course_id = Column(String(50), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
+    key = Column(String(50), nullable=False)
+    kind = Column(String(20), nullable=False)
+    number = Column(Integer, nullable=True)
+    title = Column(String(255), nullable=False)
+    week_due = Column(Integer, nullable=False)
+    covers = Column(String(255), nullable=True)
+    instructions_markdown = Column(Text, nullable=False)
+    display_order = Column(Integer, nullable=False, default=0)
+
+    __table_args__ = (
+        UniqueConstraint("course_id", "key", name="uq_course_assessment_key"),
+        Index("idx_course_assessments_course", "course_id"),
+    )
+
+
+class UserAssessmentSubmission(Base):
+    """A student's submission for a course assessment; evaluators fill score and feedback later."""
+    __tablename__ = "user_assessment_submissions"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    assessment_id = Column(PG_UUID(as_uuid=True), ForeignKey("course_assessments.id", ondelete="CASCADE"), nullable=False)
+    submission_text = Column(Text, nullable=False)
+    link_url = Column(Text, nullable=True)
+    file_url = Column(Text, nullable=True)
+    file_name = Column(String(255), nullable=True)
+    status = Column(String(20), nullable=False, default="submitted")
+    score = Column(Integer, nullable=True)
+    feedback = Column(Text, nullable=True)
+    submitted_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "assessment_id", name="uq_user_assessment_submission"),
+        Index("idx_user_assessment_submissions_user", "user_id"),
+    )

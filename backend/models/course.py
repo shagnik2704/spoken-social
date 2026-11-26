@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Numeric, Index
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from database import Base
 from datetime import datetime, timezone
 
@@ -13,6 +13,7 @@ class Course(Base):
     description = Column(Text)
     forum_category = Column(String(200))  # e.g., "Linux New" — maps to forum's FOSS category
     ui_layout = Column(String(50), default="standard_tracker", nullable=False)  # "standard_tracker" | "learner_pack"
+    guide = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships

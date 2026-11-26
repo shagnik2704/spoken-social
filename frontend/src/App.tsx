@@ -8,6 +8,7 @@ import { ComposeModal } from '@/components/compose/ComposeModal'
 const Profile = lazy(() => import('@/components/profile/Profile'))
 const Dashboard = lazy(() => import('@/components/dashboard/Dashboard'))
 const TutorialPage = lazy(() => import('@/components/tutorial/TutorialPage'))
+const AssessmentPage = lazy(() => import('@/components/assessment/AssessmentPage'))
 const CourseContentPage = lazy(() => import('@/components/dashboard/CourseContentPage'))
 const Leaderboard = lazy(() => import('@/components/leaderboard/Leaderboard'))
 const CoordinatorDashboard = lazy(() => import('@/components/coordinator/CoordinatorDashboard'))
@@ -125,6 +126,7 @@ function AppContent() {
               <Route path="/courses/:courseId" element={<Dashboard />} />
               <Route path="/courses/:courseId/content" element={<CourseContentPage />} />
               <Route path="/courses/:courseId/tutorials/:tutorialNumber/:step?" element={<TutorialPage />} />
+              <Route path="/courses/:courseId/assessments/:key" element={<AssessmentPage />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/coordinator" element={<CoordinatorDashboard />} />

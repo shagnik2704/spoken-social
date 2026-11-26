@@ -36,7 +36,7 @@ from models.follow import Follow
 from models.hashtag import Tag, PostTag, Hashtag, PostHashtag, HashtagCount
 from models.xp_event import XPEvent
 from models.activity import Activity
-from models.learner_pack import TutorialContent, QuizQuestion, UserReflection, UserQuizAttempt, UserHabitLogCheckin
+from models.learner_pack import TutorialContent, QuizQuestion, UserReflection, UserQuizAttempt, UserHabitLogCheckin, CourseAssessment, UserAssessmentSubmission
 from models.swayam import SwayamOIDCState
 
 target_metadata = Base.metadata

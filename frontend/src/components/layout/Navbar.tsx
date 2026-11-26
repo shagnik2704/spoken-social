@@ -22,7 +22,7 @@ import {
     BookOpen,
     ChevronLeft,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, initials } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -146,7 +146,7 @@ export function TopBar() {
                             <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                                 <Avatar className="h-8 w-8 border-2 border-primary/50">
                                     <AvatarFallback className="bg-primary text-sm font-semibold text-primary-foreground">
-                                        {user?.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
+                                        {initials(user?.displayName)}
                                     </AvatarFallback>
                                 </Avatar>
                                 {/* Level badge */}

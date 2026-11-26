@@ -1,3 +1,4 @@
+import { initials } from '@/lib/utils'
 import { useState } from 'react'
 import {
     Flame, Zap, BookOpen, Trophy, MapPin, LinkIcon,
@@ -64,7 +65,7 @@ function ProfileHeader() {
                 {/* Avatar */}
                 <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-background absolute -top-10 sm:-top-12 shadow-lg">
                     <AvatarFallback className="bg-primary text-primary-foreground text-xl sm:text-2xl font-bold">
-                        {user.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
+                        {initials(user.displayName)}
                     </AvatarFallback>
                 </Avatar>
 
