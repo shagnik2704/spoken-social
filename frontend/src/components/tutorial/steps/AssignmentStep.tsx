@@ -48,11 +48,13 @@ export const AssignmentStep: React.FC<TutorialStepProps> = ({ detail, workspace,
                                 remarkPlugins={[remarkGfm]}
                                 components={{
                                     h3: ({ ...props }) => <h3 className="text-base sm:text-lg font-bold text-foreground mt-4 mb-2 font-sans" {...props} />,
+                                    h4: ({ ...props }) => <h4 className="text-sm sm:text-base font-bold text-foreground mt-4 mb-1.5 font-sans" {...props} />,
                                     p: ({ ...props }) => <p className="leading-relaxed mb-3 text-foreground/90 text-sm sm:text-base font-sans" {...props} />,
                                     ul: ({ ...props }) => <ul className="list-disc pl-6 mb-4 space-y-2 text-sm sm:text-base text-foreground/90" {...props} />,
                                     ol: ({ ...props }) => <ol className="list-decimal pl-6 mb-4 space-y-2 text-sm sm:text-base text-foreground/90" {...props} />,
                                     li: ({ ...props }) => <li className="leading-relaxed" {...props} />,
                                     strong: ({ ...props }) => <strong className="font-bold text-foreground" {...props} />,
+                                    code: ({ ...props }) => <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-foreground" {...props} />,
                                 }}
                             >
                                 {cleanedAssignmentText}
@@ -70,7 +72,9 @@ export const AssignmentStep: React.FC<TutorialStepProps> = ({ detail, workspace,
                         <div className="space-y-1">
                             <p className="font-semibold text-foreground">How to Complete</p>
                             <p className="text-muted-foreground leading-relaxed">
-                                Complete this practical task in your physical notebook or discuss it with friends or classmates.
+                                {nav.isCreativeAi
+                                    ? 'Complete this lab using the tools covered in the tutorials (AI chatbot, Google Colab, or your local terminal), then mark it completed below.'
+                                    : 'Complete this practical task in your physical notebook or discuss it with friends or classmates.'}
                             </p>
                         </div>
                     </div>

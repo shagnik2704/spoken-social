@@ -4,6 +4,7 @@ import type { TutorialWorkspace } from './useTutorialWorkspace'
 
 export interface TutorialNav {
     isLinux: boolean
+    isCreativeAi: boolean
     isSetup: boolean
     hasAssignment: boolean
     nextTutorial: LearnerPackOverviewTutorial | null

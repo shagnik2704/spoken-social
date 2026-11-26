@@ -9,6 +9,7 @@ export const isTutorialStepId = (value?: string): value is TutorialStepId =>
     TUTORIAL_STEP_IDS.includes(value as TutorialStepId)
 
 export const LINUX_COURSE_ID = 'linux'
+export const CREATIVE_AI_COURSE_ID = 'being-creative-with-ai'
 const SETUP_TUTORIAL_COUNT = 2
 
 export const QUIZ_PASS_SCORE = 3
@@ -16,6 +17,7 @@ export const TERMINAL_MAX_CHARS = 20000
 export const SCREENSHOT_MAX_BYTES = 5 * 1024 * 1024
 
 export const isLinuxCourse = (courseId?: string | null): boolean => courseId === LINUX_COURSE_ID
+export const isCreativeAiCourse = (courseId?: string | null): boolean => courseId === CREATIVE_AI_COURSE_ID
 
 export const isSetupTutorial = (courseId: string | null | undefined, tutorialNumber: number): boolean =>
     isLinuxCourse(courseId) && tutorialNumber <= SETUP_TUTORIAL_COUNT
@@ -160,6 +162,7 @@ export const tutorialPath = (courseId: string, tutorialNumber: number, step?: Tu
 
 export const getActivityLabel = (courseId: string | null | undefined, _tutorialNumber?: number): string => {
     if (isLinuxCourse(courseId)) return 'Assignment'
+    if (isCreativeAiCourse(courseId)) return 'Practice task'
     return 'Activity & reflection'
 }
 
@@ -328,12 +331,22 @@ export const fileNameFromUrl = (url: string): string => url.split('/').pop()?.sp
 export interface TryItInstructions {
     intro: string
     steps: string[]
+    submit?: string
 }
 
+const TRY_IT_SUBMIT_RE = /\n*(?:\*\*)?What to submit[^:]*:(?:\*\*)?\s*([\s\S]+)$/i
+
 export const parseTryItInstructions = (raw: string): TryItInstructions => {
-    const parts = raw.split(/(?:\*\*Step\s+\d+:\*\*|\b\d+\.\s+)/).map(part => part.trim()).filter(Boolean)
-    if (parts.length > 1) return { intro: parts[0], steps: parts.slice(1) }
-    return { intro: '', steps: raw ? [raw] : [] }
+    let body = raw
+    let submit: string | undefined
+    const submitMatch = TRY_IT_SUBMIT_RE.exec(raw)
+    if (submitMatch) {
+        submit = submitMatch[1].replace(/^\*\*\s*/, '').trim()
+        body = raw.slice(0, submitMatch.index).trim()
+    }
+    const parts = body.split(/(?:\*\*Step\s+\d+:\*\*|\b\d+\.\s+)/).map(part => part.trim()).filter(Boolean)
+    if (parts.length > 1) return { intro: parts[0], steps: parts.slice(1), submit }
+    return { intro: '', steps: body ? [body] : [], submit }
 }
 
 export interface CourseMaterial {

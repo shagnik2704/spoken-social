@@ -15,6 +15,7 @@ import {
     getTutorialXp,
     getTutorialXpFlags,
     getWeekTopic,
+    isCreativeAiCourse,
     isDone,
     isLinuxCourse,
     isSetupTutorial,
@@ -28,6 +29,7 @@ import {
 import { useLearnerPackStore } from '@/store/learnerPackStore'
 import type { LearnerPackOverview, LearnerPackOverviewTutorial } from '@/types'
 import { AssignmentStep } from './steps/AssignmentStep'
+import { CreativeAiPracticeStep } from './steps/CreativeAiPracticeStep'
 import { QuizStep } from './steps/QuizStep'
 import { ReadingStep } from './steps/ReadingStep'
 import { ReflectionActivityStep } from './steps/ReflectionActivityStep'
@@ -41,6 +43,7 @@ import { useTutorialWorkspace } from './useTutorialWorkspace'
 
 const ACTIVITY_SHORT_LABELS: Record<string, string> = {
     'Activity & reflection': 'Activity',
+    'Practice task': 'Practice',
     'Assignment': 'Assignment',
 }
 
@@ -71,6 +74,7 @@ const PageSkeleton: React.FC = () => (
 const ActivityStep: React.FC<TutorialStepProps> = (props) => {
     if (props.nav.isSetup) return <SetupVerificationStep {...props} />
     if (props.nav.isLinux) return <TerminalLabStep {...props} />
+    if (props.nav.isCreativeAi) return <CreativeAiPracticeStep {...props} />
     return <ReflectionActivityStep {...props} />
 }
 
@@ -100,6 +104,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
     }, [step])
 
     const isLinux = isLinuxCourse(courseId)
+    const isCreativeAi = isCreativeAiCourse(courseId)
     const isSetup = isSetupTutorial(courseId, tutorial.number)
     const progress = tutorial.userProgress
     const activityLabel = getActivityLabel(courseId, tutorial.number)
@@ -190,6 +195,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
 
     const nav: TutorialNav = {
         isLinux,
+        isCreativeAi,
         isSetup,
         hasAssignment,
         nextTutorial,

@@ -72,7 +72,8 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
     body = tree.find("w:body", ns)
 
     def p_to_md(p) -> str:
-        parts = []
+        # Merge adjacent runs with identical (bold, italic) formatting so we never emit '****' boundaries
+        grouped: list[tuple[bool, bool, str]] = []
         for r in p.findall("w:r", ns):
             rPr = r.find("w:rPr", ns)
             is_bold = rPr is not None and (rPr.find("w:b", ns) is not None or rPr.find("w:bCs", ns) is not None)
@@ -87,14 +88,24 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
             text = "".join(run_parts)
             if not text:
                 continue
-            if is_bold and is_italic:
-                parts.append(f"***{text}***")
-            elif is_bold:
-                parts.append(f"**{text}**")
-            elif is_italic:
-                parts.append(f"*{text}*")
+            if grouped and grouped[-1][0] == is_bold and grouped[-1][1] == is_italic:
+                prev_b, prev_i, prev_t = grouped[-1]
+                grouped[-1] = (prev_b, prev_i, prev_t + text)
             else:
+                grouped.append((is_bold, is_italic, text))
+
+        parts = []
+        for is_bold, is_italic, text in grouped:
+            if not is_bold and not is_italic:
                 parts.append(text)
+                continue
+            m = re.match(r"^(\s*)(.*?)(\s*)$", text, re.DOTALL)
+            lead, core, trail = m.groups() if m else ("", text, "")
+            if not core:
+                parts.append(text)
+                continue
+            marker = "***" if (is_bold and is_italic) else ("**" if is_bold else "*")
+            parts.append(f"{lead}{marker}{core}{marker}{trail}")
         return "".join(parts).strip()
 
     elements = []
@@ -161,7 +172,7 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
 
         # Categorize sections
         cur_sec = "header"
-        sec_map: dict[str, list] = {"header": [], "reading": [], "try_it": [], "read_more": [], "quiz": [], "lab": []}
+        sec_map: dict[str, list] = {"header": [], "reading": [], "try_it": [], "read_more": [], "quiz": [], "lab": [], "footer": []}
         for el in tut_els:
             if el[0] == "p":
                 raw = el[1]
@@ -173,8 +184,10 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
                     cur_sec = "read_more"
                 elif re.match(r"^Quiz\s+\d+", raw, re.IGNORECASE):
                     cur_sec = "quiz"
-                elif re.match(r"^Lab\s+\d+", raw, re.IGNORECASE) or (cur_sec == "quiz" and re.match(r"^(Capstone Project|Weeks\s+11–12)", raw)):
+                elif re.match(r"^(Lab\s+\d+|Capstone Project)", raw, re.IGNORECASE):
                     cur_sec = "lab"
+                elif re.match(r"^(Module\s+\d+\s*:|Live session\s+\d+|Revision Checklist\b|Final exam\b)", raw, re.IGNORECASE):
+                    cur_sec = "footer"
             sec_map[cur_sec].append(el)
 
         # Build reading markdown
@@ -241,9 +254,14 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
                 if el[0] == "p":
                     raw, md = el[1], el[2]
                     if re.match(r"^(Lab\s+\d+|Capstone Project)", raw):
-                        lab_lines.append(f"### {md}\n")
-                    elif raw.startswith("Due:") or raw.startswith("Due in") or raw.startswith("Objective") or raw.startswith("Tasks") or raw.startswith("What to"):
-                        lab_lines.append(f"**{md}**\n")
+                        lab_lines.append(f"### {raw}\n")
+                    elif raw in ("Objective", "Tasks", "What to Submit", "Evaluation Focus"):
+                        lab_lines.append(f"#### {raw}\n")
+                    elif re.match(r"^[•\-\*]\s*", raw):
+                        bullet_text = re.sub(r"^[•\-\*]\s*", "", md)
+                        lab_lines.append(f"* {bullet_text}")
+                    elif (raw.startswith("Due:") or raw.startswith("Due in") or raw.startswith("What to")) and not (md.startswith("**") and md.endswith("**")):
+                        lab_lines.append(f"**{raw}**\n")
                     else:
                         lab_lines.append(md)
                 elif el[0] == "tbl":

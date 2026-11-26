@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
 import api from '@/lib/axios'
-import { FORUM_SECOND_BUCKET, isDone, SCREENSHOT_MAX_BYTES, TERMINAL_MAX_CHARS, type TutorialStepId } from '@/lib/learnerPack'
+import { FORUM_SECOND_BUCKET, isCreativeAiCourse, isDone, SCREENSHOT_MAX_BYTES, TERMINAL_MAX_CHARS, type TutorialStepId } from '@/lib/learnerPack'
 import { useLearnerPackStore } from '@/store/learnerPackStore'
 import { useUserStore } from '@/store/userStore'
 import type { LearnerPackTutorialDetail } from '@/types'
@@ -167,7 +167,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         try {
             setIsMarkingActivity(true)
             const res = await api.post(`${endpoint}/activity-complete`)
-            announceXp('Private notebook exercise completed!', res.data.xpGained)
+            announceXp(isCreativeAiCourse(courseId) ? 'Practice task marked done!' : 'Private notebook exercise completed!', res.data.xpGained)
             setJustCompletedStep('activity')
             setDetail(prev => prev && { ...prev, userTutorial: res.data.userTutorial })
             refreshOverview()
@@ -201,7 +201,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         try {
             setIsSubmittingReflection(true)
             const res = await api.post(`${endpoint}/reflection`, { reflection_text: reflectionText })
-            announceXp('Reflection submitted!', res.data.xpGained)
+            announceXp(isCreativeAiCourse(courseId) ? 'Practice output submitted!' : 'Reflection submitted!', res.data.xpGained)
             setJustCompletedStep('activity')
             setDetail(prev => prev && {
                 ...prev,
