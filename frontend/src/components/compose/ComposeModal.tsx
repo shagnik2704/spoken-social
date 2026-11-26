@@ -1,3 +1,4 @@
+import { initials } from '@/lib/utils'
 import { useState } from 'react'
 import {
     X, Send, Image, Code, HelpCircle, Trophy, MessageSquare,
@@ -98,7 +99,7 @@ export function ComposeModal() {
                 : undefined,
             authorId: user.id,
             authorName: user.displayName,
-            authorInitials: user.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??',
+            authorInitials: initials(user.displayName),
             authorLevel: user.level,
             authorTitle: user.levelTitle,
         })
@@ -178,7 +179,7 @@ export function ComposeModal() {
                         <div className="flex gap-3">
                             <Avatar className="h-9 w-9 shrink-0">
                                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                                    {user?.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
+                                    {initials(user?.displayName)}
                                 </AvatarFallback>
                             </Avatar>
 

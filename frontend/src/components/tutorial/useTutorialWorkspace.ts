@@ -195,13 +195,13 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
 
     const submitReflection = async (): Promise<void> => {
         if (!reflectionText.trim()) {
-            toast.error('Please enter your reflection before submitting.')
+            toast.error(isCreativeAiCourse(courseId) ? 'Paste your work before submitting.' : 'Please enter your reflection before submitting.')
             return
         }
         try {
             setIsSubmittingReflection(true)
             const res = await api.post(`${endpoint}/reflection`, { reflection_text: reflectionText })
-            announceXp(isCreativeAiCourse(courseId) ? 'Practice output submitted!' : 'Reflection submitted!', res.data.xpGained)
+            announceXp(isCreativeAiCourse(courseId) ? 'Practice task done!' : 'Reflection submitted!', res.data.xpGained)
             setJustCompletedStep('activity')
             setDetail(prev => prev && {
                 ...prev,

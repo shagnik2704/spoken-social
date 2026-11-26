@@ -1,5 +1,5 @@
 import { AlertCircle, ArrowRight, CheckCircle2, ClipboardCheck, Code2, Lightbulb, Lock, Sparkles, Terminal } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -7,10 +7,17 @@ import { Textarea } from '@/components/ui/textarea'
 import { isDone, parseTryItInstructions, withXp } from '@/lib/learnerPack'
 import type { TutorialStepProps } from '../types'
 
+const INLINE_MARKDOWN: Components = {
+    p: ({ ...props }) => <span {...props} />,
+    code: ({ ...props }) => <code className="px-1 py-0.5 rounded bg-muted font-mono text-[11px] text-foreground" {...props} />,
+}
+
 export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }) => {
     const tryIt = parseTryItInstructions(detail.content?.tryItInstructions || '')
-    const rawPrompt = detail.content?.reflectionPrompt || (tryIt.submit ? `What to submit on Spoken Social: ${tryIt.submit}` : '')
-    const isActivityDone = isDone(detail.userTutorial.activityDone) || isDone(detail.userTutorial.minitaskOpted)
+    const whatToSubmit = tryIt.submit || (detail.content?.reflectionPrompt ?? '').replace(/^\**What to submit[^:]*:\**\s*/i, '')
+    const hasSubmission = Boolean(detail.userReflection)
+    const markedDoneWithoutWork = !hasSubmission && (isDone(detail.userTutorial.activityDone) || isDone(detail.userTutorial.minitaskOpted))
+    const practiceXp = nav.xpFor('activityDone') + nav.xpFor('assignmentDone')
     const hasAssignment = nav.hasAssignment
 
     return (
@@ -81,60 +88,11 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                             ))}
                         </div>
 
-                        {tryIt.submit && (
-                            <div className="flex gap-2.5 p-3.5 rounded-xl border border-primary/20 bg-primary/[0.04]">
-                                <ClipboardCheck className="size-4 shrink-0 mt-0.5 text-primary" />
-                                <p className="text-xs text-foreground/90 leading-relaxed">
-                                    <span className="font-semibold text-foreground">What to submit: </span>
-                                    {tryIt.submit}
-                                </p>
-                            </div>
-                        )}
-
                         <div className="flex gap-2.5 p-3 rounded-xl bg-warning/10 border border-warning/20">
                             <AlertCircle className="size-4 shrink-0 mt-0.5 text-warning" />
                             <p className="text-xs text-muted-foreground leading-relaxed">
                                 <strong className="text-foreground">Keep your work safe:</strong> Never paste your Gemini API key, passwords, or private personal details into your submission.
                             </p>
-                        </div>
-                    </div>
-
-                    {/* Completion Trigger for Practice Steps */}
-                    <div className="space-y-3 pt-2">
-                        <div className={`p-4 rounded-xl border transition-all ${isActivityDone
-                            ? 'bg-success/10 border-success/30 shadow-2xs'
-                            : 'bg-card border-border hover:border-primary/40'
-                            }`}>
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                <div className="space-y-0.5">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle2 className={`h-4 w-4 ${isActivityDone ? 'text-success' : 'text-muted-foreground'}`} />
-                                        <span className="text-xs font-bold text-foreground">
-                                            {isActivityDone ? 'Practice Task Done' : 'Mark Task as Done'}
-                                        </span>
-                                    </div>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        {isActivityDone
-                                            ? 'Practice task completion recorded.'
-                                            : 'Click after finishing the hands-on task in your AI tool, Colab, or terminal.'}
-                                    </p>
-                                </div>
-                                <Button
-                                    size="sm"
-                                    onClick={workspace.markActivityComplete}
-                                    disabled={isActivityDone || workspace.isMarkingActivity}
-                                    className={`min-h-11 sm:min-h-9 text-xs font-semibold shrink-0 w-full sm:w-auto cursor-pointer ${isActivityDone
-                                        ? 'bg-success/15 text-success border border-success/30 shadow-none'
-                                        : ''
-                                        }`}
-                                >
-                                    {isActivityDone
-                                        ? '✓ Done'
-                                        : workspace.isMarkingActivity
-                                            ? 'Saving...'
-                                            : withXp('Mark Done', nav.xpFor('activityDone'))}
-                                </Button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -153,20 +111,28 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                                         <h3 className="text-base font-bold text-foreground">Paste & Submit Your Work</h3>
                                     </div>
                                 </div>
-                                {nav.xpFor('assignmentDone') > 0 && (
+                                {practiceXp > 0 && (
                                     <div className="flex items-center gap-1.5 font-mono text-xs text-foreground font-semibold bg-muted/60 border border-border px-2.5 py-1 rounded-full">
                                         <Sparkles className="h-3.5 w-3.5 text-xp-gold" />
-                                        <span>+{nav.xpFor('assignmentDone')} XP</span>
+                                        <span>+{practiceXp} XP</span>
                                     </div>
                                 )}
                             </div>
 
-                            {rawPrompt && (
-                                <div className="space-y-2 bg-primary/5 p-4 rounded-xl border border-primary/15">
-                                    <p className="text-xs font-semibold text-primary leading-relaxed">
-                                        {rawPrompt}
-                                    </p>
+                            {whatToSubmit && (
+                                <div className="flex gap-2.5 p-4 rounded-xl border border-primary/15 bg-primary/5">
+                                    <ClipboardCheck className="size-4 shrink-0 mt-0.5 text-primary" />
+                                    <div className="text-xs text-foreground/90 leading-relaxed [&_p]:m-0">
+                                        <span className="font-semibold text-foreground">What to submit: </span>
+                                        <ReactMarkdown components={INLINE_MARKDOWN}>{whatToSubmit}</ReactMarkdown>
+                                    </div>
                                 </div>
+                            )}
+                            {markedDoneWithoutWork && (
+                                <p className="flex gap-2 text-[11px] text-muted-foreground leading-relaxed">
+                                    <CheckCircle2 className="size-3.5 shrink-0 mt-0.5 text-success" />
+                                    You marked this task as done earlier. Paste your work below so the evaluators can see it.
+                                </p>
                             )}
                         </div>
 
@@ -191,14 +157,14 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                                     Visible only to you and academic evaluators
                                 </span>
                                 <span className="text-[11px] text-muted-foreground">
-                                    {detail.userReflection ? '✓ Previously submitted' : 'Saved on submission'}
+                                    {hasSubmission ? '✓ Previously submitted' : 'Saved on submission'}
                                 </span>
                             </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t">
-                            <span className="text-xs text-muted-foreground">
-                                {detail.userReflection ? 'Submission recorded' : 'Submit to record your practice output'}
+                            <span className={`text-xs ${hasSubmission ? 'text-success font-medium' : 'text-muted-foreground'}`}>
+                                {hasSubmission ? '✓ Practice task done' : 'Submitting your work marks this task as done'}
                             </span>
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <Button
@@ -208,11 +174,11 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                                 >
                                     {workspace.isSubmittingReflection
                                         ? 'Saving...'
-                                        : detail.userReflection
+                                        : hasSubmission
                                             ? 'Update Submission'
-                                            : withXp('Submit Output', nav.xpFor('assignmentDone'))}
+                                            : withXp('Submit Work', practiceXp)}
                                 </Button>
-                                {detail.userReflection && (
+                                {hasSubmission && (
                                     <Button
                                         variant="outline"
                                         onClick={() => nav.goToStep(hasAssignment ? 'assignment' : 'quiz')}

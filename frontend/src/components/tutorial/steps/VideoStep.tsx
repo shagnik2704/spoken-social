@@ -30,7 +30,7 @@ export const VideoStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav 
                 </div>
                 <div className="flex flex-col sm:flex-row justify-center gap-3">
                     <Button asChild className="min-h-11 font-semibold">
-                        <a href={SPOKEN_TUTORIAL_URL} target="_blank" rel="noopener noreferrer">
+                        <a href={detail.videoPageUrl || SPOKEN_TUTORIAL_URL} target="_blank" rel="noopener noreferrer">
                             Open Spoken Tutorial player
                             <ExternalLink className="size-4" />
                         </a>

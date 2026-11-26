@@ -1,3 +1,4 @@
+import { initials } from '@/lib/utils'
 import {
     Heart, MessageCircle, Share2, MoreHorizontal, Send,
     Trophy, HelpCircle, BookOpen, Flame, Image, Smile,
@@ -105,7 +106,7 @@ function PostComposer() {
             type: 'discussion',
             authorId: user.id,
             authorName: user.displayName,
-            authorInitials: user.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??',
+            authorInitials: initials(user.displayName),
             authorLevel: user.level,
             authorTitle: user.levelTitle,
         })
@@ -119,7 +120,7 @@ function PostComposer() {
                 <div className="flex gap-3">
                     <Avatar className="h-10 w-10 shrink-0">
                         <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                            {user?.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
+                            {initials(user?.displayName)}
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
@@ -184,7 +185,7 @@ function FeedPost({ post }: { post: Post }) {
                     <div className="flex items-start gap-3 min-w-0">
                         <Avatar className="h-10 w-10 shrink-0 ring-2 ring-background">
                             <AvatarFallback className="bg-muted text-foreground text-xs font-semibold">
-                                {post.author.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??'}
+                                {initials(post.author.name)}
                             </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
@@ -382,7 +383,7 @@ function SuggestedPeople() {
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <Avatar className="h-8 w-8 shrink-0">
                                     <AvatarFallback className="bg-muted text-foreground text-[10px] font-semibold">
-                                        {user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??'}
+                                        {initials(user.name)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0">

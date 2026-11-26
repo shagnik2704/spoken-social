@@ -285,7 +285,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                             Week {tutorial.week}
                             <span className="hidden sm:inline normal-case tracking-normal font-medium text-muted-foreground">
                                 <span aria-hidden="true"> · </span>
-                                {getWeekTopic(tutorial.week, courseId)}
+                                {getWeekTopic(tutorial.week, courseId, overview.guide)}
                             </span>
                         </p>
                         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans">{tutorial.title}</h1>

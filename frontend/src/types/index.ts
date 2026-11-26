@@ -242,7 +242,7 @@ export interface TutorialContentData {
     reflectionPrompt: string
     reflectionMinSentences: number
     keyTerms: { term: string; meaning: string }[]
-    readMore: { title: string; author: string; desc: string }[]
+    readMore: unknown[]
     assignmentInstructions?: string | null
 }
 
@@ -254,6 +254,7 @@ export interface LearnerPackTutorialDetail {
     forumCategory?: string | null
     videoUrl?: string | null
     videoPosterUrl?: string | null
+    videoPageUrl?: string | null
     videoDurationSeconds?: number | null
     codeFilesUrl?: string | null
     instructionSheetUrl?: string | null
@@ -340,6 +341,45 @@ export interface LearnerPackOverview {
     tutorials: LearnerPackOverviewTutorial[]
     habitMilestones: HabitMilestone[]
     materials?: CourseMaterialUrls
+    assessments?: AssessmentSummary[]
+    guide?: CourseGuide | null
+    schedule?: CourseSchedule | null
+}
+
+export interface CourseSchedule {
+    batchName: string
+    startDate: string
+    endDate: string
+    currentWeek: number
+}
+
+export interface CourseGuideWeek {
+    week: number
+    topic: string
+    modules: number[]
+    videos: string
+    alsoThisWeek: string
+}
+
+export interface CourseGuideModule {
+    number: number
+    title: string
+    summary: string[]
+    tutorials: number[]
+    weeks: number[]
+}
+
+export interface CourseGuide {
+    intro?: string | null
+    marks: Array<{ what: string; marks: string; how: string }>
+    passRule?: string | null
+    safetyRules: Array<{ title: string; text: string }>
+    weeks: CourseGuideWeek[]
+    modules: CourseGuideModule[]
+    liveSessions: Array<{ number: number; week?: number; text: string }>
+    liveSessionNote?: string | null
+    revision?: { intro: string; items: string[] } | null
+    finalExam?: string | null
 }
 
 export interface HabitLogCheckinItem {
@@ -348,5 +388,38 @@ export interface HabitLogCheckinItem {
     checkinDate: string
     summaryReflection: string | null
     summarySubmittedAt: string | null
+}
+
+export type AssessmentKind = 'lab' | 'capstone'
+
+export interface AssessmentSubmissionSummary {
+    status: string
+    submittedAt: string | null
+    score: number | null
+    feedback: string | null
+    reviewedAt: string | null
+}
+
+export interface AssessmentSubmission extends AssessmentSubmissionSummary {
+    text: string
+    linkUrl: string | null
+    fileUrl: string | null
+    fileName: string | null
+}
+
+export interface AssessmentSummary {
+    id: string
+    key: string
+    kind: AssessmentKind
+    number: number | null
+    title: string
+    weekDue: number
+    covers: string | null
+    submission: AssessmentSubmissionSummary | null
+}
+
+export interface AssessmentDetail extends Omit<AssessmentSummary, 'submission'> {
+    instructionsMarkdown: string
+    submission: AssessmentSubmission | null
 }
 

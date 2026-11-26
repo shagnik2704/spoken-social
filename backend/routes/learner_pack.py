@@ -12,6 +12,7 @@
 
 import os
 import io
+import re
 import uuid
 from datetime import datetime, timezone, date
 from typing import Optional, Dict, Any, List
@@ -29,12 +30,16 @@ from sqlalchemy.orm import selectinload
 from database import get_db
 from dependencies import get_current_user
 from models import User, Course, Tutorial, UserTutorial
+from models.batch import Batch
+from models.course import UserCourse
 from models.learner_pack import (
     TutorialContent,
     QuizQuestion,
     UserReflection,
     UserQuizAttempt,
     UserHabitLogCheckin,
+    CourseAssessment,
+    UserAssessmentSubmission,
 )
 from models.xp_event import XPEvent
 from services.xp import XP_MAP, recompute_tutorial_xp, recalc_level
@@ -285,10 +290,36 @@ async def get_course_overview(
         "uiLayout": course.ui_layout,
         "forumCategory": course.forum_category,
         "xpRewards": {api_key: XP_MAP[column] for column, api_key in XP_REWARD_API_KEYS.items()},
-        "totalWeeks": 12,
+        "totalWeeks": TOTAL_WEEKS,
+        "guide": course.guide,
+        "schedule": await _course_schedule(db, user.id, course_id),
         "tutorials": tutorial_list,
         "habitMilestones": habit_milestones,
         "materials": _course_wide_materials(tutorials),
+        "assessments": await _assessment_summaries(db, course_id, user.id),
+    }
+
+
+TOTAL_WEEKS = 12
+
+
+async def _course_schedule(db: AsyncSession, user_id, course_id: str) -> Optional[Dict[str, Any]]:
+    """Where the learner's batch is on the calendar: week 0 before it starts, past TOTAL_WEEKS after."""
+    res = await db.execute(
+        select(Batch)
+        .join(UserCourse, UserCourse.batch_id == Batch.id)
+        .filter(UserCourse.user_id == user_id, UserCourse.course_id == course_id)
+    )
+    batch = res.scalars().first()
+    if not batch:
+        return None
+    today = date.today()
+    week = 0 if today < batch.start_date else (today - batch.start_date).days // 7 + 1
+    return {
+        "batchName": batch.name,
+        "startDate": batch.start_date.isoformat(),
+        "endDate": batch.end_date.isoformat(),
+        "currentWeek": week,
     }
 
 
@@ -367,6 +398,7 @@ async def get_tutorial_content(
         "forumCategory": tutorial.course.forum_category if tutorial.course else None,
         "videoUrl": (content.video_url if content and content.video_url else tutorial.video_url),
         "videoPosterUrl": (content.video_poster_url if content and content.video_poster_url else tutorial.video_poster_url),
+        "videoPageUrl": tutorial.video_page_url,
         "videoDurationSeconds": content.video_duration_seconds if content else None,
         "codeFilesUrl": (content.code_files_url if content and content.code_files_url else tutorial.code_files_url),
         "instructionSheetUrl": (content.instruction_sheet_url if content and content.instruction_sheet_url else tutorial.instruction_sheet_url),
@@ -566,6 +598,10 @@ async def mark_assignment_complete(
     return {"success": True, "userTutorial": ut.to_api_dict(), "xpGained": xp_gained}
 
 
+# Courses whose practice task is one action: pasting the output also marks the task done.
+PRACTICE_SUBMISSION_COURSES = {"being-creative-with-ai"}
+
+
 @router.post("/tutorials/{tutorial_id}/reflection")
 async def submit_reflection(
     tutorial_id: str,
@@ -613,6 +649,8 @@ async def submit_reflection(
     # 2. Update UserTutorial -> assignment_done = True
     ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
     ut.assignment_done = True
+    if ut.tutorial and ut.tutorial.course_id in PRACTICE_SUBMISSION_COURSES:
+        ut.activity_done = True
     await _check_and_mark_tutorial_completed_if_no_quiz(db, ut, tut_uuid)
 
     # Recompute XP
@@ -1051,3 +1089,180 @@ async def record_habit_checkin(
             "summarySubmittedAt": checkin.summary_submitted_at.isoformat() if checkin.summary_submitted_at else None,
         }
     }
+
+
+# ------------------------------------------------------------
+# Course assessments (labs and capstone)
+# ------------------------------------------------------------
+
+ASSESSMENT_TEXT_MIN = 20
+ASSESSMENT_TEXT_MAX = 20000
+ASSESSMENT_FILE_MAX_BYTES = 10 * 1024 * 1024
+ASSESSMENT_TEXT_EXTS = {".csv", ".txt", ".py", ".ipynb", ".md"}
+ASSESSMENT_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+ASSESSMENT_FILE_EXTS = ASSESSMENT_TEXT_EXTS | ASSESSMENT_IMAGE_EXTS | {".pdf"}
+GEMINI_KEY_PATTERN = re.compile(r"AIza[0-9A-Za-z_\-]{35}")
+API_KEY_MESSAGE = "Your submission contains what looks like a Gemini API key. Remove it and submit again: keys are passwords."
+
+
+def _submission_summary(submission: Optional[UserAssessmentSubmission]) -> Optional[dict]:
+    if not submission:
+        return None
+    return {
+        "status": submission.status,
+        "submittedAt": submission.submitted_at.isoformat() if submission.submitted_at else None,
+        "score": submission.score,
+        "feedback": submission.feedback,
+        "reviewedAt": submission.reviewed_at.isoformat() if submission.reviewed_at else None,
+    }
+
+
+def _assessment_summary(assessment: CourseAssessment, submission: Optional[UserAssessmentSubmission]) -> dict:
+    return {
+        "id": str(assessment.id),
+        "key": assessment.key,
+        "kind": assessment.kind,
+        "number": assessment.number,
+        "title": assessment.title,
+        "weekDue": assessment.week_due,
+        "covers": assessment.covers,
+        "submission": _submission_summary(submission),
+    }
+
+
+async def _assessment_summaries(db: AsyncSession, course_id: str, user_id: uuid.UUID) -> list[dict]:
+    a_res = await db.execute(
+        select(CourseAssessment).filter_by(course_id=course_id).order_by(CourseAssessment.display_order)
+    )
+    assessments = a_res.scalars().all()
+    if not assessments:
+        return []
+    s_res = await db.execute(
+        select(UserAssessmentSubmission).filter(
+            UserAssessmentSubmission.user_id == user_id,
+            UserAssessmentSubmission.assessment_id.in_([a.id for a in assessments]),
+        )
+    )
+    submissions = {s.assessment_id: s for s in s_res.scalars().all()}
+    return [_assessment_summary(a, submissions.get(a.id)) for a in assessments]
+
+
+async def _load_assessment(db: AsyncSession, course_id: str, key: str) -> CourseAssessment:
+    res = await db.execute(select(CourseAssessment).filter_by(course_id=course_id, key=key))
+    assessment = res.scalars().first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    return assessment
+
+
+def _assessment_detail(assessment: CourseAssessment, submission: Optional[UserAssessmentSubmission]) -> dict:
+    detail = _assessment_summary(assessment, submission)
+    detail["instructionsMarkdown"] = assessment.instructions_markdown
+    if submission:
+        detail["submission"].update({
+            "text": submission.submission_text,
+            "linkUrl": submission.link_url,
+            "fileUrl": submission.file_url,
+            "fileName": submission.file_name,
+        })
+    return detail
+
+
+def _validate_assessment_file(filename: str, content: bytes) -> str:
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ASSESSMENT_FILE_EXTS:
+        allowed = ", ".join(sorted(ASSESSMENT_FILE_EXTS))
+        raise HTTPException(status_code=400, detail=f"Unsupported file type '{ext or filename}'. Allowed: {allowed}.")
+    if len(content) > ASSESSMENT_FILE_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="The file is larger than 10 MB.")
+    if not content:
+        raise HTTPException(status_code=400, detail="The file is empty.")
+    if ext in ASSESSMENT_TEXT_EXTS:
+        try:
+            text = content.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            raise HTTPException(status_code=400, detail="The file isn't readable text. Save it as UTF-8 and try again.")
+        if GEMINI_KEY_PATTERN.search(text):
+            raise HTTPException(status_code=400, detail=API_KEY_MESSAGE)
+    elif ext == ".pdf":
+        if not content.startswith(b"%PDF"):
+            raise HTTPException(status_code=400, detail="The PDF file is damaged.")
+    elif Image is not None:
+        try:
+            Image.open(io.BytesIO(content)).verify()
+        except Exception:
+            raise HTTPException(status_code=400, detail="The image file is damaged.")
+    return ext
+
+
+@router.get("/course/{course_id}/assessments/{key}")
+async def get_assessment(
+    course_id: str,
+    key: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    assessment = await _load_assessment(db, course_id, key)
+    s_res = await db.execute(select(UserAssessmentSubmission).filter_by(user_id=user.id, assessment_id=assessment.id))
+    return _assessment_detail(assessment, s_res.scalars().first())
+
+
+@router.post("/course/{course_id}/assessments/{key}/submission")
+async def submit_assessment(
+    course_id: str,
+    key: str,
+    submission_text: str = Form(...),
+    link_url: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Saves (or replaces) a student's lab or capstone submission. Keeps a previously uploaded file
+    when no new file is sent. Rejects anything containing a Gemini API key."""
+    assessment = await _load_assessment(db, course_id, key)
+    s_res = await db.execute(select(UserAssessmentSubmission).filter_by(user_id=user.id, assessment_id=assessment.id))
+    submission = s_res.scalars().first()
+    if submission and submission.reviewed_at:
+        raise HTTPException(status_code=409, detail="This submission has already been reviewed, so it can't be changed.")
+
+    text = submission_text.replace("\x00", "").strip()
+    if len(text) < ASSESSMENT_TEXT_MIN:
+        raise HTTPException(status_code=400, detail="Write or paste your work before submitting.")
+    if len(text) > ASSESSMENT_TEXT_MAX:
+        raise HTTPException(status_code=400, detail="Your submission is longer than 20,000 characters. Attach long output as a file instead.")
+    if GEMINI_KEY_PATTERN.search(text):
+        raise HTTPException(status_code=400, detail=API_KEY_MESSAGE)
+
+    link = (link_url or "").strip() or None
+    if link and (not link.startswith("https://") or len(link) > 2048 or any(c.isspace() for c in link)):
+        raise HTTPException(status_code=400, detail="The link must be a full https:// address.")
+    if link and GEMINI_KEY_PATTERN.search(link):
+        raise HTTPException(status_code=400, detail=API_KEY_MESSAGE)
+
+    file_url = file_name = None
+    if file is not None and file.filename:
+        content = await file.read()
+        ext = _validate_assessment_file(file.filename, content)
+        uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "assessments")
+        os.makedirs(uploads_dir, exist_ok=True)
+        stored = f"{uuid.uuid4().hex}{ext}"
+        with open(os.path.join(uploads_dir, stored), "wb") as f:
+            f.write(content)
+        file_url = f"/uploads/assessments/{stored}"
+        file_name = os.path.basename(file.filename)[:255]
+
+    if not submission:
+        submission = UserAssessmentSubmission(id=uuid.uuid4(), user_id=user.id, assessment_id=assessment.id)
+        db.add(submission)
+    submission.submission_text = text
+    submission.link_url = link
+    if file_url:
+        submission.file_url = file_url
+        submission.file_name = file_name
+    submission.status = "submitted"
+    submission.submitted_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(submission)
+
+    return _assessment_detail(assessment, submission)
+

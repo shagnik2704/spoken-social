@@ -24,6 +24,8 @@ from models.learner_pack import (
     UserReflection,
     UserQuizAttempt,
     UserHabitLogCheckin,
+    CourseAssessment,
+    UserAssessmentSubmission,
 )
 from models.swayam import SwayamOIDCState
 

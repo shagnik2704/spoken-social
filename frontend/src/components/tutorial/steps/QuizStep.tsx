@@ -6,6 +6,20 @@ import { normalizeQuizOptions, QUIZ_PASS_SCORE, withXp } from '@/lib/learnerPack
 import { cn } from '@/lib/utils'
 import type { TutorialStepProps } from '../types'
 
+const WithInlineCode: React.FC<{ text: string }> = ({ text }) => (
+    <>
+        {text.split(/(`[^`]+`)/).map((part, index) =>
+            part.length > 2 && part.startsWith('`') && part.endsWith('`') ? (
+                <code key={index} className="font-terminal text-[0.92em] px-1.5 py-0.5 rounded-md bg-muted border border-border text-foreground break-words">
+                    {part.slice(1, -1)}
+                </code>
+            ) : (
+                part
+            )
+        )}
+    </>
+)
+
 export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }) => {
     const nextTutorial = nav.nextTutorial
 
@@ -59,7 +73,7 @@ export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }
                                         {q.questionNumber}
                                     </div>
                                     <h4 className="text-sm sm:text-base font-semibold text-foreground leading-relaxed flex-1">
-                                        {q.questionText}
+                                        <WithInlineCode text={q.questionText} />
                                     </h4>
                                 </div>
 
@@ -90,7 +104,7 @@ export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }
                                                 <RadioGroupItem value={opt.id} className="mt-0.5" />
                                                 <span className="flex-1 leading-relaxed">
                                                     <strong className="mr-1.5 font-bold uppercase">{opt.id}.</strong>
-                                                    {opt.text}
+                                                    <WithInlineCode text={opt.text} />
                                                 </span>
                                                 {isCorrect && <Check className="h-4 w-4 text-success shrink-0 mt-0.5" />}
                                             </label>
@@ -103,10 +117,10 @@ export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }
                                     <div className="mt-4 p-4 rounded-xl bg-muted/60 border border-border/80 text-xs sm:text-sm space-y-1.5 sm:ml-10">
                                         <span className="font-bold text-primary flex items-center gap-1.5 text-xs uppercase tracking-wider">
                                             <Lightbulb className="h-3.5 w-3.5" />
-                                            {nav.isLinux ? 'Technical Explanation & Solution' : 'Psychological Rationale & Explanation'}
+                                            {nav.isLinux ? 'Technical Explanation & Solution' : nav.isCreativeAi ? 'Explanation' : 'Psychological Rationale & Explanation'}
                                         </span>
                                         <p className="text-foreground/80 leading-relaxed font-sans">
-                                            {q.explanation}
+                                            <WithInlineCode text={q.explanation} />
                                         </p>
                                     </div>
                                 )}

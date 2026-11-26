@@ -22,7 +22,7 @@ if BACKEND_DIR not in sys.path:
 from database import SyncSessionLocal
 from models.batch import Batch
 from models.course import Course, UserCourse
-from models.learner_pack import QuizQuestion, TutorialContent
+from models.learner_pack import CourseAssessment, QuizQuestion, TutorialContent
 from models.programme import Programme, ProgrammeCourse
 from models.tutorial import Tutorial, UserTutorial
 from models.user import User
@@ -73,6 +73,7 @@ def seed_swayam_creative_ai():
                 description=course_data["description"],
                 forum_category=course_data.get("forum_category", "Being Creative with AI"),
                 ui_layout=course_data.get("ui_layout", "learner_pack"),
+                guide=course_data.get("guide"),
             )
             session.add(course)
             session.flush()
@@ -82,6 +83,7 @@ def seed_swayam_creative_ai():
             course.description = course_data["description"]
             course.forum_category = course_data.get("forum_category", "Being Creative with AI")
             course.ui_layout = course_data.get("ui_layout", "learner_pack")
+            course.guide = course_data.get("guide")
             session.flush()
             print(f"  ✓ Updated Course: {course.title} (layout: {course.ui_layout})")
 
@@ -139,6 +141,7 @@ def seed_swayam_creative_ai():
                     title=t_info["title"],
                     video_url=t_info.get("video_url"),
                     video_poster_url=t_info.get("video_poster_url"),
+                    video_page_url=t_info.get("video_page_url"),
                     code_files_url=t_info.get("code_files_url"),
                     instruction_sheet_url=t_info.get("instruction_sheet_url"),
                     installation_sheet_url=t_info.get("installation_sheet_url"),
@@ -151,6 +154,7 @@ def seed_swayam_creative_ai():
                 tut.title = t_info["title"]
                 tut.video_url = t_info.get("video_url")
                 tut.video_poster_url = t_info.get("video_poster_url")
+                tut.video_page_url = t_info.get("video_page_url")
                 tut.code_files_url = t_info.get("code_files_url")
                 tut.instruction_sheet_url = t_info.get("instruction_sheet_url")
                 tut.installation_sheet_url = t_info.get("installation_sheet_url")
@@ -238,7 +242,23 @@ def seed_swayam_creative_ai():
             q_count += 1
         print(f"  ✓ Verified/Updated all {q_count} Quiz Questions")
 
-        # 8. Enroll demo student if present
+        # 8. Course assessments (labs and capstone)
+        for a_info in data.get("assessments", []):
+            assessment = session.query(CourseAssessment).filter_by(course_id=course.id, key=a_info["key"]).first()
+            if not assessment:
+                assessment = CourseAssessment(id=uuid.uuid4(), course_id=course.id, key=a_info["key"])
+                session.add(assessment)
+            assessment.kind = a_info["kind"]
+            assessment.number = a_info.get("number")
+            assessment.title = a_info["title"]
+            assessment.week_due = a_info["week_due"]
+            assessment.covers = a_info.get("covers")
+            assessment.instructions_markdown = a_info["instructions_markdown"]
+            assessment.display_order = a_info.get("display_order", 0)
+        session.flush()
+        print(f"  ✓ Verified/Updated all {len(data.get('assessments', []))} Course Assessments")
+
+        # 9. Enroll demo student if present
         demo_email = "swayam.student@spoken-tutorial.org"
         demo_user = session.query(User).filter_by(email=demo_email).first()
         if demo_user:

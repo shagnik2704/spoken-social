@@ -1,3 +1,4 @@
+import { initials } from '@/lib/utils'
 import {
     Trophy, Zap,
     Crown, Medal, Award, ChevronDown, Star,
@@ -62,7 +63,7 @@ function Podium({ users }: { users: LeaderboardUser[] }) {
                                 <div className="relative mb-2">
                                     <Avatar className={`${config.size} border-2 ${config.border}`}>
                                         <AvatarFallback className={`bg-gradient-to-b ${config.bg} text-foreground text-sm font-bold`}>
-                                            {user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??'}
+                                            {initials(user.name)}
                                         </AvatarFallback>
                                     </Avatar>
                                     {config.rank === 1 && (
@@ -121,7 +122,7 @@ function LeaderboardRow({ user }: { user: LeaderboardUser }) {
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <Avatar className="h-9 w-9 shrink-0">
                     <AvatarFallback className={`text-[11px] font-semibold ${user.isCurrentUser ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'}`}>
-                        {user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??'}
+                        {initials(user.name)}
                     </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
