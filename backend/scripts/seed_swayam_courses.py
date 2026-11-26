@@ -49,7 +49,7 @@ SWAYAM_COURSES = [
         "title": "Being Creative with AI",
         "description": "A 2-credit course exploring generative AI, prompt engineering, persona prompting, image creation, Google Colab Python, and Retrieval-Augmented Generation (RAG).",
         "forum_category": "Being Creative with AI",
-        "ui_layout": "under_development",
+        "ui_layout": "learner_pack",
         "batch_id": "creative-ai-swayam-2026-nov",
         "credits": 2,
     },

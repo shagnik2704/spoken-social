@@ -4,7 +4,7 @@ import {
     Zap, ChevronRight, Trophy, Lock,
     BookOpen, Code, Terminal, BarChart3, FileText, Settings,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
-    CheckCircle2, Database, Brain, FlaskConical, Compass
+    CheckCircle2, Database, Brain, FlaskConical, Compass, Sparkles
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -35,6 +35,7 @@ const courseIconMap: Record<string, React.ReactNode> = {
     'PHD': <FlaskConical className="h-6 w-6 text-primary" />,
     'Developing Empathy and Growth Mindset': <Compass className="h-6 w-6 text-primary" />,
     'Personality and Human Development': <Compass className="h-6 w-6 text-primary" />,
+    'Being Creative with AI': <Sparkles className="h-6 w-6 text-primary" />,
 }
 
 

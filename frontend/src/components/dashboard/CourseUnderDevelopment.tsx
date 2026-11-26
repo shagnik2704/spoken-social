@@ -11,11 +11,6 @@ export interface CoursePreviewMeta {
 }
 
 export const KNOWN_SWAYAM_COURSES: Record<string, CoursePreviewMeta> = {
-    'being-creative-with-ai': {
-        id: 'being-creative-with-ai',
-        title: 'Being Creative with AI',
-        forumCategory: 'Being Creative with AI',
-    },
     'deep-learning-frameworks': {
         id: 'deep-learning-frameworks',
         title: 'Introduction to Deep Learning Frameworks',

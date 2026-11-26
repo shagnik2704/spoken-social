@@ -52,9 +52,29 @@ const LINUX_WEEK_TOPICS: Record<number, string> = {
     12: 'Capstone Project Submission & Final Exam Revision',
 }
 
+const CREATIVE_AI_WEEK_TOPICS: Record<number, string> = {
+    1: 'Foundations of AI, GenAI & Lab 1',
+    2: 'Prompting Fundamentals & The 3 Cs',
+    3: 'Persona, Examples & Structured Prompting',
+    4: 'Image Prompting & Lab 2',
+    5: 'Critical Thinking in AI, Lab 3 & Live Session 1',
+    6: 'Python in Google Colab & Functions',
+    7: 'Data Structures in Python & Practice',
+    8: 'Gemini API Key, Colab & Lab 4',
+    9: 'Introduction to RAG & Pipeline',
+    10: 'RAG Environment, Basic RAG & Live Session 2',
+    11: 'Lab 5: Semantic Retrieval System',
+    12: 'Capstone Project Submission & Final Exam Prep',
+}
+
 export const getWeekTopic = (weekNumber: number, courseId?: string | null): string => {
-    const topics = isLinuxCourse(courseId) ? LINUX_WEEK_TOPICS : PERSONALITY_DEV_WEEK_TOPICS
-    return topics[weekNumber] || `Week ${weekNumber}`
+    if (isLinuxCourse(courseId)) {
+        return LINUX_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
+    }
+    if (courseId === 'being-creative-with-ai') {
+        return CREATIVE_AI_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
+    }
+    return PERSONALITY_DEV_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
 }
 
 export const resolveMediaUrl = (url?: string | null): string => {
