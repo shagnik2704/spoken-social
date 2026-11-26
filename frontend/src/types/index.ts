@@ -343,14 +343,6 @@ export interface LearnerPackOverview {
     materials?: CourseMaterialUrls
     assessments?: AssessmentSummary[]
     guide?: CourseGuide | null
-    schedule?: CourseSchedule | null
-}
-
-export interface CourseSchedule {
-    batchName: string
-    startDate: string
-    endDate: string
-    currentWeek: number
 }
 
 export interface CourseGuideWeek {

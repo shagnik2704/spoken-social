@@ -61,26 +61,37 @@ def format_table(rows: list[list[str]]) -> str:
 
 
 SPOKEN_TUTORIAL_WATCH_BASE = "https://spoken-tutorial.org/watch/Being+Creative+with+AI"
-SPOKEN_TUTORIAL_WATCH_SLUGS = {
-    1: "Introduction+to+Artificial+Intelligence",
-    2: "Machine+Learning+and+Deep+Learning",
-    3: "Introduction+to+Generative+AI",
-    4: "Introduction+to+Prompting",
-    5: "The+3+Cs+of+Prompting",
-    6: "Prompting+Using+Persona+and+Examples",
-    7: "Structured+and+Iterative+Prompting",
-    8: "Prompting+for+Images",
-    9: "Importance+of+Critical+Thinking+in+the+AI+Era",
-    10: "Getting+Started+with+Python+in+Google+Colab",
-    11: "Python+Functions+in+Google+Colab",
-    12: "Lists+and+Dictionaries+in+Python+using+Colab",
-    13: "Creating+and+using+a+Gemini+API+Key",
-    14: "Using+Gemini+in+Google+Colab",
-    15: "Rag+and+its+Uses",
-    16: "Understanding+the+RAG+pipeline",
-    17: "Setting+up+the+RAG+environment+in+Linux",
-    18: "Building+a+Basic+RAG+system",
+SPOKEN_TUTORIAL_MEDIA_BASE = "https://spoken-tutorial.org/media/videos/198"
+# tutorial number -> (watch page slug, media id, media file name); file names don't always match the page names.
+SPOKEN_TUTORIAL_VIDEOS = {
+    1: ("Introduction+to+Artificial+Intelligence", 2230, "Introduction-to-Artificial-Intelligence"),
+    2: ("Machine+Learning+and+Deep+Learning", 2231, "Machine-Learning-and-Deep-Learning"),
+    3: ("Introduction+to+Generative+AI", 2232, "Generative-AI"),
+    4: ("Introduction+to+Prompting", 2233, "Introduction-to-Prompting"),
+    5: ("The+3+Cs+of+Prompting", 2234, "The-3-Cs-of-Prompting"),
+    6: ("Prompting+Using+Persona+and+Examples", 2235, "Prompting-Using-Persona-and-Giving-Examples"),
+    7: ("Structured+and+Iterative+Prompting", 2236, "Structured-and-Iterative-Prompting"),
+    8: ("Prompting+for+Images", 2237, "Prompting-for-Images"),
+    9: ("Importance+of+Critical+Thinking+in+the+AI+Era", 2238, "Importance-of-Critical-Thinking-in-the-AI-Era"),
+    10: ("Getting+Started+with+Python+in+Google+Colab", 2239, "Getting-Started-with-Python-in-Google-Colab"),
+    11: ("Python+Functions+in+Google+Colab", 2240, "Python-Functions-in-Google-Colab"),
+    12: ("Lists+and+Dictionaries+in+Python+using+Colab", 2241, "Lists-and-Dictionaries-in-Python"),
+    13: ("Creating+and+using+a+Gemini+API+Key", 2242, "Creating-and-using-Gemini-API-Key"),
+    14: ("Using+Gemini+in+Google+Colab", 2243, "Using-Gemini-in-Google-Colab"),
+    15: ("Rag+and+its+Uses", 2262, "Rag-and-its-Uses"),
+    16: ("Understanding+the+RAG+pipeline", 2263, "Understanding-the-RAG-pipeline"),
+    17: ("Setting+up+the+RAG+environment+in+Linux", 2264, "Setting-up-the-RAG-environment-in-Linux"),
+    18: ("Building+a+Basic+RAG+system", 2265, "Building-a-Basic-RAG-system"),
 }
+# Spoken Tutorial keeps code files behind its login, so copies are served from frontend/public.
+CODE_FILES_BASE = "/downloads/courses/being-creative-with-ai"
+TUTORIALS_WITH_CODE_FILES = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18}
+
+
+def code_files_url(number: int) -> str | None:
+    if number not in TUTORIALS_WITH_CODE_FILES:
+        return None
+    return f"{CODE_FILES_BASE}/tutorial-{number}-{SPOKEN_TUTORIAL_VIDEOS[number][2].lower()}.zip"
 
 LAB_HEADING = re.compile(r"^###\s*Lab\s+(\d+):\s*(.+?)\s*$", re.MULTILINE)
 DUE_LINE = re.compile(r"^\*\*Due(?: in|:)\s*(?:End of\s*)?Week\s*(\d+)[^\n]*\*\*\s*$", re.MULTILINE | re.IGNORECASE)
@@ -106,10 +117,20 @@ def _strip_heading_and_due(body: str, heading: re.Pattern) -> tuple[str, int | N
 
 def split_course_assessments(payload: dict) -> dict:
     """Move labs and the capstone out of tutorial assignment text into course-level assessments,
-    and attach each tutorial's Spoken Tutorial watch page."""
+    and attach each tutorial's Spoken Tutorial video, poster, watch page and code files."""
+    contents = {c["tutorial_number"]: c for c in payload["tutorial_contents"]}
     for tutorial in payload["tutorials"]:
-        slug = SPOKEN_TUTORIAL_WATCH_SLUGS.get(tutorial["tutorial_number"])
-        tutorial["video_page_url"] = f"{SPOKEN_TUTORIAL_WATCH_BASE}/{slug}/English" if slug else None
+        video = SPOKEN_TUTORIAL_VIDEOS.get(tutorial["tutorial_number"])
+        if not video:
+            continue
+        slug, media_id, media_name = video
+        urls = {
+            "video_url": f"{SPOKEN_TUTORIAL_MEDIA_BASE}/{media_id}/{media_name}-English.webm",
+            "video_poster_url": f"{SPOKEN_TUTORIAL_MEDIA_BASE}/{media_id}/{media_name}-Big.png",
+            "code_files_url": code_files_url(tutorial["tutorial_number"]),
+        }
+        tutorial.update(urls, video_page_url=f"{SPOKEN_TUTORIAL_WATCH_BASE}/{slug}/English")
+        contents[tutorial["tutorial_number"]].update(urls)
 
     assessments: list[dict] = []
     previous_lab_tutorial = 0

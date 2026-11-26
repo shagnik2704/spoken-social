@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, CalendarDays, Check, CheckCircle2, ChevronDown, FlaskConical, Heart, Info, LayoutList, Video } from 'lucide-react'
+import { ArrowRight, Check, CheckCircle2, ChevronDown, Heart, Info, LayoutList, Video } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,6 @@ import api from '@/lib/axios'
 import {
     assessmentLabel,
     courseContentPath,
-    getCalendarWeek,
     getGuideWeek,
     getNextStep,
     getWeekLiveSessions,
@@ -33,9 +32,6 @@ import { TutorialRow } from './TutorialRow'
 import { AssessmentRow } from './AssessmentRow'
 
 type HabitLogs = Record<string, HabitLogCheckinItem[]>
-
-const formatDate = (iso: string): string =>
-    new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
 
 interface WeekNoteProps {
     icon: React.ElementType
@@ -138,14 +134,7 @@ export const LearnerPackTracker: React.FC = () => {
     const nextStep = nextIncompleteTutorial ? getNextStep(courseId, nextIncompleteTutorial) : null
     const allCompleted = totalTuts > 0 && !nextIncompleteTutorial
     const guide = overview.guide
-    const assessments = overview.assessments ?? []
-    const calendarWeek = getCalendarWeek(overview)
-    const scheduleWeek = calendarWeek !== null && calendarWeek >= 1 && calendarWeek <= overview.totalWeeks ? calendarWeek : null
-    const currentWeek = scheduleWeek ?? nextIncompleteTutorial?.week
-    const isCatchingUp = scheduleWeek !== null && nextIncompleteTutorial !== undefined && nextIncompleteTutorial.week < scheduleWeek
-    const overdue = scheduleWeek !== null ? assessments.filter(assessment => !assessment.submission && assessment.weekDue < scheduleWeek) : []
-    const nextDue = scheduleWeek !== null ? assessments.find(assessment => !assessment.submission && assessment.weekDue >= scheduleWeek) : undefined
-    const nextLiveSession = scheduleWeek !== null ? guide?.liveSessions.find(session => session.week !== undefined && session.week >= scheduleWeek) : undefined
+    const currentWeek = nextIncompleteTutorial?.week
 
     return (
         <div className="space-y-6">
@@ -184,37 +173,6 @@ export const LearnerPackTracker: React.FC = () => {
                     )}
                 </CardContent>
 
-                {calendarWeek !== null && overview.schedule && (
-                    <div className="border-t border-border/80 px-5 sm:px-7 py-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
-                            <CalendarDays className="size-3.5 text-primary" aria-hidden="true" />
-                            {calendarWeek < 1
-                                ? `Starts ${formatDate(overview.schedule.startDate)}`
-                                : scheduleWeek !== null
-                                    ? <>Week <span className="font-mono">{scheduleWeek}</span> of <span className="font-mono">{overview.totalWeeks}</span></>
-                                    : `The ${overview.totalWeeks}-week plan is over · open until ${formatDate(overview.schedule.endDate)}`}
-                        </span>
-                        {overdue.map(assessment => (
-                            <span key={assessment.id} className="inline-flex items-center gap-1.5 font-medium text-warning">
-                                <FlaskConical className="size-3.5" aria-hidden="true" />
-                                {assessmentLabel(assessment)} was due week <span className="font-mono">{assessment.weekDue}</span>
-                            </span>
-                        ))}
-                        {nextDue && (
-                            <span className="inline-flex items-center gap-1.5 font-medium text-teal">
-                                <FlaskConical className="size-3.5" aria-hidden="true" />
-                                {assessmentLabel(nextDue)} due {nextDue.weekDue === scheduleWeek ? 'this week' : <>week <span className="font-mono">{nextDue.weekDue}</span></>}
-                            </span>
-                        )}
-                        {nextLiveSession && (
-                            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                                <Video className="size-3.5" aria-hidden="true" />
-                                Live session {nextLiveSession.number} {nextLiveSession.week === scheduleWeek ? 'this week' : <>in week <span className="font-mono">{nextLiveSession.week}</span></>}
-                            </span>
-                        )}
-                    </div>
-                )}
-
                 {nextIncompleteTutorial && nextStep && (
                     <div className="border-t border-border/80 bg-primary/[0.04] px-5 sm:px-7 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="space-y-1 min-w-0">
@@ -225,7 +183,6 @@ export const LearnerPackTracker: React.FC = () => {
                                 </span>
                                 <span aria-hidden="true">·</span>
                                 <span>Week {nextIncompleteTutorial.week}</span>
-                                {isCatchingUp && <span className="font-semibold text-warning">Catching up</span>}
                                 <span aria-hidden="true">·</span>
                                 <span className="text-foreground/90">{nextStep.stepLabel}</span>
                             </div>
@@ -276,7 +233,6 @@ export const LearnerPackTracker: React.FC = () => {
                     const weekModules = moduleLabel(getGuideWeek(guide, weekNum)?.modules ?? [])
                     const weekLiveSessions = getWeekLiveSessions(guide, weekNum)
                     const weekNotes = getWeekNotes(guide, weekNum)
-                    const currentWeekLabel = scheduleWeek !== null ? 'This week' : 'Current week'
                     const isWeekOpen = openWeeks[weekNum] ?? (opensAllWeeks || isCurrentWeek)
                     const isUpcoming = currentWeek !== undefined && weekNum > currentWeek && !isWeekCompleted
                     const weekPercent = weekItems > 0 ? Math.round((weekItemsDone / weekItems) * 100) : 0
@@ -352,14 +308,14 @@ export const LearnerPackTracker: React.FC = () => {
                                                     ) : (
                                                         'Milestone week'
                                                     )}
-                                                    {isCurrentWeek && <span className="sm:hidden text-primary font-semibold"> · {currentWeekLabel}</span>}
+                                                    {isCurrentWeek && <span className="sm:hidden text-primary font-semibold"> · Current week</span>}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
                                             {isCurrentWeek && (
                                                 <Badge variant="outline" className="hidden sm:inline-flex text-[11px] font-semibold bg-primary/10 text-primary border-primary/25">
-                                                    {currentWeekLabel}
+                                                    Current week
                                                 </Badge>
                                             )}
                                             {weekLiveSessions.map(session => (
