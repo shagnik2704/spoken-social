@@ -30,8 +30,6 @@ from sqlalchemy.orm import selectinload
 from database import get_db
 from dependencies import get_current_user
 from models import User, Course, Tutorial, UserTutorial
-from models.batch import Batch
-from models.course import UserCourse
 from models.learner_pack import (
     TutorialContent,
     QuizQuestion,
@@ -290,36 +288,12 @@ async def get_course_overview(
         "uiLayout": course.ui_layout,
         "forumCategory": course.forum_category,
         "xpRewards": {api_key: XP_MAP[column] for column, api_key in XP_REWARD_API_KEYS.items()},
-        "totalWeeks": TOTAL_WEEKS,
+        "totalWeeks": 12,
         "guide": course.guide,
-        "schedule": await _course_schedule(db, user.id, course_id),
         "tutorials": tutorial_list,
         "habitMilestones": habit_milestones,
         "materials": _course_wide_materials(tutorials),
         "assessments": await _assessment_summaries(db, course_id, user.id),
-    }
-
-
-TOTAL_WEEKS = 12
-
-
-async def _course_schedule(db: AsyncSession, user_id, course_id: str) -> Optional[Dict[str, Any]]:
-    """Where the learner's batch is on the calendar: week 0 before it starts, past TOTAL_WEEKS after."""
-    res = await db.execute(
-        select(Batch)
-        .join(UserCourse, UserCourse.batch_id == Batch.id)
-        .filter(UserCourse.user_id == user_id, UserCourse.course_id == course_id)
-    )
-    batch = res.scalars().first()
-    if not batch:
-        return None
-    today = date.today()
-    week = 0 if today < batch.start_date else (today - batch.start_date).days // 7 + 1
-    return {
-        "batchName": batch.name,
-        "startDate": batch.start_date.isoformat(),
-        "endDate": batch.end_date.isoformat(),
-        "currentWeek": week,
     }
 
 

@@ -1,5 +1,5 @@
 import { BookOpen, FileText, FolderArchive, Wrench, type LucideIcon } from 'lucide-react'
-import type { AssessmentSummary, CourseGuide, CourseGuideWeek, CourseMaterialUrls, LearnerPackOverview, LearnerPackOverviewTutorial, QuizOption, RadioValue, XpRewards } from '@/types'
+import type { AssessmentSummary, CourseGuide, CourseGuideWeek, CourseMaterialUrls, LearnerPackOverviewTutorial, QuizOption, RadioValue, XpRewards } from '@/types'
 
 export type TutorialStepId = 'video' | 'reading' | 'activity' | 'assignment' | 'quiz'
 
@@ -70,12 +70,6 @@ export const moduleLabel = (modules: number[]): string => {
     if (modules.length === 0) return ''
     if (modules.length === 1) return `Module ${modules[0]}`
     return `Modules ${modules[0]}–${modules[modules.length - 1]}`
-}
-
-/** The batch's calendar week, for courses whose guide sets out a week-by-week plan. */
-export const getCalendarWeek = (overview: Pick<LearnerPackOverview, 'guide' | 'schedule'> | null | undefined): number | null => {
-    if (!overview?.guide?.weeks.length || !overview.schedule) return null
-    return overview.schedule.currentWeek
 }
 
 const SUBMISSION_NOTE = /^Submit (?:Lab \d+|the capstone project)$/i
