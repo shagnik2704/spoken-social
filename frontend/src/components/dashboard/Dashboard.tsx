@@ -2,9 +2,9 @@ import { useEffect } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
     Zap, ChevronRight, Trophy, Lock,
-    BookOpen, Code, Terminal, BarChart3, FileText, Settings,
+    BookOpen,
     ClipboardCheck, GraduationCap, CalendarClock, MessageCircle,
-    CheckCircle2, Database, Brain, FlaskConical, Compass, Sparkles
+    CheckCircle2,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -16,6 +16,7 @@ import { CourseUnderDevelopment, KNOWN_SWAYAM_COURSES } from './CourseUnderDevel
 import { useSyncActiveCourse } from '@/hooks/useSyncActiveCourse'
 import api from '@/lib/axios'
 import { useUserStore } from '@/store/userStore'
+import { CourseIcon } from '@/components/CourseIcon'
 import type { UpcomingEvent } from '@/types'
 
 // Will be replaced with API call later
@@ -24,20 +25,6 @@ const UPCOMING: UpcomingEvent[] = []
 
 
 
-const courseIconMap: Record<string, React.ReactNode> = {
-    'Python': <Code className="h-6 w-6 text-primary" />,
-    'Linux': <Terminal className="h-6 w-6 text-primary" />,
-    'Scilab': <BarChart3 className="h-6 w-6 text-primary" />,
-    'C/C++': <Settings className="h-6 w-6 text-primary" />,
-    'LibreOffice': <FileText className="h-6 w-6 text-primary" />,
-    'PostgreSQL': <Database className="h-6 w-6 text-primary" />,
-    'AI': <Brain className="h-6 w-6 text-primary" />,
-    'PHD': <FlaskConical className="h-6 w-6 text-primary" />,
-    'Developing Empathy and Growth Mindset': <Compass className="h-6 w-6 text-primary" />,
-    'Personality and Human Development': <Compass className="h-6 w-6 text-primary" />,
-    'Being Creative with AI': <Sparkles className="h-6 w-6 text-primary" />,
-    'Interactive AI Tools': <Brain className="h-6 w-6 text-primary" />,
-}
 
 
 const badgeIconMap: Record<string, React.ReactNode> = {
@@ -183,7 +170,7 @@ function MyCourses() {
                         >
                             <CardContent className="p-4 sm:p-5">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50 mb-3">
-                                    {courseIconMap[course.title] || <Code className="h-5 w-5 text-muted-foreground" />}
+                                    <CourseIcon title={course.title} className="h-6 w-6" />
                                 </div>
                                 <h3 className="text-sm font-semibold truncate">{course.title}</h3>
                                 {course.batchName && (

@@ -19,7 +19,7 @@ import {
 
     Users,
     Shield,
-    Calendar,
+    Library,
     BookOpen,
     ChevronLeft,
 } from 'lucide-react'
@@ -52,7 +52,7 @@ const navItems = [
     { icon: User, label: 'Profile', path: '/profile', roles: ['student', 'coordinator', 'admin'] },
     { icon: Users, label: 'My Learners', path: '/coordinator', roles: ['coordinator'] },
     { icon: Shield, label: 'Admin Panel', path: '/admin', roles: ['admin'] },
-    { icon: Calendar, label: 'Switch Batch', path: '/landing', roles: ['student', 'coordinator', 'admin'] },
+    { icon: Library, label: 'My courses', path: '/landing', roles: ['student', 'coordinator', 'admin'] },
 ]
 
 
@@ -259,7 +259,7 @@ export function DesktopSidebar() {
                     <nav className="flex flex-col gap-1.5 px-2 py-3 flex-1">
                         {navItems
                             .filter(item => item.roles.includes(user?.role || 'student'))
-                            .filter(item => !(hasSingleCourseOnly && item.label === 'Switch Batch'))
+                            .filter(item => !(hasSingleCourseOnly && item.label === 'My courses'))
                             .map((item) => {
                                 const isActive = isNavItemActive(item.path, location.pathname)
 
@@ -401,7 +401,7 @@ export function MobileBottomNav() {
             <div className="flex items-center justify-around h-16 px-2">
                 {navItems
                     .filter(item => item.roles.includes(user?.role || 'student'))
-                    .filter(item => !(hasSingleCourseOnly && item.label === 'Switch Batch'))
+                    .filter(item => !(hasSingleCourseOnly && item.label === 'My courses'))
                     .map((item) => {
                         const isActive = isNavItemActive(item.path, location.pathname)
 
