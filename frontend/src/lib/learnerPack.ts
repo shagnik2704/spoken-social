@@ -10,6 +10,7 @@ export const isTutorialStepId = (value?: string): value is TutorialStepId =>
 
 export const LINUX_COURSE_ID = 'linux'
 export const CREATIVE_AI_COURSE_ID = 'being-creative-with-ai'
+export const INTERACTIVE_AI_COURSE_ID = 'interactive-ai-tools'
 const SETUP_TUTORIAL_COUNT = 2
 
 export const QUIZ_PASS_SCORE = 3
@@ -18,6 +19,9 @@ export const SCREENSHOT_MAX_BYTES = 5 * 1024 * 1024
 
 export const isLinuxCourse = (courseId?: string | null): boolean => courseId === LINUX_COURSE_ID
 export const isCreativeAiCourse = (courseId?: string | null): boolean => courseId === CREATIVE_AI_COURSE_ID
+export const isInteractiveAiCourse = (courseId?: string | null): boolean => courseId === INTERACTIVE_AI_COURSE_ID
+export const hasPracticeSubmission = (courseId?: string | null): boolean =>
+    isCreativeAiCourse(courseId) || isInteractiveAiCourse(courseId)
 
 export const isSetupTutorial = (courseId: string | null | undefined, tutorialNumber: number): boolean =>
     isLinuxCourse(courseId) && tutorialNumber <= SETUP_TUTORIAL_COUNT
@@ -54,6 +58,21 @@ const LINUX_WEEK_TOPICS: Record<number, string> = {
     12: 'Capstone Project Submission & Final Exam Revision',
 }
 
+const INTERACTIVE_AI_WEEK_TOPICS: Record<number, string> = {
+    1: 'Getting Started with Jupyter & Libraries',
+    2: 'Jupyter Kernels, Markdown & Lab 1',
+    3: 'Loading CSV Datasets & Visual Graphs',
+    4: 'Interactive Experimentation & Debugging',
+    5: 'Basic Learning Workflows, Project Structure & Lab 2',
+    6: 'VS Code Setup, Files & Folders',
+    7: 'Integrated Terminal, Extensions & Python Workflow',
+    8: 'Debugging Applications & Lab 3',
+    9: 'Git Version Control, Multiple Files & Refactoring',
+    10: 'GitHub Integration & Student Result System',
+    11: 'Lab 4, Capstone Start & Live Session 2',
+    12: 'Capstone Project & Final Exam Revision',
+}
+
 export const getGuideWeek = (guide: CourseGuide | null | undefined, weekNumber: number): CourseGuideWeek | undefined =>
     guide?.weeks.find(week => week.week === weekNumber)
 
@@ -62,6 +81,9 @@ export const getWeekTopic = (weekNumber: number, courseId?: string | null, guide
     if (guideTopic) return guideTopic
     if (isLinuxCourse(courseId)) {
         return LINUX_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
+    }
+    if (isInteractiveAiCourse(courseId)) {
+        return INTERACTIVE_AI_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
     }
     return PERSONALITY_DEV_WEEK_TOPICS[weekNumber] || `Week ${weekNumber}`
 }
@@ -167,7 +189,7 @@ export const tutorialPath = (courseId: string, tutorialNumber: number, step?: Tu
 
 export const getActivityLabel = (courseId: string | null | undefined, _tutorialNumber?: number): string => {
     if (isLinuxCourse(courseId)) return 'Assignment'
-    if (isCreativeAiCourse(courseId)) return 'Practice task'
+    if (hasPracticeSubmission(courseId)) return 'Practice task'
     return 'Activity & reflection'
 }
 

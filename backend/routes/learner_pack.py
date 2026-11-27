@@ -573,7 +573,7 @@ async def mark_assignment_complete(
 
 
 # Courses whose practice task is one action: pasting the output also marks the task done.
-PRACTICE_SUBMISSION_COURSES = {"being-creative-with-ai"}
+PRACTICE_SUBMISSION_COURSES = {"being-creative-with-ai", "interactive-ai-tools"}
 
 
 @router.post("/tutorials/{tutorial_id}/reflection")
@@ -741,6 +741,142 @@ async def submit_terminal_output(
     }
 
 
+async def _save_screenshot_file(file: UploadFile) -> str:
+    """Validate and save a PNG/JPEG/WEBP screenshot upload, returning its relative URL."""
+    allowed_exts = {".png", ".jpg", ".jpeg", ".webp"}
+    original_ext = os.path.splitext(file.filename or "")[1].lower()
+    if original_ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type '{original_ext}'. Please upload an image (.png, .jpg, .jpeg, or .webp)."
+        )
+
+    MAX_SIZE = 5 * 1024 * 1024
+    content = await file.read()
+    if len(content) > MAX_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="File size exceeds the 5 MB limit. Please resize or take a standard resolution screenshot."
+        )
+    if len(content) < 100:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty or corrupted.")
+
+    if Image is not None:
+        try:
+            img = Image.open(io.BytesIO(content))
+            img.verify()
+            img_format = (img.format or "").lower()
+            if img_format not in ("png", "jpeg", "webp"):
+                raise ValueError(f"Unsupported format: {img_format}")
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid or corrupted image file: {exc}")
+    else:
+        is_png = content.startswith(b'\x89PNG\r\n\x1a\n')
+        is_jpeg = content.startswith(b'\xff\xd8\xff')
+        is_webp = content.startswith(b'RIFF') and b'WEBP' in content[:16]
+        if not (is_png or is_jpeg or is_webp):
+            raise HTTPException(status_code=400, detail="Invalid or unsupported image file format.")
+
+    uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "screenshots")
+    os.makedirs(uploads_dir, exist_ok=True)
+    filename = f"{uuid.uuid4().hex}{original_ext}"
+    dest_path = os.path.join(uploads_dir, filename)
+    with open(dest_path, "wb") as f:
+        f.write(content)
+
+    return f"/uploads/screenshots/{filename}"
+
+
+@router.post("/tutorials/{tutorial_id}/practice-submission")
+async def submit_practice_work(
+    tutorial_id: str,
+    reflection_text: str = Form(...),
+    file: Optional[UploadFile] = File(None),
+    remove_image: bool = Form(False),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Saves practice task text (code, commands, outputs, prompts) together with an
+    optional screenshot upload. Marks activity_done and assignment_done cleanly.
+    """
+    try:
+        tut_uuid = uuid.UUID(tutorial_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid tutorial ID")
+
+    text = reflection_text.replace("\x00", "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Please enter your code or output before submitting.")
+    if len(text) > ASSESSMENT_TEXT_MAX:
+        raise HTTPException(status_code=400, detail="Submission exceeds the 20,000 character limit.")
+    if GEMINI_KEY_PATTERN.search(text):
+        raise HTTPException(status_code=400, detail=API_KEY_MESSAGE)
+
+    new_image_url = await _save_screenshot_file(file) if (file is not None and file.filename) else None
+    words = len(text.split())
+
+    ref_res = await db.execute(select(UserReflection).filter_by(user_id=user.id, tutorial_id=tut_uuid))
+    user_ref = ref_res.scalars().first()
+    if user_ref:
+        user_ref.reflection_text = text
+        user_ref.submission_type = "practice"
+        if new_image_url:
+            user_ref.image_url = new_image_url
+        elif remove_image:
+            user_ref.image_url = None
+        user_ref.word_count = words
+        user_ref.submitted_at = datetime.now(timezone.utc)
+    else:
+        user_ref = UserReflection(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            tutorial_id=tut_uuid,
+            submission_type="practice",
+            reflection_text=text,
+            image_url=new_image_url,
+            word_count=words,
+            submitted_at=datetime.now(timezone.utc),
+        )
+        db.add(user_ref)
+
+    ut = await _get_or_create_user_tutorial(db, user.id, tut_uuid)
+    ut.assignment_done = True
+    if ut.tutorial and ut.tutorial.course_id in PRACTICE_SUBMISSION_COURSES:
+        ut.activity_done = True
+    await _check_and_mark_tutorial_completed_if_no_quiz(db, ut, tut_uuid)
+
+    xp_gained = recompute_tutorial_xp(ut)
+    if xp_gained != 0:
+        user.xp_total += xp_gained
+        db.add(XPEvent(
+            user_id=user.id,
+            source_type="learner_pack_practice",
+            source_id=str(tut_uuid),
+            xp_delta=xp_gained,
+            course_id=ut.tutorial.course_id if ut.tutorial else None,
+        ))
+        recalc_level(user)
+
+    if ut.tutorial and ut.tutorial.course_id:
+        await sync_course_progress_and_swayam(db, user.id, ut.tutorial.course_id)
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "reflection": {
+            "reflectionText": user_ref.reflection_text,
+            "submissionType": user_ref.submission_type,
+            "imageUrl": user_ref.image_url,
+            "wordCount": user_ref.word_count,
+            "submittedAt": user_ref.submitted_at.isoformat(),
+        },
+        "userTutorial": ut.to_api_dict(),
+        "xpGained": xp_gained,
+    }
+
+
 @router.post("/tutorials/{tutorial_id}/screenshot-submission")
 async def submit_screenshot(
     tutorial_id: str,
@@ -759,52 +895,7 @@ async def submit_screenshot(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid tutorial ID")
 
-    # 1. Validate file extension and MIME type
-    allowed_exts = {".png", ".jpg", ".jpeg", ".webp"}
-    original_ext = os.path.splitext(file.filename or "")[1].lower()
-    if original_ext not in allowed_exts:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type '{original_ext}'. Please upload an image (.png, .jpg, .jpeg, or .webp)."
-        )
-
-    # 2. Read bytes and check size (max 5 MB = 5 * 1024 * 1024 bytes)
-    MAX_SIZE = 5 * 1024 * 1024
-    content = await file.read()
-    if len(content) > MAX_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail="File size exceeds the 5 MB limit. Please resize or take a standard resolution screenshot."
-        )
-    if len(content) < 100:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty or corrupted.")
-
-    # 3. Verify real image headers with Pillow if available, otherwise check magic bytes
-    if Image is not None:
-        try:
-            img = Image.open(io.BytesIO(content))
-            img.verify()
-            img_format = (img.format or "").lower()
-            if img_format not in ("png", "jpeg", "webp"):
-                raise ValueError(f"Unsupported format: {img_format}")
-        except Exception as exc:
-            raise HTTPException(status_code=400, detail=f"Invalid or corrupted image file: {exc}")
-    else:
-        is_png = content.startswith(b'\x89PNG\r\n\x1a\n')
-        is_jpeg = content.startswith(b'\xff\xd8\xff')
-        is_webp = content.startswith(b'RIFF') and b'WEBP' in content[:16]
-        if not (is_png or is_jpeg or is_webp):
-            raise HTTPException(status_code=400, detail="Invalid or unsupported image file format.")
-
-    # 4. Save to uploads/screenshots directory
-    uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "screenshots")
-    os.makedirs(uploads_dir, exist_ok=True)
-    filename = f"{uuid.uuid4().hex}{original_ext}"
-    dest_path = os.path.join(uploads_dir, filename)
-    with open(dest_path, "wb") as f:
-        f.write(content)
-
-    image_rel_url = f"/uploads/screenshots/{filename}"
+    image_rel_url = await _save_screenshot_file(file)
     caption = (notes or f"Setup screenshot ({file.filename})").strip()[:500]
 
     # 5. Upsert UserReflection

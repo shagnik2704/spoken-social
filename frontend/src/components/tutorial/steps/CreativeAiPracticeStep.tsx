@@ -1,10 +1,10 @@
-import { AlertCircle, ArrowRight, CheckCircle2, ClipboardCheck, Code2, Lightbulb, Lock, Sparkles, Terminal } from 'lucide-react'
+import { AlertCircle, ArrowRight, CheckCircle2, ClipboardCheck, Code2, ImagePlus, Lightbulb, Lock, Sparkles, Terminal, Trash2 } from 'lucide-react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { isDone, parseTryItInstructions, withXp } from '@/lib/learnerPack'
+import { isDone, parseTryItInstructions, resolveMediaUrl, withXp } from '@/lib/learnerPack'
 import type { TutorialStepProps } from '../types'
 
 const INLINE_MARKDOWN: Components = {
@@ -19,6 +19,12 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
     const markedDoneWithoutWork = !hasSubmission && (isDone(detail.userTutorial.activityDone) || isDone(detail.userTutorial.minitaskOpted))
     const practiceXp = nav.xpFor('activityDone') + nav.xpFor('assignmentDone')
     const hasAssignment = nav.hasAssignment
+    const screenshotRecommended = /\bscreenshot\b/i.test(whatToSubmit)
+    const screenshotSrc = workspace.screenshotFile
+        ? workspace.screenshotPreview
+        : workspace.screenshotPreview
+            ? resolveMediaUrl(workspace.screenshotPreview)
+            : null
 
     return (
         <div>
@@ -77,8 +83,10 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                                             remarkPlugins={[remarkGfm]}
                                             components={{
                                                 p: ({ ...props }) => <p className="leading-relaxed m-0 text-xs text-foreground/90" {...props} />,
+                                                ul: ({ ...props }) => <ul className="list-disc pl-4 mt-1.5 space-y-1 text-xs text-foreground/90" {...props} />,
                                                 strong: ({ ...props }) => <strong className="font-semibold text-foreground" {...props} />,
-                                                code: ({ ...props }) => <code className="px-1 py-0.5 rounded bg-muted font-mono text-[11px] text-foreground" {...props} />,
+                                                pre: ({ ...props }) => <pre className="mt-2 p-2.5 rounded-lg bg-muted border border-border font-terminal text-[11px] leading-relaxed overflow-x-auto text-foreground [&_code]:bg-transparent [&_code]:p-0 [&_code]:font-terminal" {...props} />,
+                                                code: ({ ...props }) => <code className="px-1 py-0.5 rounded bg-muted font-terminal text-[11px] text-foreground" {...props} />,
                                             }}
                                         >
                                             {step}
@@ -91,7 +99,10 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                         <div className="flex gap-2.5 p-3 rounded-xl bg-warning/10 border border-warning/20">
                             <AlertCircle className="size-4 shrink-0 mt-0.5 text-warning" />
                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                <strong className="text-foreground">Keep your work safe:</strong> Never paste your Gemini API key, passwords, or private personal details into your submission.
+                                <strong className="text-foreground">Keep your work safe:</strong>{' '}
+                                {nav.isInteractiveAi
+                                    ? "Never paste real passwords, phone numbers, Aadhaar numbers, or private personal data into your submission."
+                                    : 'Never paste your Gemini API key, passwords, or private personal details into your submission.'}
                             </p>
                         </div>
                     </div>
@@ -147,9 +158,72 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                                 rows={9}
                                 value={workspace.reflectionText}
                                 onChange={(e) => workspace.setReflectionText(e.target.value)}
-                                placeholder="Paste your prompts, code, or output here..."
+                                placeholder={nav.isInteractiveAi ? 'Paste your code, commands, or output here...' : 'Paste your prompts, code, or output here...'}
                                 className="text-sm font-sans leading-relaxed resize-y min-h-[200px] p-3.5"
                             />
+
+                            {nav.isInteractiveAi && (
+                                <div className="pt-2 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                                            <ImagePlus className="h-3.5 w-3.5 text-primary" />
+                                            <span>Screenshot (optional)</span>
+                                            {screenshotRecommended && (
+                                                <Badge variant="outline" className="text-[10px] px-2 py-0 bg-teal/10 text-teal border-teal/30 font-semibold">
+                                                    Recommended
+                                                </Badge>
+                                            )}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground">PNG, JPG, WEBP · up to 5 MB</span>
+                                    </div>
+
+                                    {screenshotSrc ? (
+                                        <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
+                                            <img
+                                                src={screenshotSrc}
+                                                alt="Practice screenshot preview"
+                                                className="max-h-56 mx-auto rounded-lg object-contain border border-border/60"
+                                            />
+                                            <div className="flex items-center justify-end gap-2">
+                                                <label className="text-xs font-medium text-primary hover:underline cursor-pointer px-2 py-1">
+                                                    Replace
+                                                    <input
+                                                        type="file"
+                                                        accept="image/png,image/jpeg,image/webp"
+                                                        className="sr-only"
+                                                        onChange={(e) => workspace.selectScreenshot(e.target.files?.[0])}
+                                                    />
+                                                </label>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={workspace.removeSavedScreenshot}
+                                                    className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                                    Remove
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <label className={`flex items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-3 text-xs cursor-pointer transition-colors ${screenshotRecommended ? 'border-teal/40 bg-teal/[0.03] hover:bg-teal/[0.06] text-foreground' : 'border-border hover:border-primary/40 text-muted-foreground'}`}>
+                                            <ImagePlus className="h-4 w-4 text-teal shrink-0" />
+                                            <span>
+                                                {screenshotRecommended
+                                                    ? 'Attach a screenshot showing your output or workspace'
+                                                    : 'Optionally attach a screenshot (.png, .jpg, .webp)'}
+                                            </span>
+                                            <input
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/webp"
+                                                className="sr-only"
+                                                onChange={(e) => workspace.selectScreenshot(e.target.files?.[0])}
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
                                 <span className="flex items-center gap-1 text-[11px]">
@@ -168,7 +242,7 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                             </span>
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <Button
-                                    onClick={workspace.submitReflection}
+                                    onClick={nav.isInteractiveAi ? workspace.submitPractice : workspace.submitReflection}
                                     disabled={workspace.isSubmittingReflection || !workspace.reflectionText.trim()}
                                     className="min-h-11 sm:min-h-9 font-semibold text-xs flex-1 sm:flex-none cursor-pointer"
                                 >

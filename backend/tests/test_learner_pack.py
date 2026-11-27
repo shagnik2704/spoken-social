@@ -230,3 +230,92 @@ async def test_sso_exchange_flow():
         course_ids = [c["id"] for c in me_data["courses"]]
         assert "empathy-growth-mindset" in course_ids
 
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_interactive_ai_practice_submission():
+    """Verify Interactive AI Tools overview, assessments, and combined text + screenshot practice upload."""
+    import io
+    from PIL import Image
+
+    sync_db = SyncSessionLocal()
+    try:
+        user = sync_db.query(User).filter_by(email="swayam_tester@test.com").first()
+        assert user is not None
+        tut1 = sync_db.query(Tutorial).filter_by(course_id="interactive-ai-tools", tutorial_number=1).first()
+        assert tut1 is not None, "Tutorial 1 for interactive-ai-tools must be seeded"
+        tut1_id = str(tut1.id)
+
+        sync_db.query(UserReflection).filter_by(user_id=user.id, tutorial_id=tut1.id).delete()
+        sync_db.query(UserTutorial).filter_by(user_id=user.id, tutorial_id=tut1.id).delete()
+        if not sync_db.query(UserCourse).filter_by(user_id=user.id, course_id="interactive-ai-tools").first():
+            sync_db.add(UserCourse(
+                user_id=user.id,
+                course_id="interactive-ai-tools",
+                batch_id="ai-tools-swayam-2026-nov",
+            ))
+        sync_db.commit()
+        user_id_str = str(user.id)
+    finally:
+        sync_db.close()
+
+    token = create_access_token(user_id=user_id_str, effective_role="student")
+    headers = {"Authorization": f"Bearer {token}"}
+    transport = ASGITransport(app=app)
+
+    img_buf = io.BytesIO()
+    Image.new("RGB", (32, 32), color="teal").save(img_buf, format="PNG")
+    png_bytes = img_buf.getvalue()
+
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        ov = await client.get("/api/learner-pack/course/interactive-ai-tools/overview", headers=headers)
+        assert ov.status_code == 200, ov.text
+        ov_data = ov.json()
+        assert len(ov_data["tutorials"]) == 19
+        assert len(ov_data["assessments"]) == 5
+        assert ov_data["guide"] is not None
+
+        # 1. Text-only practice submission
+        res1 = await client.post(
+            f"/api/learner-pack/tutorials/{tut1_id}/practice-submission",
+            data={"reflection_text": "python3 -m venv course\nsource course/bin/activate"},
+            headers=headers,
+        )
+        assert res1.status_code == 200, res1.text
+        d1 = res1.json()
+        assert d1["xpGained"] == 10
+        assert d1["userTutorial"]["activityDone"] is True
+        assert d1["userTutorial"]["assignmentDone"] is True
+        assert d1["reflection"]["imageUrl"] is None
+
+        # 2. Combined text + PNG upload (idempotent XP = 0)
+        res2 = await client.post(
+            f"/api/learner-pack/tutorials/{tut1_id}/practice-submission",
+            data={"reflection_text": "python3 -m venv course\njupyter notebook"},
+            files={"file": ("notebook.png", png_bytes, "image/png")},
+            headers=headers,
+        )
+        assert res2.status_code == 200, res2.text
+        d2 = res2.json()
+        assert d2["xpGained"] == 0
+        saved_img = d2["reflection"]["imageUrl"]
+        assert saved_img and saved_img.startswith("/uploads/screenshots/")
+
+        # 3. Text update without sending file preserves saved screenshot
+        res3 = await client.post(
+            f"/api/learner-pack/tutorials/{tut1_id}/practice-submission",
+            data={"reflection_text": "Updated terminal commands"},
+            headers=headers,
+        )
+        assert res3.status_code == 200, res3.text
+        assert res3.json()["reflection"]["imageUrl"] == saved_img
+
+        # 4. Removing saved screenshot clears imageUrl
+        res4 = await client.post(
+            f"/api/learner-pack/tutorials/{tut1_id}/practice-submission",
+            data={"reflection_text": "Final text only", "remove_image": "true"},
+            headers=headers,
+        )
+        assert res4.status_code == 200, res4.text
+        assert res4.json()["reflection"]["imageUrl"] is None
+
+

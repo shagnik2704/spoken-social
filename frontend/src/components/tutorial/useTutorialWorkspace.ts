@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
 import api from '@/lib/axios'
-import { FORUM_SECOND_BUCKET, isCreativeAiCourse, isDone, SCREENSHOT_MAX_BYTES, TERMINAL_MAX_CHARS, type TutorialStepId } from '@/lib/learnerPack'
+import { FORUM_SECOND_BUCKET, hasPracticeSubmission, isDone, SCREENSHOT_MAX_BYTES, TERMINAL_MAX_CHARS, type TutorialStepId } from '@/lib/learnerPack'
 import { useLearnerPackStore } from '@/store/learnerPackStore'
 import { useUserStore } from '@/store/userStore'
 import type { LearnerPackTutorialDetail } from '@/types'
@@ -39,6 +39,8 @@ export interface TutorialWorkspace {
     setReflectionText: (text: string) => void
     isSubmittingReflection: boolean
     submitReflection: () => Promise<void>
+    submitPractice: () => Promise<void>
+    removeSavedScreenshot: () => void
     isMarkingActivity: boolean
     markActivityComplete: () => Promise<void>
     isMarkingAssignment: boolean
@@ -91,6 +93,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
     const [terminalOutput, setTerminalOutput] = useState('')
     const [screenshotFile, setScreenshotFile] = useState<File | null>(null)
     const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
+    const [removeScreenshot, setRemoveScreenshot] = useState(false)
     const [screenshotNotes, setScreenshotNotes] = useState('')
     const [isSubmittingLab, setIsSubmittingLab] = useState(false)
 
@@ -167,7 +170,7 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         try {
             setIsMarkingActivity(true)
             const res = await api.post(`${endpoint}/activity-complete`)
-            announceXp(isCreativeAiCourse(courseId) ? 'Practice task marked done!' : 'Private notebook exercise completed!', res.data.xpGained)
+            announceXp(hasPracticeSubmission(courseId) ? 'Practice task marked done!' : 'Private notebook exercise completed!', res.data.xpGained)
             setJustCompletedStep('activity')
             setDetail(prev => prev && { ...prev, userTutorial: res.data.userTutorial })
             refreshOverview()
@@ -195,13 +198,13 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
 
     const submitReflection = async (): Promise<void> => {
         if (!reflectionText.trim()) {
-            toast.error(isCreativeAiCourse(courseId) ? 'Paste your work before submitting.' : 'Please enter your reflection before submitting.')
+            toast.error(hasPracticeSubmission(courseId) ? 'Paste your work before submitting.' : 'Please enter your reflection before submitting.')
             return
         }
         try {
             setIsSubmittingReflection(true)
             const res = await api.post(`${endpoint}/reflection`, { reflection_text: reflectionText })
-            announceXp(isCreativeAiCourse(courseId) ? 'Practice task done!' : 'Reflection submitted!', res.data.xpGained)
+            announceXp(hasPracticeSubmission(courseId) ? 'Practice task done!' : 'Reflection submitted!', res.data.xpGained)
             setJustCompletedStep('activity')
             setDetail(prev => prev && {
                 ...prev,
@@ -209,8 +212,43 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
                 userTutorial: res.data.userTutorial,
             })
             refreshOverview()
-        } catch {
-            toast.error('Failed to submit reflection.')
+        } catch (err) {
+            toast.error(errorDetail(err) ?? 'Failed to submit reflection.')
+        } finally {
+            setIsSubmittingReflection(false)
+        }
+    }
+
+    const submitPractice = async (): Promise<void> => {
+        if (!reflectionText.trim()) {
+            toast.error('Paste your code or output before submitting.')
+            return
+        }
+        try {
+            setIsSubmittingReflection(true)
+            const formData = new FormData()
+            formData.append('reflection_text', reflectionText)
+            if (screenshotFile) {
+                formData.append('file', screenshotFile)
+            } else if (removeScreenshot) {
+                formData.append('remove_image', 'true')
+            }
+            const res = await api.post(`${endpoint}/practice-submission`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            })
+            announceXp('Practice task done!', res.data.xpGained)
+            setJustCompletedStep('activity')
+            setScreenshotFile(null)
+            setRemoveScreenshot(false)
+            setScreenshotPreview(res.data.reflection?.imageUrl || null)
+            setDetail(prev => prev && {
+                ...prev,
+                userReflection: res.data.reflection,
+                userTutorial: res.data.userTutorial,
+            })
+            refreshOverview()
+        } catch (err) {
+            toast.error(errorDetail(err) ?? 'Failed to submit practice work.')
         } finally {
             setIsSubmittingReflection(false)
         }
@@ -248,11 +286,19 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         }
         setScreenshotFile(file)
         setScreenshotPreview(URL.createObjectURL(file))
+        setRemoveScreenshot(false)
     }
 
     const clearScreenshot = (): void => {
         setScreenshotFile(null)
         setScreenshotPreview(detail?.userReflection?.imageUrl || null)
+        setRemoveScreenshot(false)
+    }
+
+    const removeSavedScreenshot = (): void => {
+        setScreenshotFile(null)
+        setScreenshotPreview(null)
+        setRemoveScreenshot(true)
     }
 
     const submitScreenshot = async (): Promise<void> => {
@@ -346,6 +392,8 @@ export const useTutorialWorkspace = (tutorialId: string, courseId: string): Tuto
         setReflectionText,
         isSubmittingReflection,
         submitReflection,
+        submitPractice,
+        removeSavedScreenshot,
         isMarkingActivity,
         markActivityComplete,
         isMarkingAssignment,

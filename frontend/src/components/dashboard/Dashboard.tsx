@@ -36,6 +36,7 @@ const courseIconMap: Record<string, React.ReactNode> = {
     'Developing Empathy and Growth Mindset': <Compass className="h-6 w-6 text-primary" />,
     'Personality and Human Development': <Compass className="h-6 w-6 text-primary" />,
     'Being Creative with AI': <Sparkles className="h-6 w-6 text-primary" />,
+    'Interactive AI Tools': <Brain className="h-6 w-6 text-primary" />,
 }
 
 

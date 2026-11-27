@@ -16,11 +16,6 @@ export const KNOWN_SWAYAM_COURSES: Record<string, CoursePreviewMeta> = {
         title: 'Introduction to Deep Learning Frameworks',
         forumCategory: 'Deep Learning',
     },
-    'interactive-ai-tools': {
-        id: 'interactive-ai-tools',
-        title: 'Interactive AI Tools',
-        forumCategory: 'Interactive AI Tools',
-    },
 }
 
 interface CourseUnderDevelopmentProps {

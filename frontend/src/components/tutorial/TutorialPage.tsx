@@ -17,6 +17,7 @@ import {
     getWeekTopic,
     isCreativeAiCourse,
     isDone,
+    isInteractiveAiCourse,
     isLinuxCourse,
     isSetupTutorial,
     isTutorialStepId,
@@ -74,7 +75,7 @@ const PageSkeleton: React.FC = () => (
 const ActivityStep: React.FC<TutorialStepProps> = (props) => {
     if (props.nav.isSetup) return <SetupVerificationStep {...props} />
     if (props.nav.isLinux) return <TerminalLabStep {...props} />
-    if (props.nav.isCreativeAi) return <CreativeAiPracticeStep {...props} />
+    if (props.nav.isCreativeAi || props.nav.isInteractiveAi) return <CreativeAiPracticeStep {...props} />
     return <ReflectionActivityStep {...props} />
 }
 
@@ -105,6 +106,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
 
     const isLinux = isLinuxCourse(courseId)
     const isCreativeAi = isCreativeAiCourse(courseId)
+    const isInteractiveAi = isInteractiveAiCourse(courseId)
     const isSetup = isSetupTutorial(courseId, tutorial.number)
     const progress = tutorial.userProgress
     const activityLabel = getActivityLabel(courseId, tutorial.number)
@@ -196,6 +198,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
     const nav: TutorialNav = {
         isLinux,
         isCreativeAi,
+        isInteractiveAi,
         isSetup,
         hasAssignment,
         nextTutorial,

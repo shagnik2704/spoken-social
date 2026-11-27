@@ -67,7 +67,7 @@ SWAYAM_COURSES = [
         "title": "Interactive AI Tools",
         "description": "A 2-credit hands-on course covering interactive development environments, Jupyter Notebooks, and Visual Studio Code (VS Code) for AI workflows.",
         "forum_category": "Interactive AI Tools",
-        "ui_layout": "under_development",
+        "ui_layout": "learner_pack",
         "batch_id": "ai-tools-swayam-2026-nov",
         "credits": 2,
     },

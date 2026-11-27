@@ -6,19 +6,46 @@ import { normalizeQuizOptions, QUIZ_PASS_SCORE, withXp } from '@/lib/learnerPack
 import { cn } from '@/lib/utils'
 import type { TutorialStepProps } from '../types'
 
-const WithInlineCode: React.FC<{ text: string }> = ({ text }) => (
-    <>
-        {text.split(/(`[^`]+`)/).map((part, index) =>
-            part.length > 2 && part.startsWith('`') && part.endsWith('`') ? (
-                <code key={index} className="font-terminal text-[0.92em] px-1.5 py-0.5 rounded-md bg-muted border border-border text-foreground break-words">
-                    {part.slice(1, -1)}
-                </code>
-            ) : (
-                part
-            )
-        )}
-    </>
-)
+const renderInlineCode = (segment: string) =>
+    segment.split(/(`[^`]+`)/).map((part, index) =>
+        part.length > 2 && part.startsWith('`') && part.endsWith('`') ? (
+            <code key={index} className="font-terminal text-[0.92em] px-1.5 py-0.5 rounded-md bg-muted border border-border text-foreground break-words">
+                {part.slice(1, -1)}
+            </code>
+        ) : (
+            part
+        )
+    )
+
+const WithInlineCode: React.FC<{ text: string }> = ({ text }) => {
+    if (!text.includes('```')) {
+        return <>{renderInlineCode(text)}</>
+    }
+    return (
+        <span className="block space-y-2">
+            {text.split(/(```[\s\S]*?```)/).map((block, bIdx) => {
+                if (block.startsWith('```') && block.endsWith('```')) {
+                    const codeBody = block.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '')
+                    return (
+                        <code
+                            key={bIdx}
+                            className="block p-3 rounded-lg bg-muted border border-border font-terminal text-xs font-normal leading-relaxed whitespace-pre overflow-x-auto text-foreground"
+                        >
+                            {codeBody}
+                        </code>
+                    )
+                }
+                const trimmed = block.trim()
+                if (!trimmed) return null
+                return (
+                    <span key={bIdx} className="block">
+                        {renderInlineCode(trimmed)}
+                    </span>
+                )
+            })}
+        </span>
+    )
+}
 
 export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }) => {
     const nextTutorial = nav.nextTutorial
@@ -117,7 +144,7 @@ export const QuizStep: React.FC<TutorialStepProps> = ({ detail, workspace, nav }
                                     <div className="mt-4 p-4 rounded-xl bg-muted/60 border border-border/80 text-xs sm:text-sm space-y-1.5 sm:ml-10">
                                         <span className="font-bold text-primary flex items-center gap-1.5 text-xs uppercase tracking-wider">
                                             <Lightbulb className="h-3.5 w-3.5" />
-                                            {nav.isLinux ? 'Technical Explanation & Solution' : nav.isCreativeAi ? 'Explanation' : 'Psychological Rationale & Explanation'}
+                                            {nav.isLinux ? 'Technical Explanation & Solution' : (nav.isCreativeAi || nav.isInteractiveAi) ? 'Explanation' : 'Psychological Rationale & Explanation'}
                                         </span>
                                         <p className="text-foreground/80 leading-relaxed font-sans">
                                             <WithInlineCode text={q.explanation} />
