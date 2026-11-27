@@ -12,11 +12,12 @@ export const ReadingStep: React.FC<TutorialStepProps> = ({ detail, workspace, na
     const readingXp = !detail.videoUrl ? nav.xpFor('watched') : 0
     const markAsRead = readingXp > 0 ? `Mark as read to claim +${readingXp} XP` : 'Mark as read'
     const readingMinutes = detail.content?.readingTimeMinutes ?? 0
+    const hasPracticeTask = nav.isCreativeAi || nav.isInteractiveAi
     const nextStep = nav.isLinux
         ? nav.isSetup
             ? { done: 'Core lesson completed. Move to the setup assignment.', todo: 'and complete the setup assignment', button: 'Proceed to Assignment' }
             : { done: 'Core lesson completed. Move directly to the hands-on terminal assignment.', todo: 'and complete the terminal assignment', button: 'Proceed to Assignment' }
-        : nav.isCreativeAi
+        : hasPracticeTask
             ? { done: 'Reading done. Next, try it yourself in the practice task.', todo: 'and go on to the practice task', button: 'Go to Practice Task' }
             : { done: 'Core lesson completed. Move directly to the notebook activity & reflection.', todo: 'and move directly to the personal notebook exercise & reflection', button: 'Proceed to Activity & Reflection' }
 
@@ -39,7 +40,7 @@ export const ReadingStep: React.FC<TutorialStepProps> = ({ detail, workspace, na
                     <ReadingExtras
                         keyTerms={detail.content?.keyTerms}
                         readMore={detail.content?.readMore}
-                        keyTermsTitle={nav.isCreativeAi ? 'Key terms for this module' : 'Key terms'}
+                        keyTermsTitle={hasPracticeTask ?'Key terms for this module' : 'Key terms'}
                     />
                 </article>
 
