@@ -71,6 +71,17 @@ SPOKEN_TUTORIAL_VIDEOS = {
 }
 
 
+# Spoken Tutorial keeps code files behind its login, so copies are served from frontend/public.
+CODE_FILES_BASE = "/downloads/courses/interactive-ai-tools"
+TUTORIALS_WITH_CODE_FILES = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19}
+
+
+def code_files_url(tut_num: int) -> str | None:
+    if tut_num not in TUTORIALS_WITH_CODE_FILES:
+        return None
+    return f"{CODE_FILES_BASE}/tutorial-{tut_num}-{SPOKEN_TUTORIAL_VIDEOS[tut_num][2].lower()}.zip"
+
+
 def _video_urls(tut_num: int) -> dict:
     video = SPOKEN_TUTORIAL_VIDEOS.get(tut_num)
     if not video:
@@ -703,7 +714,7 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
             "tutorial_number": tut_num,
             "title": title,
             **_video_urls(tut_num),
-            "code_files_url": None,
+            "code_files_url": code_files_url(tut_num),
             "instruction_sheet_url": None,
             "installation_sheet_url": None,
             "assignment_url": None,
@@ -727,7 +738,7 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
             "read_more": [{"text": item} for item in read_more_list],
             "video_url": _video_urls(tut_num)["video_url"],
             "video_poster_url": _video_urls(tut_num)["video_poster_url"],
-            "code_files_url": None,
+            "code_files_url": code_files_url(tut_num),
             "instruction_sheet_url": None,
             "installation_sheet_url": None,
             "assignment_url": None,
