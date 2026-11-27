@@ -371,7 +371,7 @@ export const parseTryItInstructions = (raw: string): TryItInstructions => {
         submit = submitMatch[1].replace(/^\*\*\s*/, '').trim()
         body = raw.slice(0, submitMatch.index).trim()
     }
-    const stepMarker = /(?:\*\*Step\s+\d+:\*\*|\b\d+\.\s+)/
+    const stepMarker = /(?:\*\*Step\s+\d+:\*\*|^\d+\.\s+)/m
     const firstStep = body.search(stepMarker)
     const steps = firstStep === -1 ? [] : body.slice(firstStep).split(stepMarker).map(part => part.trim()).filter(Boolean)
     if (steps.length > 0) return { intro: body.slice(0, firstStep).trim(), steps, submit }

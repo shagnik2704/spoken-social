@@ -46,6 +46,82 @@ SHELL_PREFIXES = (
 )
 
 
+SPOKEN_TUTORIAL_BASE = "https://spoken-tutorial.org"
+# tutorial number -> (series, media id, media file name); the watch page slug is the file name with "+" for "-".
+SPOKEN_TUTORIAL_VIDEOS = {
+    1: ("Jupyter Notebook", "205/2430", "Introduction-to-Jupyter-Notebook-Interface"),
+    2: ("Jupyter Notebook", "205/2431", "Installing-Libraries-inside-Jupyter-Notebook"),
+    3: ("Jupyter Notebook", "205/2432", "Managing-Notebook-Kernels-and-Runtimes"),
+    4: ("Jupyter Notebook", "205/2469", "Working-with-Notebook-Markdown-Documentation"),
+    5: ("Jupyter Notebook", "205/2470", "Loading-CSV-Datasets"),
+    6: ("Jupyter Notebook", "205/2471", "Creating-Visual-Graphs"),
+    7: ("Jupyter Notebook", "205/2472", "Interactive-Experimentation"),
+    8: ("Jupyter Notebook", "205/2473", "Debugging-Notebook-Workflows"),
+    9: ("Jupyter Notebook", "205/2474", "Running-Basic-Learning-Workflows"),
+    10: ("Jupyter Notebook", "205/2475", "Organising-Notebook-Projects"),
+    11: ("Visual Studio Code", "207/2458", "Introduction-of-VS-Code-on-Ubuntu"),
+    12: ("Visual Studio Code", "207/2459", "Working-with-Files-and-Folders"),
+    13: ("Visual Studio Code", "207/2460", "Integrated-Terminal-and-Extensions"),
+    14: ("Visual Studio Code", "207/2461", "Python-Development-Workflow"),
+    15: ("Visual Studio Code", "207/2462", "Debugging-Applications"),
+    16: ("Visual Studio Code", "207/2463", "Git-and-Version-Control"),
+    17: ("Visual Studio Code", "207/2464", "Multiple-Files-and-Refactoring"),
+    18: ("Visual Studio Code", "207/2465", "Connecting-a-Project-to-GitHub"),
+    19: ("Visual Studio Code", "207/2466", "Building-a-Student-Result-System"),
+}
+
+
+def _video_urls(tut_num: int) -> dict:
+    video = SPOKEN_TUTORIAL_VIDEOS.get(tut_num)
+    if not video:
+        return {"video_url": None, "video_poster_url": None, "video_page_url": None}
+    series, media_id, name = video
+    media = f"{SPOKEN_TUTORIAL_BASE}/media/videos/{media_id}/{name}"
+    return {
+        "video_url": f"{media}-English.webm",
+        "video_poster_url": f"{media}-Big.png",
+        "video_page_url": f"{SPOKEN_TUTORIAL_BASE}/watch/{series.replace(' ', '+')}/{name.replace('-', '+')}/English",
+    }
+
+
+# The docx sets no code font inside sentences, so inline code is marked from these patterns.
+INLINE_CODE = re.compile(
+    r"(?<![`\w])("
+    r"[\w.]+\([^()\n]*\)(?:\[[^\]\n]*\])?"  # calls such as read_csv(), data.info(), print(data.data[:3])
+    r"|[\w-]+\.(?:csv|py|txt|html|md|ipynb)"  # file names such as employee.csv, README.md
+    r")(?![`\w(])"
+)
+TRY_IT_CODE = {
+    3: ['"Python"'],
+    5: ["data.columns", "shape"],
+    6: ["x = [1, 2, 3, 4]", "y = [3, 5, 7, 9]", "[3, 9, 4, 12]"],
+    7: ['"Student"'],
+    8: ['print("Welcome"'],
+    10: ["ls -R", "tree"],
+    12: ["ls"],
+    13: ["touch", "ls"],
+    15: ["gross_pay", "bonuss", "NameError"],
+    16: ["git init", "git status", "git add .", "git commit", "git log --oneline"],
+    17: ['author_name = "Priya"', "lead_author_name", "author_name"],
+    18: ["git log --oneline", "git remote -v"],
+    19: ["code ."],
+}
+
+
+def _outside_code(text: str, transform) -> str:
+    """Apply transform to text outside fenced blocks and existing inline code spans."""
+    parts = re.split(r"(```.*?```|`[^`\n]+`)", text, flags=re.DOTALL)
+    return "".join(p if p.startswith("`") else transform(p) for p in parts)
+
+
+def _mark_inline_code(text: str, phrases: list[str] | None = None) -> str:
+    text = _outside_code(text, lambda s: INLINE_CODE.sub(r"`\1`", s))
+    for phrase in sorted(phrases or [], key=len, reverse=True):
+        pattern = re.compile(rf"(?<![`\w]){re.escape(phrase)}(?![`\w])")
+        text = _outside_code(text, lambda s: pattern.sub(f"`{phrase}`", s))
+    return text
+
+
 WORDS_PER_MINUTE = 200
 MODULE_SUMMARY_STOP = re.compile(
     r"^(Module\s+\d+\s+week by week|Before you start|How Module\s+\d+\s+builds|Key terms|Tutorial\s+\d+\s*:)",
@@ -167,6 +243,8 @@ def _code_lang(code: str) -> str:
     first_line = code.lstrip().splitlines()[0] if code.strip() else ""
     if any(first_line.startswith(p) for p in SHELL_PREFIXES):
         return "bash"
+    if re.fullmatch(r"[\w ]+(,[\w .]+){2,}", first_line.strip()):
+        return "csv"
     return "python"
 
 
@@ -488,7 +566,7 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
             else:
                 md_parts.append(f"{md}\n")
 
-        reading_markdown = "\n".join(md_parts).strip()
+        reading_markdown = _mark_inline_code("\n".join(md_parts).strip())
 
         # Build Try-It instructions & submission prompt
         # Keep top-level decimal items numbered ("1. ...", "2. ...") so parseTryItInstructions splits each step cleanly,
@@ -527,7 +605,7 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
         else:
             submission_prompt = "Submit your code and output, pasted as text, or a screenshot on Spoken Social."
 
-        try_it_instructions = "\n\n".join(try_it_blocks).strip()
+        try_it_instructions = _mark_inline_code("\n\n".join(try_it_blocks).strip(), TRY_IT_CODE.get(tut_num))
 
         # Build Read more
         read_more_list = [
@@ -624,8 +702,7 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
             "course_id": "interactive-ai-tools",
             "tutorial_number": tut_num,
             "title": title,
-            "video_url": None,
-            "video_poster_url": None,
+            **_video_urls(tut_num),
             "code_files_url": None,
             "instruction_sheet_url": None,
             "installation_sheet_url": None,
@@ -648,8 +725,8 @@ def parse_docx(docx_path: str = DEFAULT_DOCX, output_path: str = OUTPUT_JSON) ->
             "reflection_min_sentences": 1,
             "key_terms": module_key_terms.get(mod_id, []),
             "read_more": [{"text": item} for item in read_more_list],
-            "video_url": None,
-            "video_poster_url": None,
+            "video_url": _video_urls(tut_num)["video_url"],
+            "video_poster_url": _video_urls(tut_num)["video_poster_url"],
             "code_files_url": None,
             "instruction_sheet_url": None,
             "installation_sheet_url": None,
