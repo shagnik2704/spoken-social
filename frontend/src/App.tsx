@@ -23,7 +23,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
 import { ImpersonationBanner } from '@/components/layout/ImpersonationBanner'
-import { LandingPage } from './components/auth/LandingPage'
+import { MyCoursesPage } from './components/auth/MyCoursesPage'
 import { ProgrammeSelector } from './components/auth/ProgrammeSelector'
 
 function AppContent() {
@@ -119,8 +119,8 @@ function AppContent() {
         <main className={`flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 ${isLessonPath(location.pathname) ? 'pb-4' : 'pb-20'} lg:pb-6`}>
           <Suspense fallback={<div className="flex h-full items-center justify-center p-8">Loading page...</div>}>
             <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/" element={<MyCoursesPage />} />
+              <Route path="/landing" element={<MyCoursesPage />} />
               <Route path="/programmes" element={<Navigate to="/" replace />} />
               {/* <Route path="/feed" element={<Feed />} /> */}
               <Route path="/dashboard" element={<Dashboard />} />
