@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { isDone, parseTryItInstructions, resolveMediaUrl, withXp } from '@/lib/learnerPack'
+import { markdownCodeBlock } from '../readingMarkdown'
 import type { TutorialStepProps } from '../types'
 
 const INLINE_MARKDOWN: Components = {
@@ -85,7 +86,7 @@ export const CreativeAiPracticeStep: React.FC<TutorialStepProps> = ({ detail, wo
                                                 p: ({ ...props }) => <p className="leading-relaxed m-0 text-xs text-foreground/90" {...props} />,
                                                 ul: ({ ...props }) => <ul className="list-disc pl-4 mt-1.5 space-y-1 text-xs text-foreground/90" {...props} />,
                                                 strong: ({ ...props }) => <strong className="font-semibold text-foreground" {...props} />,
-                                                pre: ({ ...props }) => <pre className="mt-2 p-2.5 rounded-lg bg-muted border border-border font-terminal text-[11px] leading-relaxed overflow-x-auto text-foreground [&_code]:bg-transparent [&_code]:p-0 [&_code]:font-terminal" {...props} />,
+                                                pre: markdownCodeBlock('my-2'),
                                                 code: ({ ...props }) => <code className="px-1 py-0.5 rounded bg-muted font-terminal text-[11px] text-foreground" {...props} />,
                                             }}
                                         >
