@@ -1,5 +1,23 @@
+import { isValidElement, type ReactNode } from 'react'
 import type { Components } from 'react-markdown'
 import { cn } from '@/lib/utils'
+import { CodeBlock } from './CodeBlock'
+
+const textOf = (node: ReactNode): string => {
+    if (typeof node === 'string' || typeof node === 'number') return String(node)
+    if (Array.isArray(node)) return node.map(textOf).join('')
+    if (isValidElement<{ children?: ReactNode }>(node)) return textOf(node.props.children)
+    return ''
+}
+
+export const markdownCodeBlock = (className?: string): Components['pre'] => {
+    const MarkdownCodeBlock: Components['pre'] = ({ children }) => {
+        const codeClass = isValidElement<{ className?: string }>(children) ? children.props.className ?? '' : ''
+        const language = /language-([\w+-]+)/.exec(codeClass)?.[1] ?? null
+        return <CodeBlock code={textOf(children).replace(/\n$/, '')} language={language} className={className} />
+    }
+    return MarkdownCodeBlock
+}
 
 export const READING_COMPONENTS: Components = {
     h1: ({ ...props }) => <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-6 font-sans" {...props} />,
@@ -12,7 +30,7 @@ export const READING_COMPONENTS: Components = {
     li: ({ ...props }) => <li className="leading-7" {...props} />,
     a: ({ ...props }) => <a className="font-medium text-teal underline underline-offset-2 hover:no-underline transition duration-200 ease-in-out" target="_blank" rel="noopener noreferrer" {...props} />,
     code: ({ className, ...props }) => <code className={cn('font-terminal text-[0.9em] px-1.5 py-0.5 rounded-md bg-teal/10 text-teal border border-teal/20', className)} {...props} />,
-    pre: ({ ...props }) => <pre className="my-5 p-4 rounded-xl bg-terminal border border-terminal-border font-terminal text-[13px] leading-6 text-terminal-fg overflow-x-auto [&_code]:bg-transparent [&_code]:border-0 [&_code]:p-0 [&_code]:text-inherit" {...props} />,
+    pre: markdownCodeBlock(),
     blockquote: ({ ...props }) => <blockquote className="my-5 pl-4 pr-3 py-3 border-l-4 border-teal bg-teal/[0.06] rounded-r-lg text-foreground/90 [&>p:last-child]:mb-0" {...props} />,
     table: ({ ...props }) => <div className="my-6 overflow-x-auto rounded-xl border border-border"><table className="w-full border-collapse text-left" {...props} /></div>,
     thead: ({ ...props }) => <thead className="bg-primary/[0.06] text-foreground text-xs sm:text-sm font-semibold border-b border-border" {...props} />,

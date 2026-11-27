@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { TopBar, DesktopSidebar, MobileBottomNav } from '@/components/layout/Navbar'
+import { isLessonPath } from '@/lib/learnerPack'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { ComposeModalProvider } from '@/hooks/useComposeModal'
 import { ComposeModal } from '@/components/compose/ComposeModal'
@@ -115,7 +116,7 @@ function AppContent() {
         <DesktopSidebar />
 
         {/* Main Content — the ONLY scrollable area */}
-        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 pb-20 lg:pb-6">
+        <main className={`flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 lg:p-6 ${isLessonPath(location.pathname) ? 'pb-4' : 'pb-20'} lg:pb-6`}>
           <Suspense fallback={<div className="flex h-full items-center justify-center p-8">Loading page...</div>}>
             <Routes>
               <Route path="/" element={<LandingPage />} />

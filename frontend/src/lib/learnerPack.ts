@@ -184,6 +184,8 @@ export const getForumCategoryUrl = (forumCategory?: string | null, courseTitle?:
 
 export const coursePath = (courseId: string): string => `/courses/${courseId}`
 
+export const isLessonPath = (pathname: string): boolean => /^\/courses\/[^/]+\/tutorials\//.test(pathname)
+
 export const tutorialPath = (courseId: string, tutorialNumber: number, step?: TutorialStepId): string =>
     `${coursePath(courseId)}/tutorials/${tutorialNumber}${step ? `/${step}` : ''}`
 
@@ -397,7 +399,7 @@ export const buildMaterials = (urls?: CourseMaterialUrls | null): CourseMaterial
             key: 'code',
             format: 'ZIP',
             title: isTutorialSpecific ? 'Lab practice files' : 'Course files',
-            description: isTutorialSpecific ? 'Practice datasets for this tutorial (.zip)' : 'Practice files used in the labs (.zip)',
+            description: isTutorialSpecific ? 'Files used in this tutorial (.zip)' : 'Practice files used in the labs (.zip)',
             url: urls.codeFilesUrl,
             isDownload: true,
             icon: FolderArchive,

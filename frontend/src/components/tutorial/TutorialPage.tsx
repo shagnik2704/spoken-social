@@ -37,7 +37,7 @@ import { ReflectionActivityStep } from './steps/ReflectionActivityStep'
 import { SetupVerificationStep } from './steps/SetupVerificationStep'
 import { TerminalLabStep } from './steps/TerminalLabStep'
 import { VideoStep } from './steps/VideoStep'
-import { TutorialResources } from './TutorialResources'
+import { TutorialActionsSheet, TutorialResources } from './TutorialResources'
 import { TutorialStepNav, type TutorialStep } from './TutorialStepNav'
 import type { TutorialNav, TutorialStepProps } from './types'
 import { useTutorialWorkspace } from './useTutorialWorkspace'
@@ -96,6 +96,8 @@ interface TutorialWorkspaceViewProps {
 const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview, tutorial, step }) => {
     const navigate = useNavigate()
     const topRef = useRef<HTMLDivElement>(null)
+    const headerRef = useRef<HTMLElement>(null)
+    const [isHeaderOutOfView, setIsHeaderOutOfView] = useState(false)
     const courseId = overview.courseId
     const workspace = useTutorialWorkspace(tutorial.id, courseId)
     const { detail } = workspace
@@ -103,6 +105,17 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
     useEffect(() => {
         topRef.current?.scrollIntoView({ block: 'start' })
     }, [step])
+
+    useEffect(() => {
+        const header = headerRef.current
+        if (!header) return
+        const observer = new IntersectionObserver(
+            ([entry]) => setIsHeaderOutOfView(!entry.isIntersecting),
+            { rootMargin: '-140px 0px 0px 0px' }
+        )
+        observer.observe(header)
+        return () => observer.disconnect()
+    }, [])
 
     const isLinux = isLinuxCourse(courseId)
     const isCreativeAi = isCreativeAiCourse(courseId)
@@ -212,20 +225,22 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
 
     const StepComponent = STEP_COMPONENTS[step]
     const tutorialNavButton = 'size-11 lg:size-9 cursor-pointer transition duration-200 ease-in-out'
+    const resourceProps = { courseId, urls: detail, askForumUrl, browseForumUrl, forumXp }
 
     return (
         <div>
             <div ref={topRef} className="scroll-mt-4 lg:scroll-mt-6" />
-            <header className="max-w-5xl mx-auto mb-2 overflow-hidden rounded-xl border border-primary/15 bg-gradient-to-br from-primary/[0.09] via-card to-teal/[0.08] shadow-xs">
-                <div className="px-3 sm:px-5 pt-2.5 pb-4 sm:pb-5 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
-                    <Button asChild variant="ghost" className="-ml-2 self-start max-w-full min-h-11 lg:min-h-9 min-w-0 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-primary/10">
-                        <Link to={coursePath(courseId)}>
+            <header ref={headerRef} className="max-w-5xl mx-auto mb-2 overflow-hidden rounded-xl border border-primary/15 bg-gradient-to-br from-primary/[0.09] via-card to-teal/[0.08] shadow-xs">
+                <div className="px-3 sm:px-5 pt-1.5 sm:pt-2.5 pb-3.5 sm:pb-5 space-y-2 sm:space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                    <Button asChild variant="ghost" className="-ml-2 min-h-11 lg:min-h-9 min-w-0 shrink gap-1.5 text-muted-foreground hover:text-foreground hover:bg-primary/10">
+                        <Link to={coursePath(courseId)} aria-label={`Back to ${overview.title}`}>
                             <ArrowLeft className="size-4 shrink-0" />
                             <span className="truncate">{overview.title}</span>
                         </Link>
                     </Button>
-                    <div className="flex items-center gap-1.5 sm:shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="hidden sm:flex items-center gap-1.5">
                         {codeFilesUrl && (
                             <Button
                                 asChild
@@ -234,8 +249,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                             >
                                 <a href={codeFilesUrl} download>
                                     <Download className="size-3.5" />
-                                    <span className="hidden sm:inline">Code Files</span>
-                                    <span className="sm:hidden">Code</span>
+                                    Code Files
                                 </a>
                             </Button>
                         )}
@@ -243,17 +257,18 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                             asChild
                             variant="outline"
                             size="sm"
-                            className="min-h-11 min-w-11 sm:min-w-0 lg:min-h-9 gap-1.5 px-3 border-primary/30 hover:bg-primary/10 text-primary font-semibold text-xs cursor-pointer transition-all duration-200"
+                            className="min-h-11 lg:min-h-9 gap-1.5 px-3 border-primary/30 hover:bg-primary/10 text-primary font-semibold text-xs cursor-pointer transition-all duration-200"
                         >
-                            <a href={askForumUrl} target="_blank" rel="noopener noreferrer" aria-label="Have doubts? Ask on forum">
-                                <MessageSquarePlus className="size-4 sm:size-3.5" />
+                            <a href={askForumUrl} target="_blank" rel="noopener noreferrer">
+                                <MessageSquarePlus className="size-3.5" />
                                 <span className="hidden md:inline">Have doubts? Ask on forum</span>
-                                <span className="md:hidden hidden sm:inline">Ask on forum</span>
-                                <ExternalLink className="hidden sm:block size-3 opacity-70" />
+                                <span className="md:hidden">Ask on forum</span>
+                                <ExternalLink className="size-3 opacity-70" />
                             </a>
                         </Button>
-                        <TutorialResources courseId={courseId} urls={detail} askForumUrl={askForumUrl} browseForumUrl={browseForumUrl} forumXp={forumXp} />
-                        <div className="ml-auto sm:ml-0 flex items-center gap-1.5">
+                        <TutorialResources {...resourceProps} />
+                        </div>
+                        <div className="flex items-center gap-1.5">
                         {prevTutorial ? (
                             <Button asChild variant="outline" size="icon" className={tutorialNavButton}>
                                 <Link to={tutorialPath(courseId, prevTutorial.number)} aria-label={`Previous: Tutorial ${prevTutorial.number}, ${prevTutorial.title}`} title={`Tutorial ${prevTutorial.number}: ${prevTutorial.title}`}>
@@ -276,6 +291,9 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                                 <ChevronRight className="size-4" />
                             </Button>
                         )}
+                        </div>
+                        <div className="sm:hidden">
+                            <TutorialActionsSheet tutorialTitle={tutorial.title} {...resourceProps} />
                         </div>
                     </div>
                 </div>
@@ -334,7 +352,13 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                 </div>
             </header>
 
-            <TutorialStepNav steps={steps} activeStep={step} justCompletedStep={workspace.justCompletedStep} hrefFor={hrefFor} />
+            <TutorialStepNav
+                steps={steps}
+                activeStep={step}
+                justCompletedStep={workspace.justCompletedStep}
+                hrefFor={hrefFor}
+                compactTitle={isHeaderOutOfView ? tutorial.title : null}
+            />
 
             <div className="max-w-5xl mx-auto pt-5 sm:pt-6">
                 {detail ? (
@@ -363,7 +387,7 @@ const TutorialWorkspaceView: React.FC<TutorialWorkspaceViewProps> = ({ overview,
                 />
             )}
 
-            <div className="lg:hidden sticky -bottom-4 z-20 -mx-4 -mb-4 mt-6 px-4 py-2.5 flex items-center gap-2 bg-card/95 backdrop-blur border-t border-border">
+            <div className="lg:hidden sticky -bottom-4 z-20 -mx-4 -mb-4 mt-6 px-4 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] flex items-center gap-2 bg-card/95 backdrop-blur border-t border-border">
                 <Button
                     variant="ghost"
                     disabled={!prevStep}

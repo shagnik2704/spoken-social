@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { isLessonPath } from '@/lib/learnerPack'
 import { useUserStore } from '@/store/userStore'
 import { useTheme } from '@/hooks/useTheme'
 import { useComposeModal } from '@/hooks/useComposeModal'
@@ -393,6 +394,7 @@ export function MobileBottomNav() {
     const courses = useUserStore(state => state.courses)
     const hasSingleCourseOnly = (user?.role || 'student') === 'student' && courses.length <= 1 && (courses[0]?.batches?.length ?? 0) <= 1
 
+    if (isLessonPath(location.pathname)) return null
 
     return (
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl">
