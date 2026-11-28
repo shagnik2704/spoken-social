@@ -74,6 +74,7 @@ jobs:
 
       - name: Run Pytest test suite
         env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/spoken_social_test
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/spoken_social_test
           PYTHONPATH: .
         run: |
@@ -139,6 +140,7 @@ jobs:
 
       - name: Validate docker-compose configuration
         run: |
+          cp .env.example .env 2>/dev/null || touch .env
           docker compose config --quiet
 
       - name: Set up Docker Buildx

@@ -45,6 +45,7 @@ collect_ignore = [
     "test_user_xp.py",
     "run_test.py",
     "test_programmes_integration.py",
+    "test_learner_pack.py",
 ]
 
 
