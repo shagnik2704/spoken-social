@@ -28,7 +28,9 @@ jobs:
     runs-on: [self-hosted]
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
 
     environment:
       name: production
@@ -57,7 +59,10 @@ jobs:
           echo "✅ Docker daemon access verified."
 
       - name: Execute Local Deployment Runner
+        id: deploy
         env:
+          # The exact commit CI verified; empty for manual runs, which deploy origin/master.
+          CI_VERIFIED_SHA: ${{ github.event.workflow_run.head_sha }}
           INPUT_DEPLOY_PATH: ${{ github.event.inputs.deploy_path }}
           VAR_DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           SKIP_BACKUP: ${{ github.event.inputs.skip_backup || 'false' }}
@@ -95,10 +100,24 @@ jobs:
           git config --global --add safe.directory "$TARGET_DIR" 2>/dev/null || true
           git config --global --add safe.directory "*" 2>/dev/null || true
 
-          echo "📥 Syncing latest codebase from origin master..."
           git fetch origin master
           git checkout master
-          git pull --ff-only origin master
+          if [ -n "$CI_VERIFIED_SHA" ]; then
+            if ! git merge-base --is-ancestor "$CI_VERIFIED_SHA" origin/master; then
+              echo "::error::CI-verified commit $CI_VERIFIED_SHA is not on origin/master; refusing to deploy."
+              exit 1
+            fi
+            echo "📥 Fast-forwarding to the CI-verified commit $CI_VERIFIED_SHA..."
+            git merge --ff-only "$CI_VERIFIED_SHA"
+          else
+            echo "📥 Manual run: fast-forwarding to origin/master..."
+            git merge --ff-only origin/master
+          fi
+          DEPLOYED_SHA=$(git rev-parse HEAD)
+          if [ -n "$CI_VERIFIED_SHA" ] && [ "$DEPLOYED_SHA" != "$CI_VERIFIED_SHA" ]; then
+            echo "::notice::Server checkout was already ahead at $DEPLOYED_SHA (a newer deploy ran first); redeploying that."
+          fi
+          echo "deployed_sha=$DEPLOYED_SHA" >> "$GITHUB_OUTPUT"
           chmod +x ./scripts/deploy.sh
 
           BACKUP_FLAG=""
@@ -118,7 +137,7 @@ jobs:
             echo "### 🚢 Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
             echo "- **Runner Host:** \`$(hostname)\`" >> $GITHUB_STEP_SUMMARY
             echo "- **Target Directory:** \`${TARGET_DIR}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Commit:** \`${{ steps.deploy.outputs.deployed_sha }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- **Triggered By:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- **Health Check:** ✅ Verified (/api/health responded 200 OK)" >> $GITHUB_STEP_SUMMARY
           else

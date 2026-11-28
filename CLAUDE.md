@@ -19,7 +19,7 @@ This file contains local development commands, project style rules, and specific
 - **Run worker:** `arq worker.WorkerSettings` (within `backend/`; needs Redis)
 
 ### Deployment & CI/CD
-- **Automated Deployment:** `./scripts/deploy.sh` (handles pre-flight checks, automatic database backup via `./backup_db.sh --prod`, git pull, rebuilding containers before migrating, running `alembic upgrade head`, and verifying `/api/health`).
+- **Automated Deployment:** `./scripts/deploy.sh` (handles pre-flight checks, a verified database backup via `./backup_db.sh` that aborts the deploy on failure, git pull, rebuilding containers before migrating, running `alembic upgrade head`, and verifying `/api/health`).
 - **Manual Deploy:** `docker compose up -d --build` **before** `docker compose exec backend alembic upgrade head` — rebuilding first is load-bearing; migrating inside a stale image silently no-ops.
 - **CI/CD Workflows:** `.github/workflows/ci.yml` (backend pytest + alembic, frontend lint + build, docker build validation) and `.github/workflows/cd.yml` (automated SSH deployment on merge to master). See `docs/CI_CD_PIPELINE.md`.
 

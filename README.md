@@ -110,7 +110,7 @@ cd backend && PYTHONPATH=. pytest
 
 The repository features a dedicated CI/CD pipeline (`.github/workflows/ci.yml` and `cd.yml`):
 - **CI**: Runs on every pull request and push to `master`. Exercises real PostgreSQL 16 and Redis 7 service containers for Alembic migration checks, 143 Pytest test cases, ESLint, strict TypeScript checks, Vite production builds, and Docker image validation.
-- **CD**: Automatically triggers upon successful CI on `master`, safely backing up the production PostgreSQL database (`./backup_db.sh --prod`), rebuilding containers, upgrading migrations, and verifying HTTP health via `./scripts/deploy.sh`.
+- **CD**: Automatically triggers upon successful CI on `master`, taking a verified backup of the production PostgreSQL database (`./backup_db.sh`, deploy aborts if it fails), rebuilding containers, upgrading migrations, and verifying HTTP health via `./scripts/deploy.sh`.
 
 See [docs/CI_CD_PIPELINE.md](docs/CI_CD_PIPELINE.md) for full configuration, architecture diagrams, and GitHub Secrets setup.
 
