@@ -88,13 +88,19 @@ jobs:
           echo "📍 Located deployment directory: $TARGET_DIR"
           cd "$TARGET_DIR"
 
+          echo "📥 Syncing latest codebase from origin master..."
+          git fetch origin master
+          git checkout master
+          git pull --ff-only origin master
+          chmod +x ./scripts/deploy.sh
+
           BACKUP_FLAG=""
           if [ "$SKIP_BACKUP" = "true" ]; then
             BACKUP_FLAG="--skip-backup"
           fi
 
           echo "🚀 Executing deployment script in $(pwd)..."
-          ./scripts/deploy.sh $BACKUP_FLAG
+          ./scripts/deploy.sh --no-pull $BACKUP_FLAG
 
       - name: Add Deployment Summary to Step Summary
         if: always()
