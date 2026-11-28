@@ -62,17 +62,31 @@ fi
 echo "   Docker and .env are ready."
 
 # ── 2. Pre-deploy Database Backup ──
-echo "💾 [2/6] Checking database backup..."
-if [ "$SKIP_BACKUP" = false ] && [ -f "./backup_db.sh" ]; then
-    # Only backup if postgres container is already running
+# Production Postgres runs in this compose project, so backup_db.sh's default
+# (docker exec) mode is the production backup. Its --prod mode is for a remote
+# database host and would fail here. A failed backup stops the deploy before
+# any migration runs; pass --skip-backup to override deliberately.
+echo "💾 [2/6] Backing up the database..."
+BACKUP_NOTE="skipped (--skip-backup)"
+if [ "$SKIP_BACKUP" = false ]; then
     if docker compose ps --services --filter "status=running" | grep -q "^postgres$"; then
-        echo "   Creating safety backup before migration..."
-        ./backup_db.sh --prod || echo "⚠️ Warning: Automated backup reported an issue, proceeding with caution."
+        if ! ./backup_db.sh; then
+            echo "❌ Database backup failed — aborting before migrations."
+            echo "   Fix the backup, or re-run with --skip-backup to deploy without one."
+            exit 1
+        fi
+        LATEST_BACKUP=$(ls -t backups/*.sql.gz)
+        LATEST_BACKUP=${LATEST_BACKUP%%$'\n'*}
+        BACKUP_NOTE="$LATEST_BACKUP ($(du -h "$LATEST_BACKUP" | cut -f1))"
     else
-        echo "   Postgres not running yet; skipping pre-deploy backup."
+        BACKUP_NOTE="none (postgres was not running, nothing to back up)"
+        echo "   Postgres is not running yet; nothing to back up."
     fi
 else
-    echo "   Backup skipped."
+    echo "   Backup skipped (--skip-backup)."
+fi
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    echo "- **Database backup:** \`$BACKUP_NOTE\`" >> "$GITHUB_STEP_SUMMARY"
 fi
 
 # ── 3. Pull Latest Code ──

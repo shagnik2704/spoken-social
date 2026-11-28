@@ -39,6 +39,15 @@ fi
 # ── Create backup directory ──
 mkdir -p "$BACKUP_DIR"
 
+BACKUP_FILE=""
+BACKUP_OK=false
+cleanup_failed_backup() {
+    if [ "$BACKUP_OK" = false ] && [ -n "$BACKUP_FILE" ]; then
+        rm -f "$BACKUP_FILE"
+    fi
+}
+trap cleanup_failed_backup EXIT
+
 echo "🗄️  Spoken Social Database Backup"
 echo "   Mode:      $MODE"
 echo "   Database:  $DB_NAME"
@@ -98,14 +107,21 @@ elif [ "$MODE" = "prod" ]; then
 fi
 
 # ── Verify backup ──
-if [ -f "$BACKUP_FILE" ]; then
+# pg_dump writes this footer only after a complete dump, so a truncated or
+# empty archive is rejected rather than reported as a good backup.
+DUMP_FOOTER=""
+if [ -f "$BACKUP_FILE" ] && gzip -t "$BACKUP_FILE" 2>/dev/null; then
+    DUMP_FOOTER=$(gzip -dc "$BACKUP_FILE" | tail -n 5)
+fi
+if [[ "$DUMP_FOOTER" == *"PostgreSQL database dump complete"* ]]; then
     SIZE=$(du -sh "$BACKUP_FILE" | cut -f1)
     echo ""
+    BACKUP_OK=true
     echo "✅ Backup complete!"
     echo "   File: $BACKUP_FILE"
     echo "   Size: $SIZE"
 else
-    echo "❌ Backup failed — file not created."
+    echo "❌ Backup failed — $BACKUP_FILE is missing or incomplete."
     exit 1
 fi
 

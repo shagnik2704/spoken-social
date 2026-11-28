@@ -46,8 +46,8 @@ flowchart TD
         CD_Trigger["On CI Success on master / Manual Dispatch"] --> Dispatch["Dispatch to Self-Hosted Runner on VM"]
         subgraph VM["Production VM (Self-Hosted Runner Agent)"]
             LocalCheck["Verify Docker & Environment"]
-            S1["Pre-deploy Database Backup (./backup_db.sh --prod)"]
-            S2["Git Fetch & Pull (Fast-Forward)"]
+            S1["Pre-deploy Database Backup (./backup_db.sh, verified)"]
+            S2["Fast-forward to the CI-verified commit"]
             S3["Docker Compose Build --pull (Rebuild Images First)"]
             S4["Docker Compose Up -d --remove-orphans"]
             S5["Alembic Upgrade Head (Run Migrations in Fresh Container)"]
@@ -102,11 +102,12 @@ Instead of using external SSH keys, jump servers, or opening port 22 to the publ
    - Dispatches jobs directly to the runner agent running on your VM.
    - Verifies Docker connectivity and that the runner user has permissions to the Docker daemon (`docker ps`).
    - Restricts deployment concurrency (`cancel-in-progress: false`) so production deployments queue safely without state races.
+   - Deploys only after CI succeeds on a **push** to `master` (not a pull-request run), and fast-forwards the server checkout to the exact commit CI verified (`workflow_run.head_sha`), so a commit that lands mid-run is never deployed untested. Manual dispatches deploy the current `origin/master`.
 
 2. **Deployment Runner Script: `scripts/deploy.sh`:**
    - **Step 1 (Pre-flight):** Verifies Docker, Docker Compose, and `.env` presence.
-   - **Step 2 (Safety Backup):** Invokes `./backup_db.sh --prod` to snapshot the database before running migrations.
-   - **Step 3 (Code Sync):** Pulls the latest commits with `git pull --ff-only origin master`.
+   - **Step 2 (Safety Backup):** Runs `./backup_db.sh` (its default mode dumps the compose `postgres` service, which is the production database on the VM; `--prod` is only for a remote database host). The dump is verified (gzip integrity and pg_dump's completion footer) and a failed backup **aborts the deploy before migrations**. Use `--skip-backup` to override deliberately. The backup file is listed in the run's step summary.
+   - **Step 3 (Code Sync):** Skipped in CD (`--no-pull`), because the workflow has already checked out the verified commit. Manual runs pull with `git pull --ff-only origin master`.
    - **Step 4 (Image Rebuild):** Rebuilds Docker images *before* running migrations. Per engineering documentation, running Alembic inside a stale container image can silently no-op.
    - **Step 5 (Orchestration & Migration):** Runs `docker compose up -d --remove-orphans` and applies `docker compose exec -T backend alembic upgrade head`.
    - **Step 6 (Verification):** Verifies all core services (`backend`, `postgres`, `redis`, `frontend`) are running, and queries `http://127.0.0.1:8000/api/health` to confirm HTTP 200.
@@ -214,6 +215,10 @@ If a deployed version causes unexpected behavior:
    # List recent backups
    ls -lh backups/
 
-   # Restore database
-   gunzip -c backups/spoken_social_prod_YYYY-MM-DD_HH-MM-SS.sql.gz | docker compose exec -T postgres psql -U spoken_user -d spoken_social
+   # Stop writers, recreate the database empty, then restore into it
+   docker compose stop backend worker
+   docker compose exec -T postgres dropdb -U spoken_user spoken_social
+   docker compose exec -T postgres createdb -U spoken_user spoken_social
+   gunzip -c backups/spoken_social_local_YYYY-MM-DD_HH-MM-SS.sql.gz | docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U spoken_user -d spoken_social
+   docker compose up -d
    ```
