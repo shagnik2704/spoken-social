@@ -88,6 +88,9 @@ jobs:
           echo "📍 Located deployment directory: $TARGET_DIR"
           cd "$TARGET_DIR"
 
+          # Fix permissions if passwordless sudo is available
+          sudo -n chown -R $(whoami):$(whoami) "$TARGET_DIR" 2>/dev/null || true
+
           echo "🔐 Configuring git safe directory exception..."
           git config --global --add safe.directory "$TARGET_DIR" 2>/dev/null || true
           git config --global --add safe.directory "*" 2>/dev/null || true
