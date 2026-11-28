@@ -16,6 +16,8 @@ set -euo pipefail
 # ── Paths & Setup ──
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+git config --global --add safe.directory "$ROOT_DIR" 2>/dev/null || true
+git config --global --add safe.directory "*" 2>/dev/null || true
 
 SKIP_BACKUP=false
 SKIP_PULL=false

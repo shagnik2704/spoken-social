@@ -88,6 +88,10 @@ jobs:
           echo "📍 Located deployment directory: $TARGET_DIR"
           cd "$TARGET_DIR"
 
+          echo "🔐 Configuring git safe directory exception..."
+          git config --global --add safe.directory "$TARGET_DIR" 2>/dev/null || true
+          git config --global --add safe.directory "*" 2>/dev/null || true
+
           echo "📥 Syncing latest codebase from origin master..."
           git fetch origin master
           git checkout master
@@ -105,7 +109,7 @@ jobs:
       - name: Add Deployment Summary to Step Summary
         if: always()
         env:
-          TARGET_DIR: ${{ github.event.inputs.deploy_path || vars.DEPLOY_PATH || '/home/ubuntu/spoken-social' }}
+          TARGET_DIR: ${{ github.event.inputs.deploy_path || vars.DEPLOY_PATH || '/websites_dir/spoken-social' }}
         run: |
           if [ "${{ job.status }}" = "success" ]; then
             echo "### 🚢 Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
