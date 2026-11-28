@@ -6,6 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-PostgreSQL--backed-brightgreen)
+[![CI](https://github.com/shagnik2704/spoken-social/actions/workflows/ci.yml/badge.svg)](https://github.com/shagnik2704/spoken-social/actions/workflows/ci.yml)
 
 A gamified learning management platform for [Spoken Tutorial](https://spoken-tutorial.org) cohort programmes. Students track per-tutorial progress and earn XP, levels, and leaderboard positions; college coordinators and programme administrators get live, drill-down analytics for every institution on the platform.
 
@@ -105,9 +106,22 @@ cd backend && PYTHONPATH=. pytest
 
 110 test functions (128 collected) run against a **real disposable PostgreSQL database** — not SQLite, not mocks — because the leaderboard depends on window functions and three-valued NULL semantics that mocks would not exercise. The conftest creates a throwaway DB per session and truncates between tests; legacy ad-hoc scripts are quarantined via `collect_ignore`.
 
-## Deployment
+## Deployment & CI/CD
 
-Production is Docker Compose on a cloud VM; one `docker-compose.yml` is tracked in git and used in every environment, with per-host differences confined to `.env`.
+The repository features a dedicated CI/CD pipeline (`.github/workflows/ci.yml` and `cd.yml`):
+- **CI**: Runs on every pull request and push to `master`. Exercises real PostgreSQL 16 and Redis 7 service containers for Alembic migration checks, 143 Pytest test cases, ESLint, strict TypeScript checks, Vite production builds, and Docker image validation.
+- **CD**: Automatically triggers upon successful CI on `master`, safely backing up the production PostgreSQL database (`./backup_db.sh --prod`), rebuilding containers, upgrading migrations, and verifying HTTP health via `./scripts/deploy.sh`.
+
+See [docs/CI_CD_PIPELINE.md](docs/CI_CD_PIPELINE.md) for full configuration, architecture diagrams, and GitHub Secrets setup.
+
+For manual deployment on the host VM:
+
+```bash
+# Automated deployment runner (pre-backup + git pull + rebuild + migrate + healthcheck)
+./scripts/deploy.sh
+```
+
+Or manually step-by-step:
 
 ```bash
 git pull
@@ -144,6 +158,7 @@ spoken-social/
 
 | Document | What it is |
 |---|---|
+| [docs/CI_CD_PIPELINE.md](docs/CI_CD_PIPELINE.md) | **CI/CD Pipeline Guide**: GitHub Actions workflows (`ci.yml`, `cd.yml`), runner scripts (`scripts/deploy.sh`), database pre-backups, and zero-downtime deployment setup. |
 | [docs/SPOKEN_SOCIAL_PRODUCT_BRIEF.md](docs/SPOKEN_SOCIAL_PRODUCT_BRIEF.md) | **Product & Application Brief** (User-directed, non-technical): purpose, personas, core features, hosted learning activities, and future roadmap. Available in [.docx](docs/Spoken_Social_Product_Brief.docx) and [.pdf](docs/Spoken_Social_Product_Brief.pdf). |
 | [docs/SPOKEN_SOCIAL_TECHNICAL_BRIEF.md](docs/SPOKEN_SOCIAL_TECHNICAL_BRIEF.md) | **Technical & Architecture Brief** (Engineering-focused): system architecture, single-writer XP engine, SQL invariants, sub-ms leaderboards, and scale roadmap. Available in [.docx](docs/Spoken_Social_Technical_Brief.docx) and [.pdf](docs/Spoken_Social_Technical_Brief.pdf). |
 | [DESIGN.md](DESIGN.md) | Original product-design document (Feb 2026) — vision, personas, page-by-page UX. Partly aspirational; see its status banner. |

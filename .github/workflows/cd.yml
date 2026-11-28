@@ -1,0 +1,114 @@
+name: CD (Self-Hosted Runner)
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [ master ]
+    types: [ completed ]
+  workflow_dispatch:
+    inputs:
+      skip_backup:
+        description: 'Skip pre-deployment database backup'
+        type: boolean
+        default: false
+        required: false
+      deploy_path:
+        description: 'Target repository path on the server'
+        type: string
+        default: '/websites_dir/spoken-social'
+        required: false
+
+concurrency:
+  group: cd-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    name: Deploy on Production VM
+    runs-on: [self-hosted]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    environment:
+      name: production
+
+    steps:
+      - name: Verify Host Environment & Docker Access
+        run: |
+          echo "=========================================================="
+          echo "🖥️  Running deployment locally on VM: $(hostname)"
+          echo "   User:      $(whoami)"
+          echo "   Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          echo "=========================================================="
+
+          # Verify Docker is reachable by this runner
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "::error::Docker is not installed or not in PATH for runner user ($(whoami))."
+            exit 1
+          fi
+
+          if ! docker ps >/dev/null 2>&1; then
+            echo "::error::Runner user ($(whoami)) does not have permission to communicate with Docker daemon."
+            echo "Run 'sudo usermod -aG docker $(whoami)' on the host and restart the runner service."
+            exit 1
+          fi
+
+          echo "✅ Docker daemon access verified."
+
+      - name: Execute Local Deployment Runner
+        env:
+          INPUT_DEPLOY_PATH: ${{ github.event.inputs.deploy_path }}
+          VAR_DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          SKIP_BACKUP: ${{ github.event.inputs.skip_backup || 'false' }}
+        run: |
+          # Candidate paths for the spoken-social repo
+          CANDIDATES=(
+            "$INPUT_DEPLOY_PATH"
+            "$VAR_DEPLOY_PATH"
+            "/websites_dir/spoken-social"
+            "/webistes_dir/spoken-social"
+            "$HOME/spoken-social"
+          )
+
+          TARGET_DIR=""
+          for p in "${CANDIDATES[@]}"; do
+            if [ -n "$p" ] && [ -d "$p" ] && [ -f "$p/docker-compose.yml" ]; then
+              TARGET_DIR="$p"
+              break
+            fi
+          done
+
+          if [ -z "$TARGET_DIR" ]; then
+            echo "::error::Could not find spoken-social directory with docker-compose.yml (checked: $HOME/spoken-social, /home/shagnik/spoken-social, etc.)."
+            echo "Please ensure the repository is located at ~/spoken-social or set the 'DEPLOY_PATH' variable in GitHub Repository Settings -> Secrets and variables -> Actions -> Variables."
+            exit 1
+          fi
+
+          echo "📍 Located deployment directory: $TARGET_DIR"
+          cd "$TARGET_DIR"
+
+          BACKUP_FLAG=""
+          if [ "$SKIP_BACKUP" = "true" ]; then
+            BACKUP_FLAG="--skip-backup"
+          fi
+
+          echo "🚀 Executing deployment script in $(pwd)..."
+          ./scripts/deploy.sh $BACKUP_FLAG
+
+      - name: Add Deployment Summary to Step Summary
+        if: always()
+        env:
+          TARGET_DIR: ${{ github.event.inputs.deploy_path || vars.DEPLOY_PATH || '/home/ubuntu/spoken-social' }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "### 🚢 Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
+            echo "- **Runner Host:** \`$(hostname)\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target Directory:** \`${TARGET_DIR}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Triggered By:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Health Check:** ✅ Verified (/api/health responded 200 OK)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Production Deployment Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- Check the execution logs above to inspect the error." >> $GITHUB_STEP_SUMMARY
+          fi

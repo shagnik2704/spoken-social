@@ -1424,7 +1424,7 @@ export default function AdminDashboard() {
     const { data: colleges = [], isLoading: isLoadingColleges } = useColleges(activeCourseId, activeBatchId, isAdmin)
     const { data: summary, isLoading: isLoadingSummary } = usePlatformSummary(platformStateFilter, activeCourseId, activeBatchId, isAdmin)
 
-    const feedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
+    const useFeedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
         useFeedbackSummary(filters, activeCourseId, activeBatchId, isAdmin)
 
     const isLoading = isLoadingColleges || isLoadingSummary
@@ -1566,7 +1566,7 @@ export default function AdminDashboard() {
             )}
 
             {activeTab === 'feedback' && (
-                <FeedbackPanel useFeedbackData={feedbackHook} onStudentClick={setSelectedStudentForFeedback} />
+                <FeedbackPanel useFeedbackData={useFeedbackHook} onStudentClick={setSelectedStudentForFeedback} />
             )}
 
             {activeTab === 'minitasks' && (

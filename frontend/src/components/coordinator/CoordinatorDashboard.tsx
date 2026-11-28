@@ -945,10 +945,10 @@ function AnalyticsTab({ collegeId, courseId, batchId }: { collegeId: string, cou
 // ===== COORDINATOR FEEDBACK TAB =====
 
 function CoordinatorFeedbackTab({ collegeId, courseId, batchId }: { collegeId: string, courseId?: string, batchId?: string | null }) {
-    const feedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
+    const useFeedbackHook = (filters: { tutorialId: string; stepType: string; reason: string }) =>
         useCoordinatorFeedbackSummary(collegeId, filters, courseId, batchId)
 
-    return <FeedbackPanel useFeedbackData={feedbackHook} />
+    return <FeedbackPanel useFeedbackData={useFeedbackHook} />
 }
 
 
