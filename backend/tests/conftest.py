@@ -32,6 +32,8 @@ _DB_NAME = TEST_DATABASE_URL.rsplit("/", 1)[1]
 
 # services/jwt reads SECRET_KEY at import time; route tests need to mint tokens.
 os.environ.setdefault("SECRET_KEY", "test-secret-not-used-outside-tests")
+os.environ.setdefault("SWAYAM_OIDC_CLIENT_ID", "test-swayam-client-id")
+os.environ.setdefault("SWAYAM_OIDC_CLIENT_SECRET", "test-swayam-client-secret")
 
 # Legacy ad-hoc scripts that predate any test infrastructure. They are not
 # pytest tests — they open a database connection and call route handlers at
@@ -79,6 +81,17 @@ async def engine():
     await admin.dispose()
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def clear_cache():
+    try:
+        import cache
+        r = cache.redis.Redis(connection_pool=cache.pool)
+        await r.flushdb()
+    except Exception:
+        pass
+    yield
+
+
 @pytest_asyncio.fixture(loop_scope="session")
 async def db(engine):
     """A session with a clean users table. Truncate rather than roll back, so
@@ -86,7 +99,7 @@ async def db(engine):
     Session = async_sessionmaker(bind=engine, expire_on_commit=False)
     async with Session() as session:
         await session.execute(
-            text("TRUNCATE users, colleges, courses, tutorials, user_tutorials CASCADE")
+            text("TRUNCATE users, colleges, courses, tutorials, user_tutorials, swayam_oidc_states CASCADE")
         )
         await session.commit()
         yield session
